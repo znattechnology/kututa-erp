@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Motivos de isenção -->
+    <record id="l10n_ao_tax_exemption_view_list" model="ir.ui.view">
+        <field name="name">l10n_ao.tax.exemption.list</field>
+        <field name="model">l10n_ao.tax.exemption</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="code"/>
+                <field name="tax_type"/>
+                <field name="name"/>
+                <field name="description" optional="show"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+    <record id="l10n_ao_tax_exemption_view_search" model="ir.ui.view">
+        <field name="name">l10n_ao.tax.exemption.search</field>
+        <field name="model">l10n_ao.tax.exemption</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="description"/>
+                <filter name="iva" string="IVA" domain="[('tax_type', '=', 'IVA')]"/>
+                <filter name="is" string="Imposto de Selo" domain="[('tax_type', '=', 'IS')]"/>
+                <filter name="iec" string="IEC" domain="[('tax_type', '=', 'IEC')]"/>
+                <group>
+                    <filter name="group_tax_type" string="Imposto" context="{'group_by': 'tax_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="l10n_ao_tax_exemption_action" model="ir.actions.act_window">
+        <field name="name">Motivos de isenção (AGT)</field>
+        <field name="res_model">l10n_ao.tax.exemption</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- CAE -->
+    <record id="l10n_ao_cae_view_list" model="ir.ui.view">
+        <field name="name">l10n_ao.cae.list</field>
+        <field name="model">l10n_ao.cae</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="code"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+    <record id="l10n_ao_cae_action" model="ir.actions.act_window">
+        <field name="name">Códigos de Actividade Económica (CAE)</field>
+        <field name="res_model">l10n_ao.cae</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Imposto de Selo -->
+    <record id="l10n_ao_stamp_duty_item_view_list" model="ir.ui.view">
+        <field name="name">l10n_ao.stamp.duty.item.list</field>
+        <field name="model">l10n_ao.stamp.duty.item</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="rate_type"/>
+                <field name="rate"/>
+            </list>
+        </field>
+    </record>
+    <record id="l10n_ao_stamp_duty_item_action" model="ir.actions.act_window">
+        <field name="name">Tabela do Imposto de Selo</field>
+        <field name="res_model">l10n_ao.stamp.duty.item</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- IEC -->
+    <record id="l10n_ao_iec_rate_view_list" model="ir.ui.view">
+        <field name="name">l10n_ao.iec.rate.list</field>
+        <field name="model">l10n_ao.iec.rate</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="uom"/>
+                <field name="rate"/>
+            </list>
+        </field>
+    </record>
+    <record id="l10n_ao_iec_rate_action" model="ir.actions.act_window">
+        <field name="name">Taxas do Imposto Especial de Consumo</field>
+        <field name="res_model">l10n_ao.iec.rate</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_config" name="Angola (AGT)" parent="account.menu_finance_configuration" sequence="90">
+        <menuitem id="menu_l10n_ao_tax_exemption" action="l10n_ao_tax_exemption_action" sequence="10"/>
+        <menuitem id="menu_l10n_ao_stamp_duty_item" action="l10n_ao_stamp_duty_item_action" sequence="20"/>
+        <menuitem id="menu_l10n_ao_iec_rate" action="l10n_ao_iec_rate_action" sequence="30"/>
+        <menuitem id="menu_l10n_ao_cae" action="l10n_ao_cae_action" sequence="40"/>
+    </menuitem>
+</odoo>

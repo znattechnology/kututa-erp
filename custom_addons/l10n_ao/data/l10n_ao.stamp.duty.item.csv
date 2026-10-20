@@ -1,0 +1,109 @@
+id,code,name,rate_type,rate
+stamp_duty_1,1,"Aquisição onerosa ou gratuita do direito de propriedade ou de figuras parcelares desse direito, sobre imóveis, bem como a resolução, invalidade ou extinção, por mútuo consenso, dos respectivos contratos - sobre o valor.",percent,0.3
+stamp_duty_2,2,Arrendamento e subarrendamento,none,0.0
+stamp_duty_2_1,2.1,"Sobre o valor, aumento da renda ou prorrogação do contrato de arrendamento e subarrendamento para fins habitacionais.",percent,0.1
+stamp_duty_2_2,2.2,"Sobre o valor, aumento da renda ou prorrogação do contrato de arrendamento e subarrendamento destinados a estabelecimento comercial, industrial, exercício de profissão em regime independente.",percent,0.4
+stamp_duty_3,3,"Autos e termos efectuados perante tribunais e serviços, estabelecimentos e organismos do Estado, ainda que personalizados, incluindo os institutos públicos que compreendem arrendamento ou licitação de bens imóveis, cessão, conferência de interessados em que se concorde na adjudicação de bens comuns, confissão de divida, fiança, hipoteca, penhor, responsabilidade por perdas e danos e transacções - por cada um.",fixed,1000.0
+stamp_duty_4,4,Cheques de qualquer natureza - por cada dez.,fixed,100.0
+stamp_duty_5,5,"Depósito civil, qualquer que seja a sua forma - sobre o respectivo valor.",percent,0.1
+stamp_duty_6,6,"Depósito, em qualquer serviço público, dos estatutos de associações e outras instituições cuja constituição dele dependa - por cada.",fixed,4400.0
+stamp_duty_7,7,Actos societários:,none,0.0
+stamp_duty_7_1,7.1,Constituição de uma sociedade - sobre o valor real dos bens de qualquer natureza entregues ou a entregar pelos sócios após dedução das obrigações assumidas e dos encargos suportados pela sociedade em consequência de cada entrada.,percent,0.1
+stamp_duty_7_2,7.2,"Transformação em sociedade, associação ou pessoa colectiva que não seja sociedade de capitais - sobre o valor real dos bens de qualquer natureza pertencentes à sociedade à data da transformação após dedução das obrigações e encargos que a onerem nesse momento.",percent,0.1
+stamp_duty_7_3,7.3,Aumento do capital social de uma sociedade mediante a entrada de bens de qualquer espécie - sobre o valor real dos bens de qualquer natureza entregues ou a entregar pelos sócios após dedução da obrigação assumidas e dos encargos suportados pela sociedade em consequência de cada entrada.,percent,0.1
+stamp_duty_7_4,7.4,"Aumento do activo de una sociedade mediante a entrada de bens de qualquer espécie remunerada não por partes representativas do capital social ou do activo, mas por direito da mesma natureza que os dos sócios, tais como direito de voto e participação nos lucros ou no saldo de liquidação - sobre o valor real dos bens de qualquer natureza entregues ou a entregar pelos sócios após dedução das obrigações assumidas e dos encargos suportados pela sociedade em consequência de cada entrada.",percent,0.1
+stamp_duty_8,8,"Outros Contratos não especialmente previstos nest tabela, incluindo os efectuados perante entidades públicas - por cada um.",fixed,1000.0
+stamp_duty_9,9,"Exploração, pesquisa e prospecção de recursos geológicos integrados no domínio público do Estado - por cada contrato administrativo.",fixed,3000.0
+stamp_duty_10,10,"Garantias das obrigações, qualquer que seja a sua natureza ou forma, designadamente o aval, a caução, a garantia bancária autónoma, a fiança, a hipoteca, o penhor e o seguro-caução, salvo quando materialmente acessórias de contratos especialmente tributados na present tabela, considerando-se como tal as que sejam constituídas até 90 dias após a celebração do contrato constitutivo da obrigação garantida ainda que em instrumentos ou títulos deferentes, ou no caso de penhor de bens futuros desde que o mesmo seja inscrito no contrato principal - sobre o respectivo valor, em função do prazo, considerando-se sempre como nova operação a prorrogação do prazo do contrato.",none,0.0
+stamp_duty_10_1,10.1,Garantias de prazo inferior a um ano.,percent,0.3
+stamp_duty_10_2,10.2,Garantias de prazo igual ou superior a um ano.,percent,0.2
+stamp_duty_10_3,10.3,Garantias sem prazo ou de prazo igual ou superior a cinco anos.,percent,0.1
+stamp_duty_11,11,"Cada aposta de jogos, designadamente as representadas por bilhetes, boletins, cartões, matrizes, rifas ou tômbolas.",fixed,100.0
+stamp_duty_11_1,11.1,"Ingressos em salas de jogo de fortuna ou azar, ou documentos equivalentes, ainda que não seja devido o respectivo preço pelo cliente e mesmo que o pagamento do acesso seja dispensado pelas empresas concessionárias.",fixed,100.0
+stamp_duty_12,12,Licenças,none,0.0
+stamp_duty_12_1,12.1,Para instalação ou exploração de máquinas electrónicas de diversão,fixed,1300.0
+stamp_duty_12_2,12.2,Para quaisquer outros jogos legais - por cada um.,fixed,1300.0
+stamp_duty_12_3,12.3,Para funcionamento de estabelecimentos de restauração e bebidas:,none,0.0
+stamp_duty_12_3_1,12.3.1,"Clubes nocturnos e outros estabelecimentos com espaço reservado para dança, designadamente bares e discotecas:",none,0.0
+stamp_duty_12_3_1_1,12.3.1.1,Em Luanda,fixed,53000.0
+stamp_duty_12_3_1_2,12.3.1.2,Restantes capitais de província e no Lobito,fixed,27000.0
+stamp_duty_12_3_1_3,12.3.1.3,Outras localidades,fixed,14000.0
+stamp_duty_12_3_2,12.3.2,Restaurantes:,none,0.0
+stamp_duty_12_3_2_1,12.3.2.1,Em Luanda,fixed,6000.0
+stamp_duty_12_3_2_2,12.3.2.2,Restantes capitais de província e no Lobito,fixed,3000.0
+stamp_duty_12_3_2_3,12.3.2.3,Outras localidades,fixed,1500.0
+stamp_duty_12_3_3,12.3.3,Outros estabelecimentos:,none,0.0
+stamp_duty_12_3_3_1,12.3.3.1,Em Luanda,fixed,1500.0
+stamp_duty_12_3_3_2,12.3.3.2,Restantes capitais de província e no Lobito,fixed,1000.0
+stamp_duty_12_3_3_3,12.3.3.3,Outras localidades,fixed,500.0
+stamp_duty_12_4,12.4,Para hotelaria e similares:,none,0.0
+stamp_duty_12_4_1,12.4.1,1º Categoria ou luxo (pelo menos 4 ou mais estrelas),fixed,100000.0
+stamp_duty_12_4_2,12.4.2,2º Categoria (3 estrelas),fixed,60000.0
+stamp_duty_12_4_3,12.4.3,Restantes:,none,0.0
+stamp_duty_12_4_3_1,12.4.3.1,Luanda,fixed,53000.0
+stamp_duty_12_4_3_2,12.4.3.2,Restantes capitais de província e no Lobito,fixed,30000.0
+stamp_duty_12_4_3_3,12.4.3.3,Outras localidades,fixed,15000.0
+stamp_duty_12_5,12.5,Para as instalações de máquinas automáticas de venda de bens ou serviços em locais de acesso público - por cada máquina,fixed,3000.0
+stamp_duty_12_6,12.6,"Outras licenças não designadas especialmente nest tabela, concedidas pelo Estado, pelas Províncias, ou qualquer dos seus serviços, estabelecimentos, organismos ou institutos - por cada uma.",fixed,2000.0
+stamp_duty_13,13,Marcas e patentes - sobre o registo unitário.,fixed,3000.0
+stamp_duty_14,14,Notariado e actos notariais,none,0.0
+stamp_duty_14_1,14.1,"Escrituras, excluindo as que tenham por objecto os actos referidos na verba 8 d tabela.",fixed,2000.0
+stamp_duty_14_2,14.2,Habilitação de herdeiros e de legatários - por cada acto.,fixed,1000.0
+stamp_duty_14_3,14.3,Testamento público ou cerrado,fixed,1000.0
+stamp_duty_14_4,14.4,"Procurações e outros instrumentos de representação voluntária, incluindo os mandatos e substabelecimentos:",none,0.0
+stamp_duty_14_4_1,14.4.1,Procurações e outros instrumentos relativos a atribuição de poderes de representação voluntária - por cada um,none,0.0
+stamp_duty_14_4_1_1,14.4.1.1,Com poderes para gerência comercial,fixed,1000.0
+stamp_duty_14_4_1_2,14.4.1.2,Com quaisquer outros poderes,fixed,500.0
+stamp_duty_14_4_1_3,14.4.1.3,Substabelecimento por cada um,fixed,500.0
+stamp_duty_14_5,14.5,Registo de documentos apresentados aos notários para ficarem arquivados - por cada registo,fixed,100.0
+stamp_duty_14_6,14.6,"Outros instrumentos notariais avulsos, não especialmente previsto nest Tabela - por cada um",fixed,100.0
+stamp_duty_15,15,Operações aduaneiras:,none,0.0
+stamp_duty_15_1,15.1,Sobre o valor aduaneiro da importação,percent,1.0
+stamp_duty_15_2,15.2,Sobre o valor aduaneiro das exportações:,percent,0.5
+stamp_duty_15_2_2,15.2.2,"Exportações de marfins e seus pelos e desperdícios, Marfim, osso, carapaça de tartaruga, Chipre, coral, madrepérol e outras matérias animais para entalhar, trabalhados e suas obras (incluindo as obras obtidas por moldagem); De peles com pêlo em bruto; peles de vision, inteiras mesmo sem cabeça, cauda ou patas; Peles de cordeiro denominadas astraçã, Breitsclnvanz, caracul, persianer ou semelhantes, de cordeiros da Índia, da China, da Mongólia ou do Tibete, de raposas e de outros animais, inteiras mesmo sem cabeça, cauda ou patas; Peles com pelo curtidas ou, acabadas (incluindo as cabeças, caudas, patas e outras partes, desperdícios e aparas), montadas ou não, sem adição de outras matérias; Vestuário e seus acessórios e outros artefactos de peles com pelo; Peles com pelos artificiais e suas obras;",percent,0.5
+stamp_duty_16,16,Operações de financiamento:,none,0.0
+stamp_duty_16_1,16.1,"Pela utilização de créditos, sob a forma de fundos, mercadorias e outros valores em virtude da concessão de crédito a qualquer título, incluindo o crédito documentário, a cessão de créditos, factoring e as operações de tesouraria quando envolvam qualquer tipo de financiamento, salvo, em qualquer circunstância, as emissões de títulos de dívida de organismos admitidos a negociação no mercado regulamentado, considerando-se em caso de prorrogação do prazo do contrato, que o imposto é recalculado em função da duração total do contrato e deduzido do montante anteriormente liquidado - sobre o respectivo valor, em função do prazo:",none,0.0
+stamp_duty_16_1_1,16.1.1,Crédito de prazo igual ou inferior a um ano.,percent,0.5
+stamp_duty_16_1_2,16.1.2,Crédito de prazo superior a um ano.,percent,0.4
+stamp_duty_16_1_3,16.1.3,Crédito de prazo igual ou superior a cinco anos.,percent,0.3
+stamp_duty_16_1_4,16.1.4,"Crédito utilizado sob a forma de conta corrente, descoberto bancário ou qualquer outra forma em que o prazo de utilização não seja determinado ou determinável, sobre a média mensal obtida através da soma dos saldos em dívida apurados diariamente, durante o mês dividido por 30.",percent,0.1
+stamp_duty_16_1_5,16.1.5,"Crédito habitação, sobre o valor.",percent,0.1
+stamp_duty_16_2,16.2,"Operações realizadas por ou com intermediação de instituições de crédito, sociedades financeiras ou outras entidades a elas legalmente equiparadas e quaisquer outras instituições financeiras - sobre o valor cobrado:",none,0.0
+stamp_duty_16_2_1,16.2.1,"Juros por, designadamente, desconto de letras e por empréstimos, por contas de créditos e por créditos sem liquidação.",percent,0.2
+stamp_duty_16_2_2,16.2.2,"Prémios e juros por letras tomadas, de letras a receber por conta alheia, saque emitidos sobre ou de qualquer transferência",percent,0.5
+stamp_duty_16_2_3,16.2.3,Comissões por garantias prestadas.,percent,0.5
+stamp_duty_16_2_4,16.2.4,"Outras comissões e contraprestações por serviços financeiros, incluindo comissões pela angariação de créditos e garantias intermediadas por entidades não financeiras.",percent,0.7
+stamp_duty_16_3,16.3,Outras operações:,none,0.0
+stamp_duty_16_3_1,16.3.1,"Saque sobre o estrangeiro, guias emitidas, ouro e fundos públicos ou títulos negociáveis vendidos, sobre o respectivo valor.",percent,1.0
+stamp_duty_16_3_2,16.3.2,"Títulos de divida pública, emitidos por governos estrangeiros, quando sejam postos a venda no País - sobre o valor nominal.",percent,0.5
+stamp_duty_16_3_3,16.3.3,"Câmbio de notas em moedas estrangeiras, conversão de moeda nacional em moeda estrangeira a favor de pessoas singulares.",percent,0.1
+stamp_duty_17,17,Operações de locação financeira,none,0.0
+stamp_duty_17_1,17.1,"Operações de locação financeira de bens imóveis, sobre o montante da contraprestação:",percent,0.3
+stamp_duty_17_2,17.2,"Operações de locação financeira e operacional de bens móveis corpóreos, integrando a manutenção e a assistência técnica, sobre o montante da contraprestação",percent,0.4
+stamp_duty_18,18,Precatórios ou mandados para levantamento e entrega de dinheiro ou valores existentes: Sobre a importância a levantar ou a entregar,percent,0.1
+stamp_duty_19,19,Publicidade:,none,0.0
+stamp_duty_19_1,19.1,"Cartazes ou anúncios afixados ou expostos em suportes fixos ou móveis na via pública ou destinados a serem vistos na via pública que façam propaganda de produtos, serviços ou de qualquer indústria, comerciais ou divertimentos com exclusão dos identificativos do próprio estabelecimento comercial onde se encontrem afixados - por cada metro quadrado ou fracção e em cada ano civil",fixed,1000.0
+stamp_duty_19_2,19.2,"Publicidade feita em revista, jornais, catálogos, programas radiofónicos ou televisivos, reclamos, etiquetas e outros impressos que se destinem à distribuição pública (por cada edição de 1000 exemplares) ou fracção",fixed,25000.0
+stamp_duty_20,20,Registos e averbamentos em conservatórias de bens móveis,none,0.0
+stamp_duty_20_1,20.1,Aeronaves,fixed,45000.0
+stamp_duty_20_2,20.2,Barcos,fixed,23000.0
+stamp_duty_20_3,20.3,Motas de água,fixed,18000.0
+stamp_duty_20_4,20.4,"Motociclos, veículos ligeiros e mustos de passageiros e veículos pesados, excepto ambulâncias e carros funerários:",fixed,5000.0
+stamp_duty_20_4_1,20.4.1,Novos e até 3 anos,fixed,7000.0
+stamp_duty_20_4_2,20.4.2,Usados com mais de 3 anos,percent,0.5
+stamp_duty_21,21,Reporte - sobre o valor contrato,none,0.0
+stamp_duty_22,22,"Seguros: Apólice de seguros, sobre a soma dos prémios do seguro, do custo da apólice e de quaisquer outras importâncias que constituam receita das empresas seguradoras, cobradas juntamente com esse prémio ou em documento separado:",none,0.0
+stamp_duty_22_1_1,22.1.1,Seguro do ramo caução,percent,0.3
+stamp_duty_22_1_2,22.1.2,"Seguro do ramo marítimo e fluvial que inclui transporte, embarcações e responsabilidade civil.",percent,0.3
+stamp_duty_22_1_3,22.1.3,"Seguro do ramo aéreo que inclui aeronave, responsabilidade civil mercadorias e pessoas transportadas",percent,0.2
+stamp_duty_22_1_4,22.1.4,"Seguro do ramo mercadorias transportadas, não previstas nos ramos marítimos, fluviais e aéreos",percent,0.1
+stamp_duty_22_1_5,22.1.5,Seguros de quaisquer outros ramos,percent,0.3
+stamp_duty_22_2,22.2,"Comissões cobradas pela actividade de mediação, sobre o respectivo valor",percent,0.4
+stamp_duty_23,23,Títulos de crédito e recibos de quitação:,none,0.0
+stamp_duty_23_1,23.1,"Letras e livranças - sobre o respectivo valor, com o mínimo de Kz: 100,00",percent,0.1
+stamp_duty_23_2,23.2,"Ordens e escritos de qualquer natureza, com exclusão dos cheques, nos quais se determine pagamento ou entrega de dinheiro com cláusulas à ordem ou a disposição, ainda que sob a forma de correspondência - sobre o respectivo valor, com o mínimo de Kz: 100,00.",percent,0.1
+stamp_duty_23_3,23.3,"Recibo de quitação pelo efectivo recebimento de créditos resultantes do exercício da actividade comercial ou industrial, em dinheiro ou em espécie, com excepção dos resultantes exclusivamente do arrendamento habitacional feito por pessoas singulares",percent,1.0
+stamp_duty_23_4,23.4,"Abertura de crédito, por escrito particular ou instrumento público",percent,0.1
+stamp_duty_24,24,Transferências onerosas de actividades ou de exploração de serviços:,none,0.0
+stamp_duty_24_1,24.1,"Trespasse ou cessão para exploração de estabelecimento comercial, industrial ou agrícola - sobre o seu valor",percent,0.2
+stamp_duty_24_2,24.2,Subcomissões e trespasses de concessões feitos pelo Estado e pelas províncias para exploração de empresas ou de serviços de qualquer natureza tenha ou não principiado a exploração - sobre seu valor,percent,0.2

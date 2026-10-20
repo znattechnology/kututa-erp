@@ -40,7 +40,7 @@ test: db          ## Testa módulo numa base nova test_<modulo>:  make test m=<m
 	@test -n "$(m)" || (echo "Indique o módulo: make test m=<modulo>"; exit 1)
 	$(eval TDB := test_$(firstword $(subst $(comma), ,$(m))))
 	docker exec $(DB_CONTAINER) dropdb -U odoo --if-exists $(TDB)
-	$(ODOO) -d $(TDB) -i $(m) --without-demo=all --test-enable \
+	$(ODOO) -d $(TDB) -i $(m) --without-demo --test-enable \
 		--test-tags=$(if $(t),$(t),$(subst $(space),$(comma),$(foreach x,$(subst $(comma), ,$(m)),/$(x)))) \
 		--stop-after-init --no-http --log-level=test
 

@@ -1,0 +1,9 @@
+id,name,model_id,group_id/id,operation,domain
+access_l10n_ao_tax_exemption_user,access_l10n_ao_tax_exemption_user,l10n_ao.tax.exemption,base.group_user,r,
+access_l10n_ao_tax_exemption_manager,access_l10n_ao_tax_exemption_manager,l10n_ao.tax.exemption,account.group_account_manager,crud,
+access_l10n_ao_cae_user,access_l10n_ao_cae_user,l10n_ao.cae,base.group_user,r,
+access_l10n_ao_cae_manager,access_l10n_ao_cae_manager,l10n_ao.cae,account.group_account_manager,crud,
+access_l10n_ao_stamp_duty_item_user,access_l10n_ao_stamp_duty_item_user,l10n_ao.stamp.duty.item,base.group_user,r,
+access_l10n_ao_stamp_duty_item_manager,access_l10n_ao_stamp_duty_item_manager,l10n_ao.stamp.duty.item,account.group_account_manager,crud,
+access_l10n_ao_iec_rate_user,access_l10n_ao_iec_rate_user,l10n_ao.iec.rate,base.group_user,r,
+access_l10n_ao_iec_rate_manager,access_l10n_ao_iec_rate_manager,l10n_ao.iec.rate,account.group_account_manager,crud,

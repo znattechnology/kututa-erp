@@ -1,0 +1,7 @@
+id,name,sequence,country_id
+tax_group_iva_14,IVA 14%,1,base.ao
+tax_group_iva_7,IVA 7%,2,base.ao
+tax_group_iva_5,IVA 5%,3,base.ao
+tax_group_iva_1,IVA 1% (Cabinda),4,base.ao
+tax_group_iva_isento,IVA Isento,5,base.ao
+tax_group_iva_ns,Não sujeito a IVA,6,base.ao

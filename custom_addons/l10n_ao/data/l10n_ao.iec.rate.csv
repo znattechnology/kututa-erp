@@ -1,0 +1,118 @@
+id,code,name,uom,rate
+iec_2202_10_00,2202.10.00,"Águas, incluídas as águas minerais e as águas gaseificadas, adicionadas de açúcar ou de outros edulcorantes ou aromatizadas",LITRO (Lt),3.0
+iec_2202_91_00,2202.91.00,Cerveja sem álcool,LITRO (Lt),4.0
+iec_2202_99_00,2202.99.00,Outras,LITRO (Lt),4.0
+iec_2203_00_00,2203.00.00,Cerveja de malte,LITRO (Lt),4.0
+iec_2204_10_10,2204.10.10,Champanhe,LITRO (Lt),8.0
+iec_2204_10_90,2204.10.90,Outros,LITRO (Lt),8.0
+iec_2204_21_00,2204.21.00,Em recipientes de capacidade não superior a 2L,LITRO (Lt),8.0
+iec_2204_22_00,2204.22.00,"Em recipientes de capacidade superior a 2 l, mas não superior a 10 l",LITRO (Lt),8.0
+iec_2204_29_00,2204.29.00,Outros,LITRO (Lt),8.0
+iec_2205_10_00,2205.10.00,Em recipientes de capacidade não superior a 2L,LITRO (Lt),8.0
+iec_2205_90_00,2205.90.00,Outros,LITRO (Lt),8.0
+iec_2206_00_00,2206.00.00,"Outras bebidas fermentadas (por exemplo, sidra, perada, hidromel); mistura de bebidas fermentadas e misturas de bebidas fermentadas com bebidas não alcoólicas, não especificadas nem compreendidas noutras posições.",LITRO (Lt),8.0
+iec_2207_10_00,2207.10.00,"Álcool etílico não desnaturado, com um teor alcoólico, em volume, igual ou superior a 80% vol.",LITRO (Lt),15.0
+iec_2207_20_10,2207.20.10,Álcool etílico,LITRO (Lt),15.0
+iec_2207_20_19,2207.20.19,Outros,LITRO (Lt),15.0
+iec_2208_20_00,2208.20.00,Aguardentes de vinho ou de bagaço de uvas,LITRO (Lt),8.0
+iec_2208_30_00,2208.30.00,Uísques,LITRO (Lt),8.0
+iec_2208_40_00,2208.40.00,"Rum e outras aguardentes provenientes da destilação, após fermentação, de produtos da cana-de-açúcar",LITRO (Lt),8.0
+iec_2208_50_00,2208.50.00,Gin e genebra,LITRO (Lt),8.0
+iec_2208_60_00,2208.60.00,Vodca,LITRO (Lt),8.0
+iec_2208_70_00,2208.70.00,Licores,LITRO (Lt),8.0
+iec_2208_90_00,2208.90.00,Outros,LITRO (Lt),8.0
+iec_2401_10_00,2401.10.00,Tabaco não destalado,KILOGRAMA (Kg),25.0
+iec_2401_20_00,2401.20.00,Tabaco total ou parcialmente destalado,KILOGRAMA (Kg),25.0
+iec_2401_30_00,2401.30.00,Desperdícios de tabaco,KILOGRAMA (Kg),25.0
+iec_2402_10_00,2402.10.00,"Charutos e cigarrilhas, que contenham tabaco",KILOGRAMA (Kg),25.0
+iec_2402_20_00,2402.20.00,Cigarros que contenham tabaco,KILOGRAMA (Kg),25.0
+iec_2402_90_00,2402.90.00,Outros,KILOGRAMA (Kg),25.0
+iec_2403_11_00,2403.11.00,Tabaco para cachimbo de água (narguilé) mencionado na Nota 1 de subposição do presente Capítulo,KILOGRAMA (Kg),25.0
+iec_2403_19_00,2403.19.00,Outros,KILOGRAMA (Kg),25.0
+iec_2403_91_00,2403.91.00,"Tabaco ""homogeneizado"" ou ""reconstituído""",KILOGRAMA (Kg),25.0
+iec_2403_99_00,2403.99.00,Outros,KILOGRAMA (Kg),25.0
+iec_3604_10_00,3604.10.00,Fogo de Artificio,KILOGRAMA (Kg),19.0
+iec_3923_21_10,3923.21.10,"Sacos de quaisquer dimensões destinados exclusivamente para embalar produtos, excepto os de transporte.",KILOGRAMA (Kg),2.0
+iec_3923_21_90,3923.21.90,Outros,KILOGRAMA (Kg),19.0
+iec_3923_29_10,3923.29.10,"Sacos de quaisquer dimensões destinados exclusivamente para embalar produtos, excepto os de transporte.",KILOGRAMA (Kg),2.0
+iec_3923_29_90,3923.29.90,Outros,KILOGRAMA (Kg),19.0
+iec_3926_90_90,3926.90.90,Outras (palhinhas de plástico).,KILOGRAMA (Kg),19.0
+iec_4012_11_00,4012.11.00,Do tipo utilizado em automóveis de passageiros (incluindo os veículos de uso misto (stations wagons) e os automóveis de corrida),UNIDADE/QUANTIDADE (U ou Qtd),19.0
+iec_4012_12_00,4012.12.00,Do tipo utilizado em autocarros ou camiões,UNIDADE/QUANTIDADE (U ou Qtd),19.0
+iec_4012_13_00,4012.13.00,Do tipo utilizado em veículos aéreos,UNIDADE/QUANTIDADE (U ou Qtd),19.0
+iec_4012_19_00,4012.19.00,Outros,UNIDADE/QUANTIDADE (U ou Qtd),19.0
+iec_4012_20_00,4012.20.00,Pneumáticos usados,UNIDADE/QUANTIDADE (U ou Qtd),19.0
+iec_4012_90_00,4012.90.00,Outros,KILOGRAMA (Kg),19.0
+iec_7113_11_00,7113.11.00,"De prata, mesmo revestida, folheada ou chapeada, de outros metais preciosos",KILOGRAMA (Kg),15.0
+iec_7113_19_00,7113.19.00,"De outros metais preciosos, mesmo revestidos, folheados ou chapeados, de metais preciosos",KILOGRAMA (Kg),15.0
+iec_7113_20_00,7113.20.00,"De metais comuns, folheados ou chapeados de metais preciosos",KILOGRAMA (Kg),15.0
+iec_7114_11_00,7114.11.00,"De prata, mesmo revestida, folheada ou chapeada de outros metais preciosos",KILOGRAMA (Kg),15.0
+iec_7114_19_00,7114.19.00,"De outros metais preciosos, mesmo revestidos, folheados ou chapeados, de metais preciosos",KILOGRAMA (Kg),15.0
+iec_7114_20_00,7114.20.00,"De metais comuns, folheados ou chapeados de metais preciosos",KILOGRAMA (Kg),15.0
+iec_8703_24_49,8703.24.49,Outros - Novos,UNIDADE/QUANTIDADE (U ou Qtd),5.0
+iec_8703_24_59,8703.24.59,Outros - Usados,UNIDADE/QUANTIDADE (U ou Qtd),5.0
+iec_8703_33_59,8703.33.59,Outros Novos,UNIDADE/QUANTIDADE (U ou Qtd),5.0
+iec_8703_33_69,8703.33.69,Outros Usados,UNIDADE/QUANTIDADE (U ou Qtd),5.0
+iec_8704_21_10,8704.21.10,"Do tipo Pickup e Furgão, de cilindrada não superior a 5000 cm3 - Novos",UNIDADE/QUANTIDADE (U ou Qtd),5.0
+iec_8704_21_11,8704.21.11,"Do tipo Pickup e Furgão, de cilindrada superior a 5000 cm3 - Novos",UNIDADE/QUANTIDADE (U ou Qtd),5.0
+iec_8704_21_15,8704.21.15,"Do tipo Pickup e Furgão, de cilindrada não superior a 5000 cm3 - Usados",UNIDADE/QUANTIDADE (U ou Qtd),5.0
+iec_8704_21_16,8704.21.16,"Do tipo Pickup e Furgão, de cilindrada superior a 5000 cm3 - Usados",UNIDADE/QUANTIDADE (U ou Qtd),5.0
+iec_8801_00_00,8801.00.00,"Balões e dirigíveis; planadores, asas voadoras e outros veículos aéreos, não concebidos para propulsão a motor",KILOGRAMA (Kg),20.0
+iec_8802_11_00,8802.11.00,"De peso não superior a 2.000 kg, sem carga (vazios)",UNIDADE (U),20.0
+iec_8802_20_00,8802.20.00,"Aviões e outros veículos aéreos, de peso não superior a 2.000 kg, sem carga (vazios)",UNIDADE (U),20.0
+iec_8903_91_00,8903.91.00,"Barcos à vela, mesmo com motor auxiliar",UNIDADE/QUANTIDADE (U ou Qtd),20.0
+iec_8903_92_00,8903.92.00,"Barcos a motor, excepto com motor fora-de-borda",UNIDADE/QUANTIDADE (U ou Qtd),20.0
+iec_8903_99_90,8903.99.90,Outros,UNIDADE/QUANTIDADE (U ou Qtd),20.0
+iec_9303_20_00,9303.20.00,"Outras espingardas e carabinas de caça ou de tiro ao alvo, com pelo menos um cano liso",UNIDADE/QUANTIDADE (U ou Qtd),50.0
+iec_9303_30_00,9303.30.00,Outras espingardas e carabinas de caça ou de tiro ao alvo,UNIDADE/QUANTIDADE (U ou Qtd),50.0
+iec_9701_10_00,9701.10.00,"Quadros, pinturas e desenhos",UNIDADE (U),5.0
+iec_9701_90_00,9701.90.00,Outros,KILOGRAMA (Kg),5.0
+iec_9702_00_00,9702.00.00,"Gravuras, estampas e litografias, originais",UNIDADE (U),5.0
+iec_9703_00_00,9703.00.00,"Produções originais de arte estatuaria ou de escultura, de quaisquer matérias",UNIDADE (U),5.0
+iec_9704_00_00,9704.00.00,"Selos postais, selos fiscais, marcas postais, envelope de primeiro dia (First Day Covers), inteiros postais e semelhantes, obliterados ou não obliterados, excepto os artigos da posição 49.07",KILOGRAMA (Kg),5.0
+iec_9705_00_00,9705.00.00,"Colecções e espécimes para colecções, de zoologia, botânica, mineralogia, anatomia, ou apresentando interesse histórico, arqueológico, paleontológico, etnográfico ou numismático",KILOGRAMA (Kg),5.0
+iec_9706_00_00,9706.00.00,Antiguidades com mais de 100 anos,KILOGRAMA (Kg),5.0
+iec_2701_11_00,2701.11.00,Antracite,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2701_12_00,2701.12.00,Hulha betuminosa,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2701_19_00,2701.19.00,Outras hulhas,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2701_20_00,2701.20.00,"Briquetes, bolas em aglomerados e combustíveis sólidos semelhantes, obtidos a partir da hulha",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2702_10_00,2702.10.00,"Linhites, mesmo em pó, mas não aglomeradas",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2702_20_00,2702.20.00,Linhites aglomeradas,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2704_00_00,2704.00.00,"Coques e semicoques, de hulha, de linhite ou de turfa, mesmo aglomerados; carvão de retorta",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2705_00_00,2705.00.00,"Gás de hulha, gás de água, gás pobre (gás de ar) e gases semelhantes, excepto gases de petróleo e outros hidrocarbonetos gasosos",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2706_00_00,2706.00.00,"Alcatrões de hulha, de linhite ou de turfa e outros alcatrões minerais, mesmo desidratados ou parcialmente destilados, incluindo os alcatrões reconstituídos.",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2707_10_00,2707.10.00,Benzol (benzeno),TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2707_20_00,2707.20.00,Toluol (tolueno),TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2707_30_00,2707.30.00,Xilol (xilenos),TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2707_40_00,2707.40.00,Naftaleno,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2707_50_00,2707.50.00,"Outras misturas de hidrocarbonetos aromáticos que destilem (incluindo as perdas) uma fração igual ou superior a 65 %, em volume, a 250ºC, segundo o método ISO 3405 (equivalente ao método ASTM D 86)",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2707_91_00,2707.91.00,Óleos de creosoto,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2707_99_00,2707.99.00,Outros,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2708_10_00,2708.10.00,Breu,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2708_20_00,2708.20.00,Coque de breu,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2710_12_11,2710.12.11,Gasolina para aviões,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2710_12_12,2710.12.12,Outras Gasolinas,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),5.0
+iec_2710_12_13,2710.12.13,Querosene,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),0.0
+iec_2710_12_14,2710.12.14,Gasóleo,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),5.0
+iec_2710_12_15,2710.12.15,Outros,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2710_19_21,2710.19.21,Óleo base,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2710_19_23,2710.19.23,Óleos lubrificantes,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2710_19_29,2710.19.29,Outros,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2710_20_00,2710.20.00,"Óleos de petróleo ou de minerais betuminosos (excepto óleos brutos) e preparações não especificadas nem compreendidas noutras posições, que contenham, como constituintes básicos, 70 % ou mais, em peso, de óleos de petróleo ou de minerais betuminosos; que contenham 1 biodiesel, excepto os resíduos de óleos",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2710_91_00,2710.91.00,"Que contenham difenilos policlorados (PCB), terfenilos policlorados (PCT) ou difenilos polibromados (PBB)",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2710_99_00,2710.99.00,Outros,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2711_12_00,2711.12.00,Propano,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2711_13_00,2711.13.00,Butano,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),0.0
+iec_2711_14_00,2711.14.00,"Etileno, propileno, butileno e butadieno",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2711_19_00,2711.19.00,Outros,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2712_10_00,2712.10.00,Vaselina,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2712_20_00,2712.20.00,"Parafina que contenha, em peso, menos de 0,75 % de óleo",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2712_90_00,2712.90.00,Outros,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2713_11_00,2713.11.00,Não calcinado,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2713_12_00,2713.12.00,Calcinado,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2713_20_00,2713.20.00,Betume de petróleo,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2713_90_00,2713.90.00,Outros resíduos dos óleos de petróleo ou de minerais betuminosos,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2714_10_00,2714.10.00,Xistos e areias betuminosos,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2714_90_10,2714.90.10,Aditivos de xistos e areias betuminosos,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2714_90_90,2714.90.90,Outros,TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0
+iec_2715_00_00,2715.00.00,"Misturas betuminosas à base de asfalto ou de betume naturais, de betume de petróleo, de alcatrão mineral ou de breu de alcatrão mineral (por exemplo, mástiques betuminosas e cut-backs)",TONELADAS MÉTRICAS ™ KILOGRAMAS (Kg) METROS CÚBICOS (m3) LITROS (Lt ou Lts),2.0

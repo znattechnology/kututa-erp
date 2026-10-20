@@ -1,0 +1,4 @@
+id,name,sequence,auto_apply,country_id,note
+ao_fp_domestic,Regime nacional,10,True,base.ao,
+ao_fp_cabinda,Cabinda,20,,,Taxa de IVA aplicável na província de Cabinda (confirmar no Código do IVA).
+ao_fp_export,Exportação / Estrangeiro,30,True,,

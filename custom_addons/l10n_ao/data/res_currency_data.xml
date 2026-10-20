@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- O Kwanza vem inactivo no Odoo: a localização angolana activa-o. -->
+    <record id="base.AOA" model="res.currency" forcecreate="0">
+        <field name="active" eval="True"/>
+    </record>
+</odoo>
