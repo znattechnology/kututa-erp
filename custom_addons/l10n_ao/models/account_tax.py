@@ -1,5 +1,6 @@
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools import float_round
 
 # Valores de taxType / taxCode da API de Facturação Electrónica (Anexo I do DE n.º 683/25).
 AO_TAX_TYPES = [
@@ -84,3 +85,41 @@ class AccountTax(models.Model):
                         tax=tax.name,
                     )
                 )
+
+    # -------------------------------------------------------------------------
+    # Arredondamento do imposto por linha (espelhado em static/src/helpers/account_tax.js)
+    # -------------------------------------------------------------------------
+
+    @api.model
+    def _add_tax_details_in_base_line(self, base_line, company, rounding_method=None):
+        """AGT (DE n.º 683/25, taxContribution): o imposto de cada linha é arredondado por excesso
+        ao cêntimo seguinte (23,144 -> 23,15). A base continua a ser arredondada ao mais próximo.
+        Sem isto, o total da factura podia diferir 1 cêntimo do total comunicado à AGT."""
+        rounding_method = rounding_method or company.tax_calculation_rounding_method
+        if company.account_fiscal_country_id.code != 'AO' or rounding_method != 'round_per_line':
+            return super()._add_tax_details_in_base_line(base_line, company, rounding_method=rounding_method)
+
+        super()._add_tax_details_in_base_line(base_line, company, rounding_method='round_globally')
+        tax_details = base_line['tax_details']
+        currency = base_line['currency_id']
+        company_currency = company.currency_id
+
+        def round_up(amount, rounding):
+            return float_round(amount, precision_rounding=rounding, rounding_method='UP')
+
+        tax_details['raw_total_excluded_currency'] = currency.round(tax_details['raw_total_excluded_currency'])
+        tax_details['raw_total_excluded'] = company_currency.round(tax_details['raw_total_excluded'])
+        for tax_data in tax_details['taxes_data']:
+            tax_data['raw_tax_amount_currency'] = round_up(tax_data['raw_tax_amount_currency'], currency.rounding)
+            tax_data['raw_tax_amount'] = round_up(tax_data['raw_tax_amount'], company_currency.rounding)
+            tax_data['raw_base_amount_currency'] = currency.round(tax_data['raw_base_amount_currency'])
+            tax_data['raw_base_amount'] = company_currency.round(tax_data['raw_base_amount'])
+            tax_data['tax_amount'] = tax_data['raw_tax_amount_currency']
+            tax_data['base_amount'] = tax_data['raw_base_amount_currency']
+        tax_details['raw_total_included_currency'] = tax_details['raw_total_excluded_currency'] + sum(
+            tax_data['raw_tax_amount_currency'] for tax_data in tax_details['taxes_data']
+        )
+        tax_details['raw_total_included'] = tax_details['raw_total_excluded'] + sum(
+            tax_data['raw_tax_amount'] for tax_data in tax_details['taxes_data']
+        )
+        return None

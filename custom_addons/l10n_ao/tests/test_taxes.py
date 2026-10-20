@@ -207,3 +207,12 @@ class TestL10nAoTaxes(AccountTestInvoicingCommon):
         self.assertEqual(foreign.default_account_id.parent_id.code, '43.2')
         cash = self.env['account.journal'].create({'name': 'Caixa 2', 'type': 'cash', 'company_id': self.company.id})
         self.assertTrue(cash.default_account_id.code.startswith('45.1.'), cash.default_account_id.code)
+
+    def test_line_tax_is_rounded_up(self):
+        """DE 683/25 (taxContribution): 100,01 x 14% = 14,0014 -> 14,01 (o Odoo arredondaria para 14,00)."""
+        invoice = self._invoice('out_invoice', self.partner_ao, self._tax('ao_iva_sale_14'), price=100.01)
+        self.assertEqual(invoice.amount_tax, 14.01)
+        self.assertEqual(invoice.amount_total, 114.02)
+        self.assertEqual(self._tax_lines(invoice), {'34.2.2': -14.01})
+        exact = self._invoice('out_invoice', self.partner_ao, self._tax('ao_iva_sale_14'), price=1000.0)
+        self.assertEqual(exact.amount_tax, 140.0, 'Valores exactos não podem ser alterados')

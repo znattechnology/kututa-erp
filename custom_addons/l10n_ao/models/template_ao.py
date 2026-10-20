@@ -36,6 +36,8 @@ class AccountChartTemplate(models.AbstractModel):
         return {
             self.env.company.id: {
                 'account_fiscal_country_id': 'base.ao',
+                # AGT: o imposto é calculado e arredondado linha a linha (taxContribution).
+                'tax_calculation_rounding_method': 'round_per_line',
                 'bank_account_code_prefix': BANK_PREFIX,
                 'cash_account_code_prefix': CASH_PREFIX,
                 'transfer_account_code_prefix': '48.4',

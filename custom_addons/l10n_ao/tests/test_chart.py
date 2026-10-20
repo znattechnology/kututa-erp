@@ -27,6 +27,7 @@ class TestL10nAoChart(AccountTestInvoicingCommon):
         self.assertEqual(company.chart_template, 'ao')
         self.assertEqual(company.currency_id, self.env.ref('base.AOA'))
         self.assertEqual(company.account_fiscal_country_id, self.env.ref('base.ao'))
+        self.assertEqual(company.tax_calculation_rounding_method, 'round_per_line')
 
     def test_pgc_codes_are_kept(self):
         """Os códigos pontuados do PGC não podem ser completados com zeros."""
