@@ -40,7 +40,7 @@ class L10nAoEdiCommon(AccountTestInvoicingCommon):
                     'state': 'active',
                 }
             )
-            for doc_type in ('FT', 'FR', 'NC', 'ND', 'RC')
+            for doc_type in ('FT', 'FR', 'FG', 'NC', 'ND', 'RG')
         }
         cls.contingency_series = Series.create(
             {
@@ -111,6 +111,9 @@ class L10nAoEdiCommon(AccountTestInvoicingCommon):
         documents = Document.sudo().search([('state', '=', 'sent')])
         documents.write({'next_poll': fields.Datetime.now()})
         Document._cron_poll()
+
+    def send_and_poll_send_only(self):
+        self.env['l10n_ao_edi.document'].with_context(l10n_ao_edi_no_commit=True)._cron_send()
 
     def register_payment(self, invoices, amount=None, **values):
         wizard = (

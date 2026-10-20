@@ -9,10 +9,10 @@ class TestL10nAoEdiReceipts(L10nAoEdiCommon):
     def test_payment_issues_receipt(self):
         invoice = self._create_invoice()  # 1000 + 14% = 1140
         payment = self.register_payment(invoice)
-        self.assertEqual(payment.l10n_ao_edi_document_no, f'RC {self.series["RC"].code}/1')
+        self.assertEqual(payment.l10n_ao_edi_document_no, f'RG {self.series["RG"].code}/1')
         self.assertEqual(payment.l10n_ao_edi_state, 'to_send')
         receipt = payment._l10n_ao_edi_document_values()
-        self.assertEqual(receipt['documentType'], 'RC')
+        self.assertEqual(receipt['documentType'], 'RG')
         self.assertNotIn('lines', receipt)
         self.assertEqual(
             receipt['paymentReceipt']['sourceDocuments'],
@@ -26,7 +26,7 @@ class TestL10nAoEdiReceipts(L10nAoEdiCommon):
         )
         self.assertEqual(receipt['documentTotals'], {'taxPayable': 140.0, 'netTotal': 1000.0, 'grossTotal': 1140.0})
         public_pem = self.taxpayer_key._get_public_key_bytes(encoding='pem', formatting='raw')
-        self.assertEqual(jws_verify(receipt['jwsDocumentSignature'], public_pem)['documentType'], 'RC')
+        self.assertEqual(jws_verify(receipt['jwsDocumentSignature'], public_pem)['documentType'], 'RG')
 
     def test_partial_payment(self):
         invoice = self._create_invoice()

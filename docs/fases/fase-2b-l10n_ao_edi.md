@@ -1,5 +1,7 @@
 # Fase 2b: recibos, contingência, fornecedores e séries (`l10n_ao_edi`)
 
+> **Revisto na auditoria de 2026-10-20** (`auditoria-fase-2.md`): os recibos passaram a **RG (Recibo Geral)**, porque na especificação o RC é o recibo do regime de caixa do IVA. Os recibos ficam fixados na emissão e a desconciliação é bloqueada. Os recibos rejeitados podem ser corrigidos. As retenções também são possíveis em numerário.
+
 **Estado:** concluída a 2026-10-20. Testes: 64 nos dois módulos (`make test m=l10n_ao,l10n_ao_edi`), 0 falhas. Testado no browser em modo de demonstração (AGT simulada; ainda sem credenciais).
 
 ## Recibos (RC): art. 6.º do DP n.º 71/25

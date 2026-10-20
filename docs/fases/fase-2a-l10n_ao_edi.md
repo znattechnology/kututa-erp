@@ -1,5 +1,7 @@
 # Fase 2a: Kututa Mukanda (`l10n_ao_edi`), núcleo da facturação electrónica AGT
 
+> **Revisto na auditoria de 2026-10-20** (`auditoria-fase-2.md`): motivo da NC/ND obrigatório de facto, bloqueio de alterações a documentos comunicados, documento fixado na emissão, novo arredondamento (IVA incluído e descontos), E09 e documentos sem estado.
+
 **Estado:** concluída a 2026-10-20. Testes: 27 (`make test m=l10n_ao_edi`) + 27 no `l10n_ao`, 0 falhas. Testado no browser em modo de demonstração.
 
 ## O que faz

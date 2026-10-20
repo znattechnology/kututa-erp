@@ -10,10 +10,12 @@ patch(GeneratePrinterData.prototype, {
         if (!this.company.l10n_ao_edi_enabled) {
             return data;
         }
-        const number = this.order.l10n_ao_edi_receipt_number;
+        // O talão sem preços (oferta) não é o documento fiscal: não leva o n.º AGT.
+        const fiscal = !this.basicReceipt;
+        const number = fiscal && this.order.l10n_ao_edi_receipt_number;
         Object.assign(data.conditions, {
-            l10n_ao_edi: true,
-            l10n_ao_edi_provisional: !number && this.order.finalized,
+            l10n_ao_edi: fiscal,
+            l10n_ao_edi_provisional: fiscal && !number && this.order.finalized,
             use_self_invoicing: false,
         });
         data.image.l10n_ao_edi_qr_code = number
@@ -22,6 +24,11 @@ patch(GeneratePrinterData.prototype, {
         data.extra_data.l10n_ao_edi_copy_label = this.order.l10n_ao_edi_print_count
             ? "2.ª via"
             : "Original";
+        // Motivos de isenção / não sujeição dos impostos usados (DP n.º 71/25).
+        const notes = this.order.lines.flatMap((line) =>
+            line.tax_ids.map((tax) => tax.l10n_ao_edi_legal_note).filter(Boolean)
+        );
+        data.extra_data.l10n_ao_edi_legal_notes = [...new Set(notes)];
         return data;
     },
 });

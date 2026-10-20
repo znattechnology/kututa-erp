@@ -1,7 +1,10 @@
 import { patch } from "@web/core/utils/patch";
 import { TicketScreen } from "@point_of_sale/app/screens/ticket_screen/ticket_screen";
 import { makeAwaitable } from "@point_of_sale/app/utils/make_awaitable_dialog";
-import { RefundReasonPopup } from "@l10n_ao_edi_pos/app/components/refund_reason_popup/refund_reason_popup";
+import {
+    REFUND_REASONS,
+    RefundReasonPopup,
+} from "@l10n_ao_edi_pos/app/components/refund_reason_popup/refund_reason_popup";
 
 patch(TicketScreen.prototype, {
     async addAdditionalRefundInfo(order, destinationOrder) {
@@ -10,9 +13,8 @@ patch(TicketScreen.prototype, {
             const payload = await makeAwaitable(this.dialog, RefundReasonPopup, {
                 order: destinationOrder,
             });
-            if (payload) {
-                destinationOrder.l10n_ao_edi_reason = payload.reason;
-            }
+            // Sem motivo escolhido (janela fechada), fica o motivo genérico: a NC não pode seguir sem motivo.
+            destinationOrder.l10n_ao_edi_reason = payload?.reason || REFUND_REASONS[0];
         }
         await super.addAdditionalRefundInfo(...arguments);
     },

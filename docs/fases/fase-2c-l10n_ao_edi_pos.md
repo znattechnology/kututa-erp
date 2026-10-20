@@ -1,5 +1,7 @@
 # Fase 2c: Kitanda, talões AGT no Ponto de Venda (`l10n_ao_edi_pos`)
 
+> **Revisto na auditoria de 2026-10-20** (`auditoria-fase-2.md`): o fecho de sessão deixou de gerar uma FT AGT. Os caixas sem permissões de contabilidade já vendem. As linhas negativas são recusadas. O talão fica fixado e bloqueado depois de emitido, e a gorjeta depois do pagamento é proibida. Os talões rejeitados podem ser corrigidos. O talão mostra o motivo de isenção. A espera pela sincronização antes de imprimir é do próprio Odoo (o patch `waitForPushOrder` foi removido).
+
 **Estado:** concluída a 2026-10-20. Testes: 86 nos três módulos (`make test m=l10n_ao,l10n_ao_edi,l10n_ao_edi_pos`), 0 falhas. Testado no browser em modo de demonstração (AGT simulada; ainda sem credenciais).
 
 ## Documentos emitidos no POS

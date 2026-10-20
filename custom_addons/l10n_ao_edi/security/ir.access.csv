@@ -3,3 +3,5 @@ access_l10n_ao_edi_series_user,access_l10n_ao_edi_series_user,l10n_ao_edi.series
 access_l10n_ao_edi_series_manager,access_l10n_ao_edi_series_manager,l10n_ao_edi.series,account.group_account_manager,crud,
 access_l10n_ao_edi_document_user,access_l10n_ao_edi_document_user,l10n_ao_edi.document,account.group_account_invoice,r,
 access_l10n_ao_edi_document_manager,access_l10n_ao_edi_document_manager,l10n_ao_edi.document,account.group_account_manager,r,
+l10n_ao_edi_series_comp_rule,Séries AGT multi-empresa,l10n_ao_edi.series,,crud,"[('company_id', 'in', company_ids)]"
+l10n_ao_edi_document_comp_rule,Comunicações AGT multi-empresa,l10n_ao_edi.document,,crud,"[('company_id', 'in', company_ids)]"

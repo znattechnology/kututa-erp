@@ -89,6 +89,9 @@ class ResCompany(models.Model):
             )
             if not value
         ]
+        if self.tax_calculation_rounding_method != 'round_per_line':
+            # A AGT calcula o imposto linha a linha (taxContribution): com arredondamento global os totais divergem.
+            missing.append(self.env._('Arredondamento do imposto «por linha» (Definições de Contabilidade)'))
         if missing:
             raise UserError(
                 self.env._(
@@ -104,7 +107,7 @@ class ResCompany(models.Model):
         result = super().write(vals)
         if vals.get('l10n_ao_edi_contingency') is False:
             # Fim da contingência: os documentos emitidos entretanto seguem para a AGT.
-            self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_send')._trigger()
+            self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_send').sudo()._trigger()
         return result
 
     def _l10n_ao_edi_check_communication_lock(self):
@@ -139,13 +142,15 @@ class ResCompany(models.Model):
             detail['signatureVersion'] = self.l10n_ao_edi_signature_version
         return {
             'softwareInfoDetail': detail,
-            'jwsSoftwareSignature': jws_sign(detail, self.l10n_ao_edi_software_key_id),
+            # As chaves só são legíveis por administradores: a assinatura é feita com privilégios de sistema
+            # (qualquer utilizador que emite documentos tem de poder assinar).
+            'jwsSoftwareSignature': jws_sign(detail, self.sudo().l10n_ao_edi_software_key_id),
         }
 
     def _l10n_ao_edi_sign(self, payload):
         """Assinatura com a chave do contribuinte (jwsDocumentSignature / jwsSignature)."""
         self.ensure_one()
-        return jws_sign(payload, self.l10n_ao_edi_taxpayer_key_id)
+        return jws_sign(payload, self.sudo().l10n_ao_edi_taxpayer_key_id)
 
     def _l10n_ao_edi_request_envelope(self):
         self.ensure_one()
@@ -164,6 +169,7 @@ class ResCompany(models.Model):
         """
         self.ensure_one()
         if (self.l10n_ao_edi_environment or 'demo') == 'demo':
+            self.sudo().l10n_ao_edi_last_communication = fields.Datetime.now()
             return self._l10n_ao_edi_simulate(service, payload)
         url = AGT_ENDPOINTS[self.l10n_ao_edi_environment] + service
         auth = (self.sudo().l10n_ao_edi_username or '', self.sudo().l10n_ao_edi_password or '')
@@ -175,8 +181,10 @@ class ResCompany(models.Model):
         try:
             body = response.json()
         except ValueError:
+            # Resposta que não é da AGT (ex.: página de erro de um proxy): não conta como comunicação.
             body = {'errorList': [{'idError': str(response.status_code), 'descriptionError': response.text[:500]}]}
-        if response.status_code == 200:
+            return response.status_code, body
+        if response.status_code == 200 and isinstance(body, dict):
             self.sudo().l10n_ao_edi_last_communication = fields.Datetime.now()
         return response.status_code, body
 
@@ -184,14 +192,14 @@ class ResCompany(models.Model):
         """Respostas simuladas da AGT (ambiente de demonstração): todos os documentos são aceites."""
         self.ensure_one()
         if service == 'registarFactura':
-            return 200, {'requestID': fields.Datetime.now().strftime('DEMO%Y%m%d%H%M%S')[:15], 'errorList': []}
+            return 200, {'requestID': f'DEMO{uuid.uuid4().hex[:11].upper()}', 'errorList': []}
         if service == 'obterEstado':
             document = (
                 self.env['l10n_ao_edi.document']
                 .sudo()
                 .search([('request_id', '=', payload.get('requestID')), ('company_id', '=', self.id)], limit=1)
             )
-            numbers = [record._l10n_ao_edi_number() for record in document._queued_records()]
+            numbers = [record._l10n_ao_edi_number() for record in document._queued_records()] if document else []
             return 200, {
                 'requestID': payload.get('requestID'),
                 'resultCode': '0',

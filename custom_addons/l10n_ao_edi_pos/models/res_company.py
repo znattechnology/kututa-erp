@@ -10,4 +10,5 @@ class ResCompany(models.Model):
             *super()._load_pos_data_fields(config),
             'l10n_ao_edi_enabled',
             'l10n_ao_edi_software_validation_number',
+            'l10n_ao_edi_environment',
         ]

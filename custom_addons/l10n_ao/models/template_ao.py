@@ -91,7 +91,9 @@ class AccountChartTemplate(models.AbstractModel):
         if template_code == 'ao':
             # O plano é carregado depois de os diários calcularem os métodos de pagamento: volta-se a ligar
             # as contas de valores em trânsito agora que existem (como no l10n_ma).
-            bank_journals = company.bank_journal_ids
-            bank_journals._assign_outstanding_account_to_payment_method_lines('inbound', chart_template='ao')
-            bank_journals._assign_outstanding_account_to_payment_method_lines('outbound', chart_template='ao')
+            journals = self.env['account.journal'].search(
+                [('company_id', '=', company.id), ('type', 'in', ('bank', 'cash'))]
+            )
+            journals._l10n_ao_assign_outstanding_accounts('inbound')
+            journals._l10n_ao_assign_outstanding_accounts('outbound')
         return result

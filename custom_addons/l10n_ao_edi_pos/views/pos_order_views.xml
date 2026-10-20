@@ -21,8 +21,22 @@
         <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
+                <field name="l10n_ao_edi_required" invisible="1"/>
+                <field name="refunded_order_id" invisible="1"/>
                 <button name="action_l10n_ao_edi_send_now" type="object" string="Enviar à AGT"
                         invisible="l10n_ao_edi_state != 'to_send'"/>
+                <button name="action_l10n_ao_edi_correct" type="object" string="Corrigir documento AGT"
+                        invisible="l10n_ao_edi_state != 'invalid'"
+                        confirm="Emitir um novo documento que corrige o documento rejeitado pela AGT?"/>
+            </xpath>
+            <xpath expr="//button[@name='action_pos_order_invoice']" position="attributes">
+                <attribute name="invisible" add="l10n_ao_edi_document_no" separator=" or "/>
+            </xpath>
+            <xpath expr="//sheet/group" position="after">
+                <group name="l10n_ao_edi_refund" invisible="not l10n_ao_edi_required or not refunded_order_id">
+                    <field name="l10n_ao_edi_reason" required="l10n_ao_edi_required and refunded_order_id and state == 'draft'"
+                           readonly="state != 'draft'" placeholder="Ex.: Devolução de artigos"/>
+                </group>
             </xpath>
             <xpath expr="//header" position="after">
                 <div class="alert alert-danger mb-0" role="alert" invisible="l10n_ao_edi_state != 'invalid'">
@@ -45,7 +59,7 @@
                         <group>
                             <field name="l10n_ao_edi_system_entry_date"/>
                             <field name="l10n_ao_edi_contingency" invisible="not l10n_ao_edi_contingency"/>
-                            <field name="l10n_ao_edi_reason" invisible="l10n_ao_document_type != 'NC'"/>
+                            <field name="l10n_ao_edi_rejected_document_no" invisible="not l10n_ao_edi_rejected_document_no"/>
                             <field name="l10n_ao_edi_print_count"/>
                         </group>
                     </group>
@@ -61,7 +75,7 @@
         <field name="inherit_id" ref="l10n_ao_edi.l10n_ao_edi_document_view_list"/>
         <field name="arch" type="xml">
             <field name="payment_ids" position="before">
-                <field name="pos_order_ids" widget="many2many_tags" optional="show"/>
+                <field name="pos_order_ids" widget="many2many_tags" optional="hide"/>
             </field>
         </field>
     </record>

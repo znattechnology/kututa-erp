@@ -45,10 +45,11 @@ class TestL10nAoEdiNumbering(L10nAoEdiCommon):
         invoice = self._create_invoice()
         invoice.l10n_ao_edi_state = 'valid'
         refund = invoice._reverse_moves([{'invoice_date': invoice.invoice_date}], cancel=False)
-        refund.ref = False
+        # A referência do Odoo («Estorno de: …») não conta como motivo: só o motivo AGT escrito pelo utilizador.
+        refund.ref = 'Estorno de: FT'
         with self.assertRaisesRegex(UserError, 'motivo'):
             refund.action_post()
-        refund.ref = 'Devolução do serviço'
+        refund.l10n_ao_edi_reason = 'Devolução do serviço'
         refund.action_post()
         self.assertEqual(refund.l10n_ao_document_type, 'NC')
         self.assertTrue(refund.name.startswith(f'NC {self.series["NC"].code}/'))

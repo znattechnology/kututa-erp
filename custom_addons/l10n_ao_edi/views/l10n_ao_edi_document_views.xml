@@ -6,9 +6,11 @@
         <field name="arch" type="xml">
             <list create="0" decoration-danger="state == 'error'" decoration-info="state == 'sent'">
                 <field name="create_date" string="Data"/>
+                <field name="service"/>
                 <field name="request_id"/>
-                <field name="move_ids" widget="many2many_tags"/>
-                <field name="payment_ids" widget="many2many_tags" optional="show"/>
+                <field name="document_numbers"/>
+                <field name="move_ids" widget="many2many_tags" optional="hide"/>
+                <field name="payment_ids" widget="many2many_tags" optional="hide"/>
                 <field name="result_code"/>
                 <field name="poll_count" optional="hide"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
@@ -28,6 +30,7 @@
                 <sheet>
                     <group>
                         <group>
+                            <field name="service"/>
                             <field name="request_id"/>
                             <field name="submission_uuid"/>
                             <field name="result_code"/>
@@ -38,8 +41,11 @@
                             <field name="poll_count"/>
                         </group>
                     </group>
-                    <field name="move_ids" widget="many2many_tags"/>
-                    <field name="payment_ids" widget="many2many_tags" invisible="not payment_ids"/>
+                    <group>
+                        <field name="document_numbers" invisible="not document_numbers"/>
+                        <field name="move_ids" widget="many2many_tags" invisible="not move_ids"/>
+                        <field name="payment_ids" widget="many2many_tags" invisible="not payment_ids"/>
+                    </group>
                     <notebook>
                         <page string="Erros" name="errors" invisible="not error_message">
                             <field name="error_message"/>

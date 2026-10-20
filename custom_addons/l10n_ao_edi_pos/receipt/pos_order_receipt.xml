@@ -29,6 +29,8 @@
     <template id="pos_order_receipt_l10n_ao_edi" inherit_id="point_of_sale.pos_order_receipt">
         <xpath expr="//div[@name='before-footer']" position="after">
             <div name="l10n_ao_edi_footer" t-if="conditions.get('l10n_ao_edi')" class="w-100 text-center mt-2 mb-2">
+                <div t-foreach="extra_data.get('l10n_ao_edi_legal_notes') or []" t-as="note" class="text-small mb-1"
+                     t-out="note"/>
                 <t t-if="order.get('l10n_ao_edi_receipt_number')">
                     <div t-if="order.get('l10n_ao_edi_receipt_reference')" class="mb-2">
                         Referente a <t t-out="order['l10n_ao_edi_receipt_reference']"/>
@@ -37,7 +39,10 @@
                          alt="QR Code AGT" class="mw-50"/>
                     <div class="text-small mt-1">Documento consultável no Portal da AGT</div>
                     <div class="text-bold mt-1" t-if="order.get('l10n_ao_edi_receipt_contingency')">
-                        Emitido em contingência, pendente de autorização
+                        Emitido em contingência<t t-if="order.get('l10n_ao_edi_receipt_pending')">, pendente de autorização</t>
+                    </div>
+                    <div class="text-bold mt-1" t-if="company.get('l10n_ao_edi_environment') == 'demo'">
+                        DEMONSTRAÇÃO: documento sem validade fiscal
                     </div>
                     <div class="text-small mt-1" t-if="company.get('l10n_ao_edi_software_validation_number')">
                         Processado por programa validado n.º <t t-out="company['l10n_ao_edi_software_validation_number']"/>/AGT

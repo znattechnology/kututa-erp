@@ -30,8 +30,11 @@
                         Processado por programa validado n.º
                         <span t-field="o.company_id.l10n_ao_edi_software_validation_number"/>/AGT
                     </p>
-                    <p class="mb-1 fw-bold" t-if="o.l10n_ao_edi_contingency and o.l10n_ao_edi_state != 'valid'">
-                        Emitido em contingência, pendente de autorização
+                    <p class="mb-1 fw-bold" t-if="o.l10n_ao_edi_contingency">
+                        Emitido em contingência<t t-if="o.l10n_ao_edi_state != 'valid'">, pendente de autorização</t>
+                    </p>
+                    <p class="mb-1 fw-bold text-danger" t-if="o.company_id.l10n_ao_edi_environment == 'demo'">
+                        DEMONSTRAÇÃO: documento sem validade fiscal
                     </p>
                     <p class="mb-0" t-if="o.l10n_ao_edi_rejected_document_no">
                         Corrige o documento <span t-field="o.l10n_ao_edi_rejected_document_no"/>

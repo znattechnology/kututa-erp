@@ -16,6 +16,6 @@ def migrate(cr, version):
             account = Account.search([*Account._check_company_domain(company), ('code', '=', code)], limit=1)
             if account and not account.l10n_ao_withholding_type:
                 account.l10n_ao_withholding_type = withholding_type
-        banks = company.bank_journal_ids
-        banks._assign_outstanding_account_to_payment_method_lines('inbound', chart_template='ao')
-        banks._assign_outstanding_account_to_payment_method_lines('outbound', chart_template='ao')
+        journals = env['account.journal'].search([('company_id', '=', company.id), ('type', 'in', ('bank', 'cash'))])
+        journals._l10n_ao_assign_outstanding_accounts('inbound')
+        journals._l10n_ao_assign_outstanding_accounts('outbound')

@@ -2,6 +2,11 @@ from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_round
 
+
+def round_up(amount, rounding):
+    return float_round(amount, precision_rounding=rounding, rounding_method='UP')
+
+
 # Valores de taxType / taxCode da API de Facturação Electrónica (Anexo I do DE n.º 683/25).
 AO_TAX_TYPES = [
     ('IVA', 'IVA - Imposto sobre o Valor Acrescentado'),
@@ -103,22 +108,52 @@ class AccountTax(models.Model):
         tax_details = base_line['tax_details']
         currency = base_line['currency_id']
         company_currency = company.currency_id
+        rate = base_line['rate'] or 1.0
+        price_included = any(tax_data.get('price_include') for tax_data in tax_details['taxes_data'])
 
-        def round_up(amount, rounding):
-            return float_round(amount, precision_rounding=rounding, rounding_method='UP')
+        def taxes_for(base):
+            """Imposto de cada taxa com a fórmula AGT: base da linha arredondada x taxa, por excesso."""
+            amounts = []
+            for tax_data in tax_details['taxes_data']:
+                tax = tax_data['tax']
+                if tax.amount_type == 'percent':
+                    # Base desta taxa (pode diferir da base da linha em impostos em cascata).
+                    tax_base = currency.round(tax_data['raw_base_amount_currency']) + (
+                        base - currency.round(tax_details['raw_total_excluded_currency'])
+                    )
+                    amount = round_up(tax_base * tax.amount / 100.0, currency.rounding)
+                    if tax_data.get('is_reverse_charge'):
+                        # Autoliquidação: o Odoo junta uma parcela simétrica (o total líquido fica a zero).
+                        amount = -amount
+                else:
+                    tax_base = currency.round(tax_data['raw_base_amount_currency'])
+                    amount = round_up(tax_data['raw_tax_amount_currency'], currency.rounding)
+                amounts.append((tax_base, amount))
+            return amounts
 
-        tax_details['raw_total_excluded_currency'] = currency.round(tax_details['raw_total_excluded_currency'])
-        tax_details['raw_total_excluded'] = company_currency.round(tax_details['raw_total_excluded'])
-        for tax_data in tax_details['taxes_data']:
-            tax_data['raw_tax_amount_currency'] = round_up(tax_data['raw_tax_amount_currency'], currency.rounding)
-            tax_data['raw_tax_amount'] = round_up(tax_data['raw_tax_amount'], company_currency.rounding)
-            tax_data['raw_base_amount_currency'] = currency.round(tax_data['raw_base_amount_currency'])
-            tax_data['raw_base_amount'] = company_currency.round(tax_data['raw_base_amount'])
+        base = currency.round(tax_details['raw_total_excluded_currency'])
+        amounts = taxes_for(base)
+        if price_included:
+            # Preço com imposto incluído: a base é a maior que não ultrapassa o preço de etiqueta
+            # (o arredondamento por excesso do imposto não pode aumentar o que o cliente paga).
+            total = currency.round(tax_details['raw_total_included_currency'])
+            sign = -1 if total < 0 else 1
+            for _attempt in range(3):
+                if currency.compare_amounts(abs(base + sum(amount for _base, amount in amounts)), abs(total)) <= 0:
+                    break
+                base = currency.round(base - sign * currency.rounding)
+                amounts = taxes_for(base)
+
+        tax_details['raw_total_excluded_currency'] = base
+        tax_details['raw_total_excluded'] = company_currency.round(base / rate) if rate else base
+        for tax_data, (tax_base, amount) in zip(tax_details['taxes_data'], amounts, strict=True):
+            tax_data['raw_base_amount_currency'] = tax_base
+            tax_data['raw_tax_amount_currency'] = amount
+            tax_data['raw_base_amount'] = company_currency.round(tax_base / rate) if rate else tax_base
+            tax_data['raw_tax_amount'] = round_up(amount / rate, company_currency.rounding) if rate else amount
             tax_data['tax_amount'] = tax_data['raw_tax_amount_currency']
             tax_data['base_amount'] = tax_data['raw_base_amount_currency']
-        tax_details['raw_total_included_currency'] = tax_details['raw_total_excluded_currency'] + sum(
-            tax_data['raw_tax_amount_currency'] for tax_data in tax_details['taxes_data']
-        )
+        tax_details['raw_total_included_currency'] = base + sum(amount for _base, amount in amounts)
         tax_details['raw_total_included'] = tax_details['raw_total_excluded'] + sum(
             tax_data['raw_tax_amount'] for tax_data in tax_details['taxes_data']
         )

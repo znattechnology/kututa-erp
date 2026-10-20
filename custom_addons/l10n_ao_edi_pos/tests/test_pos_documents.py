@@ -219,7 +219,8 @@ class TestL10nAoEdiPosDocuments(L10nAoEdiPosCommon):
             self.company.l10n_ao_edi_contingency = False
             self.send_and_poll()
         self.assertEqual(order.l10n_ao_edi_state, 'valid')
-        self.assertFalse(order.l10n_ao_edi_receipt_contingency)
+        self.assertTrue(order.l10n_ao_edi_receipt_contingency)
+        self.assertFalse(order.l10n_ao_edi_receipt_pending)
 
     def test_communication_lock_counts_pos_orders(self):
         order = self.sync_order([(self.pos_product, 1)])

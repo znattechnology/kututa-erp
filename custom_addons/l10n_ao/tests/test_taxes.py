@@ -2,6 +2,7 @@ from odoo import Command
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.exceptions import ValidationError
 from odoo.tests import tagged
+from odoo.tools import float_round
 
 
 @tagged('post_install', '-at_install', 'post_install_l10n', 'l10n_ao')
@@ -216,3 +217,34 @@ class TestL10nAoTaxes(AccountTestInvoicingCommon):
         self.assertEqual(self._tax_lines(invoice), {'34.2.2': -14.01})
         exact = self._invoice('out_invoice', self.partner_ao, self._tax('ao_iva_sale_14'), price=1000.0)
         self.assertEqual(exact.amount_tax, 140.0, 'Valores exactos não podem ser alterados')
+
+    def _line_invoice(self, line_vals, taxes):
+        invoice = self.env['account.move'].create(
+            {
+                'move_type': 'out_invoice',
+                'partner_id': self.partner_ao.id,
+                'invoice_date': '2026-01-15',
+                'invoice_line_ids': [Command.create({**line_vals, 'tax_ids': [Command.set(taxes.ids)]})],
+            }
+        )
+        return invoice
+
+    def test_tax_computed_on_rounded_base(self):
+        """Com desconto, o imposto calcula-se sobre a base já arredondada (como o taxContribution da AGT)."""
+        invoice = self._line_invoice(
+            {'name': 'X', 'quantity': 1, 'price_unit': 10.0, 'discount': 28.56}, self._tax('ao_iva_sale_14')
+        )
+        # Base 7,144 -> 7,14; imposto 7,14 x 14% = 0,9996 -> 1,00.
+        self.assertEqual(invoice.amount_untaxed, 7.14)
+        self.assertEqual(invoice.amount_tax, 1.0)
+        self.assertEqual(invoice.amount_total, 8.14)
+
+    def test_price_included_never_exceeds_label_price(self):
+        """IVA incluído: o total não ultrapassa o preço de etiqueta e o imposto segue a fórmula AGT."""
+        included = self._tax('ao_iva_sale_14').copy({'name': 'IVA 14% incl.', 'price_include_override': 'tax_included'})
+        invoice = self._line_invoice({'name': 'X', 'quantity': 1, 'price_unit': 100.0}, included)
+        self.assertLessEqual(invoice.amount_total, 100.0)
+        self.assertEqual(invoice.amount_tax, float_round(invoice.amount_untaxed * 0.14, 2, rounding_method='UP'))
+        three = self._line_invoice({'name': 'X', 'quantity': 3, 'price_unit': 100.0}, included)
+        self.assertLessEqual(three.amount_total, 300.0)
+        self.assertEqual(three.amount_tax, float_round(three.amount_untaxed * 0.14, 2, rounding_method='UP'))

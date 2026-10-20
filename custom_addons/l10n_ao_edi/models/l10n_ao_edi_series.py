@@ -11,7 +11,7 @@ AGT_DOCUMENT_TYPES = [
     ('AC', 'AC - Aviso de Cobrança'),
     ('AR', 'AR - Aviso de Cobrança/Recibo'),
     ('TV', 'TV - Talão de Venda'),
-    ('RC', 'RC - Recibo'),
+    ('RC', 'RC - Recibo (regime de caixa do IVA)'),
     ('RG', 'RG - Recibo Geral'),
     ('RE', 'RE - Estorno ou Recibo de Estorno'),
     ('ND', 'ND - Nota de Débito'),
@@ -50,6 +50,7 @@ class L10nAoEdiSeries(models.Model):
     next_number = fields.Integer(string='Próximo n.º', default=1, copy=False)
     state = fields.Selection(
         selection=[('draft', 'Por pedir'), ('active', 'Activa'), ('closed', 'Encerrada')],
+        string='Estado',
         default='draft',
         required=True,
         copy=False,
@@ -76,7 +77,8 @@ class L10nAoEdiSeries(models.Model):
         for series in self:
             if not series.code:
                 raise UserError(self.env._('Indique o código da série atribuído pela AGT.'))
-            series.state = 'active'
+            # A numeração começa no primeiro número autorizado pela AGT.
+            series.write({'state': 'active', 'next_number': max(series.next_number, series.first_number or 1)})
 
     def action_close(self):
         self.state = 'closed'
@@ -103,8 +105,11 @@ class L10nAoEdiSeries(models.Model):
                 'jwsSignature': company._l10n_ao_edi_sign(signed),
             }
             status, body = company._l10n_ao_edi_call('solicitarSerie', payload)
-            result = (body or {}).get('seriesFEResult') or {}
-            if status != 200 or str(body.get('resultCode')) != '1' or not result.get('seriesCode'):
+            body = body if isinstance(body, dict) else {}
+            result = body.get('seriesFEResult') or {}
+            ok = status == 200 and str(body.get('resultCode')) == '1' and bool(result.get('seriesCode'))
+            self.env['l10n_ao_edi.document']._log_call(company, 'solicitarSerie', payload, status, body, ok=ok)
+            if not ok:
                 errors = '; '.join(
                     f'{e.get("idError", "")} {e.get("descriptionError", "")}'.strip() if isinstance(e, dict) else str(e)
                     for e in (body or {}).get('errorList') or []
@@ -123,7 +128,8 @@ class L10nAoEdiSeries(models.Model):
 
     @api.model
     def _l10n_ao_edi_find(self, company, document_type, year, contingency=False):
-        return self.search(
+        # Quem emite (ex.: um caixa do POS) não precisa de acesso à configuração das séries.
+        return self.sudo().search(
             [
                 ('company_id', '=', company.id),
                 ('document_type', '=', document_type),
@@ -152,7 +158,7 @@ class L10nAoEdiSeries(models.Model):
                     est=company.l10n_ao_edi_establishment or 'SEDE',
                 )
             )
-        return series, series._l10n_ao_edi_reserve_number()
+        return series.sudo(False), series._l10n_ao_edi_reserve_number()
 
     @api.model
     def action_l10n_ao_edi_sync_series(self):
@@ -163,21 +169,30 @@ class L10nAoEdiSeries(models.Model):
         nif = company.partner_id._l10n_ao_normalize_nif(company.vat)
         payload = {
             **company._l10n_ao_edi_request_envelope(),
+            'establishmentNumber': company.l10n_ao_edi_establishment or 'SEDE',
             'jwsSignature': company._l10n_ao_edi_sign({'taxRegistrationNumber': nif}),
         }
         status, body = company._l10n_ao_edi_call('listarSeries', payload)
+        body = body if isinstance(body, dict) else {}
+        self.env['l10n_ao_edi.document']._log_call(company, 'listarSeries', payload, status, body, ok=status == 200)
         if status != 200:
-            errors = self.env['l10n_ao_edi.document']._format_errors((body or {}).get('errorList') or [])
+            errors = self.env['l10n_ao_edi.document']._format_errors(body.get('errorList') or [])
             raise UserError(self.env._('A AGT recusou a listagem de séries: %s', errors or status))
         created = self.browse()
         valid_types = dict(AGT_DOCUMENT_TYPES)
         # A documentação da AGT escreve «seriresInfo» num exemplo e «seriesInfo» na tabela.
-        for info in (body or {}).get('seriesInfo') or (body or {}).get('seriresInfo') or []:
+        for info in body.get('seriesInfo') or body.get('seriresInfo') or []:
             code = info.get('seriesCode')
             if not code or info.get('documentType') not in valid_types:
                 continue
+            # Só as séries de facturação electrónica por software (FESF) ainda abertas: as do Portal (FEPC) e as
+            # de facturação não electrónica (SF) não podem ser numeradas aqui.
+            if info.get('seriesStatus') == 'F' or (info.get('invoicingMethod') or 'FESF') != 'FESF':
+                continue
             if self.search_count([('company_id', '=', company.id), ('code', '=', code)]):
                 continue
+            first = int(info.get('firstDocumentApproved') or 1)
+            last_created = int(info.get('lastDocumentCreated') or 0)
             created |= self.create(
                 {
                     'company_id': company.id,
@@ -186,6 +201,10 @@ class L10nAoEdiSeries(models.Model):
                     'year': int(info.get('seriesYear') or fields.Date.context_today(self).year),
                     'establishment': info.get('establishmentNumber') or company.l10n_ao_edi_establishment or 'SEDE',
                     'contingency': info.get('seriesContingencyIndicator') == 'C',
+                    'first_number': first,
+                    'last_number': float(info.get('lastDocumentApproved') or 0),
+                    # Uma série já usada (outra instalação, outro software) continua a partir do último emitido.
+                    'next_number': max(first, last_created + 1),
                     'state': 'active',
                 }
             )
@@ -204,7 +223,7 @@ class L10nAoEdiSeries(models.Model):
         """Reserva o próximo número da série, sem falhas: a linha da série fica bloqueada até ao fim da transacção."""
         self.ensure_one()
         self.env.cr.execute('SELECT next_number FROM l10n_ao_edi_series WHERE id = %s FOR UPDATE', [self.id])
-        number = self.env.cr.fetchone()[0]
+        number = max(self.env.cr.fetchone()[0], self.first_number or 1)
         if self.last_number and number > self.last_number:
             raise UserError(self.env._('A série %s esgotou os números autorizados pela AGT.', self.code))
         self.env.cr.execute('UPDATE l10n_ao_edi_series SET next_number = %s WHERE id = %s', [number + 1, self.id])

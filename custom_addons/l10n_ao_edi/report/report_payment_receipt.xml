@@ -11,6 +11,47 @@
             </h3>
         </xpath>
         <xpath expr="//table[@name='invoices']" position="after">
+            <t t-if="o.l10n_ao_edi_document_no">
+                <t t-set="agt" t-value="o._l10n_ao_edi_payload_values()"/>
+                <table class="table table-sm mt-4" name="l10n_ao_edi_receipt">
+                    <thead>
+                        <tr>
+                            <th>Documento liquidado</th>
+                            <th>Data</th>
+                            <th class="text-end">Valor liquidado (sem imposto)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="agt['paymentReceipt']['sourceDocuments']" t-as="source">
+                            <td t-out="source['sourceDocumentID']['OriginatingON']"/>
+                            <td t-out="source['sourceDocumentID']['documentDate']"/>
+                            <td class="text-end"><span t-out="source['creditAmount']" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="table table-sm w-50 ms-auto" name="l10n_ao_edi_receipt_totals">
+                    <tr>
+                        <td>Total sem imposto</td>
+                        <td class="text-end"><span t-out="agt['documentTotals']['netTotal']" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/></td>
+                    </tr>
+                    <tr>
+                        <td>Imposto</td>
+                        <td class="text-end"><span t-out="agt['documentTotals']['taxPayable']" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/></td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Total liquidado</td>
+                        <td class="text-end"><span t-out="agt['documentTotals']['grossTotal']" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/></td>
+                    </tr>
+                    <tr t-foreach="agt.get('withholdingTaxList') or []" t-as="withholding">
+                        <td>Retenção: <t t-out="withholding['withholdingTaxDescription']"/></td>
+                        <td class="text-end"><span t-out="-withholding['withholdingTaxAmount']" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/></td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td>Valor recebido</td>
+                        <td class="text-end"><span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
+                    </tr>
+                </table>
+            </t>
             <div id="l10n_ao_edi_qrcode" class="d-flex mt-4 avoid-page-break-inside" t-if="o.l10n_ao_edi_qr_url">
                 <div class="me-3">
                     <img t-att-src="'/report/barcode/?barcode_type=QR&amp;barLevel=M&amp;width=140&amp;height=140&amp;value=%s' % quote_plus(o.l10n_ao_edi_qr_url)"
@@ -22,8 +63,14 @@
                         Processado por programa validado n.º
                         <span t-field="o.company_id.l10n_ao_edi_software_validation_number"/>/AGT
                     </p>
-                    <p class="mb-0 fw-bold" t-if="o.l10n_ao_edi_contingency and o.l10n_ao_edi_state != 'valid'">
-                        Emitido em contingência, pendente de autorização
+                    <p class="mb-0 fw-bold" t-if="o.l10n_ao_edi_contingency">
+                        Emitido em contingência<t t-if="o.l10n_ao_edi_state != 'valid'">, pendente de autorização</t>
+                    </p>
+                    <p class="mb-0" t-if="o.l10n_ao_edi_rejected_document_no">
+                        Corrige o recibo <span t-field="o.l10n_ao_edi_rejected_document_no"/>
+                    </p>
+                    <p class="mb-0 fw-bold text-danger" t-if="o.company_id.l10n_ao_edi_environment == 'demo'">
+                        DEMONSTRAÇÃO: documento sem validade fiscal
                     </p>
                 </div>
             </div>

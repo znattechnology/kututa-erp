@@ -22,33 +22,53 @@ patch(accountTaxHelpers, {
         const tax_details = base_line.tax_details;
         const currency_pd = base_line.currency_id.rounding;
         const company_currency_pd = company.currency_id.rounding;
+        const rate = base_line.rate || 1.0;
+        const round = (amount) => roundPrecision(amount, currency_pd);
+        const roundUp = (amount, precision = currency_pd) => roundPrecision(amount, precision, "UP");
+        const priceIncluded = tax_details.taxes_data.some((tax_data) => tax_data.price_include);
+        const lineBase = round(tax_details.raw_total_excluded_currency);
 
-        tax_details.raw_total_excluded_currency = roundPrecision(
-            tax_details.raw_total_excluded_currency,
-            currency_pd
-        );
-        tax_details.raw_total_excluded = roundPrecision(
-            tax_details.raw_total_excluded,
-            company_currency_pd
-        );
-        for (const tax_data of tax_details.taxes_data) {
-            tax_data.raw_tax_amount_currency = roundPrecision(
-                tax_data.raw_tax_amount_currency,
-                currency_pd,
-                "UP"
-            );
-            tax_data.raw_tax_amount = roundPrecision(tax_data.raw_tax_amount, company_currency_pd, "UP");
-            tax_data.raw_base_amount_currency = roundPrecision(
-                tax_data.raw_base_amount_currency,
-                currency_pd
-            );
-            tax_data.raw_base_amount = roundPrecision(tax_data.raw_base_amount, company_currency_pd);
-            tax_data.tax_amount = tax_data.raw_tax_amount_currency;
-            tax_data.base_amount = tax_data.raw_base_amount_currency;
+        // Imposto de cada taxa com a fórmula AGT: base da linha arredondada x taxa, por excesso.
+        const taxesFor = (base) =>
+            tax_details.taxes_data.map((tax_data) => {
+                const tax = tax_data.tax;
+                if (tax.amount_type === "percent") {
+                    const taxBase = round(tax_data.raw_base_amount_currency) + (base - lineBase);
+                    const amount = roundUp((taxBase * tax.amount) / 100.0);
+                    // Autoliquidação: o Odoo junta uma parcela simétrica (o total líquido fica a zero).
+                    return [taxBase, tax_data.is_reverse_charge ? -amount : amount];
+                }
+                return [round(tax_data.raw_base_amount_currency), roundUp(tax_data.raw_tax_amount_currency)];
+            });
+        const sumTaxes = (amounts) => amounts.reduce((sum, [, amount]) => sum + amount, 0);
+
+        let base = lineBase;
+        let amounts = taxesFor(base);
+        if (priceIncluded) {
+            // Preço com imposto incluído: a base é a maior que não ultrapassa o preço de etiqueta.
+            const total = round(tax_details.raw_total_included_currency);
+            const sign = total < 0 ? -1 : 1;
+            for (let attempt = 0; attempt < 3; attempt++) {
+                if (round(Math.abs(base + sumTaxes(amounts)) - Math.abs(total)) <= 0) {
+                    break;
+                }
+                base = round(base - sign * currency_pd);
+                amounts = taxesFor(base);
+            }
         }
-        tax_details.raw_total_included_currency =
-            tax_details.raw_total_excluded_currency +
-            tax_details.taxes_data.reduce((sum, tax_data) => sum + tax_data.raw_tax_amount_currency, 0);
+
+        tax_details.raw_total_excluded_currency = base;
+        tax_details.raw_total_excluded = roundPrecision(base / rate, company_currency_pd);
+        tax_details.taxes_data.forEach((tax_data, index) => {
+            const [taxBase, amount] = amounts[index];
+            tax_data.raw_base_amount_currency = taxBase;
+            tax_data.raw_tax_amount_currency = amount;
+            tax_data.raw_base_amount = roundPrecision(taxBase / rate, company_currency_pd);
+            tax_data.raw_tax_amount = roundUp(amount / rate, company_currency_pd);
+            tax_data.tax_amount = amount;
+            tax_data.base_amount = taxBase;
+        });
+        tax_details.raw_total_included_currency = base + sumTaxes(amounts);
         tax_details.raw_total_included =
             tax_details.raw_total_excluded +
             tax_details.taxes_data.reduce((sum, tax_data) => sum + tax_data.raw_tax_amount, 0);
