@@ -26,7 +26,9 @@ class AccountTax(models.Model):
     l10n_ao_tax_region = fields.Selection(
         selection=[('AO', 'Angola'), ('AO-CAB', 'Cabinda')],
         string='Região do imposto (AGT)',
-        default='AO',
+        compute='_compute_l10n_ao_tax_region',
+        store=True,
+        readonly=False,
     )
     l10n_ao_exemption_id = fields.Many2one(
         'l10n_ao.tax.exemption',
@@ -34,24 +36,51 @@ class AccountTax(models.Model):
         help='Obrigatório quando o código de imposto é ISE ou o tipo é NS (DE n.º 683/25, taxExemptionCode).',
     )
 
-    @api.constrains('l10n_ao_tax_type', 'l10n_ao_tax_code', 'l10n_ao_exemption_id')
-    def _check_l10n_ao_exemption(self):
+    @api.depends('country_code', 'l10n_ao_tax_type')
+    def _compute_l10n_ao_tax_region(self):
         for tax in self:
-            needs_reason = tax.l10n_ao_tax_type == 'NS' or tax.l10n_ao_tax_code == 'ISE'
-            if needs_reason and not tax.l10n_ao_exemption_id:
+            if tax.country_code != 'AO':
+                tax.l10n_ao_tax_region = False
+            elif not tax.l10n_ao_tax_region:
+                tax.l10n_ao_tax_region = 'AO'
+
+    def _l10n_ao_needs_exemption(self):
+        self.ensure_one()
+        return self.l10n_ao_tax_type == 'NS' or self.l10n_ao_tax_code == 'ISE'
+
+    @api.constrains('country_id', 'amount', 'l10n_ao_tax_type', 'l10n_ao_tax_code', 'l10n_ao_exemption_id')
+    def _check_l10n_ao_agt_fields(self):
+        for tax in self.filtered(lambda t: t.country_code == 'AO' and t.l10n_ao_tax_type):
+            exemption = tax.l10n_ao_exemption_id
+            if tax.l10n_ao_tax_type == 'IVA' and not tax.l10n_ao_tax_code:
                 raise ValidationError(
-                    self.env._(
-                        'O imposto "%s" é isento ou não sujeito: indique o motivo de isenção da AGT.',
-                        tax.name,
-                    )
+                    self.env._('O imposto "%s" é de IVA: indique o código de imposto da AGT.', tax.name)
                 )
-            exemption_type = tax.l10n_ao_exemption_id.tax_type
-            if exemption_type and tax.l10n_ao_tax_type not in (exemption_type, 'NS'):
+            if tax.l10n_ao_tax_type == 'NS' and tax.l10n_ao_tax_code:
+                raise ValidationError(
+                    self.env._('O imposto "%s" é não sujeito: não pode ter código de imposto.', tax.name)
+                )
+            if tax._l10n_ao_needs_exemption():
+                if not exemption:
+                    raise ValidationError(
+                        self.env._(
+                            'O imposto "%s" é isento ou não sujeito: indique o motivo de isenção da AGT.', tax.name
+                        )
+                    )
+                if tax.amount:
+                    raise ValidationError(
+                        self.env._('O imposto "%s" é isento ou não sujeito: a taxa tem de ser 0.', tax.name)
+                    )
+            elif exemption:
+                raise ValidationError(
+                    self.env._('O imposto "%s" não é isento: retire o motivo de isenção da AGT.', tax.name)
+                )
+            if exemption and tax.l10n_ao_tax_type not in (exemption.tax_type, 'NS'):
                 raise ValidationError(
                     self.env._(
                         'O motivo de isenção %(code)s é de %(type)s e não pode ser usado no imposto "%(tax)s".',
-                        code=tax.l10n_ao_exemption_id.code,
-                        type=exemption_type,
+                        code=exemption.code,
+                        type=exemption.tax_type,
                         tax=tax.name,
                     )
                 )

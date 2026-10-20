@@ -124,21 +124,21 @@ code,name,page
 29.5,"Subprodutos, desperdícios, resíduos e refugos",94
 29.6,Mercadorias,94
 31,Clientes,95
-31.1,Clientes correntes,96
+31.1,Clientes – correntes,96
 31.1.1,Grupo,96
 31.1.1.1,Subsidiárias,96
 31.1.1.2,Associadas,96
 31.1.2,Não grupo,96
 31.1.2.1,Nacionais,96
 31.1.2.2,Estrangeiros,96
-31.2,Clientes títulos a receber,96
+31.2,Clientes – títulos a receber,96
 31.2.1,Grupo,96
 31.2.1.1,Subsidiárias,96
 31.2.1.2,Associadas,96
 31.2.2,Não grupo,96
 31.2.2.1,Nacionais,96
 31.2.2.2,Estrangeiros,96
-31.3,Clientes títulos descontados,96
+31.3,Clientes – títulos descontados,96
 31.3.1,Grupo,96
 31.3.1.1,Subsidiárias,96
 31.3.1.2,Associadas,96
@@ -146,29 +146,29 @@ code,name,page
 31.3.2.1,Nacionais,96
 31.3.2.2,Estrangeiros,96
 31.8,Clientes de cobrança duvidosa,96
-31.8.1,Clientes correntes,96
-31.8.2,Clientes títulos,96
-31.9,Clientes saldos credores,96
+31.8.1,Clientes – correntes,96
+31.8.2,Clientes – títulos,96
+31.9,Clientes – saldos credores,96
 31.9.1,Adiantamentos,96
 31.9.2,Embalagens a devolver,96
 31.9.3,Material à consignação,96
 32,Fornecedores,95
-32.1,Fornecedores correntes,96
+32.1,Fornecedores – correntes,96
 32.1.1,Grupo,96
 32.1.1.1,Subsidiárias,96
 32.1.1.2,Associadas,96
 32.1.2,Não grupo,96
 32.1.2.1,Nacionais,96
 32.1.2.2,Estrangeiros,96
-32.2,Fornecedores títulos a pagar,96
+32.2,Fornecedores – títulos a pagar,96
 32.2.1,Grupo,96
 32.2.1.1,Subsidiárias,96
 32.2.1.2,Associadas,96
 32.2.2,Não grupo,96
 32.2.2.1,Nacionais,96
 32.2.2.2,Estrangeiros,96
-32.8,Fornecedores facturas em recepção e conferência,96
-32.9,Fornecedores– saldos devedores,96
+32.8,Fornecedores – facturas em recepção e conferência,96
+32.9,Fornecedores – saldos devedores,96
 32.9.1,Adiantamentos,96
 32.9.2,Embalagens a devolver,96
 32.9.3,Material à consignação,96
@@ -201,12 +201,12 @@ code,name,page
 35.1.1.2,C/adiantºs sobre lucros,98
 35.1.1.3,C/lucros,98
 35.1.1.4,Empréstimos,98
-35.1.2,Empresas do grupo subsidiárias,98
+35.1.2,Empresas do grupo – subsidiárias,98
 35.1.2.1,C/subscrição,98
 35.1.2.2,C/adiantºs sobre lucros,98
 35.1.2.3,C/lucros,98
 35.1.2.4,Empréstimos,98
-35.1.3,Empresas do grupo associadas,98
+35.1.3,Empresas do grupo – associadas,98
 35.1.3.1,C/subscrição,98
 35.1.3.2,C/adiantºs sobre lucros,98
 35.1.3.3,C/lucros,98
@@ -222,12 +222,12 @@ code,name,page
 35.2.1.2,C/adiantºs sobre lucros,98
 35.2.1.3,C/lucros,98
 35.2.1.4,Empréstimos,98
-35.2.2,Empresas do grupo subsidiárias,98
+35.2.2,Empresas do grupo – subsidiárias,98
 35.2.2.1,C/subscrição,98
 35.2.2.2,C/adiantºs sobre lucros,98
 35.2.2.3,C/lucros,98
 35.2.2.4,Empréstimos,98
-35.2.3,Empresas do grupo associadas,98
+35.2.3,Empresas do grupo – associadas,98
 35.2.3.1,C/subscrição,98
 35.2.3.2,C/adiantºs sobre lucros,98
 35.2.3.3,C/lucros,98
@@ -238,14 +238,14 @@ code,name,page
 35.2.4.3,C/lucros,98
 35.2.4.4,Empréstimos,98
 36,Pessoal,95
-36.1,Pessoal remunerações,98
+36.1,Pessoal – remunerações,98
 36.1.1,Órgãos sociais,98
 36.1.2,Empregados,98
-36.2,Pessoal participação nos resultados,98
+36.2,Pessoal – participação nos resultados,98
 36.2.1,Órgãos sociais,98
 36.2.2,Empregados,98
-36.3,Pessoal adiantamentos,99
-36.9,Pessoal outros,99
+36.3,Pessoal – adiantamentos,99
+36.9,Pessoal – outros,99
 37,Outros valores a receber e a pagar,95
 37.1,Compras de imobilizado,99
 37.1.1,Corpóreo,99
@@ -275,13 +275,13 @@ code,name,page
 37.9,Outros valores a receber e a pagar,99
 38,Provisões para cobranças duvidosas,95
 38.1,Provisões para clientes,99
-38.1.1,Clientes correntes,99
+38.1.1,Clientes – correntes,99
 38.1.1.1,Grupo,99
 38.1.1.2,Não grupo,99
-38.1.2,Clientes títulos a receber,99
+38.1.2,Clientes – títulos a receber,99
 38.1.2.1,Grupo,99
 38.1.2.2,Não grupo,99
-38.1.3,Clientes cobrança duvidosa,99
+38.1.3,Clientes – cobrança duvidosa,99
 38.2,Provisões para saldos devedores de fornecedores,100
 38.3,Provisões p/ participantes e participadas,100
 38.3.1,Participantes,100
@@ -472,8 +472,8 @@ code,name,page
 68.1.1.5,Mercadorias,109
 68.1.2,Cobranças Duvidosa,109
 68.1.2.1,Clientes,109
-68.1.2.2,Clientes títulos a receber,109
-68.1.2.3,Clientes cobrança duvidosa,109
+68.1.2.2,Clientes – títulos a receber,109
+68.1.2.3,Clientes – cobrança duvidosa,109
 68.1.2.4,Saldos devedores de fornecedores,109
 68.1.2.5,Participantes e participadas,109
 68.1.2.6,Dívidas do Pessoal,109
@@ -519,7 +519,7 @@ code,name,page
 71.9,Transferência para resultados operacionais,112
 72,Custos com o pessoal,111
 72.1,Remunerações-Órgãos sociais,112
-72.2,Remunerações Pessoal,112
+72.2,Remunerações – Pessoal,112
 72.3,Pensões,112
 72.3.1,Órgãos sociais,112
 72.3.2,Pessoal,112
@@ -644,8 +644,8 @@ code,name,page
 78.1.1.5,Mercadorias,115
 78.1.2,Cobranças Duvidosas,115
 78.1.2.1,Clientes,115
-78.1.2.2,Clientes títulos a receber,115
-78.1.2.3,Clientes cobrança duvidosa,115
+78.1.2.2,Clientes – títulos a receber,115
+78.1.2.3,Clientes – cobrança duvidosa,115
 78.1.2.4,Saldos devedores de fornecedores,115
 78.1.2.5,Participantes e participadas,115
 78.1.2.6,Dívidas do Pessoal,115

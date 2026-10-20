@@ -1,4 +1,5 @@
 from . import (
+    account_journal,
     account_tax,
     l10n_ao_cae,
     l10n_ao_iec_rate,

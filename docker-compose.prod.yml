@@ -1,5 +1,11 @@
 # Produção genérica: Odoo + PostgreSQL. Cada cliente = uma base de dados (dbfilter por subdomínio).
-# Uso: cp .env.example .env  &&  docker compose -f docker-compose.prod.yml up -d
+#
+# Uso:  cp .env.example .env   &&   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Obrigatório à frente deste compose: um reverse proxy com TLS (nginx, Caddy ou Traefik) que encaminhe
+#   /websocket  ->  odoo:8072   (bus/chat em modo multi-worker)
+#   o resto     ->  odoo:8069
+# As portas do Odoo só ficam expostas em 127.0.0.1. Ver docs/producao.md.
 services:
   db:
     image: postgres:17
@@ -10,20 +16,30 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   odoo:
     build:
       context: .
       dockerfile: docker/Dockerfile
     restart: unless-stopped
-    depends_on: [db]
-    command: >
-      -c /etc/odoo/odoo.conf
-      --db_host=db --db_user=${DB_USER} --db_password=${DB_PASSWORD}
-      --admin_passwd=${ODOO_MASTER_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    # As credenciais vão por variáveis de ambiente (lidas pelo libpq / Odoo), nunca na linha de comando.
+    environment:
+      PGHOST: db
+      PGPORT: '5432'
+      PGUSER: ${DB_USER}
+      PGPASSWORD: ${DB_PASSWORD}
+      ODOO_MASTER_PASSWORD: ${ODOO_MASTER_PASSWORD}
     ports:
-      - "8069:8069"
-      - "8072:8072"
+      - '127.0.0.1:8069:8069'
+      - '127.0.0.1:8072:8072'
     volumes:
       - odoo-data:/var/lib/odoo
 

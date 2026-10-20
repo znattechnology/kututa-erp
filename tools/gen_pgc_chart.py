@@ -65,6 +65,9 @@ def group_lines(words):
 
 
 def tidy(name):
+    # O decreto separa qualificativos com travessão: «Clientes – correntes». Normaliza-se o espaçamento.
+    name = re.sub(r'(?<=\S)\s*–\s*(?=\S)', ' – ', name)
+    name = re.sub(r'(?<=\S)\s+-\s+(?=\S)', ' – ', name)
     name = re.sub(r'\s+', ' ', name).strip(' -–_.…')
     if name.isupper():
         name = name[0] + name[1:].lower()
@@ -87,7 +90,7 @@ def parse_column(lines, page, accounts, order):
             rest = tokens[1:]
         if CODE_RE.match(first):
             code = first.rstrip('.')
-            name = ' '.join(t for t in rest if not SKIP_RE.match(t))
+            name = ' '.join(t for t in rest if t in ('–', '-') or not SKIP_RE.match(t))
             if '.' not in code and page not in SUMMARY_PAGES:
                 current = None  # título repetido na página de detalhe: o nome oficial vem do resumo
                 continue

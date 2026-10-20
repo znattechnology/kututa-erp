@@ -3,6 +3,7 @@
 
 Fontes (revistas manualmente, em ``tools/data/``):
 * ``pgc_decreto_82_01.csv``: lista de contas do Decreto n.º 82/01 (§5.3), extraída por ``gen_pgc_chart.py``;
+* ``pgc_correcoes.csv``: correcções aos lapsos de impressão do decreto (códigos repetidos, gralhas);
 * ``pgc_extensoes.csv``: contas que o PGC de 2001 não prevê (IVA, contas técnicas do Odoo).
 
 Regras:
@@ -18,16 +19,13 @@ import pathlib
 ROOT = pathlib.Path(__file__).resolve().parent
 SOURCE = ROOT / 'data' / 'pgc_decreto_82_01.csv'
 EXTENSIONS = ROOT / 'data' / 'pgc_extensoes.csv'
+CORRECTIONS = ROOT / 'data' / 'pgc_correcoes.csv'
 TARGET = ROOT.parent / 'custom_addons' / 'l10n_ao' / 'data' / 'template' / 'account.account-ao.csv'
 
 # Subcontas-modelo do decreto, a desenvolver por cada empresa.
 PLACEHOLDER_NAMES = {'Banco', 'Caixa', 'Entidade', 'Ano'}
 # Contas que têm de ser agregadoras mesmo sem subcontas no template (o Odoo cria as filhas).
-FORCED_PARENTS = {'43.1', '43.2', '45.1'}
-RENAMES = {
-    '81.1': 'Resultados transitados de exercícios anteriores',
-}
-SKIP_PREFIXES = ('81.2',)  # repetição do bloco «Ano ___» (81.1)
+FORCED_PARENTS = {'43.1', '43.2', '45.1'}  # 43.1/45.1: diários em Kz; 43.2: bancos em moeda estrangeira
 
 # (prefixo, tipo, reconciliável) — o prefixo mais longo prevalece.
 TYPE_RULES = [
@@ -51,10 +49,10 @@ TYPE_RULES = [
     ('38', 'asset_current', False),
     ('39', 'liability_non_current', False),
     ('4', 'asset_current', False),
-    ('42', 'asset_cash', False),
+    # asset_cash só nas contas de diário (43 depósitos à ordem, 45.1 fundo fixo); o resto é activo corrente.
     ('43', 'asset_cash', False),
-    ('44', 'asset_cash', False),
-    ('45', 'asset_cash', False),
+    ('45.1', 'asset_cash', False),
+    ('45.2', 'asset_current', True),
     ('5', 'equity', False),
     ('6', 'income', False),
     ('66', 'income_other', False),
@@ -99,12 +97,23 @@ def account_type_for(code):
 
 def main():
     with SOURCE.open(encoding='utf-8') as f:
-        accounts = {
-            row['code']: {'name': RENAMES.get(row['code'], row['name'])}
-            for row in csv.DictReader(f)
-            if not row['code'].startswith(SKIP_PREFIXES)
-            and (row['code'] in RENAMES or row['code'].count('.') < 2 or row['name'] not in PLACEHOLDER_NAMES)
-        }
+        accounts = {row['code']: {'name': row['name']} for row in csv.DictReader(f)}
+    with CORRECTIONS.open(encoding='utf-8') as f:
+        for row in csv.DictReader(f):
+            code = row['code']
+            if row['op'] == 'delete':
+                for existing in [c for c in accounts if c == code or c.startswith(code + '.')]:
+                    del accounts[existing]
+            elif row['op'] == 'rename':
+                accounts[code]['name'] = row['name']
+            elif row['op'] == 'add':
+                assert code not in accounts, f'{code} já existe'
+                accounts[code] = {'name': row['name']}
+            else:
+                raise SystemExit(f'Operação desconhecida: {row["op"]}')
+    accounts = {
+        code: data for code, data in accounts.items() if code.count('.') < 2 or data['name'] not in PLACEHOLDER_NAMES
+    }
     with EXTENSIONS.open(encoding='utf-8') as f:
         for row in csv.DictReader(f):
             accounts[row['code']] = {
@@ -138,10 +147,7 @@ def main():
                     code,
                     account_type,
                     'True' if reconcile and not is_group else '',
-                    'True'
-                    if account_type in ('asset_receivable', 'liability_payable')
-                    and not code.startswith(('31.1', '31.2', '31.8', '32.1', '32.2', '32.8'))
-                    else '',
+                    '',
                 ]
             )
     groups = sum(1 for c in accounts if c in has_children)

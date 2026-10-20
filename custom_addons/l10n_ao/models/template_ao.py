@@ -1,9 +1,18 @@
 from odoo import models
 from odoo.addons.account.models.chart_template import template
 
+# Prefixos com dois dígitos finais: o Odoo incrementa só o último grupo numérico, logo
+# «43.1.00» permite 99 diários bancários (43.1.01 … 43.1.99); «43.1.0» permitiria 9.
+BANK_PREFIX = '43.1.00'
+BANK_FOREIGN_PREFIX = '43.2.00'
+CASH_PREFIX = '45.1.00'
+
 
 class AccountChartTemplate(models.AbstractModel):
     _inherit = 'account.chart.template'
+
+    def _l10n_ao_is_ao_template(self, company):
+        return 'ao' in self._get_parent_template(company.chart_template)
 
     @template('ao')
     def _get_ao_template_data(self):
@@ -16,8 +25,9 @@ class AccountChartTemplate(models.AbstractModel):
     def _get_account_parent_xmlid(self, code_prefix, template_code):
         if template_code == 'ao':
             return {
-                '43.1.0': 'ao_43_1',
-                '45.1.0': 'ao_45_1',
+                BANK_PREFIX: 'ao_43_1',
+                BANK_FOREIGN_PREFIX: 'ao_43_2',
+                CASH_PREFIX: 'ao_45_1',
             }.get(code_prefix)
         return super()._get_account_parent_xmlid(code_prefix, template_code)
 
@@ -26,9 +36,8 @@ class AccountChartTemplate(models.AbstractModel):
         return {
             self.env.company.id: {
                 'account_fiscal_country_id': 'base.ao',
-                'currency_id': 'base.AOA',
-                'bank_account_code_prefix': '43.1.0',
-                'cash_account_code_prefix': '45.1.0',
+                'bank_account_code_prefix': BANK_PREFIX,
+                'cash_account_code_prefix': CASH_PREFIX,
                 'transfer_account_code_prefix': '48.4',
                 'transfer_account_id': 'ao_48_4',
                 'account_journal_suspense_account_id': 'ao_48_3',
@@ -41,8 +50,10 @@ class AccountChartTemplate(models.AbstractModel):
                 'account_journal_early_pay_discount_loss_account_id': 'ao_76_3',
                 'receivable_account_id': 'ao_31_1_2_1',
                 'payable_account_id': 'ao_32_1_2_1',
-                'income_account_id': 'ao_61_3_1',
-                'expense_account_id': 'ao_21_2',
+                # Por omissão, um produto é um serviço: proveito em 62 e custo em 75.2 (FST).
+                # As mercadorias (61 / 21 / 26) configuram-se nas categorias de produtos.
+                'income_account_id': 'ao_62_1_1',
+                'expense_account_id': 'ao_75_2_39',
                 'account_sale_tax_id': 'ao_iva_sale_14',
                 'account_purchase_tax_id': 'ao_iva_purchase_14',
             },
@@ -50,7 +61,7 @@ class AccountChartTemplate(models.AbstractModel):
 
     def _create_outstanding_accounts(self, company, bank_prefix, code_digits):
         # PGC: os valores em trânsito ficam na conta 48 (Conta transitória), não nos depósitos à ordem.
-        if company.chart_template != 'ao':
+        if not self._l10n_ao_is_ao_template(company):
             return super()._create_outstanding_accounts(company, bank_prefix, code_digits)
         self.env['ir.model.data']._update_xmlids(
             [
@@ -66,3 +77,9 @@ class AccountChartTemplate(models.AbstractModel):
             ]
         )
         return None
+
+    def _get_bank_fees_reco_account(self, company):
+        # O Odoo procura uma conta chamada «Bank Fees»; sem ela cairia na primeira conta de custos (72.1).
+        if self._l10n_ao_is_ao_template(company):
+            return self.with_company(company).ref('ao_76_7')
+        return super()._get_bank_fees_reco_account(company)

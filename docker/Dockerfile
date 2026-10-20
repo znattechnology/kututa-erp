@@ -3,13 +3,15 @@ FROM python:3.13-slim-bookworm
 
 ARG WKHTMLTOPDF_VERSION=0.12.6.1-3
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    ODOO_RC=/etc/odoo/odoo.conf
+    PYTHONUNBUFFERED=1
 
+# Dependências de runtime + build; as de build são removidas depois do pip install.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential curl ca-certificates fontconfig libpq-dev libldap2-dev libsasl2-dev \
-        libxml2-dev libxslt1-dev libjpeg62-turbo-dev zlib1g-dev libffi-dev \
-        node-less npm xfonts-75dpi xfonts-base fonts-dejavu-core \
+        curl ca-certificates fontconfig xfonts-75dpi xfonts-base fonts-dejavu-core \
+        libpq5 libldap-2.5-0 libsasl2-2 libxml2 libxslt1.1 libjpeg62-turbo zlib1g libffi8 npm \
+    && apt-get install -y --no-install-recommends \
+        build-essential libpq-dev libldap2-dev libsasl2-dev libxml2-dev libxslt1-dev \
+        libjpeg62-turbo-dev zlib1g-dev libffi-dev \
     && ARCH="$(dpkg --print-architecture)" \
     && curl -fsSL -o /tmp/wkhtmltox.deb \
         "https://github.com/wkhtmltopdf/packaging/releases/download/${WKHTMLTOPDF_VERSION}/wkhtmltox_${WKHTMLTOPDF_VERSION}.bookworm_${ARCH}.deb" \
@@ -19,18 +21,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY odoo/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt \
+    && apt-get purge -y --auto-remove \
+        build-essential libpq-dev libldap2-dev libsasl2-dev libxml2-dev libxslt1-dev \
+        libjpeg62-turbo-dev zlib1g-dev libffi-dev \
+    && rm -rf /var/lib/apt/lists/* /tmp/requirements.txt
 
 RUN useradd --system --create-home --home-dir /var/lib/odoo --shell /usr/sbin/nologin odoo \
-    && mkdir -p /etc/odoo /mnt/extra-addons \
-    && chown odoo: /var/lib/odoo
+    && mkdir -p /etc/odoo /mnt/extra-addons
 
-COPY --chown=odoo:odoo odoo /opt/odoo
-COPY --chown=odoo:odoo custom_addons /mnt/extra-addons
-COPY --chown=odoo:odoo docker/odoo.conf /etc/odoo/odoo.conf
+# Código e configuração pertencem ao root (só leitura); só /var/lib/odoo é gravável pelo utilizador odoo.
+COPY odoo /opt/odoo
+COPY custom_addons /mnt/extra-addons
+COPY docker/odoo.conf /etc/odoo/odoo.conf
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 USER odoo
 EXPOSE 8069 8072
 VOLUME ["/var/lib/odoo"]
-ENTRYPOINT ["python", "/opt/odoo/odoo-bin"]
-CMD ["-c", "/etc/odoo/odoo.conf"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
+    CMD curl -fsS http://127.0.0.1:8069/web/health || exit 1
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

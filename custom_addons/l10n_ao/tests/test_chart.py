@@ -96,3 +96,28 @@ class TestL10nAoChart(AccountTestInvoicingCommon):
         self.assertEqual(self.env['l10n_ao.tax.exemption'].search_count([('tax_type', '=', 'IEC')]), 16)
         self.assertEqual(self.env['l10n_ao.cae'].search_count([]), 574)
         self.assertTrue(self.env.ref('base.AOA').active)
+
+    def test_decree_errata_are_corrected(self):
+        """Lapsos de impressão do Decreto 82/01 (tools/data/pgc_correcoes.csv)."""
+        self.assertEqual(self._account('18.2').name, 'Imobilizações incorpóreas')
+        self.assertEqual(self._account('18.3').name, 'Investimentos financeiros em imóveis')
+        self.assertEqual(self._account('18.1.4').parent_id.code, '18.1')
+        self.assertFalse(self._account('18.4'), 'As subcontas de 18.1 não podem colidir com os cabeçalhos 18.x')
+        self.assertEqual(self._account('56.2.2').name, 'Realização')
+        self.assertEqual(self._account('76.6.1.4').name, 'Fundos')
+        self.assertEqual(self._account('38.1.3.2').parent_id.code, '38.1.3')
+        self.assertEqual(self._account('31.1').name, 'Clientes – correntes')
+
+    def test_second_angolan_company(self):
+        """Cada empresa recebe o seu próprio plano, diários e contas de valores em trânsito."""
+        company = self.env['res.company'].create({'name': 'Segunda AO', 'country_id': self.env.ref('base.ao').id})
+        self.env['account.chart.template'].with_company(company).try_loading('ao', company=company, install_demo=False)
+        env = self.env(context=dict(self.env.context, allowed_company_ids=company.ids))
+        self.assertEqual(company.chart_template, 'ao')
+        self.assertEqual(company.currency_id.name, 'AOA')
+        bank = env['account.journal'].search([('company_id', '=', company.id), ('type', '=', 'bank')], limit=1)
+        self.assertEqual(bank.default_account_id.with_company(company).code, '43.1.01')
+        chart = env['account.chart.template'].with_company(company)
+        outstanding = chart.ref('account_journal_payment_debit_account_id')
+        self.assertEqual(outstanding.with_company(company).code, '48.1')
+        self.assertEqual(outstanding.company_ids, company)

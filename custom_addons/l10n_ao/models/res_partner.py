@@ -19,3 +19,11 @@ class ResPartner(models.Model):
     def _l10n_ao_is_valid_nif(self, vat):
         nif = self._l10n_ao_normalize_nif(vat)
         return nif == AO_FINAL_CONSUMER_NIF or bool(AO_NIF_RE.match(nif))
+
+    # Gancho de validação do NIF do módulo base (res.partner._run_vat_checks → check_vat_<país>).
+    def check_vat_ao(self, vat):
+        return self._l10n_ao_is_valid_nif(vat)
+
+    # Gancho de formatação do módulo base (res.partner._format_vat_number → format_vat_<país>).
+    def format_vat_ao(self, vat):
+        return self._l10n_ao_normalize_nif(vat)
