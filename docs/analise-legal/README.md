@@ -88,7 +88,7 @@ Legenda: ✅ já existe · 🟡 configuração/parcial · 🔴 desenvolvimento n
 ## 5. Fontes externas necessárias (não estão nos documentos fornecidos)
 
 **Bloqueantes:**
-- ~~Especificação da API da AGT~~ ✅ obtida (Quiosque AGT). Falta o texto integral do Decreto Executivo n.º 683/25;
+- ~~Especificação da API da AGT~~ ✅ obtida (Quiosque AGT); ~~Decreto Executivo n.º 683/25~~ ✅ obtido (`decretos/`);
 - regulamento e processo de certificação de software da AGT;
 - esquema XSD do SAF-T (AO) e o DP 312/18, na parte não derrogada.
 

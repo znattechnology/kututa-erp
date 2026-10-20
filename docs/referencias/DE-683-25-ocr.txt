@@ -1,0 +1,4880 @@
+# Decreto Executivo n.º 683/25, de 22 de Agosto — texto OCR (pode conter erros; confirmar no PDF em decretos/)
+# Fonte: https://www.ucm.minfin.gov.ao/cs/groups/public/documents/document/aw40/otuy/~edisp/minfin4952361.pdf
+
+=== PÁGINA p-01
+Sexta-feira, 22 de Agosto de 2025 | Série - N.º 159
+
+DIÁRIO DA REPÚBLICA
+
+ÓRGÃO OFICIAL DA REPÚBLICA DE ANGOLA
+Preço deste número - Kz: 3.400,00
+
+Ministério das Finanças
+
+Decreto Executivo n.º 683/25 ... 19164
+Define a estrutura de dados de software, modelo de facturação electrónica e respectivas especi-
+ficações técnicas e procedimentais.
+
+Banco Nacional de Angola
+
+Aviso n.2 4/25... cereereerereeerereeraeracereeraes ercereereneraerae crseraere errne re aeraeraer ecrsereneesaena o 19228
+Estabelece as regras e os procedimentos para a abertura, movimentação e encerramento de
+Contas de Moeda Electrónica, por pessoas singulares e colectivas. — Revoga o Instrutivo n.º 7/24,
+de 15 de Agosto, sobre Contas de Moeda Electrónica, e os artigos 11.º, 14.8, 15.º, 16.2 e 17.º do
+Aviso n.º 2/22, de 2 de Fevereiro, sobre a Prestação de Serviços de Pagamento, e toda a regula-
+mentação que contrarie o disposto no presente Aviso.
+=== PÁGINA p-02
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19164
+
+MINISTÉRIO DAS FINANÇAS
+
+Decreto Executivo n.º 683/25
+de 22 de Agosto
+
+Considerando que, por força do Decreto Presidencial n.271/25, de 20 de Março, foiaprovado
+o Regime Jurídico das Facturas, diploma que institui a facturação electrónica nas operações
+comerciais entre os agentes económicos e estes e os consumidores finais;
+
+Havendo a necessidade de definição da estrutura de dados de software e do modelo da
+facturação electrónica, bem como das demais especificações técnicas e procedimentais do sis-
+tema de facturação electrónica;
+
+Em conformidade com os poderes delegados pelo Presidente da República, nos termos do
+artigo 137.º da Constituição da República de Angola, e de acordo com o artigo 36.º do Decreto
+Presidencial n.º 71/25, de 20 de Março, que aprova o Regime Jurídico das Facturas, e do
+artigo 5.º do Estatuto Orgânico do Ministério das Finanças, aprovado pelo Decreto Presidencial
+n.º 92/24, de 16 de Abril, determino:
+
+ARTIGO 1.º
+(Objecto)
+
+O presente Diploma define a estrutura de dados de software, modelo de facturação elec-
+trónica e respectivas especificações técnicas e procedimentais, para efeitos do disposto no
+artigo 36.º do Decreto Presidencial n.º 71/25, de 20 de Março, que aprova o Regime Jurídico
+das Facturas, e estabelece a competência para gerar as séries de facturas.
+
+ARTIGO 2.º
+(Estrutura de dados de software e especificações técnicas)
+
+A estrutura de dados de software, modelo de facturação electrónica e respectivas espe-
+cificações técnicas e procedimentais correspondem aos Anexos |, Il e Ill ao presente Decreto
+Executivo, de que são partes integrantes.
+
+ARTIGO 3.º
+(Disponibilização de actualizações)
+
+A Administração Geral Tributária disponibiliza aos contribuintes e produtores de soft-
+ware de facturação, sempre que necessário, as actualizações de especificações técnicas e
+procedimentais.
+
+ARTIGO 4.º
+(Série de facturas)
+
+Para efeitos do disposto na alínea b) do n.º 1 do artigo 10.2 alínea c) don. 1 do artigo 24.8,
+ambos do Decreto Presidencial n.º 71/25, de 20 de Março, que aprova o Regime Jurídico das
+Facturas, as séries utilizadas pelos contribuintes que emitem facturas em softwares de factura-
+ção electrónica são geradas pela Administração Geral Tributária.
+=== PÁGINA p-03
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19165
+
+ARTIGO 5.º
+(Dúvidas e omissões)
+
+As dúvidas e omissões resultantes da interpretação e aplicação do presente Diploma são
+resolvidas pela Ministra das Finanças.
+
+ARTIGO 6.º
+(Entrada em vigor)
+
+O presente Decreto Executivo entra em vigor 30 (trinta) dias após a data da sua publicação.
+Publique-se.
+Luanda, aos 15 de Agosto de 2025.
+
+A Ministra, Vera Esperança dos Santos Daves de Sousa.
+=== PÁGINA p-04
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19166
+
+ANEXO |
+Estrutura de Dados do Software
+
+Serviço Solicitar Registo de Factura Electrónica (registar Factura)
+
+Serviço destinado à recepção de pedidos de registo de facturas electrónicas, devolvendo em
+resposta o identificador único do pedido, identificador essencial para acompanhar o processo
+de validação posterior que indicará se a factura validou ou não com sucesso. Caso o pedido não
+seja aceite é dada informação dos problemas que levaram à sua rejeição.
+
+Parâmetros de entrada.
+
+Campo Tipo | Atributos Obrigatório Descrição
+(JSON)
+schemaVersion string |IN/A Sim Versão do schema do serviço, exemplo
+“1.0”
+submissionGUID string |IN/A Sim Identificador (GUID ou UUID) da
+
+solicitação, fornecido pelo software no
+formato standard “xxxxxxxx-xxxx-Mxxx-
+NxxX-XXXXXxxxxxxx” em que:
+
+e Cadax é um dígito hexadecimal
+(0-9, a-f);
+
+* Mindica a versão do UUID (por
+exemplo, 4 para UUID versão 4 —
+aleatório);
+
+e Nindica o variant (especifica o
+layout; para UUIDs compatíveis
+com RFC 4122, os primeiros bits
+de N devem estar entre 8 e b).
+
+Exemplo:
+
+550e8400-e29b-41 d4-a716-
+446655440000
+
+Este identificador deverá ser único por
+contribuinte emissor.
+taxRegistrationNumber jstring  |“maxlength”: 15 |Sim Número fiscal de contribuinte.
+submissionTimeStamp [string |IN/A Sim Timestamp de submissão do pedido no
+formato ISO 8601, exemplos:
+
+e "2025-05-27T14:30:00Z2" (em
+
+UTC);
+
+e "2025-05-27T14:30:00-03:00"
+
+(com informação de timezone).
+
+=== PÁGINA p-05
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19167
+
+softwarelnfo object N/A Sim Objecto com os dados do Software de
+Facturação.
+
+numberOfEntries integer IN/A Sim Número de facturas que constam na
+chamada ao serviço.
+
+documents array N/A Sim Array com a lista de facturas (object
+document)
+
+Prevê-se um máximo de 30 facturas.
+
+Composição (properties) do object softwarelnfo
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+softwarelnfoDetail object IN/A Sim Objecto com os detalhes do
+Software de Facturação
+jwsSoftwareSignature string  |minlength”. | |Sim Assinatura do Software de
+256 Facturação (encriptação
+“maxlength”: usando a chave privada do
+256 produtor com todos os
+campos do objecto
+softwarelnfo)
+
+Composição (properties) do object softwarelnfoDetail
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+productld string N/A Sim Nome do Software de Facturação.
+productVersion string N/A Sim Versão do Software de Facturação.
+softwareValidationNumber (string  IN/A Sim Número de Certificação do Software de
+Facturação.
+
+Composição (itens) do array documents
+
+Campo Tipo Atributos Obrigatório Descrição
+JSON)
+document object N/A Sim Array com a lista de documentos (object
+document)
+Prevê-se um máximo de 30 documentos.
+
+Composição (properties) do object document
+
+Campo Tipo | |Atributos Obrigatório Descrição
+(JSON)
+documentNo string |“minlength”: 8 |Sim Identificação única do documento, gerado
+“maxlength”: elo Software de Facturação de documentos
+60 m conformidade com o documento SAF-
+(AO).
+onsiste de um código de documento
+interno - espaço - número de série do
+ocumento -/- e um número sequencial do
+
+=== PÁGINA p-06
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19168
+
+documento para a sequência de
+consentimento.
+
+documentStatus
+
+string
+
+“minlength”: 1
+“maxlength”: 1
+
+Sim
+
+Estado actual do documento de facturação,
+
+com os seguintes valores possíveis e
+
+Isignificados:
+
+e N-Normal
+
+e S- Autofacturação
+
+e A- Anulado
+
+e R- Documento de resumo de outros
+documentos criados noutras
+aplicações e gerado nesta
+aplicação
+
+e C-— Documento gerado para
+correcção de documento
+anteriormente gerado e rejeitado
+pela AGT (identificado no campo
+rejectedDocumentNo)
+
+documentCancelReason
+
+String
+
+“minlength”: 1
+“maxlength”: 1
+
+Não
+
+Motivo de anulação do documento de
+facturação de acordo com o previsto na
+legislação (n.ºs 8 e 9 do artigo 8.º do Decreto
+Presidencial 71/25, de 20 de Março), com os
+seguintes valores possíveis e significados:
+e I-anulada por incorrecta
+identificação do adquirente.
+e N-anulada por não ter sido
+enviado o documento ao
+adquirente.
+O preenchimento deste campo é obrigatório
+quando o estado do documento transmitido
+[é anulado (documentStatus = <A”).
+
+rejectedDocumentNo
+
+String
+
+“minlength”: 8
+“maxlength”:
+60
+
+Não
+
+Identificação do número de documento
+reviamente submetido à AGT e rejeitado
+or falta de conformidade.
+
+preenchimento deste campo é obrigatório
+uando a informação de estado do
+ocumento transmitido é correcção
+
+documentStatus = “C”).
+
+documento identificado nesta correcção
+erá verificado se corresponde a uma
+rejeição no histórico de pedidos de registo
+de facturas emitidas.
+
+jwsDocumentSignature
+
+string
+
+“minlength”:
+256
+“maxlength”:
+256
+
+Sim
+
+Assinatura da factura, encriptação usando a
+chave privada do emissor com os seguintes
+campos da factura:
+
+e documentNo
+
+e taxRegistrationNumber
+
+e documentType
+
+e documentDate
+
+e customerTaxlD
+
+e customerCountry
+
+e companyName
+
+e documentTotals
+
+=== PÁGINA p-07
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19169
+
+documentDate
+
+string
+
+“format”:
+“date”
+
+Sim
+
+Data de emissão do documento
+
+documentType
+
+string
+
+“minlength”: 2
+“maxlength”: 2
+
+Sim
+
+Tipo de documento de facturação
+lelectrónica, com os seguintes valores
+possíveis e significados:
+
+e FA- Factura de Adiantamento
+
+e FT-Factura
+
+e FR- Factura/Recibo
+
+e FG- Factura Global
+
+e AC- Aviso de Cobrança
+
+e AR- Aviso de Cobrança/Recibo
+
+e TV-Talão de Venda
+
+e RC- Recibo Emitido
+
+e RG- Recibo
+
+e RE- Estorno ou Recibo de Estorno
+
+e ND- Nota de Débito
+
+e NC- Nota de Crédito
+
+e AF- Factura/Recibo de
+
+Autofacturação
+
+e RP- Prémio ou Recibo de Prémio
+
+e RA- Resseguro Aceite
+
+e CS- Imputação a Co-seguradoras
+
+e LD- Imputação a Co-seguradora
+
+Líder
+
+eacCode
+
+string
+
+“minlength”: 5
+“maxlength”: 5
+
+Não
+
+Código de actividade que se relaciona com
+lesta factura (ver Tabela 1)
+
+systemEntry Date
+
+string
+
+“format”: “date-
+time”
+
+Sim
+
+Timestamp de gravação do registo no
+momento da assinatura - formato ISO 8601
+YYYY-MM-DDThh:mm:ss)
+
+customerCountry
+
+string
+
+“minlength”: 2
+“maxlength”: 2
+
+Sim
+
+Código de país do comprador, seguindo a
+norma ISO 3166-1-alpha-2, para
+compradores domésticos é utilizada a sigla
+“AO”
+
+customer TaxID
+
+string
+
+“minlength”: 1
+“maxlength”:
+so
+
+Sim
+
+Número de identificação do cliente da
+factura. Para compradores domésticos
+identificados com AO no campo
+customerCountry) é preenchido com o NIF
+lem Angola.
+
+Para documentos de facturação de
+contribuintes domésticos sem identificação
+do comprador poderá ser utilizado o valor
+“999999999”.
+
+companyName
+
+string
+
+“minlength”: 1
+“maxlength”:
+200
+
+Sim
+
+Nome/denominação do contribuinte.
+
+lines
+
+array
+
+N/A
+
+Array com a lista de artigos do documento
+de facturação (object document), sendo não
+preenchido para os tipos de factura
+documentType):
+
+e AR- Aviso de Cobrança/Recibo
+
+e RC- Recibo Emitido
+
+e RG- Outros Recibos Emitidos
+
+=== PÁGINA p-08
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19170
+
+Este elemento é obrigatoriamente
+preenchido para os demais tipos de
+documentos de facturação
+
+paymentReceipt object |N/A Não
+
+Object com os dados do recibo, sendo
+obrigatoriamente preenchido para os tipos
+de factura (document Type):
+
+e AR- Aviso de Cobrança/Recibo
+
+e RC- Recibo Emitido
+
+e RG- Outros Recibos Emitidos
+Este elemento não é preenchido para os
+demais tipos de documentos de facturação.
+
+documentTotals object |N/A Sim
+
+Objecto cujos atributos apresentam os totais
+do documento de facturação.
+
+withholdingTaxList array IN/A Não
+
+Array com a lista de retenções na fonte do
+documento de facturação (object
+withHoldingT ax).
+
+Composição (itens) do array lines
+Campo Tipo Atributos Obrigatório
+(JSON)
+
+Descrição
+
+line object IN/A Sim
+
+Objecto com os dados de uma linha de artigos
+ou serviços do documento de facturação.
+
+Composição (properties) do object line
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+lineNumber integer “minimum”: 1 [Sim Número da linha de artigos do documento de
+facturação, começando em 1 e incrementando
+de 1 unidade em cada nova linha.
+productCode string  [“minlength”: 1 |Sim Código do produto ou serviço.
+
+“maxlength”: 60
+
+productDescription (string  [“minlength”: 1 |Sim
+“maxlength”:
+200
+
+Descrição do produto ou serviço.
+
+quantity number minimum”: 0 Sim
+
+Quantidade, inteira ou decimal.
+
+unitOfMeasure string  [ºminlength”: 1 |Sim
+“maxlength”: 20
+
+Unidade de medida.
+
+unitPrice number [“minimum”: 0 Sim
+
+Preço unitário, sem descontos e sem impostos.
+
+unitPriceBase number “minimum”: O [Sim
+
+Preço unitário já deduzido de descontos por
+linha ou cabeçalho, sem incluir impostos.
+
+referencelnfo object |N/A Não
+
+Objecto detalhando a referência para o
+documento base para este documento de
+facturação.
+Obrigatório para documentos de facturação do
+tipo:
+e NC, para indicar a factura base aonde
+se deu a devolução de artigos;
+
+debitAmount number [“minimum”:0 Não
+
+Montante total para cada linha, excluindo
+impostos, sendo abatido o valor de descontos,
+aonde o valor da taxa e/ou o motivo da isenção
+foi aplicada.
+
+=== PÁGINA p-09
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+ISÉRIE, N.º 159 [19171
+
+'Só um dos campos debitAmount e
+creditAmount poderá estar preenchido.
+
+creditAmount number [íminimum”:0 Não
+
+Montante total para cada linha, excluindo
+impostos, sendo abatido o valor de descontos,
+aonde o valor da taxa e/ou o motivo da isenção
+foi aplicada.
+
+'Só um dos campos debitAâmount e
+creditAmount poderá estar preenchido.
+
+taxes array  IN/A
+
+Array de objectos que especificam o(s)
+imposto(s) calculados para a linha.
+
+settlementAmount jnumber minimum”: 0 [Sim
+
+Valor total de descontos, deve reflectir a
+proporção do desconto global para essa linha e
+o desconto específico para a mesma.
+
+Composição (itens) do object referencelnto
+
+Campo Tipo Atributos Obrigatório Descrição
+JSON)
+reference Istring — |“minlength”: 1 |Sim Referência do documento de facturação origem a
+“maxlength”: 60 que este artigo se refere.
+reason Estring “maxlength”. 60 Não Motivo de intervenção no documento origem.
+
+Composição (properties) do array taxes
+
+Campo Tipo | lAtributos Obrigatório Descrição
+(JSON)
+taxType string |minlength”: 2 |Sim Sistema de imposto, com os seguintes valores
+“maxlength”: 3 possíveis e significados:
+e |IVA- Imposto s/o Valor Acrescentado;
+e IS- Imposto de Selo;
+e JEC- Imposto Especial de Consumo;
+e NS- Não sujeito a IVA, IS ou IEC.
+taxCountryRegion |string [ºminlength”: 2 |Sim Código de País ou Região do Imposto.
+“maxlength”: 6 Quando se refere a um país utiliza um código
+ISO 3166-1-alpha-2.
+Quando se refere à região de Cabinda (único
+valor possível diferente de códigos de países)
+deverá utilizar o valor “AO-CAB”.
+taxCode string |“minlength”: 2 |Não Código de imposto, de preenchimento obrigatório
+“maxlength”: dependendo do valor preenchido no campo
+10 taxType, assumindo os seguintes valores
+
+possíveis e significados:
+Se taxType = IVA:
+e NOR- Taxa normal
+e | INT-— Taxa intermédia
+e RED-Taxa reduzida
+e ISE-lIsento
+e OUT- Outra
+Se taxType = IS:
+e Preenchido opcionalmente com a verba
+de IS, ver valores possíveis no Tabela 3
+e ISE-lsento
+
+Se taxType = IEC:
+
+=== PÁGINA p-10
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19172
+
+e Preenchido opcionalmente, quando
+preenchido deverá ter o código pautal
+para aplicação de IEC, ver valores
+possíveis no Tabela 2.
+
+e ISE-lIsento
+
+taxBase
+
+number
+
+“minimum”: O
+
+Não
+
+Valor tributável unitário, sendo gerado quando o
+montante a constar na linha se refere unicamente
+ja imposto, i.e., a base tributável subjacente à
+determinação desse imposto não constitui receita
+do sujeito passivo (poderá não fazer parte dos
+campos debitAmount ou creditAmount).
+Exemplos:
+
+e Emitir um documento rectificativo de
+factura (nota de crédito), por a taxa de
+imposto mencionada na factura se
+encontrar incorrecta e não existindo a
+possibilidade ou intenção de proceder à
+anulação desta ou de se efectuar o seu
+estorno integral, ter-se-á de liquidar ou
+devolver o imposto, respectivamente, em
+falta ou em excesso.
+
+e Nas situações de concessão de crédito
+por instituições mutuantes com o encargo
+de liquidar Imposto do Selo pelo crédito
+concedido, a base considerada para a
+liquidação desse imposto não constitui
+sua receita pelo que essa base deverá
+constar no campo TaxBase.
+
+taxPercentage
+
+number
+
+“minimum”: O
+
+Não
+
+Taxa a aplicar em percentagem (exemplo: 14
+representa a taxa de 14%). Deverá ser
+preenchida com O no caso de isenção ou não
+Isujeição.
+
+taxAmount
+
+number
+
+“minimum”: O
+
+Não
+
+Valor fixo da verba de IS, concorre após
+multiplicado pela quantidade (quantity) para o
+valor de imposto total da linha do documento de
+facturação.
+
+taxContribution
+
+number
+
+“minimum”: O
+
+Não
+
+Valor calculado de imposto para esta linha de
+mpostos (valor decimal com um máximo de 2
+casas decimais) contribuindo para o total de
+mpostos do documento de facturação.
+
+O valor calculado neste campo deverá ser
+
+rredondado por excesso para o cêntimo
+Seguinte, tal como ilustram os exemplos:
+Cálculo Valor do
+taxContribution
+23,144 23,15
+
+0,001844 0,01
+5,9999999 5,00
+
+taxExemptionCode
+
+string
+
+“minlength”: 3
+
+“maxlength”: 3
+
+Não
+
+Código de motivo de isenção do imposto. Campo
+deverá ser preenchido sempre que campo
+
+=== PÁGINA p-11
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 [19173
+
+axCode assumir o valor “ISE” (isento), sendo
+esse caso de preenchimento obrigatório.
+uando for preenchido o taxType = “NS” (Não
+ujeito a IVA, IS ou IEC, deverá também ser
+reenchido obrigatoriamente.
+uando preenchido assume um dos valores
+onstantes no Tabelas 4 (IVA), 5 (IS) ou 6 (IEC).
+
+Composição (properties) do object paymentReceipt
+
+Campo Tipo | lAtributos Obrigatório |Descrição
+(JSON)
+sourceDocuments array N/A Sim Dados do documento de facturação pago.
+
+Composição (itens) do array sourceDocumentList
+
+Campo
+
+Tipo — lAtributos
+(JSON)
+
+Obrigatório Descrição
+
+lineNo
+
+integer minimum”: 1
+
+Sim
+
+Número da linha do documento de facturação
+que foi incluída no recibo, iniciando em 1 e
+incrementando de 1 unidade em cada nova
+linha.
+
+sourceDocumentiD
+
+object N/A
+
+Sim
+
+Dados do documento de facturação que foi
+incluído neste recibo.
+
+debitAmount
+
+number minimum”: O
+
+Não
+
+Valor do recibo do documento rectificativo que
+resultou da lista de documentos sem
+impostos e eventuais descontos.
+
+Um e um só dos campos debitAmount e
+creditAmount poderá estar preenchido.
+
+creditAmount
+
+number fminimum”: O
+
+Valor do recibo da factura ou documento
+rectificativo, sem impostos e eventuais
+descontos.
+
+Um e um só dos campos debitAmount e
+creditAmount poderá estar preenchido.
+
+Composição (itens) do object sourceDocumentlD
+
+Campo
+
+ipo Atributos
+JSON)
+
+Obrigatório
+
+Descrição
+
+OriginatingON pers “minlength”: 1
+
+“maxlength”: 60
+
+Sim
+
+Número do documento de facturação
+regularizado.
+
+documentDate [en “format”: “date”
+
+Sim
+
+Data de emissão da factura ou documento
+
+rectificativo desta a que se refere o pagamento.
+
+=== PÁGINA p-12
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+ISÉRIE, N.º 159 | 19174
+
+Composição (properties) do object documentTotals
+
+Campo Tipo Atributos
+
+(JSON)
+
+Obrigatório
+
+Descrição
+
+taxPayable number |N/A Sim
+
+Valor total de imposto devido (soma de imposto
+das linhas).
+Quando se trata de um documento de facturação
+dos tipos:
+
+e AR- Aviso de Cobrança/Recibo;
+
+e RC- Recibo Emitido;
+
+e RG- Outros Recibos emitidos.
+Este valor deverá ser apurado somando os
+valores taxPayable dos diferentes documentos
+origem regularizados pelo recibo, sendo as NC
+contabilizadas com sinal negativo.
+
+netTotal number |N/A Sim
+
+Valor total do documento sem imposto
+Quando se trata de um documento de facturação
+dos tipos:
+
+e AR- Aviso de Cobrança/Recibo;
+
+e RC- Recibo Emitido;
+
+e RG- Outros Recibos emitidos.
+Este valor é apurado somando os valores
+netTotal dos diferentes documentos origem
+regularizados pelo recibo, sendo as NC
+contabilizadas com sinal negativo.
+
+grossTotal number |N/A Sim
+
+'Soma do valor total sem imposto e do valor total
+de imposto devido.
+
+currency object N/A
+
+Objecto destinado a guardar a informação da
+divisa em que se processa o pagamento da
+factura, não preenchido se divisa for AOA. Passa
+'a preenchimento obrigatório caso divisa diferente
+de AOA.
+
+Composição (properties) do object currency
+
+Campo Tipo Atributos Obrigatório [Descrição
+(JSON)
+currencyCode string  [minlength”: 3 Sim Código da divisa utilizada para pagar a
+“maxlength”: 3 factura, segundo norma ISO 4217 (excluindo
+AOA).
+currencyAmount number [*exclusiveMinimum"Sim Valor total na moeda estrangeira.
+:0
+exchangeRate number [“exclusiveMinimum"Sim Taxa de câmbio para AOA.
+:0
+
+=== PÁGINA p-13
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+ISÉRIE, N.º 159 [19175
+
+Composição (itens) do array withholding TaxList
+
+Campo
+
+Tipo
+(JSON)
+
+Atributos
+
+Obrigatório
+
+Descrição
+
+withholdingTaxType
+
+string
+
+"maxLength":
+3
+
+Sim
+
+Código de tipo de retenção na fonte ou de
+cativação, assumindo os seguintes
+valores possíveis e significados:
+
+e IRT- Imposto Sobre os
+Rendimentos do Trabalho;
+
+e Il- Imposto Industrial;
+
+e IS- Imposto de Selo;
+
+e IVA- Imposto s/o Valor
+Acrescentado;
+
+e IP- Imposto Predial;
+
+e IAC- Imposto sobre Aplicação de
+Capitais;
+
+e OU- Outros;
+
+e |IRPC- Imposto s/rendimento de
+pessoas colectivas (impostos
+futuros);
+
+e |IRPS- Imposto s/ rendimento de
+pessoas singulares (impostos
+futuros).
+
+withholdingTaxDescription
+
+string
+
+"maxLength":
+120
+
+Não
+
+O motivo de retenção na fonte. Devem ser
+indicadas as disposições legais aplicáveis
+ou a percentagem de imposto aplicável.
+
+withholdingTaxAmount
+
+number
+
+N/A
+
+Sim
+
+Valor de retenção na fonte.
+Quando se trata de um documento de
+facturação de um dos tipos:
+
+e AR- Aviso de cobrançaírecibo
+
+e RC- Recibo emitido
+
+e RG- Outros recibos emitidos
+Este valor é apurado agrupando os
+valores withholdingTaxAmount, para o
+mesmo tipo de imposto
+withholdingTaxType) dos diferentes
+documentos origem regularizados pelo
+recibo, sendo as NC contabilizadas com
+[Sinal negativo.
+
+=== PÁGINA p-14
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19176
+
+Parâmetros de saída (POST)
+
+HTTP code Tipo Descrição
+JSON)
+200 string Registo de pedido efectuado com sucesso sendo devolvido ID
+
+requestID ide confirmação de solicitação de registo de documentos de
+facturação — a validação será efectuada de forma diferida no
+tempo.
+
+Atributos da string requestID: “maxlength”: 15
+
+400 array Registo de pedido efectuado com erros, sendo devolvida uma
+errorList | lista de erros na recepção dos dados do pedido de registo dos
+documentos de facturação.
+
+Composição (items) do array errorList
+
+Campo Tipo Atributos Obrigatório Descrição
+JSON)
+idError string |N/A Sim Código do erro (ver tabela na secção
+4.1.5).
+descriptionError string IN/A Sim Descrição do erro (ver tabela na
+secção 4.1.5).
+documentNo string IN/A Não Número do documento de facturação
+
+a que se refere o erro (campo com o
+mesmo nome transmitido nos
+parâmetros de entrada).
+
+Campo passa a obrigatório se erro
+ocorrer num dos parâmetros incluídos
+no array documents.
+
+Serviço Obter Estado de Validação da Factura (obterEstado)
+
+Serviço destinado a obter o estado de validação das facturas previamente transmitidas
+através do serviço registarFactura, devolvendo em resposta um indicador de sucesso ou
+insucesso na obtenção da informação, bem como o estado de cada uma das facturas
+incluídas na solicitação.
+
+Parâmetros de entrada
+
+Campo Tipo Atributos |Obrigatório Descrição
+(JSON)
+schemaVersion string IN/A Sim Versão do schema do serviço,
+exemplo “1.0”
+submissionld string IN/A Sim Identificador da solicitação
+
+fomecido pelo barramento, no
+formato: xxxxx-99999999-9999
+em que:
+
+=== PÁGINA p-15
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 [19177
+
+e x-é um dígito do
+alfabeto letra;
+e 9-é um dígito numérico.
+taxRegistrationNumber string ['maxlength”:|Sim Número fiscal de contribuinte.
+15
+submissionTimeStamp (string IN/A Sim Timestamp de submissão do
+pedido no formato ISO 8601,
+exemplos:
+"2025-05-27T14:30:002"
+(em UTC)
+e "2025-05-27T14:30:00-
+03:00" (com informação
+de timezone)
+softwarelnfo object IN/A Sim Objecto com os dados do
+Software de Facturação
+jwsSignature string ['minlength” :Sim Assinatura do contribuinte
+256 emissor, encriptação usando a
+'maxlength”: chave privada do emissor com
+256 os seguintes campos da
+pesquisa:
+e taxRegistrationNumber
+e requestiD
+requestiD string ['maxlength”:|Sim Identificador do pedido de
+15 registo de documentos de
+facturação, valor obtido quando
+ocorreu com sucesso a
+chamada ao serviço
+registarFactura.
+Parâmetros de Saída
+HTTP code Tipo Descrição
+JSON)
+200 object Registo de pedido efectuado com sucesso sendo devolvido
+statusResult um object do tipo statusResult com o ponto de situação do
+processo de validação das facturas enviadas.
+422 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E96” - “erro na
+chamada, solicitação ainda em processamento”
+422 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E97” - “erro na
+chamada, solicitação prematura”
+422 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E95” - “erro na
+chamada, NIF emissor diferente”
+
+=== PÁGINA p-16
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19178
+
+429 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E98” - “erro na
+chamada, demasiadas solicitações repetidas”
+
+400 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E96” -
+“solicitação mal efectuada — erro de estrutura”
+
+Composição (properties) do object statusResult
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+requestID string [maxlength”: |Sim Identificador do pedido de registo de
+15 documentos de facturação que se
+
+pretende consultar (enviado como
+
+parâmetro na chamada).
+
+resultCode nteger IN/A Sim Resultado do processamento da
+
+solicitação de registo de facturas,
+
+com os seguintes valores possíveis e
+
+significados:
+
+e 0- Processamento concluído,
+sem facturas inválidas;
+
+e 1- Processamento concluído,
+com facturas válidas com ou
+sem penalizações e facturas
+inválidas;
+
+e 2- Processamento concluído,
+sem facturas válidas com ou
+sem penalizações;
+
+e 7- Solicitação não respondida
+por ser prematura ou
+repetitiva, devendo aguardar
+período mínimo para repetir
+
+este pedido;
+* 8- Processamento ainda em
+curso;
+* 9- Processamento cancelado.
+documentStatusList array N/A Não Array com os resultados do
+
+processamento de cada uma das
+facturas constantes no pedido de
+registo de facturas, sendo obrigatório
+quando resultCode for diferente de
+7,80U9.
+
+Terá uma linha para cada n.º de
+factura que constava no pedido de
+registo solicitado.
+
+=== PÁGINA p-17
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+ISÉRIE, N.º 159 | 19179
+
+Composição (items) do array documentsS tatusList
+
+Campo Tipo Atributos
+
+JSON)
+
+Obrigatório
+
+Descrição
+
+documentNo string  [minlength”: 1
+
+“maxlength”: 60
+
+Sim
+
+Identificação única do documento.
+
+documentStatus string “minlength”: 1
+
+“maxlength”: 1
+
+Sim
+
+Resultado do processamento da factura
+identificada no campo documentNo, com os
+seguintes valores possíveis e significados:
+
+V- Factura válida;
+
+I- Factura inválida
+
+P- Factura válida com penalização
+(enviada com mais de 24h de atraso e
+sem contingência).
+
+errorList array N/A
+
+|Array com os erros encontrados no
+
+processamento do documento de facturação
+identificado no campo documentNo, sendo
+obrigatório quando documentStatus for “|”.
+
+Terá uma linha para cada erro encontrado.
+
+Composições (items) do array errorList e (properties) do object errorEntry
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+errorCode string |“minlength”: Sim Código de erro
+3
+maxlength”:
+3
+errorDescription string |ºmaxlength”: [Sim Descrição do erro
+100
+
+Serviço Listar Facturas Electrónicas (listarFacturas)
+Serviço destinado a obter a lista de facturas registadas em nome do contribuinte durante
+um determinado período, devolvendo em resposta a lista de facturas encontradas e
+
+respectivas datas de emissão.
+
+Parâmetros de entrada
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+schemaVersion string IN/A Sim Versão do schema do serviço,
+exemplo “1.0”
+submissionld string IN/A Sim Identificador da solicitação
+
+fornecido pelo barramento, no
+formato: xxxxx-99999999-9999
+em que:
+
+x- é um dígito do
+alfabeto letra;
+
+9 - é um dígito numérico.
+
+=== PÁGINA p-18
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19180
+taxRegistrationNumber string ['maxlength”:/Sim Número fiscal de contribuinte.
+15
+submissionTimeStamp (string IN/A Sim Timestamp de submissão do
+pedido no formato ISO 8601,
+exemplos:
+e "2025-05-27T14:30:002"
+(em UTC)
+"2025-05-277T14:30:00-
+03:00" (com informação
+de timezone)
+softwarelnfo object IN/A Sim Objecto com os dados do
+Software de Facturação.
+jwsSignature string [minlength” Sim Assinatura do contribuinte
+256 aderente a consultar,
+'maxlength”: encriptação usando a chave
+256 privada do contribuinte aderente
+à facturação electrónica com os
+seguintes campos da pesquisa:
+e taxRegistrationNumber;
+e queryStartDate;
+e queryEndDate.
+queryStartDate string Mormat”: Sim Data inicial do período de
+'date” pesquisa de facturas recebidas
+a pesquisar.
+queryEndDate string Mormat”: Sim Data final do período de
+'date” pesquisa de facturas recebidas
+a pesquisar.
+Parâmetros de Saída
+HTTP Tipo (JSON) Descrição
+code
+200 object Registo de pedido efectuado com sucesso sendo
+documentListResult devolvido um object do tipo documentListResult com os
+dados das facturas encontradas.
+422 Object errorEntry. (Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro
+'E94” - “erro na chamada, nif diferente”
+429 Object errorEntry (Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro
+'E98” - “erro na chamada, demasiadas solicitações
+repetidas”
+400 Object errorEntry (Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro
+'E96" - “solicitação mal efectuada — erro de estrutura”
+
+=== PÁGINA p-19
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19181
+
+Composição (properties) do object documentListResult
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+documentResultCount integer |N/A Sim Número de facturas que foram
+encontradas para os critérios de
+pesquisa especificados.
+documentResultList array |N/A Sim Dados (identificação e data de
+
+emissão) da factura electrónica
+encontrada para o período
+Array com a lista de dados de
+facturas (object
+
+documentResultList).
+
+Composição (properties) do array documentResultList
+
+Campo ipo
+JSON)
+
+Atributos
+
+Obrigatório
+
+Descrição
+
+documentNo [o
+
+“maxlength”: 60
+
+Sim
+
+Identificador da factura electrónica que se
+pretende consultar (enviado como parâmetro na
+chamada).
+
+documentDate pros
+
+“format”. “date”
+
+Sim
+
+Data de emissão da factura electrónica
+fencontrada
+
+Serviço Consultar Factura Electrónica (consultarFactura)
+
+Serviço destinado a obter os dados detalhados de uma factura electrónica emitida em nome
+do contribuinte, devolvendo em resposta o indicador de sucesso ou insucesso na obtenção
+da informação, bem como o detalhe da factura especificada na solicitação.
+
+Parâmetros de entrada
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+schemaVersion string IN/A Sim Versão do schema do serviço,
+exemplo “1.0”.
+submissionld string IN/A Sim Identificador da solicitação
+fornecido pelo barramento, no
+formato: xxxxx-99999999-9999
+em que:
+e x- é um dígito do
+alfabeto letra;
+e 9- é um dígito numérico.
+taxRegistrationNumber string [maxlength”:Sim Número fiscal de contribuinte.
+15
+submissionTimeStamp (string IN/A Sim Timestamp de submissão do
+pedido no formato ISO 8601.
+Exemplos:
+
+=== PÁGINA p-20
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19182
+
+e "2025-05-27714:30:002"
+(em UTC);
+
+e "2025-05-27T14:30:00-
+03:00" (com informação
+de timezone).
+
+softwarelnfo
+
+object IN/A
+
+Sim
+
+Objecto com os dados do
+Software de Facturação
+
+jwsSignature string [minlength”: Sim Assinatura do contribuinte
+256 aderente a consultar,
+'maxlength”: encriptação usando a chave
+256 privada do contribuinte aderente
+à facturação electrónica com os
+seguintes campos da pesquisa:
+e taxRegistrationNumber;
+e documentNo.
+documentNo string ['maxlength":Sim Identificador da factura
+
+60 electrónica que se pretende
+consultar.
+Parâmetros de Saída
+HTTP code Tipo Descrição
+JSON)
+200 object Registo de pedido efectuado com sucesso sendo devolvido
+statusResult um object do tipo statusFE Result com os dados da factura
+pesquisada.
+422 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E94” - “erro na
+chamada, nif diferente”
+429 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E98” - “erro na
+chamada, demasiadas solicitações repetidas”
+400 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+
+errorEntry (código e descrição) correspondente ao erro “E96” -
+
+“solicitação mal efectuada — erro de estrutura”
+
+Composição (properties) do object statusFE Result
+
+Campo Tipo Atributos Obrigatório Descrição
+JSON)
+documentNo string “maxlength”: [Sim Identificador da factura electrónica
+60 que se pretende consultar (enviado
+
+como parâmetro na chamada).
+
+=== PÁGINA p-21
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19183
+
+validationStatus
+
+string
+
+“maxlength”:
+1
+
+Não
+
+Indicador de validação do
+documento de facturação solicitado,
+com os seguintes valores possíveis
+e significados:
+
+e V-Factura válida;
+
+e P-Factura válida com
+penalização (enviada com
+mais de 24h de atraso e sem
+contingência aprovada pela
+AGT).
+
+Campo é de preenchimento
+obrigatório se, para o documento de
+facturação encontrada, não foi
+encontrado registo de anulação
+posterior.
+
+documents
+
+array
+
+N/A
+
+Sim
+
+Array com o(s) dado(s) da(s)
+factura(s) electrónica(s) — poderão
+ser encontrados mais que um
+resultado se a factura foi anulada
+após emitida.
+
+Serviço Solicitar Criação de Série de Facturas Electrónica (solicitarSerie)
+Serviço destinado à criação de séries de numeração de Facturas Electrónicas, devolvendo
+em resposta um indicador de sucesso ou insucesso.
+
+Parâmetros de entrada
+
+Campo Tipo | Atributos Obrigatório Descrição
+(JSON)
+schemaVersion string |N/A Sim Versão do schema do serviço, exemplo “1.0”.
+submissionld string |N/A Sim Identificador da solicitação fornecido pelo
+barramento, no formato: xxxxx-99999999-
+9999 em que:
+e X- é um dígito do alfabeto letra
+e 9-é um dígito numérico
+taxRegistrationNumber |string  [“maxlength”: [Sim Número fiscal do contribuinte.
+15
+submissionTimeStamp |string IN/A Sim Timestamp de submissão do pedido no
+formato ISO 8601, exemplos:
+e "2025-05-27714:30:002" (em UTC)
+e "2025-05-27T14:30:00-03:00" (com
+informação de timezone)
+softwarelnfo object N/A Sim Objecto com os dados do Software de
+Facturação
+jwsSignature string |“minlength”: Sim Assinatura do contribuinte aderente a
+256 consultar, encriptação usando a chave
+privada do contribuinte aderente à facturação
+
+=== PÁGINA p-22
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19184
+
+“maxlength”:
+256
+
+electrónica com os seguintes campos da
+pesquisa:
+
+e taxRegistrationNumber
+
+e seriesCode
+
+e seriesYear
+
+e documentType
+
+e firstDocumentNumber
+
+seriesCode
+
+string
+
+“minlength”: 3
+“maxlength”:
+60
+
+Sim
+
+Código da série de numeração de facturas
+electrónicas, tendo como requisito que
+deverá conter na sua composição o ano de
+emissão das facturas, com 2 ou 4 dígitos
+(exemplos: 25 ou 2025), deverá ser composto
+por caracteres alfanuméricos.
+
+seriesYear
+
+integer
+
+N/A
+
+Sim
+
+Ano de emissão associado à série de
+numeração das facturas. De 1 de Janeiro até
+15 de Dezembro é possível criar séries
+somente para o ano de sistema, após essa
+data é possível criar séries para o ano de
+sistema e para o ano imediatamente posterior
+ao do sistema.
+
+documentType
+
+string
+
+“minlength”: 2
+“maxlength”: 2
+
+Sim
+
+Tipo de documento de facturação electrónica,
+com os seguintes valores possíveis e
+significados:
+
+e FA- Factura de Adiantamento
+
+e FT-Factura
+
+e FR- Factura/Recibo
+
+e FG-Factura Global
+
+e AC- Aviso de Cobrança
+
+e AR- Aviso de Cobrança/Recibo
+
+e TV- Talão de Venda
+
+e RC- Recibo Emitido
+
+e RG- Outros Recibos Emitidos
+
+e RE- Estorno ou Recibo de Estorno
+
+e ND- Nota de Débito
+
+e NC- Nota de Crédito
+
+e AF- Factura/Recibo de
+
+Autofacturação
+
+e RP- Prémio ou Recibo de Prémio
+
+e RA- Resseguro Aceite
+
+e CS- Imputação a Co-seguradoras
+
+e LD- Imputação a Co-seguradora
+
+Líder
+
+firsstDocumentNumber
+
+Integer
+
+“minimum”: 1
+
+Sim
+
+Primeiro número de factura a gerar nesta
+série de facturas (normalmente será o
+número 1).
+
+=== PÁGINA p-23
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19185
+
+Parâmetros de saída
+
+HTTP code Tipo Descrição
+(JSON)
+
+200 Integer Código de resultado do pedido (1 = sucesso, O = insucesso)
+resultCode
+
+400 array Registo de pedido efectuado com erros, sendo devolvida uma
+errorList ista de erros na recepção dos dados da factura.
+
+Composição (items) do array errorList
+
+Campo Tipo Atributos Obrigatório Descrição
+JSON)
+idError string |N/A Sim Código do erro (ver tabela na secção
+5.5.5).
+descriptionError string IN/A Sim Descrição do erro (ver tabela na
+secção 5.5.5).
+
+Serviço Listar Séries de Numeração de Facturas (listarFacturas)
+
+Serviço destinado a obter a lista de séries de numeração registadas em nome do
+contribuinte, devolvendo em resposta a lista de séries de numeração encontradas e
+respectivas datas de emissão.
+
+Parâmetros de entrada
+Campo
+
+Tipo Atributos
+
+(JSON)
+
+Obrigatório
+
+Descrição
+
+schemaVersion
+
+string IN/A
+
+Sim
+
+Versão do schema do serviço,
+exemplo “1.0”
+
+submissionid
+
+string IN/A
+
+Sim
+
+Identificador da solicitação
+
+fomecido pelo barramento, no
+
+formato: xxxxx-99999999-9999
+
+em que:
+
+e x-é um dígito do
+alfabeto letra
+
+- 9-é um dígito numérico
+
+taxRegistrationNumber
+
+string ['maxlength”:
+
+15
+
+Sim
+
+Número fiscal de contribuinte
+
+submissionTimeStamp
+
+string IN/A
+
+Sim
+
+Timestamp de submissão do
+
+pedido no formato ISO 8601,
+
+exemplos:
+
+e "2025-05-27T14:30:002"
+(em UTC)
+
+e "2025-05-27714:30:00-
+03:00" (com informação
+de timezone)
+
+=== PÁGINA p-24
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19186
+
+softwarelnfo
+
+object
+
+N/A
+
+Sim
+
+Objecto com os dados do
+Software de Facturação
+
+jwsSignature
+
+string
+
+'minlength”:
+256
+'maxlength”:
+256
+
+Sim
+
+Assinatura do contribuinte
+aderente a consultar,
+encriptação usando a chave
+privada do contribuinte aderente
+à facturação electrónica com os
+seguintes campos da pesquisa:
+
+e taxRegistrationNumber
+
+* documentNo
+
+seriesCode
+
+string
+
+'minlength”:
+3
+'maxlength”:
+60
+
+Não
+
+Código da série de numeração
+de documentos de facturação
+electrónica, tendo como
+requisito que deverá conter na
+sua composição o ano de
+emissão dos documento de
+facturação, com 2 ou 4 dígitos
+
+exemplos: 25 ou 2025), deverá
+ser composto por caracteres
+alfanuméricos.
+
+seriesY ear
+
+integer
+
+N/A
+
+Não
+
+Ano de emissão associado à
+série de numeração dos
+documentos de facturação. De
+1 de Janeiro até 15 de
+Dezembro é possível criar
+séries somente para o ano de
+sistema, após essa data é
+possível criar séries para o ano
+de sistema e para o ano
+mediatamente posterior ao do
+sistema.
+
+documentType
+
+string
+
+'minlength”:
+2
+'maxlength”:
+2
+
+Não
+
+Tipo de documento de
+facturação electrónica, com os
+seguintes valores possíveis e
+significados:
+e FA-Factura de
+Adiantamento
+e FT-Factura
+e FR-Factura/Recibo
+e FG- Factura Global
+e AC - Aviso de Cobrança
+e AR- Aviso de
+Cobrança/Recibo
+e TV-Talão de Venda
+
+=== PÁGINA p-25
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19187
+
+e RC-Recibo Emitido
+
+e RG-Outros Recibos
+Emitidos
+
+e RE- Estorno ou Recibo
+de Estorno
+
+e ND- Nota de Débito
+
+e NC- Nota de Crédito
+
+e AF- Factura/Recibo de
+Autofacturação
+
+e RP- Prémio ou Recibo
+de Prémio
+
+e RA -Resseguro Aceite
+
+e CS- Imputação a Co-
+seguradoras
+
+e LD- Imputação a Co-
+seguradora Líder
+
+seriesStatus string [minlength”. Não Estado da série de numeração
+2 da facturação, com os
+'maxlength”: seguintes valores possíveis e
+2 significados:
+
+- A-Série aberta
+
+e U-Série em utilização
+
+- F-Série fechada (após
+expirado o respectivo
+ano de emissão)
+
+Parâmetros de Saída
+
+HTTP Tipo (JSON) Descrição
+code
+200 object Registo de pedido efectuado com sucesso sendo devolvido
+seriesListResult um object do tipo seriesListResult com os dados das séries
+de numeração de facturas encontradas.
+422 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E94” - “erro na
+chamada, nif diferente”
+429 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E98” - “erro na
+chamada, demasiadas solicitações repetidas”
+400 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E96” -
+"solicitação mal efectuada — erro de estrutura”
+
+=== PÁGINA p-26
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19188
+
+Composição (properties) do object seriesListResult
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+seriesResultCount integer IN/A Sim Número de séries encontradas na
+pesquisa realizada e para os
+critérios de pesquisa especificados.
+seriesinfo array  IN/A Sim Array com a lista de dados das
+séries (object seriesinfo).
+
+Composição (properties) do array seriesinto
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+seriesCode string |'minlength”: Não Código da série de numeração
+3 de facturas electrónicas.
+“maxlength”:
+60
+seriesY ear integer |IN/A Não Ano de emissão associado à
+série de numeração das
+facturas.
+documentType string |'minlength”. Não Tipo de documento de
+2 facturação electrónica, com os
+“maxlength”: seguintes valores possíveis e
+2 significados:
+
+e FA-Factura de
+Adiantamento
+
+e FT-Factura
+
+e FR-Factura/Recibo
+
+e FG-Factura Global
+
+e AC- Aviso de Cobrança
+
+e AR- Aviso de
+Cobrança/Recibo
+
+e TV-Talão de Venda
+
+e RC-Recibo Emitido
+
+e RG- Outros Recibos
+Emitidos
+
+e RE-Estomo ou Recibo
+de Estorno
+
+e ND- Nota de Débito
+
+e NC- Nota de Crédito
+
+e AF - Factura/Recibo de
+Autofacturação
+
+e RP- Prémio ou Recibo de
+Prémio
+
+e RA-Resseguro Aceite
+
+=== PÁGINA p-27
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19189
+
+e CS-Imputação a Co-
+seguradoras
+
+e LD-Imputação a Co-
+seguradora Líder
+
+seriesStatus string |'minlength”: Não Estado da série de numeração
+2 da facturação, com os seguintes
+“maxlength”: valores possíveis e significados:
+2 « A-Série aberta
+
+e U- Série em utilização
+e F- Série fechada (após
+expirado o respectivo ano
+
+de emissão)
+seriesCreationDate string |format”: Sim Data de criação da série
+“date” electrónica
+firstDocumentCreated |string IN/A Sim Número do primeiro documento
+de facturação criado na série
+lastDocumentCreated string | |IN/A Não Ultima factura criada na série
+
+(desde que já tenha sido
+utilizada na criação de facturas)
+
+invoicingMethod string |'minlength”: Sim Qual o método para geração das
+2 facturas, com os seguintes
+“maxlength”: valores possíveis e significados:
+4 e FEPC —Facturação
+
+electrónica com emissão
+no Portal do Contribuinte
+
+e FESF — Facturação
+electrónica com emissão
+via Software de
+Facturação
+
+e SF- Facturação não
+electrónica com emissão
+via Software de
+Facturação
+
+Serviço Validar Documento de Facturação Electrónica (ValidarDocumento)
+
+Serviço destinado a transmitir a confirmação ou rejeição de uma factura ou documento
+equivalente em que o solicitante é indicado como adquirente e definir a percentagem IVA
+Dedutível a considerar sempre que aplicável.
+=== PÁGINA p-28
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19190
+
+Parâmetros de entrada
+Campo
+
+Tipo
+(JSON)
+
+Atributos
+
+Obrigatório Descrição
+
+schemaVersion
+
+string
+
+N/A
+
+Sim
+
+Versão do schema do serviço,
+exemplo “1.0”.
+
+submissionid
+
+string
+
+N/A
+
+Sim
+
+Identificador da solicitação
+fornecido pelo barramento, no
+formato: xxxxx-99999999-
+9999 em que:
+e x-é um dígito do
+alfabeto letra;
+- 9-é um dígito
+numérico.
+
+taxRegistrationNumber
+
+string
+
+'maxlength”
+15
+
+Sim
+
+Número fiscal de contribuinte.
+
+submissionTimeStamp
+
+string
+
+N/A
+
+Sim
+
+Timestamp de submissão do
+pedido no formato ISO 8601.
+Exemplos:
+
+e "2025-05-
+27714:30:002" (em
+UTC);
+
+e "2025-05-27714:30:00-
+03:00" (com
+informação de
+timezone).
+
+softwarelnfo
+
+object
+
+N/A
+
+Sim
+
+Objecto com os dados do
+Software de Facturação
+
+jwsSignature
+
+string
+
+'minlength”:
+256
+'maxlength”
+| 256
+
+Sim
+
+Assinatura do contribuinte
+aderente a consultar,
+encriptação usando a chave
+privada do contribuinte
+aderente à facturação
+electrónica com os seguintes
+campos da pesquisa:
+
+e taxRegistrationNumber;
+
+e documentNo.
+
+documentNo
+
+string
+
+'maxlength”
+: 60
+
+Sim
+
+Identificador do documento de
+facturação que se pretende
+confirmar/rejeitar.
+
+action
+
+string
+
+'minlength”:
+1
+
+Sim
+
+Acção que o adquirente
+pretende aplicar ao
+
+documento de facturação
+
+=== PÁGINA p-29
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19191
+'maxlength” emitido, com os seguintes
+1 valores possíveis e
+significados:
+e C-Confirmação do
+documento
+e R- Rejeição do
+documento
+deductibleVATPercentagenumber ['minimum”: INão Percentagem de IVA
+o) dedutível a considerar para o
+'maximum”: documento em análise sendo
+100 utilizado quando action for
+“C” (confirmação do
+documento) e o tipo de
+documento não for
+considerado recibo nem nota
+de crédito. Caso este campo
+não esteja preenchido será
+considerado que o
+contribuinte não tem direito a
+dedução.
+Parâmetros de Saída
+HTTP code Tipo Descrição
+JSON)
+200 object Registo de pedido efectuado com sucesso sendo devolvido
+statusResult um object do tipo statusFE Result com os dados da factura
+pesquisada.
+422 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E94” - “erro na
+chamada, nif diferente”
+400 Object Chamada ocorreu com erro, sendo enviado uma mensagem
+errorEntry (código e descrição) correspondente ao erro “E96” -
+"solicitação mal efectuada — erro de estrutura”
+
+Composição (properties) do
+
+object confirmRejectResult
+
+Campo Tipo Atributos Obrigatório Descrição
+JSON)
+actionResultCode string |minlength”. [Sim Código de resultado da
+4 solicitação, com os seguintes
+“maxlength”: valores possíveis e significados:
+5 e C OK-—Confirmação do
+documento com sucesso
+e R OK- Rejeição do
+documento com sucesso
+
+=== PÁGINA p-30
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19192
+
+e C NOK -— Confirmação
+do documento não
+possível
+
+e R NOK - Rejeição do
+documento não possível
+
+documentStatusCode Istring |minlength”.
+
+3
+
+4
+
+“maxlength”:
+
+Sim
+
+Código de estado em que o
+documento a actualizar foi
+encontrado antes de tentada a
+realização desta acção, com os
+seguintes valores possíveis e
+significados:
+
+e S A-Anulado
+
+e S C-Confirmado
+
+e SlI-Inválido
+
+e S RG- Registado
+S RJ- Rejeitado
+e SV-Válido
+
+errorList
+
+array  |N/A
+
+Array com os erros encontrados
+que impediram a execução com
+sucesso da acção solicitada
+confirmação ou rejeição do
+documento) sobre o documento
+de facturação identificado no
+campo documentNo, sendo
+obrigatório quando
+actionResultCode for
+
+“Cc NOK” ou “R NOK”.
+
+Terá uma linha para cada erro
+encontrado.
+
+Composições (items) do array errorList e (properties) do object errorEntry
+
+Campo Tipo Atributos Obrigatório Descrição
+(JSON)
+errorCode string |minlength”. Sim Código de erro
+3
+maxlength”:
+3
+errorDescription string |ºmaxlength”: [Sim Descrição do erro
+
+100
+
+=== PÁGINA p-31
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19193
+
+ANEXO Il
+Modelo de Facturação Electrónica
+
+Adopta-se o modelo de validação a posteriori, modelo em que os documentos electrónicos
+são emitidos e entregues ao adquirente sem necessidade de validação prévia pela
+Administração Geral Tributária (AGT), sendo a respectiva validação efectuada
+posteriormente, com base em regras pré-estabelecidas de controlo. Este modelo de
+facturação electrónica assenta essencialmente na troca de informações por via de serviços.
+
+Enviar para Contribuinte
+
+Emitir toctura |
+1.1 Assinar foctura
+1.2Validar Lo Enviar paraAGT Consultar toctura o
+E TE
+-
+
+Contribuimo Contribuinte
+(Vendedor) [2) (Consumidor)
+
+o)
+
+Assincrono
+
+==] 3.1 validação da factura
+| 3.1.1 se aprovado, armazena na Base de Dados
+3,1.2 se rejeitada, devolver para correção
+
+Serviços do Modelo de Facturação Electrónica. Na definição da solução técnica que
+atenda aos requisitos funcionais previstos neste documento será importante ter em linha de
+conta os seguintes aspectos:
+
+e Apenas contribuintes que tenham aderido à facturação electrónica podem utilizar os
+serviços online (webservices) de facturação electrónica previstos para o respectivo
+módulo;
+
+e Os softwares de facturação devem comunicar as séries de numeração de Facturas
+Electrónicas para os diferentes tipos de documentos electrónicos;
+
+e Os contribuintes podem enviar/registar facturas electrónicas individualmente ou em
+lotes de facturas até um limite previamente predefinido;
+
+e O serviço de solicitação de registo de facturas responde de imediato se conseguiu
+registar a solicitação ou se existiu erro estrutural na cnamada;
+
+e Avalidação do conteúdo do registo solicitado é efectuada posteriormente à resposta
+de aceitação da solicitação, sendo disponibilizado um segundo serviço que permite
+à entidade emissora consultar o resultado do processo de validação;
+
+e Avalidação das facturas deve ser realizada num intervalo de tempo razoável e que
+atenda à infraestrutura tecnológica que suporta o sistema de facturação electrónica;
+
+e Sempre que uma solicitação, por algum motivo, seja rejeitada ou considerada
+inválida tal implica que, para efeitos fiscais, uma determinada factura ou conjunto de
+facturas não existem;
+
+e Cada contribuinte deve ter a possibilidade de consultar as facturas electrónicas
+emitidas em seu nome bem como informação do seu detalhe, podendo, num período
+de 2 meses, validar um documento de facturação em que foi identificado como
+adquirente.
+=== PÁGINA p-32
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19194
+
+ANEXO III
+Especificações Técnicas do Sistema de Facturação Electrónica
+
+Nos pontos seguintes são identificados os serviços REST necessários para integração
+entre o sistema SIGT e os softwares de facturação sob a responsabilidade directa da AGT,
+nomeadamente:
+
+Método Serviço Tipo Elo a Descrição
+comunicação
+Serviço que responde ao processo solicitar registo
+POST | registarFactura Síncrono de factura electrónica e registar dados para
+emissão de factura.
+POST obterEstado Síncrono Obter estado de validação da factura electrónica.
+POST listarFacturas Sincrono Obter lista de facturas electrónicas emitidas num
+período em nome de um determinado contribuinte.
+POST | consultarFactura Sincrono Obter dados de factura electrónica emitida em
+nome de um determinado contribuinte.
+POST solicitarSerie Sincrono Solicitar criação de nova série de numeração de
+facturas electrónicas.
+Obter lista de séries de numeração de facturas
+POST listarSeries Síncrono electrónicas em utilização por um emissor de
+facturas.
+POST lvalidarDocumento Síncrono Validar (confirmarirejeitar) um documento de
+facturação emitido em nome do adquirente.
+
+Os seguintes requisitos técnicos foram definidos:
+e Os Serviços Web têm de respeitar a arquitectura REST;
+e Os dados têm de ser transmitidos em formato JSON;
+e Tem de ser suportados os caracteres e formatos numéricos portugueses;
+e Ao nível de auditoria, todos os eventos, erros e alterações têm de ser registados;
+
+e Os campos não obrigatórios poderão não constar na respectiva chamada ou
+resposta, e se constarem poderão aparecer com o valor null, permitido em JSON,
+significando que não têm valor atribuído.
+
+Especificações do QR Code a utilizar nos documentos impressos
+
+Parão
+Versão ERES
+(5%
+fiododedados E
+
+Codificação de caracteres TF-8
+
+URL codificada ttps://portaldocontribuinte.minfin.gov.ao/consultar-
+e?documentNo
+
+Formato do arquivo PNG, 350x350 px
+
+Método de substituição de ada espaço deve ser substituído pela sequência %20
+espaços no documentNo a incluir
+
+na url
+
+=== PÁGINA p-33
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19195
+
+Deverá ser incluído o logotipo da AGT (incluído no cabeçalho deste documento),
+devendo nesse caso ocupar uma percentagem inferior a 20% do total da imagem.
+
+Tabelas a que se refere o Anexo |
+
+Tabela 1 - Códigos de Actividade Económica — CAE
+
+A lista de códigos definidos para os CAE, é baseada na lista publicada pelo INE, nomeadamente:
+
+Código Descrição
+01111 Cerealicultura (excepto arroz)
+
+01112 Leguminosas secas e sementes oleaginosas
+
+01120 Cultura de arroz
+
+01131 Cultura de mandioca
+
+01132 Cultura de produtos horticolas e de outras raízes e tubérculos
+01140 Cultura de cana-de-açúcar
+
+01150 Cultura de tabaco
+
+01161 Cultura de algodão
+
+01162 Cultura de sisal
+
+01163 Outras culturas de plantas têxteis
+
+01191 Cultura de flores e de plantas ornamentais
+
+01192 Outras culturas temporárias, n. e
+
+01210 Viticultura
+
+01220 Culturas de frutos tropicais e subtropicais
+
+=== PÁGINA p-34
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19196
+
+Código Descrição
+
+01230 Cultura de citrinos
+
+01240 Cultura de pomóideas e prunóideas
+01250 Cultura de outros frutos (inclui casca rija) em árvores e arbustos
+01260 Cultura de frutos oleaginosos
+
+01271 Cafeicultura
+
+01272 Outras culturas de plantas destinadas à preparação de bebidas
+
+01280 Cultura de especiarias, plantas aromáticas, medicinais e farmacêuticas
+01290 Outras culturas permanentes
+
+01300 Cultura de materiais de propagação vegetativa
+
+01410 Bovinicultura
+
+01420 Criação de gado cavalar, asinino e muar
+
+01430 Criação de gado ovino e caprino
+
+01440 Suinicultura
+
+01450 Avicultura
+
+01491 Apicultura
+
+01492 Criação de animais de companhia
+01493 Outra produção animal, n.e
+01500 Agricultura e produção animal combinadas
+
+01610 Actividades dos serviços relacionados com a agricultura
+
+01620 Actividades dos serviços relacionados com a produção animal, excepto serviços veterinários
+
+01630 Preparação de produtos agrícolas para a venda
+
+01640 Preparação e tratamento de sementes para propagação
+
+01700 Caça, repovoamento cinegético e actividades dos serviços relacionados
+02100 Silvicultura e outras actividades florestais
+
+02200 Exploração florestal
+
+02300 Extracção de cortiça, resina e apanha de outros produtos florestais, excepto madeira
+02400 Actividades dos serviços relacionados com a silvicultura e exploração florestal
+03111 Pesca maritima
+
+03112 Apanha de algas e de outros produtos do mar
+
+03120 Pesca e apanha de produtos em águas interiores
+
+03210 Aquacultura em águas salgadas e salobras
+
+03220 Aquacultura em águas doces
+
+05100 Extracção de hulha
+
+05200 Extracção de lenhite
+
+06100 Extracção de petróleo bruto
+
+=== PÁGINA p-35
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19197
+
+Código Descrição
+
+06200 Extracção de gás natural
+
+07100 Extracção e preparação de minérios de ferro
+
+07210 Extracção e preparação de minérios de urânio e de tório
+
+07291 Extracção e preparação de minérios de cobre
+
+07292 Extracção e preparação de minérios de metais preciosos
+
+07293 Extracção e preparação de outros minérios metálicos não ferrosos (excepto minérios de urânio e de
+tório), ne.
+
+08101 Extracção de mármore e rochas similares
+
+08102 Extracção de calcário, gesso e cré
+
+08103 Extracção de saibro, areia e pedra britada
+
+08104 Extracção de argila e caulino
+
+08910 Extracção de minerais para a indústria química e para a fabricação de adubos
+
+08920 Extracção de sal
+
+08991 Extracção de diamantes
+
+08992 Extracção de outros minerais não metálicos, n.e
+
+09100 Actividades dos serviços relacionados com a extracção de petróleo e gás, excepto a prospecção
+
+09900 Outras actividades dos serviços relacionados com as indústrias extractivas
+
+10101 Abate de gado (produção de carne)
+
+10102 Abate de aves (produção de carne)
+
+10103 Fabricação de produtos à base de came
+
+10201 Preparação de produtos da pesca e da aquacultura
+
+10202 Congelação de produtos da pesca e da aquacultura
+
+10203 Conservação de produtos da pesca e da aquacultura em azeite e outros óleos vegetais e outros
+molhos
+
+10204 Secagem, salgas e outras actividades de transformação de produtos da pesca e da aquacultura
+
+10301 Fabricação de sumos de frutos e de produtos hortícolas
+
+10302 Congelação de frutos e de produtos hortícolas
+
+10303 Fabricação de doces, compotas, geleias e marmelada
+
+10304 Secagem e desidratação de frutos e produtos hortícolas
+
+10305 Preparação e conservação de batatas
+
+10306 Preparação e conservação de frutos e de produtos hortícolas, por outros processos
+
+10401 Produção e refinação de óleos gorduras vegetais
+
+10402 Produção e refinação de óleos e gorduras animais
+
+10403 Fabricação de margarinas e de gorduras alimentares similares
+
+10501 Indústrias do leite e derivados
+
+10502 Fabricação de gelados e sorvetes
+
+=== PÁGINA p-36
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19198
+Código Descrição
+10611 Moagem de cereais
+10612 Descasque, branqueamento e glaciagem do arroz
+10613 Transformação de cereais e leguminosas, n.e
+10620 Fabricação de amidos, féculas e produtos afins
+10711 Panificação
+10712 Pastelaria
+10713 Fabricação de bolachas, biscoitos, tostas e pastelaria de conservação
+10720 Indústria do açúcar
+10730 Indústria do cacau, do chocolate e dos produtos de confeitaria
+10740 Fabricação de massas alimentícias, cuscuz e similares
+10750 Fabricação de refeições e pratos pré-cozinhados
+10791 Refinação do sal
+10792 Indústria do café e do chá
+10793 Fabricação de outros produtos alimentares diversos, n.e
+10800 Fabricação de alimentos para animais
+11010 Fabricação de bebidas alcoólicas destiladas
+11020 Produção de vinho e de bebidas fermentadas de frutos
+11030 Fabricação de cerveja e malte
+11041 Engarrafamento de águas minerais naturais e de nascente
+11042 Fabricação de refrigerantes e de outras bebidas não alcoólicas, n.e.
+12000 Indústria do Tabaco
+13111 Preparação, fiação e tecelagem de algodão, de fibras artificiais, sintéticas e mistas
+13112 Fabricação de linhas de costura
+13113 Preparação, fiação e tecelagem de outras fibras têxteis
+13120 Acabamento de têxteis
+13910 Fabricação de artigos têxteis confeccionados, excepto vestuário
+13920 Fabricação de tapetes e carpetes
+13930 Fabricação de cordoaria e redes
+13991 Fabricação de bordados e rendas
+13992 Fabricação de outros artigos têxteis diversos, n.e
+14101 Confecção de vestuário de trabalho e de uniformes
+14102 Confecção de outro vestuário exterior em série
+14103 Confecção de outro vestuário exterior por medida
+14104 Confecção de outros artigos e acessórios de vestuário
+14200 Fabricação de artigos de peles com pêlo
+
+=== PÁGINA p-37
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19199
+
+Código Descrição
+
+14300 Fabricação de artigos de malha
+
+15110 Curtimenta e acabamento de peles, sem pêlo e com pêlo
+
+15120 Fabricação de artigos de viagem e de uso pessoal, de marroquinaria, de correeiro e de seleiro
+
+15200 Indústria do calçado e seus componentes
+
+16100 Serração, aplainamento e impregnação da madeira
+
+16210 Fabricação de folheados, contraplacados, painéis lamelados, de partículas, de fibras e de outros
+painéis
+
+16220 Fabricação de obras de carpintaria para a construção
+
+16230 Fabricação de embalagens de madeira
+
+16291 Fabricação de obras de cestaria, de espartaria e similares
+
+16292 Indústria da cortiça e de outras obras de madeira, n.e
+
+17010 Fabricação de pasta, de papel e cartão (excepto canelado)
+
+17020 Fabricação de papel e de cartão canelados e de embalagens de papel e cartão
+
+17030 Fabricação de artigos de papel para uso doméstico e sanitário
+
+17090 Fabricação de artigos de pasta de papel, de papel e de cartão, n.e
+
+18110 Impressão
+
+18120 Actividades relacionadas com a impressão
+
+18200 Reprodução de suportes gravados
+
+19100 Fabricação de produtos de coqueria
+
+19200 Fabricação de produtos petrolíferos refinados e de aglomerados de combustíveis
+
+20111 Fabricação de gases industriais
+
+20112 Fabricação de álcool etílico de fermentação
+
+20113 Fabricação de outros produtos químicos de base
+
+20120 Fabricação de adubos e de compostos azotados
+
+20130 Fabricação de matérias plásticas e de borracha sintética sob formas primárias
+
+20210 Fabricação de pesticidas e de outros produtos agroquímicos
+
+20220 Fabricação de tintas, vernizes e produtos similares; mastiques, tintas de impressão
+
+20231 Fabricação de sabões e detergentes, produtos de limpeza e de polimento
+
+20232 Fabricação de perfumes, cosméticos e de produtos de higiene
+
+20291 Fabricação de explosivos e artigos de pirotecnia
+
+20292 Fabricação de outros produtos químicos, diversos, n.e.
+
+20300 Fabricação de fibras sintéticas ou artificiais
+
+21000 Fabricação de produtos farmacêuticos de base e de preparações farmacêuticas
+
+22111 Fabricação de pneus e câmaras-de-ar
+
+22112 Reconstrução de pneus
+
+=== PÁGINA p-38
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19200
+
+Código Descrição
+
+22190 Fabricação de produtos de borracha, n.e.
+
+22201 Fabricação de chapas, folhas, tubos e perfis de plástico
+
+22202 Fabricação de embalagens de plástico
+
+22203 Fabricação de artigos de plástico, n.e.
+
+23100 Fabricação de vidro e artigos de vidro
+
+23910 Fabricação de produtos cerâmicos refractários
+
+23921 Fabricação de azulejos, ladrilhos, mosaicos e placas de cerâmica
+
+23922 Fabricação de tijolos, telhas e de outros produtos de barro para a construção
+23930 Fabricação de outros produtos de porcelana e cerâmicos não refractários
+
+23941 Fabricação de cimento
+
+23942 Fabricação de cal e gesso
+
+23951 Fabricação de betão pronto e produtos de betão para a construção (excepto blocos)
+
+23952 Fabricação de produtos de fibrocimento
+
+23953 Fabricação de blocos de cimento para construção
+
+23954 Fabricação de outros produtos de betão, gesso e cimento
+
+23960 Serragem, corte e acabamento de rochas omamentais e de outras pedras de construção
+23990 Fabricação de outros produtos minerais não metálicos, n.e.
+
+24100 Indústrias metalúrgicas de base do ferro e do aço
+
+24201 Obtenção e primeira transformação de metais preciosos
+
+24202 Obtenção e primeira transformação do zinco
+
+24203 Obtenção e primeira transformação de outros metais não ferrosos
+
+24310 Fundição de ferro fundido e de aço
+
+24320 Fundição de metais não ferrosos
+
+25111 Fabricação de estruturas de construções metálicas
+
+25112 Fabricação de portas, janelas e elementos similares em metal
+
+25120 Fabricação de reservatórios, recipientes, caldeiras e radiadores metálicos para aquecimento central
+25130 Fabricação de geradores de vapor (excepto caldeiras para aquecimento central)
+
+25200 Fabricação de armas e munições
+
+25910 Fabricação de produtos forjados, estampados e laminados; metalurgia dos pós
+
+25920 Tratamento e revestimento de metais; actividades de mecânica geral
+
+25931 Fabricação de cutelaria
+
+25932 Fabricação de fechaduras, dobradiças e de outras ferragens
+25933 Fabricação de ferramentas e de moldes metálicos
+25991 Fabricação de embalagens metálicas
+
+25992 Fabricação de produtos de arame, rebites, parafusos, molas e correntes metálicas
+
+=== PÁGINA p-39
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19201
+
+Código Descrição
+
+25993 Fabricação de outros produtos metálicos, n.e.
+
+26100 Fabricação de componentes e de placas, electrónicos
+
+26200 Fabricação de computadores e equipamento periférico
+
+26300 Fabricação de equipamentos de comunicação
+
+26400 Fabricação de receptores de rádio e de televisão e bens de consumo similares
+
+26510 Fabricação de instrumentos e aparelhos de medida, verificação, controlo, navegação e outros fins
+
+26520 Fabricação de relógios e material de relojoaria
+
+26600 Fabricação de equipamentos de radiação, electromedicina e electroterapêutico
+
+26700 Fabricação de material e equipamento óptico
+
+26800 Fabricação de suportes de informação magnéticos e ópticos
+
+27101 Fabricação de motores, geradores e transformadores eléctricos
+
+27102 fabricação de material de distribuição e de controlo para instalações eléctricas
+
+27200 Fabricação de acumuladores e de pilhas eléctricas
+
+27300 Fabricação de fios e cabos isolados e seus acessórios
+
+27400 Fabricação de lâmpadas eléctricas e de outro material de iluminação
+
+27501 Fabricação de electrodomésticos
+
+27502 Fabricação de aparelhos não eléctricos para o uso doméstico
+
+27900 Fabricação de outro equipamento eléctrico
+
+28110 Fabricação de motores e turbinas, excepto motores para aeronaves, automóveis e motociclos
+
+28120 Fabricação de equipamento hidráulico e pneumatico, bombas, compressores, tomeiras, e válvulas
+
+28130 Fabricação de rolamentos, de engrenagens e de outros órgãos de transmissão
+
+28140 Fabricação de fornos e queimadores
+
+28150 Fabricação de equipamento de elevação e de movimentação
+
+28160 Fabricação de máquinas e equipamento de escritório, excepto computadores e equipamento
+periférico
+
+28170 Fabricação de máquinas-ferramentas portáteis com motor
+
+28190 Fabricação de outras máquinas de uso geral
+
+28210 Fabricação de máquinas e de tractores para a agricultura, pecuária e silvicultura
+
+28220 Fabricação de outras máquinas-ferramentas para metais, excepto portáteis
+
+28230 Fabricação de máquinas para a metalurgia
+
+28250 Fabricação de máquinas para as indústrias alimentares, das bebidas e do tabaco
+
+28260 Fabricação de máquinas para as indústrias têxtil, do vestuário e do couro
+
+28290 Fabricação de outras máquinas e equipamentos para uso específico, n.e.
+
+29100 Fabricação de veículos automóveis
+
+29200 Fabricação de carroçarias, reboques e semi-reboques
+
+=== PÁGINA p-40
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19202
+
+Código Descrição
+
+29300 Fabricação de componentes e acessórios para veículos automóveis e seus motores
+30110 Construção de embarcações, excepto de recreio e desporto
+
+30120 Construção de embarcações de recreio e desporto
+
+30200 Fabricação de material circulante para caminhos-de-ferro
+
+30300 Fabricação de aeronaves, de veículos espaciais e equipamento relacionado
+30400 Fabricação de veículos militares de combate
+
+30910 Fabricação de motociclos
+
+30920 Fabricação de bicicletas e veículos para deficientes físicos
+
+30990 Fabricação de outro equipamento de transporte, n.e
+
+31001 Fabricação de mobiliário de madeira
+
+31002 Fabricação de mobiliário metálico
+
+31003 Fabricação de colchões
+
+31004 Fabricação de mobiliário n.e.
+
+32110 Fabricação de joalharia, ourivesaria e artigos similares; cunhagem de moedas
+32120 Fabricação de bijutarias
+
+32200 Fabricação de instrumentos musicais
+
+32300 Fabricação de artigos de desporto
+
+32400 Fabricação de jogos e de brinquedos
+
+32500 Fabricação de instrumentos e material médico-cirúrgico
+
+32901 Fabricação de vassouras, escovas e pincéis
+
+32902 Fabricação de canetas, lápis e similares
+
+32903 Fabricação de caixões mortuários em madeira
+
+32904 Outras indústrias transformadoras, ne.
+
+33110 Reparação e manutenção de produtos metálicos, excepto reparação de máquinas e equipamentos
+33120 Reparação e manutenção de máquinas e equipamentos
+
+33130 Reparação e manutenção de equipamento electrónico e óptico
+
+33140 Reparação e manutenção de equipamento eléctrico
+
+33150 Reparação e manutenção de equipamento de transporte, excepto veículos automóveis
+33190 Reparação e manutenção de outro equipamento
+
+33200 Instalação de máquinas e equipamentos industriais
+
+35101 Produção de electricidade
+
+35102 Transporte de electricidade
+
+35103 Distribuição e comércio de electricidade
+
+35200 Produção de gás; distribuição de combustíveis gasosos por condutas
+
+35301 Produção e distribuição de vapor, água quente e fria e ar frio por conduta
+
+=== PÁGINA p-41
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19203
+
+Código Descrição
+
+35302 Produção de gelo
+
+36000 Captação, tratamento e distribuição de água
+
+37000 Recolha, Drenagem e Tratamento de Águas Residuais
+38110 Recolha de resíduos não perigosos
+
+38120 Recolha de resíduos perigosos
+
+38210 Tratamento e eliminação de resíduos não perigosos
+
+38220 Tratamento e eliminação de resíduos perigosos
+
+38301 Valorização de sucatas e de resíduos metálicos
+
+38302 Valorização de resíduos não metálicos
+
+39000 Descontaminação e Actividades Similares
+
+41001 Promoção imobiliária
+
+41002 Construção de edifícios (residenciais e não residenciais)
+
+42100 Construção de auto-estradas, estradas, pontes, túneis, aeroportos e vias-férreas
+
+42200 Construção de redes de transporte de água, de esgotos e de outros fluidos, de distribuição de
+
+energia, de telecomunicação e de outras redes
+
+42900 Construção de outras obras de engenharia civil
+
+43100 Demolição e preparação dos locais de construção
+
+43210 Instalação eléctrica
+
+43220 Instalação de canalizações e de climatização
+
+43290 Outras instalações em construções
+
+43301 Montagem de trabalhos de carpintaria e de caixilharia
+
+43302 Estucagem, revestimento de pavimentos e de paredes
+
+43303 Outras actividades de acabamento
+
+43901 Aluguer de equipamento de construção e de demolição, com operador
+43902 Outras obras especializadas de construção, n.e
+
+45100 Comércio de veículos automóveis
+
+45200 Manutenção e reparação de veículos automóveis
+
+45300 Comércio de peças e acessórios para veículos automóveis
+
+45401 Comércio por grosso e a retalho de motociclos, de suas peças e acessórios
+45402 Manutenção e reparação de motociclos, de suas peças e acessórios
+
+46101 Agentes do comércio por grosso de matérias-primas agricolas e têxteis, animais vivos e produtos
+
+semi-acabados
+
+46102 Agentes do comércio por grosso de combustíveis, minérios, metais, produtos químicos para a
+indústria, máquinas, equipamentos industriais, embarcações e aeronaves
+
+46103 Agentes do comércio por grosso de madeira, materiais de construção, mobiliário, artigos para uso
+doméstico e ferragens
+
+46104 Agentes do comércio por grosso de produtos alimentares, bebidas e tabaco
+
+=== PÁGINA p-42
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19204
+
+Código Descrição
+
+46105 Agentes do comércio por grosso misto sem predominância
+
+46106 Agentes especializados do comércio por grosso de produtos, n.e.
+
+46201 Comércio por grosso de cereais, sementes, leguminosas, oleaginosas e alimentos para animais
+
+46202 Comércio por grosso de flores e plantas
+
+46203 Comércio por grosso de animais vivos, de peles e couro
+
+46204 Comércio por grosso de tabaco em bruto
+
+46301 Comércio por grosso de frutas e de produtos hortícolas
+
+46302 Comércio por grosso de carne e de produtos à base de carne
+
+46303 Comércio por grosso de leite e derivados, ovos, azeite, óleo e gorduras alimentares
+
+46304 Comércio por grosso de bebidas
+
+46305 Comércio por grosso de tabaco
+
+46306 Comércio por grosso de café, açúcar, chá, cacau, produtos de confeitaria e de especiarias
+
+46307 Comércio por grosso de peixe, crustáceos e moluscos
+
+46308 Comércio por grosso de outros produtos alimentares
+
+46411 Comércio por grosso de têxteis, vestuário e acessórios
+
+46412 Comércio por grosso de calçado
+
+46491 Comércio por grosso de electrodomésticos, aparelhos de rádio e de televisão
+
+46492 Comércio por grosso de louças em cerâmica e em vidro, de papel de parede e de produtos de
+limpeza
+
+46493 Comércio por grosso de perfumes, de produtos de higiene e de produtos farmacêuticos
+
+46494 Comércio por grosso de artigos de papelaria, livros, revistas e jornais
+
+46495 Comércio por grosso de outros bens de consumo, excepto alimentares, bebidas e tabaco
+
+46510 Comércio por grosso de computadores, equipamentos periféricos e programas informáticos,
+excepto outras máquinas e equipamento de escritório
+
+46520 Comércio por grosso de outros componentes e equipamentos electrónicos e de telecomunicações
+
+46530 Comércio por grosso de máquinas e equipamentos agrícolas
+
+46591 Comércio por grosso de máquinas-ferramentas, de máquinas para construção e de engenharia civil
+
+46592 Comércio por grosso de mobiliário de escritório, de máquinas e equipamento de escritório, excepto
+computadores
+
+46593 Comércio por grosso de máquinas e equipamentos para a indústria, comércio, navegação e para
+outros fins, n.e.
+
+46610 Comércio por grosso de combustíveis sólidos, líquidos, gasosos e produtos derivados
+
+46620 Comércio por grosso de minérios e de metais
+
+46631 Comércio por grosso de madeira em bruto e de produtos derivados
+
+46632 Comércio por grosso de materiais de construção (excepto madeira) e equipamento sanitário
+
+46633 Comércio por grosso de ferragens, ferramentas manuais e artigos para canalização e aquecimento
+
+46691 Comércio por grosso de produtos químicos
+
+=== PÁGINA p-43
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19205
+
+Código Descrição
+
+46692 Comércio por grosso de bens intermédios não agrícolas, n.e., de desperdícios e de sucatas
+
+46900 Comércio por grosso, n.e
+
+47111 Comércio a retalho em supermercados e hipermercados
+
+47112 Comércio a retalho em outros estabelecimentos não especializados, com predominância de
+produtos alimentares, bebidas ou tabaco
+
+47190 Comércio a retalho em estabelecimentos não especializados, sem predominância de produtos
+alimentares, bebidas ou tabaco
+
+47211 Comércio a retalho de frutas e de produtos hortícolas, em estabelecimentos especializados
+
+47212 Comércio a retalho de carne e de produtos à base de came, em estabelecimentos especializados
+
+47213 Comércio a retalho de peixe, crustaceos e moluscos, em estabelecimentos especializados
+
+47214 Comércio a retalho de pão, de produtos de pastelaria e de confeitaria, em estabelecimentos
+especializados
+
+47215 Comércio a retalho de outros produtos alimentares, em estabelecimentos especializados
+
+47220 Comércio a retalho de bebidas, em estabelecimentos especializados
+
+47230 Comércio a retalho de tabaco, em estabelecimentos especializados
+
+47300 Comércio a retalho de combustível para veículos a motor, em estabelecimentos especializados
+
+47411 Comércio a retalho de computadores, equipamentos periféricos e programas informáticos
+(software), em estabelecimentos especializados
+
+47412 Comércio a retalho de equipamento de telecomunicações, em estabelecimentos especializados
+
+47420 Comércio a retalho de equipamento audiovisual, em estabelecimentos especializados
+
+47510 Comércio a retalho de têxteis, em estabelecimentos especializados
+
+47520 Comércio a retalho de ferragens, tintas, vidros, equipamento sanitário, ladrilhos e similares, em
+estabelecimentos especializados
+
+47530 Comércio a retalho de carpetes, tapetes, cortinados e outros revestimentos para paredes e
+pavimentos, em estabelecimentos especializados
+
+47591 Comércio a retalho de electrodomésticos, em estabelecimentos especializados
+
+47592 Comércio a retalho de mobiliário e artigos de iluminação, em estabelecimentos especializados
+
+47593 Comércio a retalho de louças, cutelaria e de outros artigos similares para uso doméstico, em
+estabelecimentos especializados
+
+47594 Comércio a retalho de outros artigos para o lar, n.e., em estabelecimentos especializados
+
+47610 Comércio a retalho de livros, jornais e artigos de papelaria, em estabelecimentos especializados
+
+47620 Comércio a retalho de discos, CD, DVD, cassetes e produtos similares, em estabelecimentos
+especializados
+
+47630 Comércio a retalho de artigos de desporto, de campismo e lazer, em estabelecimentos
+especializados
+
+47640 Comércio a retalho de brinquedos e jogos, em estabelecimentos especializados
+
+47711 Comércio a retalho de vestuário, em estabelecimentos especializados
+
+47712 Comércio a retalho de marroquinaria e artigos de viagem e de calçado, em estabelecimentos
+
+especializados
+
+=== PÁGINA p-44
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19206
+
+Código Descrição
+
+47720 Comércio a retalho de produtos farmacêuticos, médicos e ortopédicos, cosméticos e de higiene, em
+estabelecimentos especializados
+
+47731 Comércio a retalho de relógios e de artigos de ourivesaria e joalharia, em estabelecimentos
+especializados
+
+47732 Comércio a retalho de flores, plantas, sementes e fertilizantes, em estabelecimentos especializados
+
+47733 Comércio a retalho de combustíveis para uso doméstico, em estabelecimentos especializados
+
+47734 Comércio a retalho de material óptico, fotográfico, cinematográfico e de instrumentos de precisão,
+em estabelecimentos especializados
+
+47735 Comércio a retalho de animais de estimação e respectivos alimentos, em estabelecimentos
+especializados
+
+47736 Comércio a retalho de máquinas e de outro material de escritório, em estabelecimentos
+especializados
+
+47737 Comércio a retalho de outros produtos novos, n.e., em estabelecimentos especializados
+
+47740 Comércio a retalho de artigos em segunda mão, em estabelecimentos especializados
+
+47810 Comércio a retalho em bancas, feiras e unidades móveis de venda de produtos alimentares,
+bebidas e tabaco
+
+47820 Comércio a retalho em bancas, feiras e unidades móveis de venda de têxteis, vestuário, calçado,
+malas e similares
+
+47890 Comércio a retalho em bancas, feiras e unidades móveis de venda de outros produtos, n.e
+
+47910 Comércio a retalho por correspondência ou via Intemet
+
+47990 Comércio a retalho por outros métodos, não efectuado em estabelecimentos, em bancas, feiras ou
+unidades móveis
+
+49110 Transporte interurbano de passageiros por caminho-de-ferro
+
+49120 Transporte de mercadorias por caminho-de-ferro
+
+49210 Transportes terrestres, urbanos e suburbanos, regulares de passageiros
+
+49220 Outros transportes terrestres não regulares de passageiros
+
+49230 Transportes rodoviários de mercadorias
+
+49300 Transportes por oleodutos e gasodutos
+
+50110 Transportes marítimos de passageiros
+
+50120 Transportes marítimos de mercadorias
+
+50210 Transportes de passageiros por vias navegáveis interiores
+
+50220 Transportes de mercadorias por vias navegáveis interiores
+
+51100 Transportes aéreos de passageiros
+
+51200 Transportes aéreos de mercadorias
+
+52100 Armazenagem
+
+52210 Actividades auxiliares dos transportes terrestres
+
+52220 Actividades auxiliares dos transportes por água
+
+52230 Actividades auxiliares dos transportes aéreos
+
+=== PÁGINA p-45
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19207
+
+Código Descrição
+
+52240 Manuseamento de carga
+
+52290 Actividades de agentes transitários, aduaneiros e de outras actividades de apoio ao transporte
+
+53100 Actividades dos correios nacionais
+
+53200 Actividades postais independentes dos correios nacionais
+
+55111 Hotéis com restaurante
+
+55112 Complexos turísticos com restaurante
+
+55113 Pensões com restaurante
+
+55114 Estabelecimento hoteleiros com restaurante, n.e
+55121 Hotéis sem restaurante
+
+55122 Pensões sem restaurante
+
+55123 Estabelecimentos hoteleiros sem restaurante, n.e.
+55200 Parques de campismo e de caravanismo
+
+55900 Outros locais de alojamento
+
+56101 Restaurantes do tipo tradicional
+
+56102 Restaurantes com lugares ao balcão (Snack bares)
+56103 Restaurantes sem serviço de mesa
+
+56104 Restaurantes, n.e.
+
+56210 Formecimento de refeições para eventos
+
+56220 Outras actividades de serviços de refeições
+
+56301 Cafés e pastelarias
+
+56302 Cervejarias e bares
+
+56303 Outros estabelecimentos de bebidas
+
+58110 Edição de livros
+
+58120 Edição de listas destinadas a consulta
+
+58130 Edição de jornais, revistas e de outras publicações periódicas
+
+58190 Outras actividades de edição
+
+58200 Edição de programas informáticos
+
+59110 Produção de filmes, vídeos e de programas de televisão
+
+59120 Actividades técnicas de pos-produção de filmes, vídeos e programas de televisão
+
+59130 Distribuição de filmes, vídeos e programas de televisão
+
+59140 Projecção de filmes e de vídeos
+
+59200 Actividades de gravação de som e de edição de música
+
+60100 Actividades de rádio
+
+60200 Actividades de televisão
+
+61100 Actividades de telecomunicações por fio
+
+=== PÁGINA p-46
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19208
+
+Código Descrição
+
+61200 Actividades de telecomunicações sem fio
+
+61300 Actividades de telecomunicações por satélite
+
+61900 Outras actividades de telecomunicações
+
+62010 Actividades de programação informática
+
+62021 Actividades de consultoria em informática
+62022 Gestão e exploração de equipamento informático
+62090 Outras actividades dos serviços relacionadas com as tecnologias de informação e informática
+
+63110 Actividades de processamento de dados, domiciliação de informação e actividades relacionadas
+
+63120 Portais Web
+
+63910 Actividades de agências de notícias
+
+63990 Outras actividades dos serviços de informação, n.e
+
+64110 Banco Central
+
+64191 Instituições bancárias
+64192 Outra intermediação monetária, n.e
+64200 Actividades das sociedades gestoras de participações sociais
+
+64300 Trusts, fundos e entidades financeiras similares
+
+64910 Actividade de locação financeira
+
+64920 Outras actividades de crédito
+
+64990 Outras actividades de serviços financeiros, n.e. (excepto seguros e fundos de pensões )
+
+65110 Seguros de vida e outras actividades complementares de segurança social
+
+65120 Seguros não vida
+
+65200 Resseguros
+
+65300 Fundos de pensões
+
+66110 Administração de mercados financeiros
+
+66120 Actividades de negociação por conta de terceiros em valores mobiliários e outros instrumentos
+
+financeiros
+66190 Outras actividades auxiliares dos serviços financeiros, excepto seguros e fundos de pensões
+66210 Actividades de avaliação do risco e danos
+
+66220 Actividade de mediadores de seguros
+
+66290 Outras actividades auxiliares de seguros e de fundos de pensões
+
+66300 Actividades de gestão de fundos
+
+68100 Actividades imobiliárias por conta própria
+
+68200 Actividades imobiliárias por conta de outrem
+
+69100 Actividades jurídicas
+
+69200 Actividades de contabilidade e auditoria; consultoria fiscal
+
+=== PÁGINA p-47
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19209
+
+Código Descrição
+
+70100 Actividades das sedes sociais
+
+70200 Actividades de consultoria para os negócios e a gestão
+
+71101 Actividades de arquitectura
+
+71102 Actividades de engenharia e técnicas afins
+
+71200 Actividades de ensaios e análises técnicas
+
+72100 Investigação científica e desenvolvimento das ciências físicas e naturais
+72200 Investigação científica e desenvolvimento das ciências sociais e humanas
+73100 Publicidade
+
+73200 Estudos de mercado e sondagens de opinião
+
+74100 Actividades de design
+
+74200 Actividades fotográficas
+
+74900 Outras actividades de consultoria, científicas, técnicas e similares, n.e.
+75000 Actividades veterinárias
+
+77100 Aluguer de veículos automóveis
+
+77210 Aluguer de bens recreativos e desportivos
+
+77220 Aluguer de videocassetes e discos
+
+77290 Aluguer de outros bens de uso pessoal e doméstico
+
+77301 Aluguer de máquinas e equipamentos agricolas
+
+77302 Aluguer de máquinas e equipamentos para construção e engenharia civil
+77303 Aluguer de máquinas e equipamentos de escritório (inclui computadores )
+77304 Aluguer de meios de transporte marítimo e fluvial
+
+77305 Aluguer de meios de transporte aéreo
+
+77306 Aluguer de meios de transporte terrestre, excepto veículos automóveis
+77307 Aluguer de outras máquinas e equipamentos, n.e
+
+77400 Locação de propriedade intelectual e produtos similares, excepto direitos de autor
+78100 Actividades das empresas de selecção e colocação de pessoal
+
+78200 Actividades das empresas de trabalho temporário
+
+78300 Outro fomecimento de recursos humanos
+
+79110 Actividades das agências de viagem
+
+79120 Actividade dos operadores turísticos
+
+79900 Outras actividades de reservas
+
+80100 Actividades de segurança privada
+
+80200 Actividades relacionadas com sistemas de segurança
+
+80300 Actividades de investigação
+
+81100 Actividades combinadas de apoio à gestão de edifícios
+
+=== PÁGINA p-48
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19210
+
+Código Descrição
+
+81210 Actividades de limpeza geral em edifícios
+
+81290 Outras actividades de limpeza em edifícios e em equipamentos industriais
+
+81300 Actividades de plantação e manutenção de jardins
+
+82110 Actividades combinadas de serviços administrativos
+
+82190 Execução de fotocópias, preparação de documentos e outras actividades especializadas de apoio
+administrativo
+
+82200 Actividades dos centros de chamadas
+
+82300 Organização de feiras, congressos e outros eventos similares
+
+82910 Actividades de cobrança e avaliação de crédito
+
+82920 Actividades de embalagem
+
+82990 Outras actividades de serviços de apoio prestados às empresas, n.e.
+
+84111 Administração central
+
+84112 Administração regional e local
+
+84113 Actividades de apoio à administração pública
+
+84121 Administração pública - actividades de saúde
+
+84122 Administração pública - actividades de educação
+
+84123 Administração pública - actividades da cultura, desporto, recreio, ambiente, habitação e de outras
+actividades sociais, excepto segurança social obrigatória
+
+84130 Administração pública - actividades económicas
+
+84210 Relações exteriores
+
+84220 Actividades de defesa
+
+84231 Justiça
+
+84232 Actividades de segurança e ordem pública
+
+84233 Actividades de protecção civil
+
+84300 Segurança social obrigatória
+
+85101 Educação pré-escolar
+
+85102 Ensino primário
+
+85211 Ensino geral do 1º ciclo
+
+85212 Formação profissional básica
+
+85221 Ensino geral do 2º ciclo
+
+85222 Formação média técnico-profissional
+
+85223 Formação de professores
+
+85300 Ensino superior
+
+85410 Ensino desportivo e recreativo
+
+85420 Ensino das actividades culturais
+
+85491 Escolas de condução e pilotagem
+
+=== PÁGINA p-49
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19211
+
+Código Descrição
+
+85492 Formação profissional
+
+85493 Outras actividades educativas, ne.
+
+85500 Actividades de serviços de apoio à educação
+
+86100 Actividades dos estabelecimentos de saúde com internamento
+
+86201 Actividades de prática médica de clínica geral, em ambulatório
+
+86202 Actividades de prática médica de clínica especializada, em ambulatório
+
+86203 Actividades de medicina dentária e odontologia
+
+86901 Laboratórios de análises clínicas
+
+86902 Actividades de enfermagem
+
+86903 Outras actividades de saúde humana, n.e.
+
+87100 Actividades de enfermagem com alojamento
+
+87200 Actividades dos estabelecimentos para pessoas com doenças do foro mental e toxicodependência,
+com alojamento
+
+87301 Actividades de acção social para pessoas idosas, com alojamento
+
+87302 Acção social para pessoas com deficiência, com alojamento
+
+87901 Actividades de acção social para crianças e jovens, com alojamento
+
+87902 Outras actividades de acção social, com alojamento, n.e.
+
+88101 Actividades de acção social para pessoas idosas, sem alojamento
+
+88102 Actividades de acção social para pessoas com deficiência, sem alojamento
+
+88901 Actividades de cuidados para crianças, sem alojamento
+
+88902 Outras actividades de acção social, sem alojamento, n.e.
+
+90001 Actividades das artes do espectáculo
+
+90002 Actividades de apoio às artes do espectáculo
+
+90003 Criação artística e literária
+
+90004 Exploração de salas de espectáculos e actividades conexas
+
+91010 Actividades das bibliotecas e arquivos
+
+91020 Actividades dos museus e de gestão dos locais e monumentos históricos
+
+91030 Actividades dos jardins botânicos e zoológicos, dos parques e reservas naturais
+
+92000 Lotarias e Outros Jogos de Aposta
+
+93110 Gestão de instalações desportivas
+
+93120 Actividades dos clubes desportivos
+
+93190 Outras actividades desportivas
+
+93210 Actividades de parques de diversão e temáticos
+
+93290 Outras actividades de diversão e recreativas, n.e
+
+94110 Actividades de organizações económicas e patronais
+
+=== PÁGINA p-50
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19212
+
+Código Descrição
+
+94120 Actividades de organizações profissionais
+
+94200 Actividades de organizações sindicais
+
+94910 Actividades de organizações religiosas
+
+94920 Actividades de organizações políticas
+
+94990 Outras actividades associativas, n.e
+
+95110 Reparação de computadores e de equipamento periférico
+
+95120 Reparação de equipamento de comunicação
+
+95210 Reparação de televisores e de outros bens de consumo similares
+95220 Reparação de electrodomésticos e de outros equipamentos de uso doméstico e para jardim
+95230 Reparação de calçado e de artigos de couro
+
+95240 Reparação de mobiliário e similares de uso doméstico
+
+95291 Reparação de relógios e de artigos de joalharia
+
+95292 Reparação de outros bens de uso pessoal e doméstico, n.e.
+
+96010 Lavagem e limpeza a seco de têxteis e peles
+
+96020 Actividades de salões de cabeleireiro e institutos de beleza
+
+96030 Actividades funerárias e conexas
+
+96090 Outras actividades de serviços pessoais, n.e
+
+97000 Actividades das Famílias Empregadoras de Pessoal Doméstico
+98100 Actividades de produção de bens pelas famílias para uso próprio
+98200 Actividades de produção de serviços pelas famílias para uso próprio
+99000 Actividades dos organismos internacionais e outras instituições extra-territoriais
+
+Tabela 2 - Taxas do Imposto Especial de Consumo (IEC)
+
+Designação
+
+idade de Medida TEC (%)
+
+Aguas, incluídas as águas minerais e as águas gaseificadas,
+2202.10.00 | adicionadas de açúcar ou de outros edulcorantes ou LITRO (Lt) 3
+aromatizadas
+2202.91.00 | Cerveja sem álcool LITRO (Lt) 4
+2202.99.00 | Outras LITRO (Lt) 4
+2203.00.00 | Cerveja de malte LITRO (Lt) 4
+2204.10.10 | Champanhe LITRO (Lt) 8
+2204.10.90 | Outros LITRO (Lt) 8
+2204.21.00 | Em recipientes de capacidade não superior a 2L LITRO (Lt) 8
+2204.22.00 cur dpientes de capacidade superior a 2 |, mas não superior LITRO (Lt) 8
+2204.29.00 | Outros LITRO (Lt) 8
+
+=== PÁGINA p-51
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19213
+
+Classificação
+
+Pautal Designação de Medida TEC (4%)
+2205.10.00 | Em recipientes de capacidade não superior a 2L LITRO (Lt) 8
+2205.90.00 | Outros LITRO (Lt) 8
+
+Outras bebidas fermentadas (por exemplo, sidra, perada,
+
+especificadas nem compreendidas noutras posições
+2207.10.00 cool etico não gesnaturado, com um teor alcoólico, em volume, LITRO (Lt) 15
+2207.20.10 | Alcool etílico LITRO (Lt) 15
+2207.20.19 | Outros LITRO (Lt) 15
+2208.20.00 | Aguardentes de vinho ou de bagaço de uvas LITRO (Lt) 8
+2208.30.00 | Uísques LITRO (Lt) 8
+22084000 |omentação, de proditos da cana de secar O O UTRO (uy )
+2208.50.00 | Gin e genebra LITRO (Lt) 8
+2208.60.00 | Vodca LITRO (Lt) 8
+2208.70.00 | Licores LITRO (Lt) 8
+2208.90.00 | Outros LITRO (Lt) 8
+2401.10.00 | Tabaco não destalado KILOGRAMA (Kg) 25
+2401.20.00 | Tabacototal ou parcialmente destalado KILOGRAMA (Kg) 25
+2401.30.00 | Desperdícios de tabaco KILOGRAMA (Kg) 25
+2402.10.00 | Charutos e cigarrilhas, que contenham tabaco KILOGRAMA (Kg) 25
+2402.20.00 | Cigarros que contenham tabaco KILOGRAMA (Kg) 25
+2402.90.00 | Outros KILOGRAMA (Kg) 25
+2403.11.00 E Cups ão do presenta Celta 7 mencionado na Nota KILOGRAMA (Kg) 25
+2403.19.00 | Outros KILOGRAMA (Kg) 25
+2403.91.00 | Tabaco "homogeneizado" ou "reconstituído" KILOGRAMA (Kg) 25
+2403.99.00 | Outros KILOGRAMA (Kg) 25
+3604.10.00 | Fogo de Artifício KILOGRAMA (Kg) 19
+3923.21.90 | Outros KILOGRAMA (Kg) 19
+3923.29.90 | Outros KILOGRAMA (Kg) 19
+3926.90.90 | Outras (palhinhas de plástico) KILOGRAMA (Kg) 19
+4012.11.00 Dee dd o Pc (otaligo v6g S e amtomovra de UNIDADEA ao DE (U ou 19
+
+corrida)
+4012.12.00 | Dotipo utilizado em autocarros ou camiões oa E (U ou 19
+
+=== PÁGINA p-52
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19214
+
+Classificação
+
+Pautal Designação jade de Medida IEC (%)
+4012.13.00 | Do tipo utilizado em veículos aéreos a E (U ou 19
+40121900 | Outros UNIDADE/QUANTIDADE (U ou 19
+
+Qtd)
+4012.20.00 | Pneumáticos usados Mo E (U ou 19
+4012.90.00 | Outros KILOGRAMA (Kg) 19
+71131100 De prata, mesmo revestida, folheada ou chapeada, de outros KILOGRAMA (Kg) 15
+metais preciosos
+De outros metais preciosos, mesmo revestidos, folheados ou
+1113.19.00 chapeados, de metais preciosos KILOGRAMA (Ko) 15
+De metais comuns, folheados ou chapeados de metais
+7113.20.00 preciosos KILOGRAMA (Kg) 15
+De prata, mesmo revestida, folheada ou chapeada de outros .
+7114.11.00 metais preciosos KILOGRAMA (Kg) 15
+71141900 De outros metais preciosos, mesmo revestidos, folheados ou KILOGRAMA (Kg) 15
+chapeados, de metais preciosos
+74142000 De metais comuns, folheados ou chapeados de metais KILOGRAMA (Kg) 15
+preciosos
+8703.24.49 | Outros -Novos o E (U ou 5
+8703.2459. | Outros —Usados Mo Et ou 5
+8703.33.59. | Outros Novos o Et ou 5
+8703.33.69 | Outros Usados oa E (U ou 5
+Do tipo Pickup e Furgão, de cilindrada não superior a 5000 cm3 | UNIDADE/QUANTIDADE (U ou
+8704.21.10 5
+— Novos Qtd)
+Do tipo Pickup e Furgão, de cilindrada superior a 5000 cm3 — UNIDADE/QUANTIDADE (U ou
+8704.21.11 5
+Novos Qtd)
+87042115 Do tipo Pickup e Furgão, de cilindrada não superior a 5000 cm3 | UNIDADE/QUANTIDADE (U ou 5
+. — Usados Qtd)
+Do tipo Pickup e Furgão, de cilindrada superior a 5000 cm3 — UNIDADE/QUANTIDADE (U ou
+8704.21.16 5
+Usados Qtd)
+8801.00.00 Balões e dirigíveis; planadores, asas voadoras e outros KILOGRAMA (Kg) 20
+veículos aéreos, não concebidos para propulsão a motor
+8602.11.00 | De peso não superior a 2.000 kg, sem carga (vazios) UNIDADE (U) 20
+Aviões e outros veículos aéreos, de peso não superior a 2.000
+2. 2
+8802.20.00 kg, sem carga (vazios) UNIDADE (U) 20
+8903.91.00 | Barcos à vela, mesmo com motor auxiliar a E (U ou 20
+8903.92.00 | Barcos a motor, excepto com motor fora-de-borda a E (U ou 20
+8903.99.90 | Outros a a (U ou 2»
+
+=== PÁGINA p-53
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 | SÉRIE, N.º 159/ 19215
+Classificação Desi E de de Medid EC (%
+Pautal esignação jade de Medida (4%)
+9303.20.00 Outras espingardas e carabinas de caça ou detiro ao alvo, com | UNIDADE/QUANTIDADE (U ou 50
+pelo menos um cano liso Qtd)
+9303.30.00 | Outras espingardas e carabinas de caça ou detiro ao alvo Mo E (U ou 50
+9701.10.00 | Quadros, pinturas e desenhos UNIDADE (U) 5
+9701.90.00 | Outros KILOGRAMA (Kg) 5
+9702.00.00 | Gravuras, estampas e litografias, originais UNIDADE (U) 5
+9703.00.00 Produções originais de arte estatuaria ou de escultura, de UNIDADE (U) 5
+quaisquer matérias
+Selos postais, selos fiscais, marcas postais, envelope de
+primeiro dia (First Day Covers), inteiros postais e semelhantes,
+9704.00.00 obliterados ou não obliterados, excepto os artigos da posição KILOGRAMA (Kg) 5
+49.07
+Colecções e espécimes para colecções, de zoologia, botânica,
+9705.00.00 | mineralogia, anatomia, ou apresentando interesse histórico, KILOGRAMA (Kg) 5
+arqueológico, paleontológico, etnográfico ou numismático
+9706.00.00 | Antiguidades com mais de 100 anos KILOGRAMA (Kg) 5
+e | TONELADAS METRICAS
+(TM)
+2701.11.00 | Antracite «e KILOGRAMAS (Kg) 2
+e METROS CÚBICOS (m3)
+* LITROS (Ltou Lts)
+e | TONELADAS METRICAS
+(TM)
+2701.12.00 | Hulha betuminosa «e KILOGRAMAS (Kg) 2
+e METROS CUBICOS (m3)
+e —LITROS(tou Lts)
+e | TONELADAS METRICAS
+(TM)
+2701.19.00 | Outras hulhas + KILOGRAMAS (Kg) 2
+e | METROS CÚBICOS (m3)
+* —LITROS(Ltou Lts)
+e | TONELADAS METRICAS
+2701.20.00 Briquetes, bolas em aglomerados e combustíveis sólidos (TM) >
+: semelhantes, obtidos a partir da hulha e KILOGRAMAS (Kg)
+e METROS CUBICOS (m3)
+e LITROS(Ltou Lts)
+e | TONELADAS METRICAS
+2702.10.00 | Linhites, mesmo em pó, mas não aglomeradas . MLOGRAMAS (Kg) 2
+e METROS CUBICOS (m3)
+e LITROS (tou Lts)
+e | TONELADAS METRICAS
+o (TM)
+2702.20.00 | Linhites aglomeradas e KILOGRAMAS (Kg) 2
+e | METROS CÚBICOS (m3)
+* — LITROS(Ltou Lts)
+e | TONELADAS METRICAS
+2704.00.00 Coques e semicoques, de hulha, de linhite ou de turfa, mesmo (TM) 2
+: aglomerados; carvão de retorta e KILOGRAMAS (Kg)
+e METROS CUBICOS (m3)
+e LITROS(Ltou Lts)
+Gás de hulha, gás de água, gás pobre (gás de ar) e gases * TONELADAS METRICAS
+. (TM)
+2705.00.00 | semelhantes, excepto gases de petróleo e outros e KILOGRAMAS (Kg) 2
+hidrocarbonetos gasosos e METROS CÚBICOS (m3)
+e | LITROS(Ltou Lts)
+Alcatrões de hulha, de linhite ou de turfa e outros alcatrões º rj DAS METRICAS
+2706.00.00 | minerais, mesmo desidratados ou parcialmente destilados, e KILOGRAMAS (Kg) 2
+incluindo os alcatrões reconstituídos e METROS CÚBICOS (m3)
+* LITROS (Ltou Lts)
+
+=== PÁGINA p-54
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19216
+
+Classificação
+Pautal
+
+2707.10.00
+
+Designação
+
+Benzol (benzeno)
+
+lade de Medida
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+IEC (%)
+
+2707.20.00
+
+Toluol (tolueno)
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2707.30.00
+
+Xilol (xilenos)
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+12
+
+2707.40.00
+
+Naftaleno
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2707.50.00
+
+Outras misturas de hidrocarbonetos aromáticos que destilem
+(incluindo as perdas) uma fração igual ou superior a 65 %, em
+volume, a 250ºC, segundo o método ISO 3405 (equivalente ao
+método ASTM D 86)
+
+TONELADAS METRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2707.91.00
+
+Óleos de creosoto
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+N
+
+2707.99.00
+
+Outros
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2708.10.00
+
+Breu
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2708.20.00
+
+Coque de breu
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+IN
+
+2710.12.11
+
+Gasolina para aviões
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2710.12.12
+
+Outras Gasolinas
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2710.1213
+
+Querosene
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2710.12.14
+
+Gasóleo
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2710.12.15
+
+Outros
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+=== PÁGINA p-55
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19217
+
+ificação
+Pautal
+
+2710.19.21
+
+Designação
+
+Óleo base
+
+Unidade de Medida
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+IEC (%)
+
+2710.19.23
+
+Óleos lubrificantes
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2710.19.29
+
+Outros
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2710.20.00
+
+Óleos de petróleo ou de minerais betuminosos (excepto óleos
+brutos) e preparações não especificadas nem compreendidas
+noutras posições, que contenham, como constituintes básicos,
+TO % ou mais, em peso, de óleos de petróleo ou de minerais
+betuminosos; que contenham 1 biodiesel, excepto os resíduos
+de óleos
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2710.91.00
+
+Que contenham difenilos policlorados (PCB), terfenilos
+policlorados (PCT) ou difenilos polibromados (PBB)
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2710.99.00
+
+Outros
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2711.12.00
+
+Propano
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+IN
+
+2711.13.00
+
+Butano
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2711.14.00
+
+Etileno, propileno, butileno e butadieno
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2711.19.00
+
+Outros
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+IN
+
+2712.10.00
+
+Vaselina
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2712.20.00
+
+Parafina que contenha, em peso, menos de 0,75 % de óleo
+
+TONELADAS MÉTRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+2712.90.00
+
+Outros
+
+TONELADAS METRICAS
+(TM)
+
+KILOGRAMAS (Kg)
+METROS CÚBICOS (m3)
+LITROS (Lt ou Lts)
+
+IN
+
+2713.11.00
+
+Não calcinado
+
+TONELADAS MÉTRICAS
+(TM)
+KILOGRAMAS (Kg)
+
+=== PÁGINA p-56
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19218
+
+Classificação
+
+Pautal Designação Uni le Medida IEC (%)
+e METROS CUBICOS (m3)
+e | LITROS(Ltou Lts)
+e | TONELADAS METRICAS
+2713.12.00 | Calcinado . O RAMAS (Kg) 2
+e | METROS CÚBICOS (m3)
+e LITROS (Ltou Lts)
+e | TONELADAS METRICAS
+2713.20.00 | Betume de petróleo - boas (o) 2
+e METROS CÚBICOS (m3)
+e | LITROS(Ltou Lts)
+e TONELADAS METRICAS
+Outros resíduos dos óleos de petróleo ou de minerais (TM)
+2713.90.00 betuminosos “e K LOGRAMAS (Kg) 2
+e METROS CÚBICOS (m3)
+e | LITROS(Ltou Lts)
+e | TONELADAS METRICAS
+2714.10.00 | Xistos e areias betuminosos . DM SRAMAS (Kg) 2
+e METROS CÚBICOS (m3)
+e LITROS (Ltou Lts)
+e | TONELADAS METRICAS
+2714.90.10 | Aditivos de xistos e areias betuminosos . LOGRAMAS (Kg) 2
+e METROS CÚBICOS (m3)
+* | LITROS(Ltou Lts)
+e | TONELADAS METRICAS
+(TM)
+2714.90.90 | Outros e KILOGRAMAS (Kg) 2
+e METROS CUBICOS (m3)
+e | LITROS (Ltou Lts)
+Misturas betuminosas à base de asfalto ou de betume naturais, | e | TONELADAS METRICAS
+2715.00.00 | de betume de petróleo, de alcatrão mineral ou de breu de (TM) 3
+Í alcatrão mineral (por exemplo, mástiques betuminosas e cut- e KILOGRAMAS (Kg) Í
+backs) e | METROS CÚBICOS (m3)
+* | LITROS(Ltou Lts)
+Tabela 3 - Verbas e Taxas de Imposto de Selo (IS)
+N.º Verba Actos/ Documentos/ Contratos/ Operações! Títulos Taxa
+1 Aquisição onerosa ou gratuita do direito de propriedade ou de figuras parcelares 0,3%
+desse direito, sobre imóveis, bem como a resolução, invalidade ou extinção, por
+mútuo consenso, dos respectivos contratos - sobre o valor
+2 Arrendamento e subarrendamento
+2.1 Sobre o valor, aumento da renda ou prorrogação do contrato de arrendamento e 0,1%
+subarrendamento para fins habitacionais
+2.2 Sobre o valor, aumento da renda ou prorrogação do contrato de arrendamento e 0,4%
+subarrendamento destinados a estabelecimento comercial, industrial, exercício de
+profissão em regime independente
+3 Autos e termos efectuados perante tribunais e serviços, estabelecimentos e 1.000,00 kz
+
+organismos do Estado, ainda que personalizados, incluindo os institutos públicos
+que compreendem arrendamento ou licitação de bens imóveis, cessão,
+conferência de interessados em que se concorde na adjudicação de bens
+comuns, confissão de divida, fiança, hipoteca, penhor, responsabilidade por
+perdas e danos e transacções - por cada um
+
+4 Cheques de qualquer natureza - por cada dez 100,00 Kz
+
+=== PÁGINA p-57
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025
+
+I SÉRIE, N.º 159 | 19219
+
+Actos/ Docu
+
+s/ Contratos/ Operações/ Títulos
+
+Depósito civil, qualquer que seja a sua forma - sobre o respectivo valor
+
+Taxa
+
+0,1%
+
+Depósito, em qualquer serviço público, dos estatutos de associações e outras
+instituições cuja constituição dele dependa - por cada
+
+4.400,00 Kz
+
+Actos societários:
+
+74
+
+Constituição de uma sociedade - sobre o valor real dos bens de qualquer
+natureza entregues ou a entregar pelos sócios após dedução das obrigações
+assumidas e dos encargos suportados pela sociedade em consequência de cada
+entrada
+
+0,1%
+
+Transformação em sociedade, associação ou pessoa colectiva que não seja
+sociedade de capitais - sobre o valor real dos bens de qualquer natureza
+pertencentes à sociedade à data da transformação após dedução das obrigações
+e encargos que a onerem nesse momento
+
+0,1%
+
+73
+
+Aumento do capital social de uma sociedade mediante a entrada de bens de
+qualquer espécie - sobre o valor real dos bens de qualquer natureza entregues ou
+a entregar pelos sócios após dedução da obrigação assumidas e dos encargos
+suportados pela sociedade em consequência de cada entrada
+
+0,1%
+
+Ta
+
+Aumento do activo de una sociedade mediante a entrada de bens de qualquer
+espécie remunerada não por partes representativas do capital social ou do activo,
+mas por direito da mesma natureza que os dos sócios, tais como direito de voto e
+participação nos lucros ou no saldo de liquidação - sobre o valor real dos bens de
+qualquer natureza entregues ou a entregar pelos sócios após dedução das
+obrigações assumidas e dos encargos suportados pela sociedade em
+consequência de cada entrada
+
+0,1%
+
+Outros Contratos não especialmente previstos nesta tabela, incluindo os
+efectuados perante entidades públicas - por cada um
+
+1.000,00 Kz
+
+Exploração, pesquisa e prospecção de recursos geológicos integrados no
+domínio público do Estado - por cada contrato administrativo
+
+3.000,00 Kz
+
+10
+
+Garantias das obrigações, qualquer que seja a sua natureza ou forma,
+designadamente o aval, a caução, a garantia bancária autónoma, a fiança, a
+hipoteca, o penhor e o seguro-caução, salvo quando materialmente
+acessórias de contratos especialmente tributados na presente tabela,
+considerando-se como tal as que sejam constituídas até 90 dias após a
+celebração do contrato constitutivo da obrigação garantida ainda que em
+instrumentos ou títulos deferentes, ou no caso de penhor de bens futuros
+desde que o mesmo seja inscrito no contrato principal - sobre o respectivo
+valor, em função do prazo, considerando-se sempre como nova operação a
+prorrogação do prazo do contrato.
+
+Garantias de prazo inferior a um ano
+
+Garantias de prazo igual ou superior a um ano
+
+0,2%
+
+Garantias sem prazo ou de prazo igual ou superior a cinco anos
+
+0,1%
+
+Cada aposta de jogos, designadamente as representadas por bilhetes, boletins,
+cartões, matrizes, nfas ou tômbolas
+
+100,00 kz
+
+Ingressos em salas de jogo de fortuna ou azar, ou documentos equivalentes
+ainda que não seja devido o respectivo preço pelo cliente e mesmo que o
+pagamento do acesso seja dispensado pelas empresas concessionárias
+
+100,00 Kz
+
+Licenças
+
+Para instalação ou exploração de máquinas electrónicas de diversão
+
+1.300,00 kz
+
+Para quaisquer outros jogos legais - por cada um
+
+1.300,00 Kz
+
+=== PÁGINA p-58
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+ISÉRIE, N.º 159 | 19220
+
+N.º Verl Actos/ Docu s/ Contratos/ Operações/ Títulos Taxa
+12.3 Para funcionamento de estabelecimentos de restauração e bebidas:
+123.1 Clubes nocturnos e outros estabelecimentos com espaço reservado para dança,
+designadamente bares e discotecas
+12.311 Em Luanda 53.000,00 kz
+12.3.1.2 Restantes capitais de província e no Lobito 27.000,00 Kz
+12.3.1.3 Outras localidades 14.000,00 Kz
+12.,3.2 Restaurantes:
+123.21 Em Luanda 6.000,00 Kz
+12.3.2.2 Restantes capitais de província e no Lobito 3.000,00 Kz
+12.3.2 Outras localidades 1.500,00 Kz
+12,3.3 Outros estabelecimentos:
+12.331 Em Luanda 1.500,00 kz
+12.3.3.2 Restantes capitais de província e no Lobito 1.000,00 Kz
+12.3.3.3 Outras localidades 500,00 kz
+124 Para hotelaria e similares:
+1241 1.º Categoria ou luxo (pelo menos 4 ou mais estrelas) 100.000,00 Kz
+124.2 2.º Categoria (3 estrelas) 60.000,00 Kz
+1243 Restantes
+124341 Luanda 53.000,00 Kz
+1243.2 Restantes capitais de província e no Lobito 30.000,00 Kz
+1243.3 Outras localidades 15.000,00 kz
+12.5 Para as instalações de máquinas automáticas de venda de bens ou serviços em 3.000,00 Kz
+locais de acesso público - por cada máquina
+12.6 Outras licenças não designadas especialmente nesta tabela, concedidas pelo 2.000,00 Kz
+Estado, pelas Províncias, ou qualquer dos seus serviços, estabelecimentos,
+organismos ou institutos - por cada uma
+13 Marcas e patentes - sobre o registo unitário 3.000,00 Kz
+14 Notariado e actos notariais
+14.1 Escrituras, excluindo as que tenham por objecto os actos referidos na verba 8 da 2.000,00 Kz
+tabela
+14.2 Habilitação de herdeiros e de legatários - por cada acto 1.000,00 Kz
+14.3 Testamento público ou cerrado 1.000,00 Kz
+144 Procurações e outros instrumentos de representação voluntária, incluindo os
+mandatos e substabelecimentos:
+1441 Procurações e outros instrumentos relativos a atribuição de poderes de
+representação voluntária - por cada um
+14.411 Com poderes para gerência comercial 1.000,00 Kz
+144.1.2 Com quaisquer outros poderes 500,00 kz
+
+=== PÁGINA p-59
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 |19221
+N.º Ver Actos/ Docu rações/ Títulos Taxa
+1441.3 Substabelecimento por cada um 500,00 kz
+14.5 Registo de documentos apresentados aos notários para ficarem arquivados - por 100,00 Kz
+cada registo
+14.6 Outros instrumentos notariais avulsos, não especialmente previsto nesta Tabela - 100,00 Kz
+por cada um
+15 Operações aduaneiras:
+151 Sobre o valor aduaneiro da importação 1%
+15.2 Sobre o valor aduaneiro das exportações 0,5%
+15.2.2 Exportações de marfins e seus pelos e desperdícios, Marfim, osso, carapaça de 0,5%
+tartaruga, Chipre, coral, madrepérol e outras matérias animais para entalhar,
+trabalhados e suas obras (incluindo as obras obtidas por moldagem); De peles
+com pêlo em bruto; peles de vision, inteiras mesmo sem cabeça, cauda ou patas;
+Peles de cordeiro denominadas astraçã, Breitscinvanz, caracul, persianer ou
+semelhantes, de cordeiros da Índia, da China, da Mongólia ou do Tibete, de
+raposas e de outros animais, inteiras mesmo sem cabeça, cauda ou patas; Peles
+com pelo curtidas ou, acabadas (incluindo as cabeças, caudas, patas e outras
+partes, desperdícios e aparas), montadas ou não, sem adição de outras matérias;
+Vestuário e seus acessórios e outros artefactos de peles com pelo; Peles com
+pelos artificiais e suas obras;
+16 Operações de financiamento:
+18.1 Pela utilização de créditos, sob a forma de fundos, mercadorias e outros valores
+em virtude da concessão de crédito a qualquer título, incluindo o crédito
+documentário, a cessão de créditos, factoring e as operações de tesouraria
+quando envolvam qualquertipo de financiamento, salvo, em qualquer
+circunstância, as emissões de títulos de dívida de organismos admitidos a
+negociação no mercado regulamentado, considerando-se em caso de
+prorrogação do prazo do contrato, que o imposto é recalculado em função da
+duração total do contrato e deduzido do montante anteriormente liquidado - sobre
+o respectivo valor, em função do prazo
+16.11 Crédito de prazo igual ou inferior a um ano 0,5%
+16.1.2 Crédito de prazo superior a um ano 0,4%
+16.1.3 Crédito de prazo igual ou superior a cinco anos 0,3%
+16.1.4 Crédito utilizado sob a forma de conta corrente, descoberto bancário ou qualquer 0,1%
+outra forma em que o prazo de utilização não seja determinado ou determinável,
+sobre a média mensal obtida através da soma dos saldos em dívida apurados
+diariamente, durante o mês dividido por 30
+16.1.5 Crédito habitação, sobre o valor 0,1%
+16.2 Operações realizadas por ou com intermediação de instituições de crédito,
+sociedades financeiras ou outras entidades a elas legalmente equiparadas e
+quaisquer outras instituições financeiras - sobre o valor cobrado:
+16.21 Juros por, designadamente, desconto de letras e por empréstimos, por contas de 0,2%
+créditos e por créditos sem liquidação
+16.22 Prémios e juros por letras tomadas, de letras a receber por conta alheia, saque 0,5%
+emitidos sobre ou de qualquer transferência
+16.2.3 Comissões por garantias prestadas 0,5%
+
+=== PÁGINA p-60
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19222
+
+Actos/ Docu s/ Contratos/ Operações/ Títulos Taxa
+16.24 Outras comissões e contraprestações por serviços financeiros, incluindo 0,7%
+comissões pela angariação de créditos e garantias intermediadas por entidades
+não financeiras
+16.3 Outras operações:
+16.31 Saque sobre o estrangeiro, guias emitidas, ouro e fundos públicos ou títulos 1%
+negociáveis vendidos, sobre o respectivo valor
+16.3.2 Títulos de divida pública, emitidos por governos estrangeiros, quando sejam 0,5%
+postos a venda no País - sobre o valor nominal
+16.3.3 Câmbio de notas em moedas estrangeiras, conversão de moeda nacional em 0,1%
+moeda estrangeira a favor de pessoas singulares
+17 Operações de locação financeira
+174 Operações de locação financeira de bens imóveis, sobre o montante da 0,3%
+contraprestação
+17.2 Operações de locação financeira e operacional de bens móveis corpóreos, 0,4%
+integrando a manutenção e a assistência técnica, sobre o montante da
+contraprestação
+18 Precatórios ou mandados para levantamento e entrega de dinheiro ou valores 0,1%
+existentes
+Sobre a importância a levantar ou a entregar
+19 Publicidade:
+19.1 Cartazes ou anúncios afixados ou expostos em suportes fixos ou móveis na via 1.000,00 Kz
+pública ou destinados a serem vistos na via pública que façam propaganda de
+produtos, serviços ou de qualquer indústria, comerciais ou divertimentos com
+exclusão dos identificativos do próprio estabelecimento comercial onde se
+encontrem afixados - por cada metro quadrado ou fracção e em cada ano civil
+19.2 Publicidade feita em revista, jornais, catálogos, programas radiofónicos ou 25.000,00 Kz
+televisivos, reclamos, etiquetas e outros impressos que se destinem à distribuição
+pública (por cada edição de 1000 exemplares) ou fracção
+20 Registos e averbamentos em conservatórias de bens móveis
+20.1 Aeronaves 45.000,00 Kz
+20.2 Barcos 23.000,00 Kz
+20.3 Motas de água 18.000,00 Kz
+20.4 Motociclos, veículos ligeiros e mustos de passageiros e veículos pesados, 5.000,00 Kz
+excepto ambulâncias e carros funerários:
+204.1 Novos e até 3 anos 7.000,00 Kz
+204.2 Usados com mais de 3 anos 0,5%
+21 Reporte - sobre o valor contrato
+22 Seguros: Apólice de seguros, sobre a soma dos prémios do seguro, do
+custo da apólice e de quaisquer outras importâncias que constituam receita
+das empresas seguradoras, cobradas juntamente com esse prémio ou em
+documento separado:
+22141 Seguro do ramo caução 0,3%
+221.2 Seguro do ramo marítimo e fluvial que inclui transporte, embarcações e 0,3%
+
+responsabilidade civil
+
+=== PÁGINA p-61
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025
+
+ISÉRIE, N.º 159 | 19223
+
+Actos/ Docu s/ Contratos/ Operações/ Títulos Taxa
+221.3 Seguro do ramo aéreo que inclui aeronave, responsabilidade civil mercadorias e 0,2%
+pessoas transportadas
+2214 Seguro do ramo mercadorias transportadas, não previstas nos ramos marítimos, 0,1%
+fluviais e aéreos
+221.5 Seguros de quaisquer outros ramos 0,3%
+22.2 Comissões cobradas pela actividade de mediação, sobre o respectivo valor 0,4%
+23 Títulos de crédito e recibos de quitação:
+23.1 Letras e livranças - sobre o respectivo valor, com o mínimo de Kz: 100,00 0,1%
+23.2 Ordens e escritos de qualquer natureza, com exclusão dos cheques, nos quais se 0,1%
+determine pagamento ou entrega de dinheiro com cláusulas à ordem ou a
+disposição, ainda que sob a forma de correspondência - sobre o respectivo valor,
+com o mínimo de Kz: 100,00
+23.3 Recibo de quitação pelo efectivo recebimento de créditos resultantes do exercício 1%
+da actividade comercial ou industrial, em dinheiro ou em espécie, com excepção
+dos resultantes exclusivamente do arrendamento habitacional feito por pessoas
+singulares
+234 Abertura de crédito, por escrito particular ou instrumento público 0,1%
+24 Transferências onerosas de actividades ou de exploração de serviços:
+241 Trespasse ou cessão para exploração de estabelecimento comercial, industrial ou 0,2%
+agricola - sobre o seu valor
+24.2 Subcomissões e trespasses de concessões feitos pelo Estado e pelas províncias 0,2%
+
+para exploração de empresas ou de serviços de qualquer natureza tenha ou não
+
+principiado a exploração - sobre seu valor
+
+Tabela 4 - Isenções de Imposto sobre o Valor Acrescentado (IVA)
+
+Menção a constar no Descrição
+documento
+M1Oo Isento nos termos da alínea A transmissão dos bens alimentares, conforme anexo | do presente
+a) do n.º 1 do artigo 12.º do código
+CIVA
+M11 Isento nos termos da alínea | As transmissões de medicamentos destinados exclusivamente a fins
+b) don. 1 do artigo 12º do terapêuticos e profilácticos
+CIVA
+M12 Isento nos termos da alínea |As transmissões de cadeiras de rodas e veículos semelhantes,
+c)don.º 1 do artigo 12.º do accionados manualmente ou por motor, para portadores de deficiência,
+CIvA aparelhos, máquinas de escrever com caracteres braille, impressoras
+para caracteres braille e os artefactos que se destinam a ser utilizados por
+invisuais ou a corrigir a audição
+M13 Isento nos termos da alínea |A transmissão de livros, incluindo em formato digital
+d)don.º 1 do artigo 12.º do
+CIVA
+M14 Isento nos termos da alínea | A locação de bens imóveis destinados a fins habitacionais,
+e)don.º 1 do artigo 12.º do designadamente prédios urbanos, fracções autónomas destes ou terrenos
+CIvA para construção, com excepção das prestações de serviços de
+alojamento efectuadas no âmbito da actividade hoteleira ou de outras com
+funções análogas
+
+=== PÁGINA p-62
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19224
+
+Código Menção a constar no
+
+documento
+
+Descrição
+
+M15 Isento nos termos da alínea | As operações sujeitas ao imposto de SISA, ainda que dele isentas
+f)do n.º 1 do artigo 12.º do
+CIvA
+M16 Isento nos termos da alínea | A exploração e a prática de jogos de fortuna ou azar e de diversão social,
+9) don.º 1 do artigo 12.º do bem como as respectivas comissões e todas as operações relacionadas,
+CIvA quando as mesmas estejam sujeitas a Imposto Especial sobre o Jogos,
+nos termos da legislação aplicável
+M17 Isento nos termos da alínea |O transporte colectivo de passageiros
+h) do n.º 1 do artigo 12.º do
+CIvA
+M18 Isento nos termos da alínea | As operações de intermediação financeira, incluindo a locação financeira,
+i) do n.º 1 artigo 12.º do CIVA | exceptuando-se aquelas em que uma taxa, ou contraprestação, especifica
+e predeterminada é cobrada pelo serviço
+M19 Isento nos termos da alínea |O seguro de saúde, bem como a prestação de seguros e resseguros do
+j)do n.º 1 do artigo 12.º do ramo vida;
+CIvA
+M20 Isento nos termos da alínea | As transmissões de produtos petrolíferos conforme anexo Il do presente
+k)don.º 1 do artigo 12.º do código
+CIvA
+M21 Isento nos termos da alínea | As prestações de serviço que tenham por objecto o ensino, efectuadas
+Ido n.º 1 do artigo 12.º do por estabelecimentos integrados conforme definidos na Lei de Bases do
+CIvA Sistema de Educação e Ensino, bem como por estabelecimentos de
+Ensino Superior devidamente reconhecidos pelo Ministério de Tutela
+M22 Isento nos termos da alínea | As prestações de serviço médico sanitário, efectuadas por
+m) do artigo 12º do CIVA estabelecimentos hospitalares, clínicas, dispensários e similares
+M23 Isento nos termos da alínea |O transporte de doentes ou feridos em ambulâncias ou outros veículos
+n) do artigo 12.º do CIVA apropriados efectuados por organismos devidamente autorizados
+M24 Isento nos termos da alínea |Os equipamentos médicos para o exercício da actividade dos
+o) do artigo 12.º do CIVA estabelecimentos de saúde
+M8o Isento nos termos da alínea | As importações definitivas de bens cuja transmissão no território nacional
+a) do n.º 1 do artigo 14.º seja isenta de imposto;
+M81 Isento nos termos da alínea | As importações de ouro, moedas ou notas de banco, efectuadas pelo
+b) do n.º 1 do artigo 14.º Banco Nacional de Angola
+M8B2 Isento nos termos da alínea | A importação de bens destinados a ofertas para atenuar os efeitos das
+c)don.º 1 do artigo 14.º calamidades naturais, tais como cheias, tempestades, secas, ciclones,
+sismos, terramotos e outros de idêntica natureza, desde que devidamente
+autorizado pelo Titular do Poder Executivo
+mMB3 Isento nos termos da alínea |A importação de mercadorias ou equipamentos destinados exclusivos e
+d)don.º 1 do artigo 14.º directamente à execução das operações petrolíferas e mineiras nos
+termos da Lei que estabelece o Regime Aduaneiro do Sector Petrolifero e
+do Código Mineiro, respectivamente
+MB4 Isento nos termos da alínea | Importação de moeda estrangeira efectuada pelas instituições financeiras
+e)don.º 1 do artigo 14.º bancárias, nos termos definidos pelo Banco Nacional de Angola
+MB5 Isento nos termos da alínea |No âmbito de tratados e acordos internacionais de que a República de
+a)donº2 do artigo 14.º Angola seja parte, nos termos previstos nesses tratados e acordos;
+MB6 Isento nos termos da alínea | No âmbito de relações diplomáticas e consulares, quando a isenção
+
+b)donº2 do artigo 14.º
+
+resulte de tratados e acordos internacionais celebrados pela República de
+Angola
+
+=== PÁGINA p-63
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 | 19225
+
+Código Menção a constar no
+
+documento
+
+Descrição
+
+M30 Isento nos termos da alínea | As transmissões de bens expedidos ou transportados com destino ao
+a) do artigo 15.º do CIVA estrangeiro pelo vendedor ou por um terceiro por conta deste
+M31 Isento nos termos da alínea |As transmissões de bens de abastecimento postos a bordo das
+b) do artigo 15.º do CIVA embarcações que efectuem navegação maritima em alto mar e que
+assegurem o transporte remunerado de passageiros ou o exercício de
+uma actividade comercial, industrial ou de pesca;
+M32 Isento nos termos da alínea | As transmissões de bens de abastecimento postos a bordo das aeronaves
+c) do artigo 15.º do CIVA utilizadas por companhias de navegação aérea que se dediquem
+principalmente ao tráfego internacional e que assegurem o transporte
+remunerado de passageiros, ou o exercício de uma actividade comercial
+ou industrial
+M33 Isento nos termos da alínea | As transmissões de bens de abastecimento postos a bordo das
+d) do artigo 15.º do CIVA embarcações de salvamento, assistência marítima, pesca costeira e
+embarcações de guerra, quando deixem o país com destino a um porto ou
+ancoradouro situado no estrangeiro
+M34 Isento nos termos da alínea | As transmissões, transformações, reparações, manutenção, frete e
+e) do artigo 15.º do CIVA aluguer, incluindo a locação financeira, de embarcações e aeronaves
+afectas às companhias de navegação aérea e marítima que se dediquem
+principalmente ao tráfego internacional, assim como as transmissões de
+bens de abastecimento postos a bordo das mesmas e as prestações de
+serviços efectuadas com vista à satisfação das suas necessidades
+directas e da respectiva carga;
+M35 Isento nos termos da alínea | As transmissões de bens efectuadas no âmbito de relações diplomáticas
+f) do artigo 15.º do CIVA e consulares cuja isenção resulte de acordos e convénios internacionais
+celebrados por Angola;
+M36 Isento nos termos da alínea |As transmissões de bens destinados a organismos internacionais
+9) do artigo 15.º do CIVA reconhecidos por Angola ou a membros dos mesmos organismos, nos
+limites e com as condições fixadas em acordos e convénios internacionais
+celebrados por Angola
+M37 Isento nos termos da alínea | As transmissões de bens efectuadas no âmbito de tratados e acordos
+h) do artigo 15.º do CIVA intemacionais de que a República de Angola seja parte, quando a isenção
+resulte desses mesmos tratados e acordos
+M38 Isento nos termos da alínea |O transporte de pessoas provenientes ou com destino ao estrangeiro
+i) do artigo 15.º do CIVA
+M90 Isento nos termos da alínea | As importações de bens que, sob controlo aduaneiro e de acordo com as
+a)don.º 1 do artigo 16.º disposições aduaneiras especificamente aplicáveis, sejam postas nos
+regimes de zona franca, que sejam introduzidos em armazéns de regimes
+aduaneiros ou lojas francas, enquanto permanecerem sob tais regimes;
+M91 Isento nos termos da alínea | As transmissões de bens que sejam expedidos ou transportados para as
+b) do n.º 1 do artigo 16.º zonas ou depósitos mencionados na alínea anterior, bem como as
+prestações de serviços directamente conexas com tais transmissões,
+M92 Isento nos termos da alínea |As transmissões de bens que se efectuem nos regimes a que se refere a
+c)don.º 1 do artigo 16.º alínea a), assim como as prestações de serviços directamente conexas
+com tais transmissões, enquanto os bens permanecerem naquelas
+situações
+M93 Isento nos termos da alínea | As transmissões de bens que se encontrem nos regimes de trânsito,
+
+d)don.º 1 do artigo 16.º
+
+draubaque ou importação temporária e as prestações de serviços
+directamente conexas com tais operações, enquanto os mesmos forem
+considerados abrangidos por aqueles regimes
+
+=== PÁGINA p-64
+DIÁRIO DA REPÚBLICA DE 22 DE AGOSTO DE 2025 ISÉRIE, N.º 159 |19226
+Código Menção a constarno Descrição
+documento
+Moo IvA- Regime Simplificado
+MO2 Transmissão de bens e
+serviço não sujeita
+MOo4 IvA — Regime de Exclusão
+
+Tabela 5 - Isenções de Imposto de Selo (IS)
+
+Código Menção a constar no
+
+documento
+
+Descrição
+
+s01
+
+Isento nos termos do CIS
+
+Isenção no âmbito do Código de Imposto do Selo
+
+s02
+
+Isento nos termos do Artigo
+28.º do CBF
+
+Isenção de Imposto de Selo nos aumentos de capital constante no Código
+dos Benefícios Fiscais
+
+sos
+
+Isento nos termos do Artigo
+40.º do CBF
+
+Isenção do pagamento do imposto de selo sobre o recibo de quitação
+para Micro Empresas (pagamentos recebidos de vendas) constante no
+Código dos Benefícios Fiscais
+
+Tabela 6 - Isenções de Imposto Especial de Consumo (IEC)
+
+Código Menção a constar no
+
+101
+
+documento
+
+Isento nos termos da alínea
+hjeijdon.º 1 do artigo 6.º
+da LIEC
+
+Descrição
+
+Isenção de imposto especial ao consumo na importação e exportação de
+produtos que beneficiem de um regime suspensivo de direitos aduaneiros
+(taxa fixa de UCF 240)
+
+102
+
+Isenção nos termos da
+alínea a) do n.º 1 do artigo
+6.º do LIEC
+
+Isenção do pagamento do IEC quando a exportação seja feita pelo próprio
+produtor ou entidade vocacionada para o efeito, reconhecida por lei.
+
+Isenção nos termos da
+alínea b) do n.º 1 do artigo
+6.º da LIEC
+
+Isenção do pagamento do IEC nos bens importados por representações
+diplomáticas ou consulares quando existe reciprocidade de tratamento,
+bem como Organizações Internacionais
+
+Isenção nos termos da
+alínea c) do n.º 1 do artigo
+6º da LIEC
+
+Isenção do pagamento do IEC para as matérias-primas para a indústria
+nacional e os bens destinados para fins medicinais ou de ensino, desde
+que devidamente certificados, por meio da declaração de exclusividade
+emitida pelo Departamento
+
+Isenção nos termos da
+alinea d) do n.º 1 do artigo
+6.º da LIEC
+
+Isenção do pagamento do IEC para os bens destinados a fins laboratoriais
+e de investigação científica
+
+Isenção nos termos da
+alinea e) do n.º 1 do artigo
+6.º da LIEC
+
+Isenção do pagamento do IEC para os bens de uso pessoal, tal como
+definido na legislação aduaneira
+
+Isenção nos termos da
+alinea f) do n.º 1 do artigo 6.º
+da LIEC
+
+Isenção do pagamento do IEC para os bens destinados ao consumo
+como provisões de bordo de qualquer meio de transporte colectivo de
+passageiros de tráfego internacional
+
+Isenção nos termos da
+alínea g) do n.º 1 do artigo
+6.º da LIEC
+
+Isenção do pagamento do IEC para os produtos vendidos a bordo de
+qualquer meio de transporte colectivo de passageiros de tráfego
+intemacionais
+
+=== PÁGINA p-65
+DIÁRIO DA REPÚBLICA
+
+DE 22 DE AGOSTO DE 2025 I SÉRIE, N.º 159 | 19227
+
+Código Menção a constar no
+
+109
+
+documento
+
+Isenção nos termos da
+alinea h) do n.º 1 do artigo
+6º da LIEC
+
+scrição
+
+Isenção do pagamento do IEC para os produtos que beneficiem da
+aplicação de um regime suspensivo de direitos aduaneiros
+
+no
+
+Isenção nos termos da
+alínea i)do nº 1 do artigo 6.º
+da LIEC
+
+Isenção do pagamento do IEC para os produtos vendidos em lojas
+francas
+
+1
+
+Isenção nos termos da
+alinea b) do artigo 98.º do
+IPP e artigo 15.º do CIVA
+
+Isenção de impostos aduaneiros, isenção de imposto especial ao
+consumo e taxas alfandegárias reduzidas na importação e exportação
+relativas a abastecimento de provisões de bordo relativas ao
+funcionamento e manutenção do meio de transporte (combustível,
+carburantes e lubrificantes excluindo as partes e acessórios)
+
+Isenção nos termos da
+alínea c) do artigo 98.º do
+IPP e artigo 15º do CIVA
+
+Isenção de impostos aduaneiros, isenção de imposto especial ao
+consumo e taxas alfandegárias reduzidas na importação e exportação
+relativas a abastecimento de provisões de bordo relativas ao
+funcionamento e manutenção do meio de transporte (combustível,
+carburantes e lubrificantes excluindo as partes e acessórios) (taxa fixa de
+UCF 240)
+
+n3
+
+Isenção nos termos das
+alíneas h) e i) do artigo 98.º
+do IPP e artigo 15.º do CIVA
+
+Isenção de impostos aduaneiros, isenção de imposto especial ao
+consumo e taxas alfandegárias reduzidas na importação e exportação de
+produtos que beneficiem de um regime suspensivo de direitos aduaneiros.
+
+14
+
+Isenção nos termos do
+anexo | da LIEC
+
+Isenção de imposto especial ao consumo na importação de produtos com
+código pautal 3926.90.90, excepto as palhinhas de plástico
+
+15
+
+Isenção nos termos do artigo
+70.º do IPP e artigo 11.º da
+LIEC
+
+Isenção de impostos aduaneiros e de imposto especial ao consumo na
+importação de mercadorias para serem utilizadas em eventos
+
+16
+
+Isenção nos termos da
+Resolução nº 6/91, de 23 de
+Março, e alíneas a)e b) do
+n.º 2 do artigo 14.º do CIVA
+
+Isenção de impostos aduaneiros, imposto especial ao consumo e IVA na
+importação e exportação de mercadorias efectuadas por agências
+especializadas das nações unidas
+
+A Ministra, Vera Esperança dos Santos Daves de Sousa.
+
+(25-0333-A-MIA)
+=== PÁGINA p-66

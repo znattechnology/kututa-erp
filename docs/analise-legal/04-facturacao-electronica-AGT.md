@@ -112,6 +112,58 @@ Tabelas oficiais no anexo da v2:
 
 Isto resolve parte das "fontes externas" que estavam em falta.
 
+## 3A. Decreto Executivo n.º 683/25: texto integral (obtido em 20/10/2026)
+
+- **Fonte oficial:** Portal AGT › Legislação Fiscal › [PDF minfin4952361](https://www.ucm.minfin.gov.ao/cs/groups/public/documents/document/aw40/otuy/~edisp/minfin4952361.pdf). DR I Série n.º 159, de 22/08/2025, pp. 19164–19227 (66 págs.).
+- **Cópia local:** `decretos/Decreto-Executivo-683-25-Facturacao-Electronica.pdf`. Texto OCR em [`docs/referencias/DE-683-25-ocr.txt`](../referencias/DE-683-25-ocr.txt).
+
+**Articulado (6 artigos):**
+
+| Art. | Conteúdo |
+|---|---|
+| 1.º | Objecto: estrutura de dados do software, modelo de facturação electrónica e especificações técnicas e procedimentais. Atribui a competência para gerar as séries. |
+| 2.º | As especificações são os **Anexos I, II e III**, que fazem parte integrante do diploma, ou seja, são **vinculativos**. |
+| 3.º | **A AGT disponibiliza actualizações das especificações sempre que necessário.** Por isso a documentação online da AGT (v2) pode legalmente actualizar o anexo. |
+| 4.º | **As séries são geradas pela AGT** (serviço `solicitarSerie`), e não pelo software. |
+| 6.º | Entra em vigor 30 dias após a publicação, por volta de **21/09/2025**. |
+
+**Anexos:**
+- **Anexo I, estrutura de dados.** Especifica os serviços `registarFactura`, `obterEstado`, `listarFacturas`, `consultarFactura`, `solicitarSerie`, `listarSeries` e `validarDocumento`, com campos, tipos, obrigatoriedade e códigos de erro (HTTP 400/422/429).
+- **Anexo II, modelo de validação *a posteriori*:**
+  - a factura é emitida e entregue ao cliente sem validação prévia, e a AGT valida-a depois;
+  - **uma factura rejeitada "não existe para efeitos fiscais"** e tem de ser corrigida e reenviada (`documentStatus = C`);
+  - o adquirente tem **2 meses** para validar as facturas em que figura;
+  - o envio pode ser individual ou em lotes.
+- **Anexo III, especificações técnicas:**
+  - REST/JSON, caracteres e formatos numéricos portugueses;
+  - **auditoria de todos os eventos, erros e alterações**;
+  - especificação do QR Code;
+  - **Tabelas oficiais:**
+
+    | Tabela | Conteúdo |
+    |---|---|
+    | 1 | CAE, segundo a lista do INE |
+    | 2 | Taxas de IEC |
+    | 3 | Verbas e taxas de Imposto de Selo |
+    | 4 | Isenções de IVA: M11–M24, M30–M38, M81, M90–M93 |
+    | 5 | Isenções de IS |
+    | 6 | Isenções de IEC |
+
+**Diferenças entre o decreto (Agosto de 2025) e a documentação online da AGT (v2)**
+
+O art. 3.º permite actualizações, por isso **implementa-se a v2 online**, que é a que o servidor da AGT valida hoje. O decreto fica como base legal.
+
+| Ponto | DE 683/25 | Documentação AGT v2 |
+|---|---|---|
+| `schemaVersion` | "1.0" | "2.0" |
+| ID da submissão | `submissionGUID` | `submissionUUID` |
+| URL do QR | `portaldocontribuinte.minfin.gov.ao/consultar-fe?…` | `quiosqueagt.minfin.gov.ao/facturacao-eletronica/consultar-fe?emissor=…&document=…` |
+| Serviços | 7 | 12: acrescenta `anularFactura`, `estenderSerie`, inventário (`comunicar`/`submeterInventario`) e `comunicarServicosEstrangeiro` |
+
+⚠️ **O URL do QR difere.** Antes de produção, deve confirmar-se com a AGT (no ambiente de homologação) qual dos dois é o válido.
+
+**O que o decreto NÃO contém:** o processo e os requisitos de **certificação do software**. Essa informação tem de ser pedida à AGT (`produtores.dfe.dcrr.agt@minfin.gov.ao`) ou obtida no Portal do Parceiro.
+
 ## 4. Impacto no plano
 
 1. **Certificação, que não é código.** Quem distribui o software tem de se registar como **produtor de software** na AGT, certificar o produto (e obter o `softwareValidationNumber`), pedir as credenciais e registar a chave pública. **Isto leva tempo e deve começar já, em paralelo com o desenvolvimento.**
@@ -137,14 +189,14 @@ Isto resolve parte das "fontes externas" que estavam em falta.
    - **Fase 5:** demonstrações financeiras.
 
 ## 5. Ainda por obter
-- **Texto integral do Decreto Executivo n.º 683/25.** O DR é pago e a documentação da AGT parece reflecti-lo, mas convém ter o diploma.
+- ~~Texto integral do Decreto Executivo n.º 683/25~~ ✅ obtido (ver §3A).
 - **Regulamento e processo de certificação de software da AGT:** requisitos funcionais e testes de homologação.
 - **Esquema XSD do SAF-T (AO)**, para a fase 3.
 
 ## Fontes
 - Documentação oficial da API AGT, v2: https://quiosqueagt.minfin.gov.ao/doc-agt/doc-agt/2/index.html · v1: https://quiosqueagt.minfin.gov.ao/doc-agt/faturacao-electronica/1/index.html
 - AGT, «Factura electrónica: o que mudará na gestão fiscal das empresas em 2026»: https://agt.minfin.gov.ao/PortalAGT/#!/sala-de-imprensa/noticias/14792/factura-electronica-o-que-mudara-na-gestao-fiscal-das-empresas-em-2026
-- Decreto Executivo n.º 683/25 (metadados): https://www.lexlink.eu/conteudo/angola/ia-serie/4106155/decreto-executivo-no-68325/14793/por-tema
+- Decreto Executivo n.º 683/25, PDF oficial (Portal AGT › Legislação Fiscal): https://www.ucm.minfin.gov.ao/cs/groups/public/documents/document/aw40/otuy/~edisp/minfin4952361.pdf
 - Expansão, «Obrigatoriedade… só arranca a 01 de Outubro»: https://expansao.co.ao/angola/detalhe/facturacao-electronica-so-arranca-a-01-deobrigatoriedade-de-emissao-de-facturacao-electronica-so-arranca-a-01-de-outubro-outubro-67435.html
 - Mercado, 07/05/2026, «Sem prorrogação, AGT dá até 31 de Dezembro…»: https://mercado.co.ao/sem-prorrogacao-agt-da-ate-31-de-dezembro-para-todas-as-empresas-aderirem-a-factura-electronica/
 - Economia & Mercado, 06/05/2026, «Não haverá prorrogação do prazo»: https://www.economiaemercado.com/artigo/nao-havera-prorrogacao-do-prazo-de-obrigatoriedade-de-facturacao-electronica-avisa-a-agt
