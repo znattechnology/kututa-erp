@@ -1,0 +1,452 @@
+
+
+    Consultar Estado da Fatura :: Facturação Electrónica
+
+    Facturação Electrónica
+    2
+
+      Facturação Electrónica
+
+          1
+
+      Facturação Electrónica
+
+          2
+
+Consultar Estado da Fatura
+
+Serviço destinado a obter o estado de validação das facturas previamente
+transmitidas através do serviço registarFactura, devolvendo em
+resposta um indicador de sucesso ou insucesso na obtenção da informação,
+bem como o estado de cada uma das facturas incluídas na solicitação.
+
+Características do Serviço
+
+Endereço de homologação
+
+  POST
+  https://sifphml.minfin.gov.ao/sigt/fe/v1/obterEstado
+
+Endereço de produção
+
+  POST
+  https://sifp.minfin.gov.ao/sigt/fe/v1/obterEstado
+
+Exemplo do Pedido(Payload)
+
+ {
+    "schemaVersion": "2.0",
+    "submissionUUID": "a1b2c3d4-e5f6-7890-g1h2-i238j234k5122",
+    "taxRegistrationNumber": "5001636863",
+    "submissionTimeStamp": "2025-09-02T14:30:00Z",
+    "softwareInfo": {
+        "softwareInfoDetail": {
+            "productId": "Meu ERP CERTO",
+            "productVersion": "1.0.1",
+            "softwareValidationNumber": "C_134"
+        },
+        "jwsSoftwareSignature": "eyJ0eXAiOiJKT1NFIiwiYWxnIjoiUlMyNTYifQ.eyJwcm9kdWN0SWQiOiJNZXUgRVJQIENFUlRPIiwicHJvZHVjdFZlcnNpb24iOiIxLjAuMSIsInNvZnR3YXJlVmFsaWRhdGlvbk51bWJlciI6IkNfMTM0In0.VE3zkvOJOpqBfz4wpx4KCgcwOGgzGUP3MSMbaHCDnHhwOaeA6jlccBW9HjgQvg2tYCVVq0imrU_z0grEHNthhG4xD3afSOD1_RzvHs8Tc45dvztHJzB4gF0CAX-yIDwi7XcHiMRY0vkXOETBeHKewg0ktWSnZ7SLf4GxGzE7ry2u_pmhqhCPhxpa0oGQ_rBJUYkEAFg1OwaqjwvzCFgdT11r-XsHmnkcfJX_ktj59RWR_zgbytiCRtwCK9LNUflveS5GzUaCXbPn2deQ3F2hPldLECEa_ahwoapoK1LhkgOAVyPLJf6M1Cm09Le7rkdSaWQSW5BI_sPx5YaUaXkeqg"
+    },
+    "requestID": "202500000000118"
+ }
+
+Payload assinatura Consultar Estado
+
+ {
+    "taxRegistrationNumber": "...",
+    "requestID": "..."
+ }
+
+Exemplo da Resposta(Payload)
+
+ {
+    "requestID": "202500000000118",
+    "resultCode": "2",
+    "taxRegistrationNumber": "5001636863",
+    "documentStatusList": [],
+    "requestErrorList": []
+    "successRequestID": ""
+ }
+
+Parâmetros de entrada
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+schemaVersion
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Versão do schema do serviço, exemplo
+“2.0”
+ | 
+
+taxRegistrationNumber
+ | 
+string
+ | 
+“maxlength”: 15
+ | 
+Sim
+ | 
+Número fiscal de
+contribuinte.
+ | 
+
+submissionTimeStamp
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+
+Timestamp de submissão do pedido no formato ISO 8601, exemplos:
+
+"2025-05-27T14:30:00Z" (em UTC)
+
+"2025-05-27T14:30:00-03:00" (com informação de timezone)
+
+ | 
+
+softwareInfo
+ | 
+object
+ | 
+N/A
+ | 
+Sim
+ | 
+Objecto com os dados do Software de
+Facturação (ver formato em 5.1.2.1)
+ | 
+
+jwsSignature
+ | 
+string
+ | 
+Tamanho variável em Base64URL (dependendo da
+tamanho da chave usada)
+ | 
+Sim
+ | 
+
+Assinatura digital da solicitação usando a chave privada do emissor
+através do algoritmo RS256 (RSA + SHA-256). Os campos a serem utilizados
+na assinatura são:
+
+taxRegistrationNumber
+
+requestID
+
+O resultado é codificado em Base64URL, sendo que o tamanho final da
+string varia conforme o tamanho da chave usada (2048, 3072 ou 4096
+bits).
+
+ | 
+
+requestID
+ | 
+string
+ | 
+“maxlength”: 15
+ | 
+Sim
+ | 
+Identificador do pedido de
+registo de documentos de facturação, valor obtido quando ocorreu com
+sucesso a chamada ao serviço registarFactura.
+ | 
+
+Parâmetros de Saída
+
+HTTP code | 
+Tipo (JSON) | 
+Descrição | 
+
+200
+ | 
+
+object
+
+statusResult
+
+ | 
+Registo de pedido efectuado com sucesso sendo devolvido um object do
+tipo statusResult com o ponto de situação do processo de validação das
+facturas enviadas.
+ | 
+
+422
+ | 
+Object errorEntry
+ | 
+Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro “E96” - “erro na
+chamada, solicitação ainda em processamento”
+ | 
+
+422
+ | 
+Object errorEntry
+ | 
+Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro “E97” - “erro na
+chamada, solicitação prematura”
+ | 
+
+422
+ | 
+Object errorEntry
+ | 
+Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro “E95” - “erro na
+chamada, NIF emissor diferente”
+ | 
+
+429
+ | 
+Object errorEntry
+ | 
+Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro “E98” - “erro na
+chamada, demasiadas solicitações repetidas”
+ | 
+
+400
+ | 
+Object errorEntry
+ | 
+Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro “E96” -
+“solicitação mal efectuada – erro de estrutura”
+ | 
+
+Composição (properties) do object statusResult
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+requestID
+ | 
+string
+ | 
+“maxlength”: 15
+ | 
+Sim
+ | 
+Identificador do pedido de
+registo de documentos de facturação que se pretende consultar (enviado
+como parâmetro na chamada).
+ | 
+
+resultCode
+ | 
+integer
+ | 
+N/A
+ | 
+Sim
+ | 
+
+Resultado do processamento da solicitação de registo de facturas, com os
+seguintes valores possíveis e significados:
+
+0 - Processamento concluído, sem facturas inválidas;
+
+1 - Processamento concluído, com facturas válidas e facturas
+inválidas;
+
+2 - Processamento concluído, sem facturas válidas;
+
+7 - Solicitação não respondida por ser prematura ou repetitiva,
+devendo aguardar período mínimo para repetir este pedido;
+
+8 - Processamento ainda em curso;
+
+9 - Processamento cancelado.
+
+ | 
+
+successRequestID
+ | 
+string
+ | 
+"maxlength": 15
+ | 
+Não
+ | 
+É o requestID que o documento em causa foi validado com sucesso (Nos caso de erro E09).
+ | 
+
+taxRegistrationNumber
+ | 
+string
+ | 
+N/A
+ | 
+Não
+ | 
+Número fiscal de contribuinte.
+ | 
+
+documentStatusList
+ | 
+array
+ | 
+N/A
+ | 
+Não
+ | 
+
+Array com os resultados do processamento de cada uma das facturas
+constantes no pedido de registo de facturas, sendo obrigatório quando
+resultCode for diferente de 7, 8 ou 9.
+
+Terá uma linha para cada nº de factura que constava no pedido de registo
+solicitado.
+
+ | 
+
+Composição (itens) do array documentStatusList
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+documentNo
+ | 
+string
+ | 
+
+“minlength” : 1
+
+“maxlength”: 60
+
+ | 
+Sim
+ | 
+Identificação única do documento.
+ | 
+
+documentStatus
+ | 
+string
+ | 
+
+“minlength”: 1
+
+“maxlength”: 1
+
+ | 
+Sim
+ | 
+
+Resultado do processamento da factura identificada no campo
+documentNo, com os seguintes valores possíveis e significados:
+
+V - Factura válida;
+
+I - Factura inválida.
+
+ | 
+
+errorList
+ | 
+array
+ | 
+N/A
+ | 
+Não
+ | 
+
+Array com os erros encontrados no processamento do documento de
+facturação identificado no campo documentNo, sendo obrigatório quando
+documentStatus for “I”.
+
+Terá uma linha para cada erro encontrado.
+
+ | 
+
+Composições (itens) do array errorList e (properties) do object errorEntry
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+errorCode
+ | 
+string
+ | 
+
+“minlength”: 3
+
+“maxlength”: 3
+
+ | 
+Sim
+ | 
+Código de erro
+ | 
+
+errorDescription
+ | 
+string
+ | 
+“maxlength”: 100
+ | 
+Sim
+ | 
+Descrição do erro
+ | 
+
+Códigos e mensagens de erro no retorno
+
+Tendo em conta as regras de negócio, são propostos adicionalmente os
+seguintes erros de validação:
+
+Regra de negócio | 
+Código de erro | 
+Descrição de erro | 
+
+FE-RNG-010
+ | 
+E08
+ | 
+A assinatura do Produtor de Software
+“jwsSoftwareSignature” não está de acordo com a informação transmitida.
+ | 
+
+FE-RNG-011
+ | 
+E39
+ | 
+Os dados constantes na assinatura do Produtor de
+Software “jwsSoftwareSignature” não estão de acordo com a informação
+constante no processo de Certificação do Software.
+ | 
+
+FE-RNG-032
+ | 
+E40
+ | 
+Os dados constantes na assinatura da chamada do
+serviço “jwsSignature” não estão de acordo com a informação constante na
+chamada do serviço.
+ | 
+

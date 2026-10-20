@@ -1,0 +1,104 @@
+
+
+    Autenticação & Autorização :: Facturação Electrónica
+
+    Facturação Electrónica
+    2
+
+      Facturação Electrónica
+
+          1
+
+      Facturação Electrónica
+
+          2
+
+Autenticação & Autorização
+
+A API utiliza o mecanismo Basic Authentication para validar e
+autorizar o acesso dos produtores de software.
+
+O acesso é concedido através de um par de credenciais (username e
+password) emitido pela entidade gestora da Faturação Eletrónica.
+
+Estas credenciais devem ser enviadas em todas as chamadas aos serviços
+protegidos da API.
+
+Obtenção das Credenciais
+
+Para solicitar as credenciais de acesso, o produtor de software deve
+enviar um e-mail formal para:
+
+📧 produtores.dfe.dcrr.agt@minfin.gov.ao
+
+O pedido deve conter:
+
+Nome da Empresa
+
+NIF da Empresa
+
+Funcionamento do Basic Auth
+
+O Basic Auth consiste em enviar as credenciais codificadas em Base64 no
+cabeçalho HTTP:
+
+Authorization: Basic <Base64(username:password)>
+
+Exemplo de codificação:
+
+Se as credenciais forem:
+
+Username: cliente123
+
+Password: s3nh@F0rte!
+
+Concatenação antes do Base64: cliente123:s3nh@F0rte!
+
+Após Base64: Y2xpZW50ZTEyMzpzM25oQEYwcnRlIQ==
+
+Exemplo de Header HTTP Completo
+
+Requisição POST
+
+ POST /sigt/fe/v1/registarFactura HTTP/1.1
+ Host: https://sifphml.minfin.gov.ao
+ Authorization: Basic Y2xpZW50ZTEyMzpzM25oQEYwcnRlIQ==
+ Content-Type: application/json
+ Accept: application/json
+ Content-Length: 524
+
+Exemplo em cURL
+
+ curl -X POST "https://sifphml.minfin.gov.ao/sigt/fe/v1/registarFactura"
+ -u cliente123:"s3nh@F0rte!"
+ -H "Accept: application/json"
+
+Nota: O curl já faz o Base64 automaticamente quando usamos -u.
+
+Exemplo em JavaScript (Fetch API)
+
+const auth = btoa("cliente123:s3nh@F0rte!");
+
+ fetch("https://sifphml.minfin.gov.ao/sigt/fe/v1/registarFactura ",{
+
+    method: "POST",
+    headers:{
+        "Authorization": `Basic $\{auth}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+ }).then(res => res.json()).then(console.log);
+
+Exemplo em C# (HttpClient)
+
+ var client = new HttpClient();
+
+ var byteArray = Encoding.ASCII.GetBytes("cliente123:s3nh@F0rte!");
+
+ client.DefaultRequestHeaders.Authorization =
+    new AuthenticationHeaderValue("Basic",Convert.ToBase64String(byteArray));
+
+ var response = await client.GetAsync("https://sifphml.minfin.gov.ao/sigt/fe/v1/registarFactura");
+ var content = await response.Content.ReadAsStringAsync();
+

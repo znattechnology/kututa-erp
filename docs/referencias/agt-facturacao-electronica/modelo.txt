@@ -1,0 +1,53 @@
+
+
+    Modelo de Processamento Assíncrono :: Facturação Electrónica
+
+    Facturação Electrónica
+    2
+
+      Facturação Electrónica
+
+          1
+
+      Facturação Electrónica
+
+          2
+
+Modelo de Processamento Assíncrono
+
+A submissão de documentos fiscais na API segue um modelo assíncrono,
+garantindo escalabilidade, resiliência e alta capacidade de
+processamento.
+
+Fluxo geral:
+
+O contribuinte/submissor envia o documento usando o endpoint
+
+Registar Factura Eletrónica.
+
+A API valida apenas a estrutura JSON.
+
+Se a estrutura estiver correta, o documento é colocado numa fila de
+processamento.
+
+A API devolve imediatamente:
+
+requestID
+
+O documento é processado internamente:
+
+Validações fiscais
+
+Regras tributárias
+
+Validação da série
+
+Verificação de integridade
+
+O produtor volta mais tarde para consultar o estado via
+
+Consultar Estado da Submissão.
+
+Este mecanismo desacopla a submissão do processamento, permitindo altas
+cargas e garantindo que o sistema nunca bloqueia o contribuinte.
+

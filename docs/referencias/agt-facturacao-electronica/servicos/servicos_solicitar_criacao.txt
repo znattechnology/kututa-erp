@@ -1,0 +1,655 @@
+
+
+    Solicitar Criação de Série :: Facturação Electrónica
+
+    Facturação Electrónica
+    2
+
+      Facturação Electrónica
+
+          1
+
+      Facturação Electrónica
+
+          2
+
+Solicitar Criação de Série
+
+Serviço destinado a solicitar a criação de séries de numeração de Faturas
+Electrónicas, devolvendo em resposta um indicador de sucesso ou
+insucesso.
+
+Características do Serviço
+
+Endereço de homologação
+
+  POST
+  https://sifphml.minfin.gov.ao/sigt/fe/ws/v1/registarFactura
+
+Endereço de produção
+
+  POST
+  https://sifp.minfin.gov.ao/sigt/fe/v1/solicitarSerie
+
+Payload de entrada para solicitar criação de série
+
+ {
+    "schemaVersion": "2.0",
+    "submissionUUID": "a1b2c3d4-e5f6-7890-g1h2-i238j234k5122",
+    "taxRegistrationNumber": "5001636863",
+    "submissionTimeStamp": "2025-09-02T14:30:00Z",
+    "softwareInfo": {
+        "softwareInfoDetail": {
+            "productId": "Meu ERP CERTO",
+            "productVersion": "1.0.1",
+            "softwareValidationNumber": "C_134"
+        },
+        "jwsSoftwareSignature": "eyJ0eXAiOiJKT1NFIiwiYWxnIjoiUlMyNTYifQ.eyJwcm9kdWN0SWQiOiJNZXUgRVJQIENFUlRPIiwicHJvZHVjdFZlcnNpb24iOiIxLjAuMSIsInNvZnR3YXJlVmFsaWRhdGlvbk51bWJlciI6IkNfMTM0In0.VE3zkvOJOpqBfz4wpx4KCgcwOGgzGUP3MSMbaHCDnHhwOaeA6jlccBW9HjgQvg2tYCVVq0imrU_z0grEHNthhG4xD3afSOD1_RzvHs8Tc45dvztHJzB4gF0CAX-yIDwi7XcHiMRY0vkXOETBeHKewg0ktWSnZ7SLf4GxGzE7ry2u_pmhqhCPhxpa0oGQ_rBJUYkEAFg1OwaqjwvzCFgdT11r-XsHmnkcfJX_ktj59RWR_zgbytiCRtwCK9LNUflveS5GzUaCXbPn2deQ3F2hPldLECEa_ahwoapoK1LhkgOAVyPLJf6M1Cm09Le7rkdSaWQSW5BI_sPx5YaUaXkeqg"
+    },
+    "seriesYear": "2025",
+    "documentType": "LD",
+    "establishmentNumber": "10",
+    "jwsSignature": "string",
+    "seriesContingencyIndicator": "N"
+}
+
+OBS: O campo establishmentNumber refere-se ao código da agência/estabelecimento a partir do qual o contribuinte emissor efetua a emissão do documento fiscal.
+
+As agências (estabelecimentos) devem estar previamente cadastradas no Portal do Contribuinte.
+
+Em ambiente de testes (sandbox) ou em cenários em que o contribuinte possua apenas uma única localização, poderá ser utilizado o valor padrão "SEDE".
+
+Payload assinatura Solicitar Serie
+
+{
+    "taxRegistrationNumber": "...",
+    "seriesYear": "...",
+    "documentType": "...",
+    "establishmentNumber": "...",
+    "seriesContingencyIndicator": "..."
+}
+
+Payload de Saída(resposta)
+
+ {
+    "resultCode": 1,
+    "errorList": [
+        ""
+    ],
+    "seriesFEResult": {
+        "seriesCode": "LD6325S2042N",
+        "authorizedQuantity": "999999999999",
+        "firstDocumentNo": "1",
+        "lastDocumentNo": "999999999999"
+    }
+ }
+
+Parâmetros de entrada
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+schemaVersion
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Versão do schema do serviço, exemplo
+“2.0”.
+ | 
+
+submissionUUID
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+
+Identificador único da solicitação, fornecido pelo software no formato
+UUID standard “xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx” em que:
+
+Cada x é um dígito hexadecimal (0–9, a–f);
+
+M indica a versão do UUID (por exemplo, 4 para UUID versão 4 —
+aleatório);
+
+N indica o variant (especifica o layout; para UUIDs compatíveis
+com RFC 4122, os primeiros bits de N devem estar entre 8 e b).
+
+Exemplo:
+
+550e8400-e29b-41d4-a716-446655440000
+
+Este identificador deverá ser único por cada submissão do contribuinte
+emissor.
+
+ | 
+
+taxRegistrationNumber
+ | 
+string
+ | 
+“maxlength”: 15
+ | 
+Sim
+ | 
+Número fiscal do
+contribuinte.
+ | 
+
+submissionTimeStamp
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+
+Timestamp de submissão do pedido no formato ISO 8601, exemplos:
+
+"2025-05-27T14:30:00Z" (em UTC)
+
+"2025-05-27T14:30:00-03:00" (com informação de timezone)
+
+ | 
+
+softwareInfo
+ | 
+object
+ | 
+N/A
+ | 
+Sim
+ | 
+
+Objecto com os dados do Software de Facturação
+
+ | 
+
+jwsSignature
+ | 
+string
+ | 
+Tamanho variável em Base64URL (dependendo da
+tamanho da chave usada)
+ | 
+Sim
+ | 
+
+Assinatura digital da solicitação de criação de série, usando a chave
+privada do emissor através do algoritmo RS256 (RSA + SHA-256). Os campos
+da solicitação a serem utilizados na assinatura são:
+
+taxRegistrationNumber
+
+establishmentNumber
+
+seriesYear
+
+documentType
+
+O resultado é codificado em Base64URL, sendo que o tamanho final da
+string varia conforme o tamanho da chave usada (2048, 3072 ou 4096
+bits).
+
+ | 
+
+seriesYear
+ | 
+integer
+ | 
+N/A
+ | 
+Sim
+ | 
+Ano de emissão associado à série de
+numeração das facturas. De 1 de Janeiro até 15 de Dezembro é possível
+criar séries somente para o ano de sistema, após essa data é possível
+criar séries para o ano de sistema e para o ano imediatamente posterior
+ao do sistema.
+ | 
+
+documentType
+ | 
+string
+ | 
+
+“minlength” : 2
+
+“maxlength”: 2
+
+ | 
+Sim
+ | 
+
+Tipo de documento de facturação electrónica, com os seguintes valores
+possíveis e significados:
+
+FA - Factura de Adiantamento
+
+FT - Factura
+
+FR - Factura/Recibo
+
+FG - Factura Global
+
+GF - Factura Genérica
+
+AC - Aviso de Cobrança
+
+AR - Aviso de Cobrança/Recibo
+
+TV - Talão de Venda
+
+RC - Recibo em numerário (cash)
+
+RG - Recibo Geral
+
+RE - Estorno ou Recibo de Estorno
+
+ND - Nota de Débito
+
+NC - Nota de Crédito
+
+AF - Factura/Recibo de Autofacturação
+
+RP - Prémio ou Recibo de Prémio
+
+RA - Resseguro Aceite
+
+CS - Imputação a Co-seguradoras
+
+LD - Imputação a Co-seguradora Líder
+
+(*) Tratamento similar a uma factura/recibo, só sendo utilizado por
+contribuintes enquadrados no Regime de Caixa do IVA.
+
+ | 
+
+establishmentNumber
+ | 
+string
+ | 
+“minlength” : 1
+
+“maxlength”: 200
+ | 
+Sim
+ | 
+Identifica o estabelecimento que solicita a
+emissão de facturas. Este campo garante que cada série esteja unicamente
+associada ao respectivo estabelecimento dentro da organização do
+contribuinte.
+ | 
+
+seriesContingencyIndicator
+ | 
+string
+ | 
+“maxlength”: 1
+ | 
+Sim
+ | 
+
+Indicador que identifica se a série de numeração de facturas se destina
+a emissão em regime de contingência, com os seguintes valores possíveis
+e significados:
+
+N – Série do regime normal de emissão;
+
+C – Série criada para suportar a emissão em contingência.
+
+ | 
+
+Composição (properties) do object softwareInfo
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+softwareInfoDetail
+ | 
+object
+ | 
+N/A
+ | 
+Sim
+ | 
+Objecto com os detalhes do
+Software de Facturação
+ | 
+
+jwsSoftwareSignature
+ | 
+string
+ | 
+
+“minlength” : 256
+
+“maxlength”: 256
+
+ | 
+Sim
+ | 
+Assinatura digital do Software de Facturação usando a chave
+privada do software, através o algoritmo RS256 (RSA + SHA-256).
+
+Todos os campos do objecto softwareInfo devem ser usados na assinatura.
+ | 
+
+Composição (properties) do object softwareInfoDetail
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+productId
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Nome do Software de Facturação.
+ | 
+
+productVersion
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Versão do Software de Facturação.
+ | 
+
+softwareValidationNumber
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Número de Certificação do
+Software de Facturação.
+ | 
+
+Parâmetros de saída
+
+HTTP code | 
+Tipo (JSON) | 
+Descrição | 
+
+200
+ | 
+
+object seriesFEResult
+
+ | 
+Registo de pedido efectuado com sucesso sendo devolvido um object do
+tipo seriesFEResult com os dados da quantidade e 1ª e última facturas
+com emissão autorizada pela AGT para a série solicitada.
+ | 
+
+400
+ | 
+
+array errorList
+
+ | 
+Registo de pedido efectuado com erros, sendo devolvida uma lista de
+erros na recepção dos dados da factura.
+ | 
+
+Composição (properties) do object seriesFEResult
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+seriesCode
+ | 
+string
+ | 
+
+“minlength” : 3
+
+“maxlength”: 60
+
+ | 
+Sim
+ | 
+Código da série de numeração de facturas electrónicas atribuído
+pela AGT para a solicitação efectuada, de acordo com a regra de
+numeração única de series definida.
+ | 
+
+authorizedQuantity
+ | 
+integer
+ | 
+N/A
+ | 
+Sim
+ | 
+Quantidade de facturas que a AGT
+aprovou para emissão nesta solicitação, serão seguidas as orientações
+das regras FE-RNG-082 e FE-RNG-083.
+ | 
+
+firstDocumentNo
+ | 
+string
+ | 
+“maxlength”: 60
+ | 
+Sim
+ | 
+Identificador da
+primeira factura electrónica que se possibilita a emissão na nova série
+ou extensão de série já existente.
+ | 
+
+lastDocumentNo
+ | 
+string
+ | 
+“maxlength”: 60
+ | 
+Sim
+ | 
+Identificador da última
+factura electrónica que se possibilita a emissão na nova série ou
+extensão de série já existente.
+ | 
+
+Composição (itens) do array errorList
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+idError
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Código do erro.
+ | 
+
+descriptionError
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Descrição do erro.
+ | 
+
+Códigos e mensagens de erro
+
+Tendo em conta as regras de negócio, são propostos os seguintes erros de
+validação:
+
+Regra de negócio | 
+Código de erro | 
+Descrição de erro | 
+
+FE-RNG-010
+ | 
+E08
+ | 
+A assinatura do produtor de software
+“jwsSoftwareSignature” não está de acordo com a informação transmitida.
+ | 
+
+FE-RNG-011
+ | 
+E39
+ | 
+Os dados constantes na assinatura do produtor de
+software “jwsSoftwareSignature” não estão de acordo com a informação
+constante no Processo de Certificação do Software.
+ | 
+
+FE-RNG-032
+ | 
+E40
+ | 
+Os dados constantes na assinatura da chamada do
+serviço “jwsSignature” não estão de acordo com a informação constante na
+chamada do serviço.
+ | 
+
+FE-RNG-049
+ | 
+E30
+ | 
+Contribuinte especificado no parâmetro <parâmetro>
+(<valor do parâmetro>) não possui actividade registada no sistema da
+AGT.
+ | 
+
+FE-RNG-050
+ | 
+E06
+ | 
+Contribuinte especificado no parâmetro <parâmetro>
+(<valor do parâmetro>) não aderiu à facturação electrónica no sistema da
+AGT.
+ | 
+
+FE-RNG-051
+ | 
+E31
+ | 
+Código de série de numeração (<valor do parâmetro1>)
+já se encontra em utilização para o contribuinte (<valor do
+parâmetro2>).
+ | 
+
+FE-RNG-053
+ | 
+E32
+ | 
+Código de série mal construído (<valor do parâmetro>),
+deverá conter o ano de emissão com 2 ou 4 dígitos.
+ | 
+
+FE-RNG-055
+ | 
+E33
+ | 
+Ano de emissão da série (<valor do parâmetro 1>) deve
+coincidir com o ano da data de sistema (<valor do parâmetro 2>
+(solicitações anteriores a 15 de Dezembro).
+ | 
+
+FE-RNG-056
+ | 
+E34
+ | 
+Série da factura (<valor do parâmetro 1>) é
+inexistente para o contribuinte (<valor do parâmetro 2>).
+ | 
+
+FE-RNG-057
+ | 
+E35
+ | 
+A factura que se pretende criar (<valor do parâmetro
+1>) refere-se a uma série de numeração de documentos de facturação não
+electrónicos.
+ | 
+
+FE-RNG-058
+ | 
+E36
+ | 
+O Software de Facturação que está a gerar a factura
+(<valor do parâmetro 1>) não coincide com o Software de Facturação que
+gerou a série (<valor do parâmetro 2>).
+ | 
+
+FE-RNG-059
+ | 
+E37
+ | 
+O tipo de factura a emitir (<valor do parâmetro 1>)
+não coincide com o tipo de factura que foi destinada a série de
+facturação (<valor do parâmetro 2>).
+ | 
+
+FE-RNG-060
+ | 
+E38
+ | 
+O ano de emissão da factura (<valor do parâmetro 1>)
+não coincide com o ano de emissão a que se refere a série de facturas
+(<valor do parâmetro 2>).
+ | 
+
+FE-RNG-080
+ | 
+E48
+ | 
+O estabelecimento referido (<valor do parâmetro 1>) é
+desconhecido, tem de ser previamente registado nos dados de adesão do
+emissor (<valor do parâmetro 2>) à facturação electrónica.
+ | 
+
+FE-RNG-081
+ | 
+E49
+ | 
+A serie cuja ampliação foi solicitada, identifica o
+estabelecimento (<valor do parâmetro 1>), mas a serie foi originalmente
+criada para o estabelecimento (<valor do parâmetro 2>) pelo que o pedido
+não pode ser aprovado.
+ | 
+

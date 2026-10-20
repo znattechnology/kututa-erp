@@ -1,0 +1,86 @@
+
+
+    Introdução :: Facturação Electrónica
+
+    Facturação Electrónica
+    2
+
+      Facturação Electrónica
+
+          1
+
+      Facturação Electrónica
+
+          2
+
+Introdução
+
+A API de Faturação Eletrónica define o conjunto de interfaces, regras e
+padrões técnicos necessários para a comunicação automática de documentos
+fiscais entre os softwares de faturação certificados e a Administração
+Tributária. O objetivo é garantir a integridade, autenticidade e
+rastreabilidade dos documentos através de mecanismos como assinatura
+digital JWS e controle de séries.
+
+A arquitetura é suportada por um modelo de processamento assíncrono,
+permitindo validações baseadas em filas de processamento, com consulta
+posterior (polling) ou envio de notificações callback (Disponível nas
+próximas versões). Este documento descreve a visão geral da API, o fluxo
+de integração ponta a ponta, o modelo de comunicação e os principais
+conceitos técnicos necessários para implementação correta da solução.
+
+Propósito da API
+
+A API de Faturação Eletrónica tem como objetivo permitir que softwares
+de faturação comuniquem em tempo real (ou quase real) todos os
+documentos fiscais à Administração Tributária, garantindo:
+
+Integridade e autenticidade por meio de assinatura digital JWS.
+
+Validação automática e retorno do estado do documento (válido ou
+inválido).
+
+Sincronização entre os sistemas internos do contribuinte e a base
+fiscal.
+
+Auditoria e rastreabilidade completa (com requestID, timestamps e
+histórico de processamento).
+
+Arquitectura Geral da API
+
+A arquitetura da solução é baseada no modelo de comunicação assíncrona:
+
+Processamento Assíncrono
+
+O contribuinte envia o documento JSON.
+
+A API devolve requestID imediatamente, confirmando apenas receção.
+
+O documento entra na fila de processamento.
+
+O contribuinte deve consultar (polling) ou aguardar callback.
+
+Este modelo suporta:
+
+volumes grandes
+
+redução de latência no front-end
+
+isolamento de falhas
+
+Mecanismos disponíveis:
+
+Mecanismo | 
+Como funciona | 
+
+Polling
+ | 
+Cliente consulta a decisão final.
+ | 
+
+Callback (se ativado)
+ | 
+A API faz POST para o endpoint do contribuinte
+quando o documento for validado. (Disponível nas próximas versões)
+ | 
+

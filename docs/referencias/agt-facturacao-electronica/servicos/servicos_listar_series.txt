@@ -1,0 +1,631 @@
+
+
+    Listar Séries :: Facturação Electrónica
+
+    Facturação Electrónica
+    2
+
+      Facturação Electrónica
+
+          1
+
+      Facturação Electrónica
+
+          2
+
+Listar Séries
+
+Serviço destinado a obter a lista de séries de numeração registadas em
+nome do contribuinte, devolvendo em resposta a lista de séries de
+numeração encontradas e respectivas datas de emissão.
+
+Características do Serviço
+
+Endereço de homologação
+
+  POST
+  https://sifphml.minfin.gov.ao/sigt/fe/v1/listarSeries
+
+Endereço de produção
+
+  POST
+  https://sifp.minfin.gov.ao/sigt/fe/v1/listarSeries
+
+Exemplo do Pedido(Payload)
+
+ {
+    "schemaVersion": "2.0",
+    "taxRegistrationNumber": "5001636863",
+    "submissionTimeStamp": "2025-10-28T18:51:10.178Z",
+    "seriesCode": "LD6325S1N",
+    "seriesYear": "2025",
+    "seriesStatus": "A",
+    "documentType": "LD",
+    "establishmentNumber": 10,
+    "jwsSignature": "string",
+    "softwareInfo": {
+        "softwareInfoDetail": {
+                "productId": "Meu ERP CERTO",
+                "productVersion": "1.0.1",
+                "softwareValidationNumber": "C_134"
+            },
+            "jwsSoftwareSignature": "eyJ0eXAiOiJKT1NFIiwiYWxnIjoiUlMyNTYifQ.eyJwcm9kdWN0SWQiOiJNZXUgRVJQIENFUlRPIiwicHJvZHVjdFZlcnNpb24iOiIxLjAuMSIsInNvZnR3YXJlVmFsaWRhdGlvbk51bWJlciI6IkNfMTM0In0.VE3zkvOJOpqBfz4wpx4KCgcwOGgzGUP3MSMbaHCDnHhwOaeA6jlccBW9HjgQvg2tYCVVq0imrU_z0grEHNthhG4xD3afSOD1_RzvHs8Tc45dvztHJzB4gF0CAX-yIDwi7XcHiMRY0vkXOETBeHKewg0ktWSnZ7SLf4GxGzE7ry2u_pmhqhCPhxpa0oGQ_rBJUYkEAFg1OwaqjwvzCFgdT11r-XsHmnkcfJX_ktj59RWR_zgbytiCRtwCK9LNUflveS5GzUaCXbPn2deQ3F2hPldLECEa_ahwoapoK1LhkgOAVyPLJf6M1Cm09Le7rkdSaWQSW5BI_sPx5YaUaXkeqg"
+    }
+ }
+
+Payload assinatura Listar Serie
+
+ {
+   "taxRegistrationNumber": "..."
+ }
+
+Exemplo da Resposta(Payload)
+
+ {
+    "resultCode": "1",
+    "seriesResultCount": "0",
+    "seriresInfo": []
+ }
+
+O presente documento tem como principal objectivo desenhar uma
+solução/modelo que possibilite a comunicação electrónica automatizada e
+em tempo real de todas as facturas geradas pelos contribuintes por
+intermédio de serviços (webservices).
+
+Para o efeito foi conceptualizado um modelo de faturação electrónica
+envolvendo todas os intervenientes no processo que garante o reporte de
+toda informação solicitada sem criar qualquer tipo de entrave ou
+constrangimento ao normal processamento das transacções entre agentes
+económicos.
+
+Parâmetros de entrada
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+schemaVersion
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Versão do schema do serviço, exemplo
+“2.0”
+ | 
+
+taxRegistrationNumber
+ | 
+string
+ | 
+“maxlength”: 15
+ | 
+Sim
+ | 
+Número fiscal de
+contribuinte
+ | 
+
+submissionTimeStamp
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+
+Timestamp de submissão do pedido no formato ISO 8601, exemplos:
+
+"2025-05-27T14:30:00Z" (em UTC)
+
+"2025-05-27T14:30:00-03:00" (com informação de timezone)
+
+ | 
+
+softwareInfo
+ | 
+object
+ | 
+N/A
+ | 
+Sim
+ | 
+
+Objecto com os dados do Software de Facturação
+
+ | 
+
+jwsSignature
+ | 
+string
+ | 
+Tamanho variável em Base64URL (dependendo da
+tamanho da chave usada)
+ | 
+Sim
+ | 
+
+Assinatura digital da solicitação usando a chave privada do emissor
+através do algoritmo RS256 (RSA + SHA-256). Os campos a serem utilizados
+na assinatura são:
+
+taxRegistrationNumber
+
+O resultado é codificado em Base64URL, sendo que o tamanho final da
+string varia conforme o tamanho da chave usada (2048, 3072 ou 4096
+bits).
+
+ | 
+
+seriesCode
+ | 
+string
+ | 
+
+“minlength” : 3
+
+“maxlength”: 60
+
+ | 
+Não
+ | 
+Código da série de numeração de documentos de facturação
+electrónica, tendo como requisito que deverá conter na sua composição o
+ano de emissão dos documentos de facturação, com 2 ou 4 dígitos
+(exemplos: 25 ou 2025, no entanto para a emissão em contingência deve
+apresenta 25C ou 2025C), deverá ser composto por caracteres
+alfanuméricos.
+ | 
+
+seriesYear
+ | 
+integer
+ | 
+N/A
+ | 
+Não
+ | 
+Ano de emissão associado à série de
+numeração dos documentos de facturação.
+ | 
+
+documentType
+ | 
+string
+ | 
+
+“minlength” : 2
+
+“maxlength”: 2
+
+ | 
+Não
+ | 
+
+Tipo de documento de facturação electrónica, com os seguintes valores
+possíveis e significados:
+
+FA - Factura de Adiantamento
+
+FT - Factura
+
+FR - Factura/Recibo
+
+FG - Factura Global
+
+GF – Factura Genérica
+
+AC - Aviso de Cobrança
+
+AR - Aviso de Cobrança/Recibo
+
+TV - Talão de Venda
+
+RC - Recibo em numerário (cash)
+
+RG - Recibo Geral
+
+RE - Estorno ou Recibo de Estorno
+
+ND - Nota de Débito
+
+NC - Nota de Crédito
+
+AF - Factura/Recibo de Autofacturação
+
+RP - Prémio ou Recibo de Prémio
+
+RA - Resseguro Aceite
+
+CS - Imputação a Co-seguradoras
+
+LD - Imputação a Co-seguradora Líder
+
+(*) Tratamento similar a uma factura/recibo, só sendo utilizado por
+contribuintes do regime de caixa
+
+ | 
+
+establishmentNumber
+ | 
+string
+ | 
+“minlength” : 1
+
+“maxlength”: 200
+ | 
+Sim
+ | 
+Identifica o estabelecimento que solicita a
+emissão de facturas em regime de contingência offline. Este campo
+garante que cada série de contingência esteja unicamente associada ao
+respectivo estabelecimento dentro da organização do contribuinte.
+ | 
+
+seriesStatus
+ | 
+string
+ | 
+
+“minlength” : 2
+
+“maxlength”: 2
+
+ | 
+Não
+ | 
+
+Estado da série de numeração da facturação, com os seguintes valores
+possíveis e significados:
+
+A - Série aberta
+
+U - Série em utilização
+
+F - Série fechada (após expirado o respectivo ano de emissão)
+
+ | 
+
+Parâmetros de Saída
+
+HTTP code | 
+Tipo (JSON) | 
+Descrição | 
+
+200
+ | 
+
+object
+
+seriesListResult
+
+ | 
+Registo de pedido efectuado com sucesso sendo devolvido um object do
+tipo seriesListResult com os dados das séries de numeração de facturas
+encontradas.
+ | 
+
+422
+ | 
+Object errorEntry
+ | 
+Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro “E94” - “erro na
+chamada, nif diferente”
+ | 
+
+429
+ | 
+Object errorEntry
+ | 
+Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro “E98” - “erro na
+chamada, demasiadas solicitações repetidas”
+ | 
+
+400
+ | 
+Object errorEntry
+ | 
+Chamada ocorreu com erro, sendo enviado uma
+mensagem (código e descrição) correspondente ao erro “E96” -
+“solicitação mal efectuada – erro de estrutura”
+ | 
+
+Composição (properties) do object seriesListResult
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+seriesResultCount
+ | 
+integer
+ | 
+N/A
+ | 
+Sim
+ | 
+Número de séries encontradas na
+pesquisa realizada e para os critérios de pesquisa especificados.
+ | 
+
+seriesInfo
+ | 
+array
+ | 
+N/A
+ | 
+Sim
+ | 
+Array com a lista de dados das séries
+(object seriesInfo).
+ | 
+
+Composição (properties) do array seriesInfo
+
+Campo | 
+Tipo (JSON) | 
+Atributos | 
+Obrigatório | 
+Descrição | 
+
+seriesCode
+ | 
+string
+ | 
+
+“minlength” : 3
+
+“maxlength”: 60
+
+ | 
+Não
+ | 
+Código da série de numeração de facturas electrónicas.
+ | 
+
+seriesYear
+ | 
+integer
+ | 
+N/A
+ | 
+Não
+ | 
+Ano de emissão associado à série de
+numeração das facturas.
+ | 
+
+documentType
+ | 
+string
+ | 
+
+“minlength” : 2
+
+“maxlength”: 2
+
+ | 
+Não
+ | 
+
+Tipo de documento de facturação electrónica, com os seguintes valores
+possíveis e significados:
+
+FA - Factura de Adiantamento
+
+FT - Factura
+
+FR - Factura/Recibo
+
+FG - Factura Global
+
+GF – Factura Genérica
+
+AC - Aviso de Cobrança
+
+AR - Aviso de Cobrança/Recibo
+
+TV - Talão de Venda
+
+RC - Recibo em numerário (cash)
+
+RG - Recibo Geral
+
+RE - Estorno ou Recibo de Estorno
+
+ND - Nota de Débito
+
+NC - Nota de Crédito
+
+AF - Factura/Recibo de Autofacturação
+
+RP - Prémio ou Recibo de Prémio
+
+RA - Resseguro Aceite
+
+CS - Imputação a Co-seguradoras
+
+LD - Imputação a Co-seguradora Líder
+
+(*) Tratamento similar a uma factura/recibo, só sendo utilizado por
+contribuintes enquadrados no Regime de Caixa do IVA.
+
+ | 
+
+seriesStatus
+ | 
+string
+ | 
+
+“minlength” : 2
+
+“maxlength”: 2
+
+ | 
+Não
+ | 
+
+Estado da série de numeração da facturação, com os seguintes valores
+possíveis e significados:
+
+A - Série aberta
+
+U - Série em utilização
+
+F - Série fechada (após expirado o respectivo ano de emissão ou,
+quando a serie se refere a emissão em contingência se terminado o
+respectivo período de emissão).
+
+ | 
+
+seriesCreationDate
+ | 
+string
+ | 
+“format”: “date”
+ | 
+Sim
+ | 
+Data de criação
+original da série electrónica (coincide com a primeira gama de emissão
+solicitada e aprovada)
+ | 
+
+firstDocumentApproved
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Número do primeiro documento
+do intervalo de facturas que foi aprovado para emissão nesta série e
+nesta data
+ | 
+
+lastDocumentApproved
+ | 
+string
+ | 
+N/A
+ | 
+Sim
+ | 
+Número do último documento do
+intervalo de facturas que foi aprovado para emissão nesta série
+ | 
+
+firstDocumentCreated
+ | 
+string
+ | 
+N/A
+ | 
+Não
+ | 
+Número do primeiro documento de
+facturação criado na série (desde que esta série já tenha sido utilizada
+na criação de facturas)
+ | 
+
+lastDocumentCreated
+ | 
+string
+ | 
+N/A
+ | 
+Não
+ | 
+Última factura criada nesta
+serie (desde que já tenha sido utilizada na criação de facturas)
+ | 
+
+invoicingMethod
+ | 
+string
+ | 
+
+“minlength” : 2
+
+“maxlength”: 4
+
+ | 
+Sim
+ | 
+
+Qual o método para geração das facturas, com os seguintes valores
+possíveis e significados:
+
+FEPC – Facturação electrónica com emissão no Portal do Contribuinte
+
+FESF – Facturação electrónica com emissão via Software de Facturação
+
+SF – Facturação não electrónica com emissão via Software de
+Facturação
+
+ | 
+
+seriesContingencyIndicator
+ | 
+string
+ | 
+“maxlength”: 1
+ | 
+Sim
+ | 
+
+Indicador que identifica se a série de numeração de facturas foi criada
+em regime de contingência, com os seguintes valores possíveis e
+significados:
+
+N – Série do regime normal de emissão;
+
+C – Série criada para suportar a emissão em contingência.
+
+ | 
+
+Códigos e mensagens de erro no retorno do Serviço
+
+Tendo em conta as regras de negócio, são propostos adicionalmente os
+seguintes erros de validação:
+
+Regra de negócio | 
+Código de erro | 
+Descrição de erro | 
+
+FE-RNG-010
+ | 
+E08
+ | 
+A assinatura do Produtor de Software
+“jwsSoftwareSignature” não está de acordo com a informação transmitida.
+ | 
+
+FE-RNG-011
+ | 
+E39
+ | 
+Os dados constantes na assinatura do Produtor de
+Software “jwsSoftwareSignature” divergem da informação constante no
+processo de Certificação do Software.
+ | 
+
+FE-RNG-032
+ | 
+E40
+ | 
+Os dados constantes na assinatura da chamada do
+serviço “jwsSignature” não estão de acordo com a informação constante na
+chamada do serviço.
+ | 
+

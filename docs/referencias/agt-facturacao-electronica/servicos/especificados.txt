@@ -1,0 +1,162 @@
+
+
+    Serviços Especificados :: Facturação Electrónica
+
+    Facturação Electrónica
+    2
+
+      Facturação Electrónica
+
+          1
+
+      Facturação Electrónica
+
+          2
+
+Serviços Especificados
+
+Nos pontos seguintes são identificados os serviços REST necessários para
+integração entre o sistema SIGT e os softwares de facturação sob a
+responsabilidade directa da AGT, nomeadamente:
+
+Método | 
+Serviço | 
+Tipo de comunicação | 
+Descrição | 
+
+POST
+ | 
+registarFactura
+ | 
+Síncrono
+ | 
+Solicitar registo de documento(s) de
+facturação electrónica.
+ | 
+
+POST
+ | 
+obterEstado
+ | 
+Síncrono
+ | 
+Obter estado de validação da factura
+electrónica.
+ | 
+
+POST
+ | 
+listarFacturas
+ | 
+Síncrono
+ | 
+Obter lista de facturas electrónicas
+emitidas num período em nome de um determinado contribuinte.
+ | 
+
+POST
+ | 
+consultarFactura
+ | 
+Síncrono
+ | 
+Obter dados de factura electrónica
+emitida em nome de um determinado contribuinte.
+ | 
+
+POST
+ | 
+solicitarSerie
+ | 
+Síncrono
+ | 
+Solicitar criação de nova série de
+numeração de facturas electrónicas.
+ | 
+
+POST
+ | 
+listarSeries
+ | 
+Síncrono
+ | 
+Obter lista de séries de numeração de
+facturas electrónicas em utilização por um emissor de facturas.
+ | 
+
+POST
+ | 
+validarDocumento
+ | 
+Síncrono
+ | 
+Validar (confirmar/rejeitar) um
+documento de facturação emitido em nome do adquirente.
+ | 
+
+POST
+ | 
+anularFactura
+ | 
+Síncrono
+ | 
+Anular uma factura ou documento
+relevante remetido via serviço previamente aceite pela AGT.
+ | 
+
+POST
+ | 
+estenderSerie
+ | 
+Síncrono
+ | 
+Solicitar extensão de série de numeração
+de facturas electrónicas, estendendo a gama de números de facturas
+autorizadas para emissão.
+ | 
+
+POST
+ | 
+comunicarInventario
+ | 
+Síncrono
+ | 
+Comunicar o inventário anual de
+existências.
+ | 
+
+POST
+ | 
+submeterInventario
+ | 
+Síncrono
+ | 
+Submeter o inventário anual de
+existências previamente comunicado.
+ | 
+
+POST
+ | 
+comunicarServicosEstrangeiro
+ | 
+Síncrono
+ | 
+Comunicar facturas de
+serviços adquiridos no estrangeiro.
+ | 
+
+Os seguintes requisitos técnicos foram definidos:
+
+Os Serviços Web têm de respeitar a arquitectura REST;
+
+Os dados têm de ser transmitidos em formato JSON;
+
+Tem de ser suportados os caracteres e formatos numéricos portugueses;
+
+Ao nível de auditoria, todos os eventos, erros e alterações têm de ser
+registados;
+
+Os campos não obrigatórios, poderão não constar na respectiva chamada
+ou resposta, e se constarem poderão aparecer com o valor “null”,
+permitido em JSON, significando que não têm valor atribuído.
+

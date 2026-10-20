@@ -1,0 +1,268 @@
+
+
+    Estrutura das Assinaturas Digitais (JWS) :: Facturação Electrónica
+
+    Facturação Electrónica
+    2
+
+      Facturação Electrónica
+
+          1
+
+      Facturação Electrónica
+
+          2
+
+Estrutura das Assinaturas Digitais (JWS)
+
+A API de Faturação Eletrónica utiliza JSON Web Signature (JWS) como
+mecanismo padrão para assinatura digital de:
+
+Informações do software (jwsSoftwareSignature)
+
+Documentos fiscais (jwsDocumentSignature)
+
+Requisições feitas ao serviço (jwsSignature)
+
+O objetivo é garantir:
+
+Integridade – os dados não foram alterados.
+
+Autenticidade – o emissor é quem diz ser.
+
+Não-repúdio – o emissor não pode negar a autoria.
+
+Cada assinatura utiliza a chave privada do contribuinte ou do
+produtor, dependendo do tipo de assinatura.
+
+Algoritmo Utilizado (RS256)
+
+Todas as assinaturas JWS utilizam o algoritmo:
+
+✔ RS256 – RSA com SHA-256
+
+Características:
+
+Chave privada RSA a partir de 2048 bits (recomenda-se 4096).
+
+Hash criptográfico SHA-256.
+
+Cabeçalho JWS:
+
+ {
+    "alg": "RS256",
+    "typ": "JWT"
+ }
+
+Para garantir melhor consistência, recomendamos que o objeto a assinar
+deve ser transformado em JSON canônico antes da assinatura.
+
+Regras de JSON canônico:
+
+Sem quebras de linha.
+
+Sem espaços ou indentação.
+
+Aspas duplas sempre obrigatórias.
+
+Números sem formatação adicional.
+
+Exemplo de objeto:
+
+ {
+    "productId":"Nome",
+    "productVersion":"1.0",
+    "softwareValidationNumber":"123"
+ }
+
+Geração da Assinatura (Resumo do Processo)
+
+Todas as assinaturas seguem este fluxo:
+
+Criar um objeto JSON (canônico recomendado) contendo apenas os campos
+exigidos.
+
+Montar o JWS Compact Serialization:
+
+base64url(header) + "." + base64url(payload)
+
+Assinar com RSA-SHA256 usando a chave privada.
+
+Gerar o JWS final:
+
+header.payload.signature
+
+Assinatura jwsSoftwareSignature
+
+Assina o objeto:
+
+ {
+   "productId": "",
+   "productVersion": "",
+   "softwareValidationNumber": ""
+ }
+
+O payload é o objeto inteiro, e não concatenação de campos.
+
+Assinatura jwsDocumentSignature
+
+Assina os elementos principais do documento fiscal, como:
+
+ {
+    "documentNo": "...",
+    "taxRegistrationNumber": "...",
+    "documentType": "...",
+    "documentDate": "...",
+    "customerTaxID": "...",
+    "customerCountry": "...",
+    "companyName": "...",
+    "documentTotals": {
+        "taxPayable": 70,
+        "netTotal": 500,
+        "grossTotal": 570
+     }
+ }
+
+❗ Novamente, assina-se o objeto completo.
+
+Assinatura jwsSignature (Assinatura da Requisição)
+
+Assina o objeto principal da requisição — por exemplo:
+
+ {
+    "taxRegistrationNumber": "5001234567",
+    "requestID": "REQ-000001"
+ }
+
+NOTA: O payload pode variar de acordo a requisição.
+
+Isto permite autenticação forte a cada chamada importante.
+
+Exemplos de Geração em Diferentes Linguagens
+
+Node.js
+
+ const fs = require("fs");
+ const jwt = require("jsonwebtoken");
+ const privateKey = fs.readFileSync("private.pem", "utf8");
+ const payload = {
+    productId: "ClinicaHub",
+    productVersion: "1.0.0",
+    softwareValidationNumber: "123456789"
+ };
+
+ const token = jwt.sign(payload, privateKey, { algorithm: "RS256" });
+
+ console.log(token);
+
+Java
+
+ import java.nio.file.*;
+ import java.security.*;
+ import java.security.spec.*;
+ import io.jsonwebtoken.*;
+ String key = Files.readString(Path.of("private.pem"));
+ PrivateKey privateKey = Keys.privateKeyFromPem(key);
+ Map<String, Object> payload = Map.of(
+ "productId", "ClinicaHub",
+ "productVersion", "1.0.0",
+ "softwareValidationNumber", "123456789"
+ );
+
+ String jws = Jwts.builder()
+
+.setClaims(payload)
+
+.signWith(privateKey, SignatureAlgorithm.RS256)
+
+.compact();
+
+ System.out.println(jws);
+
+C# (.NET)*
+
+ using System.IdentityModel.Tokens.Jwt;
+ using Microsoft.IdentityModel.Tokens;
+ using System.Security.Cryptography;
+ var payload = new Dictionary<string, object>
+
+ {
+    { "productId", "ClinicaHub" },
+    { "productVersion", "1.0.0" },
+    { "softwareValidationNumber", "123456789" }
+ };
+
+ var privateKey = RSA.Create();
+ privateKey.ImportFromPem(File.ReadAllText("private.pem"));
+ var credentials = new SigningCredentials(
+ new RsaSecurityKey(privateKey),
+ SecurityAlgorithms.RsaSha256
+ ) ;
+
+ var token = new JwtSecurityToken(
+ claims: payload.Select(kv => new Claim(kv.Key, kv.Value.ToString())), signingCredentials: credentials
+);
+
+var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+Console.WriteLine(jwt);
+
+Go
+
+package main
+
+ import ("fmt" "os" jwt "github.com/golang-jwt/jwt/v5")
+
+ func main(){
+
+ keyData, _ := os.ReadFile("private.pem")
+ privateKey, _ := jwt.ParseRSAPrivateKeyFromPEM(keyData)
+
+ payload := jwt.MapClaims
+ {
+    "productId": "ClinicaHub",
+    "productVersion": "1.0.0",
+    "softwareValidationNumber": "123456789",
+ }
+
+ token := jwt.NewWithClaims(jwt.SigningMethodRS256, payload)
+ signed, _ := token.SignedString(privateKey)
+ fmt.Println(signed)
+}
+
+Python
+
+ import jwt
+
+ with open("private.pem", "r") as f:
+
+ private_key = f.read()
+
+ payload = {
+    "productId": "ClinicaHub",
+    "productVersion": "1.0.0",
+    "softwareValidationNumber": "123456789"
+ }
+
+ token = jwt.encode(payload, private_key, algorithm="RS256")
+
+ print(token)
+
+Erros Comuns na Geração de JWS
+
+❌ Concatenar campos ao invés de assinar o JSON
+
+✔ A assinatura é sempre sobre o objeto JSON completo.
+
+❌ Usar RSA com chave inferior a 2048 bits
+
+✔ Recomendado: no mínimo 2048 bits.
+
+❌ Assinar com chave pública
+
+✔ A assinatura é feita com private key.
+
+❌ Codificação Base64 normal
+
+✔ Deve usar Base64URL, sem padding =.
+

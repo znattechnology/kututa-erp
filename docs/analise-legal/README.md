@@ -7,12 +7,15 @@ Data: 2026-10-20 · Base: Odoo 20.0 Community (submódulo `odoo/`)
 | Facturação | Decreto Presidencial n.º 71/25, de 20 de Março (regime jurídico das facturas) | [01-faturacao-DP-71-25.md](01-faturacao-DP-71-25.md) |
 | Contabilidade | Decreto n.º 82/01, de 16 de Novembro (Plano Geral de Contabilidade) | [02-contabilidade-PGC.md](02-contabilidade-PGC.md) |
 | Recursos Humanos | Lei n.º 12/23, de 27 de Dezembro (Lei Geral do Trabalho) | [03-rh-LGT-12-23.md](03-rh-LGT-12-23.md) |
+| **Facturação electrónica** | DP 71/25, arts. 16.º–21.º e 36.º–38.º, Decreto Executivo n.º 683/25 e API oficial da AGT | [04-facturacao-electronica-AGT.md](04-facturacao-electronica-AGT.md) |
 
 Legenda: ✅ já existe · 🟡 configuração/parcial · 🔴 desenvolvimento necessário
 
 > Os textos da LGT e do DP 71/25 foram obtidos por OCR. Os artigos citados devem ser confirmados no PDF original antes de se implementar cada regra.
 
 ---
+
+> 🚨 **Prazo legal:** a facturação electrónica é **obrigatória para todos os contribuintes dos Regimes Geral e Simplificado do IVA a partir de 01/01/2027**. Para os Grandes Contribuintes e os fornecedores do Estado já o é desde 01/01/2026, e a AGT diz que não haverá prorrogação. A AGT já publicou a especificação técnica (API REST/JSON com assinaturas JWS RS256). Ver [04](04-facturacao-electronica-AGT.md).
 
 ## 1. Constatações gerais
 
@@ -71,25 +74,26 @@ Legenda: ✅ já existe · 🟡 configuração/parcial · 🔴 desenvolvimento n
 | `l10n_ao_reports` | Balanço, DR, DFC e Notas segundo o PGC (PDF/XLSX, N/N-1) | `l10n_ao` |
 | `l10n_ao_hr` | Regras de contrato da LGT, tipos de ausência, horas extra, assistente de cessação, registos obrigatórios | `hr`, `hr_holidays`, `hr_work_entry` |
 | `l10n_ao_payroll` | Recibos de salário, regras salariais, tabelas IRT/INSS, ficheiro bancário, lançamentos contabilísticos | `l10n_ao_hr`, `l10n_ao` |
-| `l10n_ao_edi` *(fase 2)* | Comunicação electrónica à AGT (tempo real e contingência) | `l10n_ao_invoicing` |
+| `l10n_ao_edi` **(prioritário)** | API AGT: séries, `registarFactura`, `obterEstado`, anulação, `validarDocumento`, JWS RS256, QR, contingência, bloqueio aos 60 dias | `l10n_ao_invoicing`, `certificate` |
 
-## 4. Roadmap sugerido
+## 4. Roadmap sugerido (revisto em 20/10/2026)
 
-1. **Fase 1, base (pré-requisito de tudo):** `l10n_ao`, com o plano PGC, os impostos e a moeda.
-2. **Fase 2, conformidade fiscal:** `l10n_ao_invoicing` e depois `l10n_ao_saft`. Sem isto, o sistema não pode emitir facturas legalmente em Angola.
-3. **Fase 3, RH:** `l10n_ao_hr` e depois `l10n_ao_payroll`.
-4. **Fase 4, reporte:** `l10n_ao_reports` e o imobilizado.
-5. **Fase 5:** `l10n_ao_edi`, quando a AGT publicar a especificação técnica.
+1. **Fase 1, base:** `l10n_ao`, com o plano PGC, os impostos com os códigos AGT (`taxType`/`taxCode`/isenções do anexo oficial) e a AOA.
+2. **Fase 1b, em paralelo e sem código:** registo como produtor de software na AGT, certificação do software, credenciais de API e chaves (ver [04 §4](04-facturacao-electronica-AGT.md)).
+3. **Fase 2, crítica, até 01/01/2027:** `l10n_ao_invoicing` e `l10n_ao_edi`, testados no ambiente de homologação da AGT.
+4. **Fase 3:** `l10n_ao_saft`.
+5. **Fase 4, RH:** `l10n_ao_hr` e depois `l10n_ao_payroll`.
+6. **Fase 5, reporte:** `l10n_ao_reports` e o imobilizado.
 
 ## 5. Fontes externas necessárias (não estão nos documentos fornecidos)
 
 **Bloqueantes:**
-- Decreto Executivo previsto no art. 36.º do DP 71/25 (estrutura de dados e API da AGT);
-- regulamento de certificação de software da AGT (algoritmo de hash e assinatura);
+- ~~Especificação da API da AGT~~ ✅ obtida (Quiosque AGT). Falta o texto integral do Decreto Executivo n.º 683/25;
+- regulamento e processo de certificação de software da AGT;
 - esquema XSD do SAF-T (AO) e o DP 312/18, na parte não derrogada.
 
 **Fiscais:**
-- Código do IVA (taxas, IVA cativo, códigos de isenção);
+- Código do IVA (taxas e IVA cativo; os códigos de isenção já constam do anexo da API AGT);
 - Código do Imposto de Selo;
 - Código do Imposto Industrial (retenções);
 - Código do IRT (tabelas de retenção);
