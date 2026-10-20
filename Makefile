@@ -14,11 +14,11 @@ space := $(empty) $(empty)
 help:             ## Lista os comandos disponíveis
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/'
 
-setup:            ## (requer: brew install libpq openssl@3) Cria o venv e instala as dependências
+setup:            ## (requer: brew install libpq openssl@3 cairo pkg-config) Cria o venv e instala as dependências
 	python3.13 -m venv $(VENV)
 	$(VENV)/bin/pip install -U pip wheel
 	PATH="$(LIBPQ)/bin:$$PATH" LDFLAGS="-L$(SSL)/lib" $(VENV)/bin/pip install -r odoo/requirements.txt
-	$(VENV)/bin/pip install -r requirements-dev.txt
+	PKG_CONFIG_PATH="$(shell brew --prefix 2>/dev/null)/lib/pkgconfig" $(VENV)/bin/pip install -r requirements-dev.txt
 	$(VENV)/bin/pre-commit install
 
 db:               ## Arranca o PostgreSQL (Docker)
@@ -43,7 +43,7 @@ test: db          ## Testa módulo numa base nova test_<modulo>:  make test m=<m
 	rm -rf .local/filestore/filestore/$(TDB)
 	$(ODOO) -d $(TDB) -i $(m) --without-demo --test-enable \
 		--test-tags=$(if $(t),$(t),$(subst $(space),$(comma),$(foreach x,$(subst $(comma), ,$(m)),/$(x)))) \
-		--stop-after-init --no-http --log-level=test
+		--stop-after-init --no-http --http-port=8169 --log-level=test
 
 lint:             ## Lint dos módulos próprios (ruff + pylint-odoo)
 	$(VENV)/bin/ruff check $(ADDONS) tools

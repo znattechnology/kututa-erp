@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_edi_series_view_list" model="ir.ui.view">
+        <field name="name">l10n_ao_edi.series.list</field>
+        <field name="model">l10n_ao_edi.series</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'closed'" decoration-info="state == 'draft'">
+                <field name="document_type"/>
+                <field name="year" options="{'format': false}"/>
+                <field name="establishment"/>
+                <field name="code"/>
+                <field name="next_number"/>
+                <field name="contingency" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'active'" decoration-info="state == 'draft'"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+    <record id="l10n_ao_edi_series_view_form" model="ir.ui.view">
+        <field name="name">l10n_ao_edi.series.form</field>
+        <field name="model">l10n_ao_edi.series</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_request_series" type="object" string="Pedir série à AGT" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_activate" type="object" string="Activar com código do Portal"
+                            invisible="state != 'draft'"/>
+                    <button name="action_close" type="object" string="Encerrar" invisible="state != 'active'"
+                            confirm="Encerrar a série? Deixará de ser possível emitir documentos com ela."/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="document_type" readonly="state != 'draft'"/>
+                            <field name="year" readonly="state != 'draft'" options="{'format': false}"/>
+                            <field name="establishment" readonly="state != 'draft'"/>
+                            <field name="contingency" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="code" readonly="state != 'draft'"/>
+                            <field name="first_number" readonly="state != 'draft'"/>
+                            <field name="last_number" readonly="state != 'draft'"/>
+                            <field name="next_number" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="l10n_ao_edi_series_action" model="ir.actions.act_window">
+        <field name="name">Séries AGT</field>
+        <field name="res_model">l10n_ao_edi.series</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crie a primeira série de numeração</p>
+            <p>As séries são geradas pela AGT por tipo de documento, ano e estabelecimento.
+               Use «Pedir série à AGT» ou introduza o código obtido no Portal do Contribuinte.</p>
+        </field>
+    </record>
+    <menuitem id="menu_l10n_ao_edi_series" action="l10n_ao_edi_series_action"
+              parent="l10n_ao.menu_l10n_ao_config" sequence="1"/>
+</odoo>

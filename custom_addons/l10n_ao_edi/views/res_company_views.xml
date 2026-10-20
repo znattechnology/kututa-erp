@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_l10n_ao_edi" model="ir.ui.view">
+        <field name="name">res.company.form.l10n_ao_edi</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <page name="general_info" position="after">
+                <page string="Facturação electrónica (AGT)" name="l10n_ao_edi" invisible="country_code != 'AO'">
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not l10n_ao_edi_enabled or l10n_ao_edi_environment != 'demo'">
+                        Ambiente de <strong>demonstração</strong>: as respostas da AGT são simuladas e nenhum documento
+                        é comunicado. Não use em facturação real.
+                    </div>
+                    <group>
+                        <group string="Activação">
+                            <field name="l10n_ao_edi_enabled"/>
+                            <field name="l10n_ao_edi_environment" invisible="not l10n_ao_edi_enabled"/>
+                            <field name="l10n_ao_edi_establishment" invisible="not l10n_ao_edi_enabled"/>
+                            <field name="l10n_ao_edi_last_communication" invisible="not l10n_ao_edi_enabled"/>
+                        </group>
+                        <group string="Credenciais da API" invisible="not l10n_ao_edi_enabled" groups="base.group_system">
+                            <field name="l10n_ao_edi_username"/>
+                            <field name="l10n_ao_edi_password" password="True"/>
+                        </group>
+                        <group string="Software certificado" invisible="not l10n_ao_edi_enabled">
+                            <field name="l10n_ao_edi_product_id"/>
+                            <field name="l10n_ao_edi_product_version"/>
+                            <field name="l10n_ao_edi_software_validation_number"/>
+                            <field name="l10n_ao_edi_signature_version"/>
+                        </group>
+                        <group string="Chaves de assinatura (RS256)" invisible="not l10n_ao_edi_enabled">
+                            <field name="l10n_ao_edi_software_key_id" domain="[('public', '=', False)]"/>
+                            <field name="l10n_ao_edi_taxpayer_key_id" domain="[('public', '=', False)]"/>
+                        </group>
+                    </group>
+                </page>
+            </page>
+        </field>
+    </record>
+</odoo>

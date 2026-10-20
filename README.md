@@ -7,7 +7,7 @@
 
 ## Primeira vez
 ```bash
-brew install libpq openssl@3   # para compilar o psycopg2
+brew install libpq openssl@3 cairo pkg-config   # psycopg2 e QR codes (rlPyCairo)
 git submodule update --init --depth 1
 make setup      # venv + dependências
 make run        # abre http://localhost:8069
