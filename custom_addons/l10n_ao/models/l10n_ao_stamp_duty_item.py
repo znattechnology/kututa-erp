@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.tools import formatLang
 
 
 class L10nAoStampDutyItem(models.Model):
@@ -19,6 +20,7 @@ class L10nAoStampDutyItem(models.Model):
         default='percent',
     )
     rate = fields.Float(string='Taxa', digits=(16, 4))
+    rate_display = fields.Char(string='Taxa ', compute='_compute_rate_display')
     active = fields.Boolean(default=True)
 
     _code_uniq = models.Constraint('UNIQUE(code)', 'A verba tem de ser única.')
@@ -27,3 +29,13 @@ class L10nAoStampDutyItem(models.Model):
     def _compute_display_name(self):
         for record in self:
             record.display_name = f'{record.code} - {(record.name or "")[:80]}'
+
+    @api.depends('rate_type', 'rate')
+    def _compute_rate_display(self):
+        for record in self:
+            if record.rate_type == 'percent':
+                record.rate_display = f'{formatLang(self.env, record.rate, digits=2)} %'
+            elif record.rate_type == 'fixed':
+                record.rate_display = f'{formatLang(self.env, record.rate, digits=2)} Kz'
+            else:
+                record.rate_display = ''

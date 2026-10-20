@@ -27,3 +27,4 @@ rename,81.1,Resultados transitados de exercícios anteriores,"O decreto prevê u
 delete,81.2,,"Bloco repetido por ano (ver 81.1)."
 delete,56.1.1,,"Conta-modelo («Decreto-lei nº ___»), a desenvolver por cada empresa."
 delete,56.1.2,,"Idem."
+rename,34.2,Imposto de produção e consumo / IVA,"O IVA (Lei 7/19) substituiu o Imposto de Produção e Consumo; as subcontas de IVA ficam em 34.2."

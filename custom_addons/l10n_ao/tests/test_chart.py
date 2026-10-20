@@ -121,3 +121,14 @@ class TestL10nAoChart(AccountTestInvoicingCommon):
         outstanding = chart.ref('account_journal_payment_debit_account_id')
         self.assertEqual(outstanding.with_company(company).code, '48.1')
         self.assertEqual(outstanding.company_ids, company)
+
+    def test_master_data_display(self):
+        self.assertEqual(self._account('34.2').name, 'Imposto de produção e consumo / IVA')
+        stamp = self.env.ref('l10n_ao.stamp_duty_6')
+        self.assertTrue(stamp.rate_display.endswith('Kz'), stamp.rate_display)
+        self.assertTrue(self.env.ref('l10n_ao.stamp_duty_23_3').rate_display.endswith('%'))
+        self.assertFalse(self.env.ref('l10n_ao.stamp_duty_2').rate_display, 'Linha de agrupamento sem taxa')
+        found = self.env['l10n_ao.tax.exemption'].search(
+            ['|', '|', ('code', 'ilike', 'selo'), ('name', 'ilike', 'selo'), ('description', 'ilike', 'selo')]
+        )
+        self.assertIn('S01', found.mapped('code'))

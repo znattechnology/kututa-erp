@@ -1,6 +1,6 @@
 # Fase 1: Kututa Kwanza (`l10n_ao`)
 
-**Estado:** concluída e revista a 2026-10-20. Os testes (`make test m=l10n_ao`) passam: 23 testes, 0 falhas.
+**Estado:** concluída e revista a 2026-10-20. Os testes (`make test m=l10n_ao`) passam: 26 testes, 0 falhas.
 
 ## O que o módulo instala
 
@@ -73,6 +73,19 @@ Três revisões independentes (plano de contas págs. 86–102, págs. 103–119
 | Média | Produção: segredos na linha de comando, sem healthcheck, websocket sem porta | `PG*`, healthcheck, `gevent_port`, portas locais, `docs/producao.md` |
 | Baixa | 42/44/45.2 como `asset_cash` (criaria diários automáticos) | `asset_current`; 45.2 reconciliável |
 | Baixa | `currency_id` redundante no template; `non_trade` sem efeito | Removidos |
+
+## Teste visual no browser (2026-10-20)
+Telas testadas: plano de contas (hierarquia, filtro por classe, pesquisa, ficha da conta), impostos (lista, ficha, separador «Angola (AGT)», notas legais, validação ao gravar), posições fiscais, as quatro tabelas AGT (isenções, Imposto de Selo, IEC, CAE: listas, pesquisa, filtros, agrupamento), ficha da empresa (regime de IVA, CAE, validação do NIF), criação de cliente com NIF de BI, factura com IVA 14% + isenção M21 (totais, lançamentos, pré-visualização). Sem erros de JavaScript nem no servidor.
+
+Corrigido depois do teste visual:
+- 34.2 passa a «Imposto de produção e consumo / IVA».
+- O NIF do cliente aparecia como «Tax ID» na factura: Angola passa a ter a etiqueta «NIF».
+- A mensagem de NIF inválido indica o formato esperado.
+- A pesquisa nas isenções procura no código, na menção e na descrição; pesquisa por código ou texto também no IS, IEC e CAE.
+- A Tabela do Imposto de Selo mostra a taxa com unidade («0,30 %», «1.000,00 Kz»).
+- **Português (Angola)** com separador de milhares «.» (como nos documentos da AGT). Recomendado para os utilizadores angolanos (`--load-language=pt_AO`); as traduções são as do português.
+
+Notas para a Fase 2: o portal mostra «Fatura pró-forma» enquanto o PDF oficial não foi gerado (comportamento do Odoo); com a facturação certificada, a factura passa a ser emitida no momento da publicação. A numeração `FT/2026/00001` passa ao formato AGT (`FT <série>/<n.º>`).
 
 ## ⚠️ A validar com um contabilista antes de produção
 1. **As taxas de IVA de 7% e de 1% (Cabinda) e o código AGT da taxa de Cabinda** (usámos `OUT` + região `AO-CAB`). Só os 14% e os 5% foram confirmados em mais de uma fonte.

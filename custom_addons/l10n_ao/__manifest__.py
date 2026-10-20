@@ -20,6 +20,7 @@ Kututa Kwanza: localização angolana do Kututa ERP.
     'data': [
         'security/ir.access.csv',
         'data/res_currency_data.xml',
+        'data/res_country_data.xml',
         'data/l10n_ao.tax.exemption.csv',
         'data/l10n_ao.cae.csv',
         'data/l10n_ao.stamp.duty.item.csv',

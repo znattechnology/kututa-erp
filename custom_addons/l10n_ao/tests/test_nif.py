@@ -22,3 +22,12 @@ class TestL10nAoNif(TransactionCase):
         self.assertEqual(partner.vat, '5000123456')
         with self.assertRaises(ValidationError):
             self.env['res.partner'].create({'name': 'KO', 'country_id': angola.id, 'vat': '12345'})
+
+    def test_nif_label_and_error_message(self):
+        angola = self.env.ref('base.ao')
+        self.assertEqual(angola.vat_label, 'NIF')
+        with self.assertRaisesRegex(ValidationError, 'Formato esperado'):
+            self.env['res.partner'].create({'name': 'KO', 'country_id': angola.id, 'vat': '12345'})
+
+    def test_portuguese_angola_number_format(self):
+        self.assertEqual(self.env.ref('base.lang_pt_AO').thousands_sep, '.')

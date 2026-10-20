@@ -6,6 +6,7 @@ from odoo import api, models
 AO_NIF_RE = re.compile(r'^(\d{10}|\d{9}[A-Z]{2}\d{3})$')
 # Consumidor final sem NIF (DE n.º 683/25, customerTaxID).
 AO_FINAL_CONSUMER_NIF = '999999999'
+AO_NIF_EXPECTED_FORMAT = '5000000000 (pessoa colectiva) ou 004567890LA042 (BI)'
 
 
 class ResPartner(models.Model):
@@ -27,3 +28,10 @@ class ResPartner(models.Model):
     # Gancho de formatação do módulo base (res.partner._format_vat_number → format_vat_<país>).
     def format_vat_ao(self, vat):
         return self._l10n_ao_normalize_nif(vat)
+
+    @api.model
+    def _build_vat_error_message(self, country_code, wrong_vat, record_label):
+        message = super()._build_vat_error_message(country_code, wrong_vat, record_label)
+        if (country_code or '').upper() == 'AO':
+            message += '\n' + self.env._('Formato esperado: %s', AO_NIF_EXPECTED_FORMAT)
+        return message

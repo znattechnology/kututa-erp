@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- O identificador fiscal angolano chama-se NIF (o Odoo mostraria «Tax ID» nas facturas). -->
+    <record id="base.ao" model="res.country">
+        <field name="vat_label">NIF</field>
+    </record>
+    <!-- Português (Angola): separador de milhares «.», como nos documentos da AGT («4.400,00 Kz»). -->
+    <record id="base.lang_pt_AO" model="res.lang">
+        <field name="thousands_sep">.</field>
+    </record>
+</odoo>
