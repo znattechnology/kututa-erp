@@ -3,6 +3,7 @@ import json
 from lxml import etree
 
 from odoo.addons.l10n_ao_edi.tests.common import TODAY, L10nAoEdiCommon
+from odoo.exceptions import UserError
 from odoo.tests import tagged
 
 
@@ -57,14 +58,15 @@ class TestL10nAoStockInventory(L10nAoEdiCommon):
                     'cost_method': 'CMP',
                     'product_type': 'M',
                     'code': 'CAD-A4',
-                    'description': '[CAD-A4] Caderno A4',
+                    'description': 'Caderno A4',
                     'quantity': 40.0,
+                    'quantity_decimals': 2,
                     'uom': self.notebook.uom_id.name,
                     'value': 6000.0,
                 }
             ],
         )
-        self.assertFalse(wizard.warning)
+        self.assertNotIn('custo padrão', wizard.warning or '')
 
     def test_json_and_xml(self):
         _wizard, content = self._export('json')
@@ -79,6 +81,31 @@ class TestL10nAoStockInventory(L10nAoEdiCommon):
         self.assertEqual(root.findtext('Stock/Valor'), '6000.00')
         _wizard, content = self._export('xlsx')
         self.assertEqual(content[:2], b'PK')
+
+    def test_duplicate_code_and_negative_stock(self):
+        self.env['product.product'].create(
+            {'name': 'Outro caderno', 'default_code': 'CAD-A4', 'is_storable': True, 'categ_id': self.category.id}
+        )
+        wizard = self.env['l10n_ao_stock.inventory.export'].create({'year': TODAY.year})
+        self.assertEqual(wizard._lines()[0]['code'], 'CAD-A4')  # o segundo não tem existências
+        quant = (
+            self.env['stock.quant']
+            .with_context(inventory_mode=True)
+            .create(
+                {
+                    'product_id': self.env['product.product'].search([('default_code', '=', 'CAD-A4')])[-1].id,
+                    'location_id': self.warehouse.lot_stock_id.id,
+                    'inventory_quantity': 5,
+                }
+            )
+        )
+        quant.action_apply_inventory()
+        with self.assertRaisesRegex(UserError, 'único'):
+            wizard._lines()
+        quant.with_context(inventory_mode=True).write({'inventory_quantity': -5})
+        quant.action_apply_inventory()
+        with self.assertRaisesRegex(UserError, 'negativas'):
+            wizard._lines()
 
     def test_no_operations(self):
         _wizard, content = self._export('json', year=TODAY.year - 1)

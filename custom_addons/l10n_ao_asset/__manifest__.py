@@ -1,6 +1,6 @@
 {
     'name': 'Kututa Mbongo - Imobilizado',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Imobilizado e amortizações com as taxas legais angolanas (DP n.º 207/15)',
     'description': """
 Gestão do imobilizado corpóreo e incorpóreo segundo o PGC e o Código do Imposto Industrial.

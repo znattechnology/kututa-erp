@@ -54,7 +54,8 @@ class ResCompany(models.Model):
                 }
             )
             journal = self.env['account.journal'].search(
-                [('company_id', '=', company.id), ('code', '=', ASSET_JOURNAL_CODE)], limit=1
+                [('company_id', '=', company.id), ('code', '=', ASSET_JOURNAL_CODE), ('type', '=', 'general')],
+                limit=1,
             ) or self.env['account.journal'].create(
                 {
                     'name': 'Operações de imobilizado',

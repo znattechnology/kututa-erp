@@ -95,6 +95,31 @@ class TestL10nAoSaft(L10nAoEdiCommon):
         self.assertEqual(products, {'CONS', 'CAD'})
         self.assertTrue(bill)
 
+    def test_foreign_currency_invoice(self):
+        usd = self.setup_other_currency('USD', rates=[('2016-01-01', 0.001)])
+        invoice = self._create_invoice(currency_id=usd.id, lines=[(self.service, 1, 100.0, self.vat14)])
+        self.mark_sent(invoice)
+        root = self._export('F')
+        node = root.find('s:SourceDocuments/s:SalesInvoices/s:Invoice', NS)
+        # Montantes em AOA (100 USD × 1 000) e o valor original em USD.
+        self.assertEqual(node.findtext('s:DocumentTotals/s:GrossTotal', namespaces=NS), '114000.00')
+        self.assertEqual(node.findtext('s:DocumentTotals/s:NetTotal', namespaces=NS), '100000.00')
+        self.assertEqual(node.findtext('s:Line/s:CreditAmount', namespaces=NS), '100000.00')
+        self.assertEqual(node.findtext('s:Line/s:UnitPrice', namespaces=NS), '100000')
+        self.assertEqual(node.findtext('s:DocumentTotals/s:Currency/s:CurrencyCode', namespaces=NS), 'USD')
+        self.assertEqual(node.findtext('s:DocumentTotals/s:Currency/s:CurrencyAmount', namespaces=NS), '114.00')
+        self.assertEqual(root.findtext('s:SourceDocuments/s:SalesInvoices/s:TotalCredit', namespaces=NS), '100000.00')
+        self.assertTrue(node.findtext('s:TransactionID', namespaces=NS))
+
+    def test_legacy_document_without_payload(self):
+        invoice = self._create_invoice()
+        self.mark_sent(invoice)
+        invoice.l10n_ao_edi_payload = False
+        root = self._export('F')
+        self.assertEqual(
+            root.findtext('s:SourceDocuments/s:SalesInvoices/s:Invoice/s:InvoiceNo', namespaces=NS), invoice.name
+        )
+
     def test_accounting_file(self):
         self._scenario()
         root = self._export('C')

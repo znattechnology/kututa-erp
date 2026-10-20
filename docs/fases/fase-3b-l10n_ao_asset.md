@@ -1,6 +1,8 @@
 # Fase 3b: imobilizado e amortizações (`l10n_ao_asset`)
 
-**Estado:** concluída a 2026-10-20. Testes: 10 (`make test m=l10n_ao_asset`); a bateria dos seis módulos tem 140 testes, 0 falhas. Testado no browser (base `kututa_demo`).
+> **Revisto na auditoria de 2026-10-21** (`auditoria-fase-3.md`): quotas pela vida útil (36 × 10 000 em vez de 37 quotas); períodos bloqueados recusados; alienação retroactiva e futura recusadas, com «Anular alienação»; rascunhos e cancelamentos tratados; descontos e IVA não dedutível nas facturas; categoria no artigo para contas partilhadas; quantidade e reduzido valor por unidade; bens não amortizáveis; «das quais de exercícios anteriores» no arranque; taxa acima da legal não aceite no mapa; permissões apertadas; menu na raiz da app.
+
+**Estado:** concluída a 2026-10-20. Testes: 14 (`make test m=l10n_ao_asset`). Testado no browser (base `kututa_demo`).
 
 **Fontes:** `docs/referencias/amortizacoes/TAXAS.md` e `taxas.csv`: Decreto Presidencial n.º 207/15 (477 taxas conferidas com o PDF oficial do DR) e arts. 24.º–44.º do Código do Imposto Industrial (Lei 19/14, alterada pela Lei 26/20). Os dados do módulo geram-se com `tools/gen_asset_rates.py`.
 
@@ -32,7 +34,7 @@
 - **Mapa de reintegrações e amortizações** (art. 43.º; Relatórios › Angola (PGC)): por categoria e por bem, com código da tabela, ano de aquisição, valor, taxa, amortizações acumuladas no início, do exercício e no fim, valor líquido, abates e amortização não aceite. PDF e Excel. Só entram as amortizações contabilizadas (art. 25.º/3).
 
 ## Teste no browser
-- Ficha «Portátil Dell Latitude», 450 000 Kz, categoria Equipamento informático: taxa G.3.1 33,33% preenchida pela categoria; plano de 12 498,75 Kz por mês a partir de 31/10.
+- Ficha «Portátil Dell Latitude», 450 000 Kz, categoria Equipamento informático: taxa G.3.1 33,33% preenchida pela categoria; plano de 12 500 Kz por mês a partir de 31/10 (36 quotas).
 
 ## A confirmar com um consultor fiscal
 - Ano de entrada no regime anual: lido à letra, leva uma quota completa (está assim implementado).

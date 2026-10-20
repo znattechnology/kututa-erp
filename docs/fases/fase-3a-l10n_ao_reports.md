@@ -1,6 +1,8 @@
 # Fase 3a: Kututa Mbongo, demonstrações financeiras PGC (`l10n_ao_reports`)
 
-**Estado:** concluída a 2026-10-20. Testes: 11 (`make test m=l10n_ao_reports`), 0 falhas. Testado no browser (base `kututa_demo`).
+> **Revisto na auditoria de 2026-10-21** (`auditoria-fase-3.md`): empresa restrita e verificada; apuramento com datas de bloqueio recusado, apuramento complementar, data fixa no fim do exercício e transferência só no exercício seguinte; Balancete com a 88 real e ordenação hierárquica; descobertos bancários em Empréstimos de curto prazo; Estado líquido por imposto; exercícios a terminar a 29/02.
+
+**Estado:** concluída a 2026-10-20. Testes: 15 (`make test m=l10n_ao_reports`), 0 falhas. Testado no browser (base `kututa_demo`).
 
 ## O que faz
 Menu **Contabilidade › Relatórios › Angola (PGC)**:

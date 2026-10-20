@@ -1,6 +1,6 @@
 {
     'name': 'Kututa Mbongo - SAF-T (AO)',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Ficheiro SAF-T (AO) de contabilidade e de facturação (DE n.º 317/20, DP n.º 71/25)',
     'description': """
 Exportação do ficheiro normalizado SAF-T (AO), versão 1.01_01.

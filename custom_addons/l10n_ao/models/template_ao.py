@@ -56,6 +56,10 @@ class AccountChartTemplate(models.AbstractModel):
                 # As mercadorias (61 / 21 / 26) configuram-se nas categorias de produtos.
                 'income_account_id': 'ao_62_1_1',
                 'expense_account_id': 'ao_75_2_39',
+                # Existências: mercadorias em armazém, valorizadas ao custo médio ponderado (PGC §3.7; a AGT só
+                # prevê FIFO, LIFO ou CMP no inventário anual).
+                'account_stock_valuation_id': 'ao_26_1',
+                'cost_method': 'average',
                 'account_sale_tax_id': 'ao_iva_sale_14',
                 'account_purchase_tax_id': 'ao_iva_purchase_14',
             },

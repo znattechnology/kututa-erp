@@ -10,7 +10,7 @@
                 </div>
                 <group>
                     <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
-                    <field name="year" options="{'format': false}"/>
+                    <field name="year" options="{'enable_formatting': false}"/>
                     <field name="file_format" widget="radio"/>
                 </group>
                 <div class="text-muted">
@@ -36,7 +36,8 @@
     <menuitem id="menu_l10n_ao_stock_inventory_export" action="action_l10n_ao_stock_inventory_export"
               parent="stock.menu_warehouse_report" sequence="200"/>
     <menuitem id="menu_l10n_ao_stock_inventory_export_accounting" action="action_l10n_ao_stock_inventory_export"
-              parent="l10n_ao_reports.menu_l10n_ao_reports" sequence="50"/>
+              parent="l10n_ao_reports.menu_l10n_ao_reports" sequence="50"
+              groups="account.group_account_invoice,account.group_account_readonly"/>
 
     <record id="product_category_form_view_l10n_ao_stock" model="ir.ui.view">
         <field name="name">product.category.form.l10n_ao_stock</field>

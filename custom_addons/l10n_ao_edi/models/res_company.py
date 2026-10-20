@@ -150,6 +150,9 @@ class ResCompany(models.Model):
     def _l10n_ao_edi_sign(self, payload):
         """Assinatura com a chave do contribuinte (jwsDocumentSignature / jwsSignature)."""
         self.ensure_one()
+        if self.env.context.get('l10n_ao_edi_skip_signature'):
+            # Reconstrução do documento para fins internos (SAF-T): não se volta a assinar.
+            return ''
         return jws_sign(payload, self.sudo().l10n_ao_edi_taxpayer_key_id)
 
     def _l10n_ao_edi_request_envelope(self):

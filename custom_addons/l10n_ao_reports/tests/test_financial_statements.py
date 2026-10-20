@@ -145,6 +145,66 @@ class TestL10nAoFinancialStatements(AccountTestInvoicingCommon):
         closing_2026 = self._closing('close', 2026)
         self.assertEqual({line.account_id.code: line.balance for line in closing_2026.line_ids}['88.6'], -10_000)
 
+    def test_trial_balance_after_closing_and_transfer(self):
+        self._closing('close', 2025)
+        self._closing('transfer', 2025)
+        result = self.engine._trial_balance(self.company, date(2026, 1, 1), date(2026, 12, 31))
+        by_code = {line['code']: line['amounts'] for line in result['lines']}
+        # A 88 transita com o resultado e é saldada pela transferência (1/1/2026); não há resultados por apurar.
+        self.assertEqual(by_code['88'], [-196_000, 196_000, 0, 0, 0])
+        self.assertEqual(by_code['81.1.1'][2], 196_000)
+        self.assertNotIn('Resultados de exercícios anteriores por apurar', [line['name'] for line in result['lines']])
+        # Antes da transferência, a 88 tem o resultado como saldo inicial.
+        self._entry('2026-03-01', [(self.bank, 10_000), ('69.5', -10_000)])
+        self._closing('close', 2026)
+        result = self.engine._trial_balance(self.company, date(2027, 1, 1), date(2027, 12, 31))
+        by_code = {line['code']: line['amounts'] for line in result['lines']}
+        self.assertEqual(by_code['88'][0], -10_000)
+
+    def test_complementary_closing_and_guards(self):
+        self._closing('close', 2025)
+        # Um lançamento feito depois do apuramento é apurado por um lançamento complementar.
+        self._entry('2025-12-28', [(self.bank, 4_000), ('69.5', -4_000)])
+        complement = self._closing('close', 2025)
+        balances = {line.account_id.code: line.balance for line in complement.line_ids}
+        self.assertEqual(balances, {'69.9': 4_000, '86.1': -4_000, '86.9': 4_000, '88.6': -4_000})
+        self.assertIn('complementar', complement.ref)
+        with self.assertRaisesRegex(UserError, 'nada a apurar'):
+            self._closing('close', 2025)
+        # A transferência leva o resultado dos apuramentos (196 000 + 4 000) e exige o exercício seguinte.
+        wizard = self.env['l10n_ao_reports.closing'].create({'operation': 'transfer', 'year': 2025})
+        wizard.date = date(2025, 12, 31)
+        with self.assertRaisesRegex(UserError, 'exercício seguinte'):
+            wizard.action_confirm()
+        transfer = self._closing('transfer', 2025)
+        self.assertEqual(
+            {line.account_id.code: line.balance for line in transfer.line_ids}, {'88.9': 200_000, '81.1.1': -200_000}
+        )
+        # Data de bloqueio: o apuramento não é empurrado para o exercício seguinte.
+        self._entry('2026-02-15', [(self.bank, 10_000), ('69.5', -10_000)])
+        self.company.fiscalyear_lock_date = date(2026, 12, 31)
+        with self.assertRaisesRegex(UserError, 'período bloqueado'):
+            self._closing('close', 2026)
+
+    def test_overdraft_and_state_grouping(self):
+        # Descoberto bancário: passivo de curto prazo, não compensa as disponibilidades.
+        self._entry('2025-12-31', [('72.1', 1_200_000), (self.bank, -1_200_000)])
+        bs = self._bs(date(2025, 12, 31))
+        self.assertEqual(bs['disponibilidades'], [0])
+        self.assertEqual(bs['emprestimos_cp'], [250_000])
+        self.assertEqual(bs['t_activo'], bs['t_cpp'])
+        # Estado: o imposto sobre os lucros é líquido das retenções sofridas (nota 19 a).
+        self._entry('2025-12-31', [('34.1.2', 30_000), ('31.1.2.1', -30_000, self.client_a)])
+        bs = self._bs(date(2025, 12, 31))
+        # 34.1 = 84 000 (estimativa) − 30 000 (retenções) = 54 000 a pagar; nada em contas a receber pelo 34.
+        self.assertEqual(bs['contas_pagar'], [600_000 + 50_000 + 54_000])
+        self.assertEqual(bs['contas_receber'], [470_000])
+
+    def test_previous_year_date(self):
+        self.assertEqual(self.engine._previous_year_date(date(2025, 2, 28)), date(2024, 2, 29))
+        self.assertEqual(self.engine._previous_year_date(date(2024, 2, 29)), date(2023, 2, 28))
+        self.assertEqual(self.engine._previous_year_date(date(2026, 10, 20)), date(2025, 10, 20))
+
     def test_closing_requires_previous_year(self):
         self._entry('2026-02-15', [(self.bank, 10_000), ('69.5', -10_000)])
         with self.assertRaisesRegex(UserError, 'exercício anterior'):

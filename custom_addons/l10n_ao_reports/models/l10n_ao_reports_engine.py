@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import timedelta
 
 from odoo import api, models
-from odoo.tools import float_round
+from odoo.tools import date_utils, float_round
 
 # Subcontas de transferência para resultados (x.9 do PGC). Recebem o apuramento e não entram na DR.
 # 68.9 e 78.9 (alterações de políticas contabilísticas) e 82.9 (outros custos operacionais) são rubricas.
@@ -19,6 +19,7 @@ CLOSING_TRANSFERS = {
     '71': ('71.9', '82.6'),
     '72': ('72.9', '82.7'),
     '73': ('73.9', '82.8'),
+    '74': ('74.9', '82.9'),
     '75': ('75.9', '82.9'),
     '66': ('66.9', '83.1'),
     '76': ('76.9', '83.2'),
@@ -195,6 +196,11 @@ INCOME_STATEMENT = [
 ]
 
 
+def has_prefix(code, *prefixes):
+    """«18.1» apanha 18.1 e 18.1.x, mas não 18.10."""
+    return any(code == prefix or code.startswith(prefix + '.') for prefix in prefixes)
+
+
 def is_transfer_account(code):
     return bool(TRANSFER_ACCOUNT_RE.match(code or ''))
 
@@ -220,13 +226,13 @@ def balance_sheet_rubric(code, account_type, balance):  # noqa: PLR0911
     c1, c2 = code[:1], code[:2]
     if c1 in ('0', '9') or is_result_account(code) or c2 in ('81', '89'):
         return None
-    if c2 == '11' or (c2 == '14' and not code.startswith(('14.8', '14.9'))) or code.startswith('18.1'):
+    if c2 == '11' or (c2 == '14' and not has_prefix(code, '14.8', '14.9')) or has_prefix(code, '18.1'):
         return 'corporeo'
-    if c2 == '12' or code.startswith(('14.8', '18.2')):
+    if c2 == '12' or has_prefix(code, '14.8', '18.2'):
         return 'incorporeo'
-    if code.startswith(('13.1', '13.2', '19.1', '19.2')):
+    if has_prefix(code, '13.1', '13.2', '19.1', '19.2'):
         return 'subsidiarias'
-    if c2 in ('13', '19') or code.startswith(('14.9', '18.3')):
+    if c2 in ('13', '19') or has_prefix(code, '14.9', '18.3'):
         return 'outros_fin'
     if c1 == '1':
         return 'outros_anc'
@@ -234,13 +240,13 @@ def balance_sheet_rubric(code, account_type, balance):  # noqa: PLR0911
         return 'existencias'
     if c2 == '33':
         return 'emprestimos_cp' if account_type == 'liability_current' else 'emprestimos_mlp'
-    if code.startswith('39.1'):
+    if has_prefix(code, '39.1'):
         return 'prov_pensoes'
     if c2 == '39':
         return 'prov_outros'
-    if code.startswith(('37.3', '37.4')):
+    if has_prefix(code, '37.3', '37.4'):
         return 'outros_ac'
-    if code.startswith(('37.5', '37.6')):
+    if has_prefix(code, '37.5', '37.6'):
         return 'outros_pc'
     if c1 == '3':
         if c2 == '38':
@@ -251,7 +257,9 @@ def balance_sheet_rubric(code, account_type, balance):  # noqa: PLR0911
             return 'outros_pnc'
         return 'contas_receber' if balance >= 0 else 'contas_pagar'
     if c1 == '4':
-        return 'disponibilidades'
+        # Um saldo credor em depósitos ou caixa é um descoberto bancário: passivo (nota 20), não
+        # compensação de saldos (PGC 3.5.3). As provisões (49) ficam a abater às disponibilidades.
+        return 'emprestimos_cp' if balance < 0 and c2 != '49' else 'disponibilidades'
     if c2 in ('51', '52', '53', '54'):
         return 'capital'
     if c1 == '5':
@@ -333,13 +341,18 @@ class L10nAoReportsEngine(models.AbstractModel):
                 values[rubric or 'unmapped'] += balance
             else:
                 per_account[account] += balance
+        state_groups = defaultdict(float)  # Estado (34): líquido por imposto (nota 19 a): 34.1, 34.2...
         for account, balance in per_account.items():
             code = account.code
             if is_result_account(code) or code[:2] in ('81', '89'):
                 # Resultados acumulados; o do exercício é separado abaixo.
                 values['transitados'] += balance
+            elif code[:2] == '34' and account.account_type in ('asset_current', 'liability_current'):
+                state_groups['.'.join(code.split('.')[:2])] += balance
             elif code[:1] not in ('0', '9'):
                 values[balance_sheet_rubric(code, account.account_type, balance) or 'unmapped'] += balance
+        for group, balance in state_groups.items():
+            values[balance_sheet_rubric(group, 'liability_current', balance) or 'unmapped'] += balance
         # Resultado do exercício: proveitos e custos desde o início do exercício, sem as transferências.
         current = sum(
             balance
@@ -433,10 +446,10 @@ class L10nAoReportsEngine(models.AbstractModel):
 
     @api.model
     def _previous_year_date(self, date):
-        try:
-            return date.replace(year=date.year - 1)
-        except ValueError:  # 29 de Fevereiro
-            return date.replace(year=date.year - 1, day=28)
+        """A mesma data no ano anterior; um fim de mês corresponde ao fim do mesmo mês (29/02 ↔ 28/02)."""
+        if date == date_utils.end_of(date, 'month'):
+            return date_utils.end_of(date.replace(year=date.year - 1, day=1), 'month')
+        return date.replace(year=date.year - 1)
 
     # ------------------------------------------------------------------
     # Balancete
@@ -458,7 +471,8 @@ class L10nAoReportsEngine(models.AbstractModel):
         for (account, _p), (_d, _c, balance) in self._account_totals(
             company, date_to=fy_start - timedelta(days=1), posted_only=posted_only
         ).items():
-            if is_result_account(account.code):
+            # A 88 guarda o resultado líquido até à transferência para a 81: não se repõe a zero.
+            if is_result_account(account.code) and account.code[:2] != '88':
                 rows[account][0] -= balance
                 unclosed += balance
         for (account, _p), (debit, credit, _b) in self._account_totals(
@@ -512,5 +526,8 @@ class L10nAoReportsEngine(models.AbstractModel):
 
     @api.model
     def _code_sort_key(self, code):
-        # Códigos com letras (contas criadas à mão) ordenam-se depois dos numéricos do mesmo nível.
-        return [(0, int(part), '') if part.isdigit() else (1, 0, part) for part in re.split(r'[.]', code or '')]
+        # O primeiro segmento ordena-se como texto, para a classe «3» vir antes da conta «31» e esta antes
+        # da classe «4»; os restantes, numericamente (68.9 < 68.10 < 68.19). Os códigos com letras (contas
+        # criadas à mão) ordenam-se depois dos numéricos do mesmo nível.
+        first, *rest = re.split(r'[.]', code or '')
+        return [(0, 0, first)] + [(0, int(part), '') if part.isdigit() else (1, 0, part) for part in rest]

@@ -28,7 +28,12 @@ class L10nAoReportsWizard(models.TransientModel):
     _name = 'l10n_ao_reports.wizard'
     _description = 'Demonstrações financeiras PGC'
 
-    company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
+    company_id = fields.Many2one(
+        'res.company',
+        required=True,
+        default=lambda self: self.env.company,
+        domain=lambda self: [('id', 'in', self.env.companies.ids)],
+    )
     report = fields.Selection(
         [
             ('balance_sheet', 'Balanço'),
@@ -78,6 +83,8 @@ class L10nAoReportsWizard(models.TransientModel):
     def _get_report_data(self):
         """Dados do mapa, comuns ao PDF, à pré-visualização e ao Excel."""
         self.ensure_one()
+        if self.company_id not in self.env.companies:
+            raise UserError(self.env._('Não tem acesso à empresa %s.', self.company_id.name))
         if self.date_from > self.date_to:
             raise UserError(self.env._('A data inicial é posterior à data final.'))
         engine = self.env['l10n_ao_reports.engine']

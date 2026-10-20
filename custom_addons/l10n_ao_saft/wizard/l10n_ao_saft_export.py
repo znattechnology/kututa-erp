@@ -1,8 +1,9 @@
 import json
 import re
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
+import pytz
 from lxml import etree
 
 from odoo import api, fields, models
@@ -21,6 +22,7 @@ FILE_TABLES = {
     'F': {'customers', 'products', 'taxes', 'sales', 'payments'},
     'I': {'accounts', 'customers', 'suppliers', 'products', 'taxes', 'ledger', 'sales', 'payments', 'purchases'},
 }
+PURCHASE_TYPES = {'FT', 'FR', 'GF', 'FG', 'AC', 'AR', 'AF', 'TV', 'NL', 'NC', 'RC'}
 WITHHOLDING_TYPES = {'IRT', 'II', 'IS', 'IVA', 'IPU', 'IAC', 'OU'}
 
 
@@ -35,8 +37,19 @@ def decimal(value, digits=6):
 
 
 def text(value, size, default=UNKNOWN):
-    value = re.sub(r'\s+', ' ', str(value or '')).strip()
+    value = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', str(value or ''))
+    value = re.sub(r'\s+', ' ', value).strip()
     return (value or default)[:size]
+
+
+def document_sort_key(number):
+    """«FT S001/12» → ('FT', 'S001', 12): ordena pelo número e não pelo texto."""
+    match = re.fullmatch(r'(\S+) (\S+)/(\d+)', number or '')
+    return (match.group(1), match.group(2), int(match.group(3))) if match else (number or '', '', 0)
+
+
+# Campo de data de cada modelo com documentos AGT, para filtrar o período na pesquisa.
+DATE_FIELDS = {'account.move': 'invoice_date', 'account.payment': 'date', 'pos.order': 'date_order'}
 
 
 def nospace(value, size):
@@ -47,7 +60,13 @@ class L10nAoSaftExport(models.TransientModel):
     _name = 'l10n_ao_saft.export'
     _description = 'Exportação SAF-T (AO)'
 
-    company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
+    company_id = fields.Many2one(
+        'res.company',
+        required=True,
+        default=lambda self: self.env.company.root_id,
+        domain=lambda self: [('id', 'in', self.env.companies.ids), ('parent_id', '=', False)],
+        help='O ficheiro é da entidade fiscal (empresa-mãe) e inclui as sucursais.',
+    )
     file_type = fields.Selection(
         [
             ('C', 'Contabilidade (anual, até 10 de Abril)'),
@@ -93,6 +112,10 @@ class L10nAoSaftExport(models.TransientModel):
 
     def _generate(self):
         """XML SAF-T (AO) validado pelo esquema; erro com os primeiros problemas se não validar."""
+        if self.company_id not in self.env.companies:
+            raise UserError(self.env._('Não tem acesso à empresa %s.', self.company_id.name))
+        if self.company_id.parent_id:
+            raise UserError(self.env._('Escolha a empresa-mãe: o ficheiro inclui as sucursais.'))
         if self.date_from > self.date_to:
             raise UserError(self.env._('A data inicial é posterior à data final.'))
         fiscal = self.company_id.compute_fiscalyear_dates(self.date_from)
@@ -103,12 +126,20 @@ class L10nAoSaftExport(models.TransientModel):
         self._validate(content)
         return content
 
+    @staticmethod
+    def _xml_line(lines, number):
+        return lines[number - 1].strip()[:120] if 0 < number <= len(lines) else ''
+
     def _validate(self, content):
         with open(file_path(XSD_PATH), 'rb') as handle:
             schema = etree.XMLSchema(etree.parse(handle))
         document = etree.fromstring(content)
         if not schema.validate(document):
-            errors = '\n'.join(f'- linha {e.line}: {e.message}' for e in list(schema.error_log)[:10])
+            lines = content.decode('utf-8').splitlines()
+            errors = '\n'.join(
+                f'- linha {e.line}: {e.message}\n    {self._xml_line(lines, e.line)}'
+                for e in list(schema.error_log)[:10]
+            )
             raise UserError(self.env._('O ficheiro SAF-T não é válido segundo o esquema da AGT:\n%s', errors))
 
 
@@ -116,8 +147,8 @@ class SaftBuilder:
     """Constrói a árvore XML do SAF-T (AO) para o assistente de exportação."""
 
     def __init__(self, wizard, fiscal_start):
-        self.wizard = wizard
-        self.env = wizard.env
+        self.wizard = wizard.with_company(wizard.company_id)
+        self.env = self.wizard.env
         self.company_id = wizard.company_id
         self.file_type = wizard.file_type
         self.date_from = wizard.date_from
@@ -183,22 +214,46 @@ class SaftBuilder:
         """Documentos AGT emitidos no período: (registo, payload) por facturas/talões e por recibos."""
         sales, receipts = [], []
         for model in self.env['l10n_ao_edi.document']._queue_fields():
-            domain = [('company_id', '=', self.company_id.id), ('l10n_ao_edi_state', '!=', False)]
+            date_field = DATE_FIELDS.get(model, 'create_date')
+            domain = [
+                ('company_id', 'child_of', self.company_id.id),
+                ('l10n_ao_edi_state', '!=', False),
+                (date_field, '>=', fields.Datetime.to_string(self._utc_start(self.date_from))),
+                (date_field, '<=', fields.Datetime.to_string(self._utc_end(self.date_to))),
+            ]
             if model == 'account.move':
                 domain.append(('move_type', 'in', ('out_invoice', 'out_refund')))
             for record in self.env[model].sudo().search(domain, order='id'):
-                # Documentos emitidos antes da fixação do payload: reconstrói-se a partir do registo.
                 if record.l10n_ao_edi_payload:
                     payload = json.loads(record.l10n_ao_edi_payload)
                 else:
-                    payload = record._l10n_ao_edi_document_values()
+                    # Documentos emitidos antes da fixação do payload: reconstrói-se a partir do registo,
+                    # sem voltar a assinar (a assinatura não entra no SAF-T).
+                    try:
+                        payload = record.with_context(l10n_ao_edi_skip_signature=True)._l10n_ao_edi_document_values()
+                    except Exception as error:  # noqa: BLE001
+                        raise UserError(
+                            self.env._(
+                                'Não foi possível reconstruir o documento %(doc)s: %(error)s',
+                                doc=record.display_name,
+                                error=error,
+                            )
+                        ) from error
                 day = fields.Date.to_date(payload.get('documentDate'))
                 if not day or not self.date_from <= day <= self.date_to:
                     continue
                 (receipts if 'paymentReceipt' in payload else sales).append((record, payload))
-        sales.sort(key=lambda item: (item[1]['documentType'], item[1]['documentNo']))
-        receipts.sort(key=lambda item: item[1]['documentNo'])
+        sales.sort(key=lambda item: (item[1]['documentType'], document_sort_key(item[1]['documentNo'])))
+        receipts.sort(key=lambda item: document_sort_key(item[1]['documentNo']))
         return sales, receipts
+
+    def _utc_start(self, day):
+        local = pytz.timezone('Africa/Luanda').localize(datetime.combine(day, time.min))
+        return local.astimezone(pytz.utc).replace(tzinfo=None)
+
+    def _utc_end(self, day):
+        local = pytz.timezone('Africa/Luanda').localize(datetime.combine(day, time.max))
+        return local.astimezone(pytz.utc).replace(tzinfo=None)
 
     def _purchase_moves(self):
         return self.env['account.move'].search(
@@ -227,9 +282,19 @@ class SaftBuilder:
         moves = self._ledger_moves() if 'ledger' in tables else self.env['account.move']
         sales, receipts = self._agt_documents() if {'sales', 'payments'} & tables else ([], [])
         purchases = self._purchase_moves() if 'purchases' in tables else self.env['account.move']
+        if 'ledger' not in tables:
+            moves = (
+                self.env['account.move']
+                .browse(
+                    [r.id for r, _p in sales if r._name == 'account.move']
+                    + [r.move_id.id for r, _p in receipts if getattr(r, 'move_id', False)]
+                )
+                .exists()
+            )
         transactions = self._collect_transactions(moves)
         for record, payload in sales + receipts:
-            self._customers.setdefault(self._customer_key(record.partner_id, payload), record.partner_id)
+            partner = record.partner_id.commercial_partner_id
+            self._customers.setdefault(self._customer_key(partner, payload), partner)
         for move in purchases:
             self._suppliers.setdefault(str(move.commercial_partner_id.id), move.commercial_partner_id)
         for _record, payload in sales:
@@ -328,6 +393,8 @@ class SaftBuilder:
         def total(account, values):
             return values[account.id] + sum(total(child, values) for child in children[account.id])
 
+        if not accounts:
+            raise UserError(self.env._('A empresa %s não tem plano de contas.', company.name))
         container = self._el(master, 'GeneralLedgerAccounts')
         for account in accounts.sorted(lambda a: engine._code_sort_key(a.code)):
             node = self._el(container, 'Account')
@@ -338,10 +405,10 @@ class SaftBuilder:
             self._el(node, 'OpeningCreditBalance', amount2(max(-start, 0.0)))
             self._el(node, 'ClosingDebitBalance', amount2(max(end, 0.0)))
             self._el(node, 'ClosingCreditBalance', amount2(max(-end, 0.0)))
-            if not account.parent_id:
-                category = 'GR'
+            if children[account.id]:
+                category = 'GR' if not account.parent_id else 'GA'
             else:
-                category = 'GA' if children[account.id] else 'GM'
+                category = 'GM'
             self._el(node, 'GroupingCategory', category)
             if account.parent_id:
                 self._el(node, 'GroupingCode', account.parent_id.code)
@@ -392,9 +459,10 @@ class SaftBuilder:
 
     def _product_record(self, code):
         Product = self.env['product.product'].with_context(active_test=False)
-        product = Product.search([('default_code', '=', code)], limit=1)
+        company_domain = ['|', ('company_id', '=', False), ('company_id', 'child_of', self.company_id.id)]
+        product = Product.search([('default_code', '=', code), *company_domain], limit=1)
         if not product and code.isdigit():
-            product = Product.browse(int(code)).exists()
+            product = Product.browse(int(code)).exists().filtered(lambda p: not p.default_code)
         return product
 
     def _build_products(self, master):
@@ -420,6 +488,8 @@ class SaftBuilder:
             percentage = tax.amount if tax.amount_type == 'percent' else 0.0
             key = (tax.l10n_ao_tax_type, tax.l10n_ao_tax_region or 'AO', tax.l10n_ao_tax_code or 'NS', percentage)
             entries.setdefault(key, tax)
+        if not entries:
+            raise UserError(self.env._('A empresa %s não tem impostos com classificação AGT.', self.company_id.name))
         table = self._el(master, 'TaxTable')
         for (tax_type, region, code, percentage), tax in sorted(entries.items()):
             node = self._el(table, 'TaxTableEntry')
@@ -430,6 +500,13 @@ class SaftBuilder:
             self._el(node, 'TaxPercentage', decimal(percentage, 2))
 
     # --- Contabilidade -------------------------------------------------
+    def _journal_id(self, journal):
+        """Código do diário, com sufixo nas sucursais para ser único no ficheiro."""
+        code = nospace(journal.code, 25) or str(journal.id)
+        if journal.company_id != self.company_id:
+            code = f'{code}-{journal.company_id.id}'
+        return code
+
     def _collect_transactions(self, moves):
         """{lançamento: dados da transacção} para os lançamentos com débitos e créditos."""
         transactions = {}
@@ -439,7 +516,7 @@ class SaftBuilder:
             lines = move.line_ids.filtered(lambda line, c=currency: not c.is_zero(line.balance))
             if not lines.filtered(lambda line: line.balance > 0) or not lines.filtered(lambda line: line.balance < 0):
                 continue
-            journal = nospace(move.journal_id.code, 30) or str(move.journal_id.id)
+            journal = self._journal_id(move.journal_id)
             archival = nospace(move.name, 20)
             if len(re.sub(r'\s+', '', move.name or '')) > 20 or not archival or archival == '/':
                 archival = str(move.id)
@@ -473,6 +550,8 @@ class SaftBuilder:
         by_journal = defaultdict(list)
         for move, tx in transactions.items():
             by_journal[tx['journal'], move.journal_id].append((move, tx))
+        if not by_journal and self.file_type == 'C':
+            raise UserError(self.env._('Não há lançamentos no período.'))
         for (journal_id, journal), items in by_journal.items():
             node = self._el(ledger, 'Journal')
             self._el(node, 'JournalID', journal_id)
@@ -521,8 +600,13 @@ class SaftBuilder:
     def _build_sales(self, source, sales, tx_ids):
         container = self._el(source, 'SalesInvoices')
         valid = [(r, p) for r, p in sales if self._status(r) == 'N']
-        debit = sum(line.get('debitAmount', 0.0) for _r, p in valid for line in p['lines'])
-        credit = sum(line.get('creditAmount', 0.0) for _r, p in valid for line in p['lines'])
+
+        def rate(payload):
+            currency = payload['documentTotals'].get('currency')
+            return currency['exchangeRate'] if currency and currency.get('exchangeRate') else 1.0
+
+        debit = sum(line.get('debitAmount', 0.0) * rate(p) for _r, p in valid for line in p['lines'])
+        credit = sum(line.get('creditAmount', 0.0) * rate(p) for _r, p in valid for line in p['lines'])
         self._el(container, 'NumberOfEntries', len(sales))
         self._el(container, 'TotalDebit', amount2(debit))
         self._el(container, 'TotalCredit', amount2(credit))
@@ -558,19 +642,31 @@ class SaftBuilder:
         if record._name == 'account.move' and record in tx_ids:
             self._el(node, 'TransactionID', tx_ids[record])
         self._el(node, 'CustomerID', self._customer_key(record.partner_id, payload))
+        # Em moeda estrangeira, o payload AGT está na moeda do documento: o SAF-T pede os montantes em AOA
+        # e o valor original em «Currency» (DE n.º 317/20, 4.1.4.20.4.2).
+        currency = payload['documentTotals'].get('currency')
+        rate = currency['exchangeRate'] if currency and currency.get('exchangeRate') else 1.0
         for line in payload['lines']:
-            self._build_invoice_line(node, line, day)
-        self._build_totals(node, payload['documentTotals'])
+            self._build_invoice_line(node, line, day, rate)
+        self._build_totals(node, payload['documentTotals'], rate=rate)
         self._build_withholdings(node, payload.get('withholdingTaxList') or [])
 
-    def _build_invoice_line(self, invoice, line, day):
+    def _line_tax(self, taxes):
+        """Imposto da linha para o SAF-T: o IVA, senão o IS, senão «NS» (o IEC não é um TaxType)."""
+        for kind in ('IVA', 'IS'):
+            tax = next((t for t in taxes if t.get('taxType') == kind), None)
+            if tax:
+                return tax
+        return {'taxType': 'NS', 'taxCode': 'NS', 'taxPercentage': 0.0}
+
+    def _build_invoice_line(self, invoice, line, day, rate=1.0):
         node = self._el(invoice, 'Line')
         self._el(node, 'LineNumber', line['lineNumber'])
         self._el(node, 'ProductCode', text(line['productCode'], 60))
         self._el(node, 'ProductDescription', text(line.get('productDescription'), 200, '-'))
         self._el(node, 'Quantity', decimal(line.get('quantity')))
         self._el(node, 'UnitOfMeasure', text(line.get('unitOfMeasure'), 20, 'UN'))
-        self._el(node, 'UnitPrice', decimal(line.get('unitPrice'), 2))
+        self._el(node, 'UnitPrice', decimal((line.get('unitPrice') or 0.0) * rate, 2))
         self._el(node, 'TaxPointDate', day)
         reference = line.get('referenceInfo')
         if reference:
@@ -581,28 +677,27 @@ class SaftBuilder:
                 self._el(ref_node, 'Reason', text(reference['reason'], 50))
         self._el(node, 'Description', text(line.get('productDescription'), 200, '-'))
         if 'debitAmount' in line:
-            self._el(node, 'DebitAmount', amount2(line['debitAmount']))
+            self._el(node, 'DebitAmount', amount2(line['debitAmount'] * rate))
         else:
-            self._el(node, 'CreditAmount', amount2(line.get('creditAmount')))
-        taxes = line.get('taxes') or []
-        tax = next((t for t in taxes if t.get('taxType') == 'IVA'), taxes[0] if taxes else None)
+            self._el(node, 'CreditAmount', amount2((line.get('creditAmount') or 0.0) * rate))
+        tax = self._line_tax(line.get('taxes') or [])
         tax_node = self._el(node, 'Tax')
-        self._el(tax_node, 'TaxType', tax['taxType'] if tax else 'NS')
-        self._el(tax_node, 'TaxCountryRegion', (tax or {}).get('taxCountryRegion') or 'AO')
-        self._el(tax_node, 'TaxCode', (tax or {}).get('taxCode') or 'NS')
-        self._el(tax_node, 'TaxPercentage', decimal((tax or {}).get('taxPercentage'), 2))
-        code = (tax or {}).get('taxExemptionCode')
+        self._el(tax_node, 'TaxType', tax['taxType'])
+        self._el(tax_node, 'TaxCountryRegion', tax.get('taxCountryRegion') or 'AO')
+        self._el(tax_node, 'TaxCode', tax.get('taxCode') or ('ISE' if tax['taxType'] == 'IS' else 'NS'))
+        self._el(tax_node, 'TaxPercentage', decimal(tax.get('taxPercentage'), 2))
+        code = tax.get('taxExemptionCode')
         if code:
             self._el(node, 'TaxExemptionReason', self._exemption_reason(code))
             self._el(node, 'TaxExemptionCode', code)
         if line.get('settlementAmount'):
-            self._el(node, 'SettlementAmount', amount2(line['settlementAmount']))
+            self._el(node, 'SettlementAmount', amount2(line['settlementAmount'] * rate))
 
-    def _build_totals(self, parent, totals, *, settlement=None):
+    def _build_totals(self, parent, totals, *, settlement=None, rate=1.0):
         node = self._el(parent, 'DocumentTotals')
-        self._el(node, 'TaxPayable', amount2(totals.get('taxPayable')))
-        self._el(node, 'NetTotal', amount2(totals.get('netTotal')))
-        self._el(node, 'GrossTotal', amount2(totals.get('grossTotal')))
+        self._el(node, 'TaxPayable', amount2((totals.get('taxPayable') or 0.0) * rate))
+        self._el(node, 'NetTotal', amount2((totals.get('netTotal') or 0.0) * rate))
+        self._el(node, 'GrossTotal', amount2((totals.get('grossTotal') or 0.0) * rate))
         if settlement:
             settlement_node = self._el(node, 'Settlement')
             self._el(settlement_node, 'SettlementAmount', amount2(settlement))
@@ -610,7 +705,8 @@ class SaftBuilder:
         if currency:
             currency_node = self._el(node, 'Currency')
             self._el(currency_node, 'CurrencyCode', currency['currencyCode'])
-            self._el(currency_node, 'CurrencyAmount', amount2(currency['currencyAmount']))
+            # Valor na moeda do documento (o payload AGT guarda aqui o contravalor em Kz).
+            self._el(currency_node, 'CurrencyAmount', amount2(totals.get('grossTotal')))
             self._el(currency_node, 'ExchangeRate', decimal(currency['exchangeRate']))
 
     def _build_withholdings(self, parent, withholdings):
@@ -624,8 +720,14 @@ class SaftBuilder:
 
     def _payment_mechanism(self, payment):
         journal = getattr(payment, 'journal_id', False)
+        method = getattr(payment, 'payment_method_line_id', False)
+        code = (method.code if method else '') or ''
         if journal and journal.type == 'cash':
             return 'NU'
+        if code in ('check_printing', 'cheque'):
+            return 'CH'
+        if 'multicaixa' in (method.name if method else '').lower():
+            return 'MB'
         return 'TB'
 
     def _build_payments(self, source, receipts, tx_ids):
@@ -658,7 +760,7 @@ class SaftBuilder:
             self._el(doc_status, 'SourcePayment', 'P')
             method = self._el(node, 'PaymentMethod')
             self._el(method, 'PaymentMechanism', self._payment_mechanism(record))
-            self._el(method, 'PaymentAmount', amount2(getattr(record, 'amount', 0.0)))
+            self._el(method, 'PaymentAmount', amount2(payload['documentTotals'].get('grossTotal')))
             self._el(method, 'PaymentDate', day)
             self._el(node, 'SourceID', self._source_id(record))
             self._el(node, 'SystemEntryDate', payload['systemEntryDate'])
@@ -691,7 +793,8 @@ class SaftBuilder:
             self._el(node, 'SourceID', self._source_id(move))
             self._el(node, 'Period', self._period(move.invoice_date))
             self._el(node, 'InvoiceDate', move.invoice_date)
-            self._el(node, 'PurchaseType', 'NC' if move.move_type == 'in_refund' else 'FT')
+            doc_type = move.l10n_ao_document_type if move.l10n_ao_document_type in PURCHASE_TYPES else None
+            self._el(node, 'PurchaseType', doc_type or ('NC' if move.move_type == 'in_refund' else 'FT'))
             self._el(node, 'SupplierID', str(move.commercial_partner_id.id))
             totals = self._el(node, 'DocumentTotals')
             self._el(totals, 'TaxPayable', amount2(move.amount_tax_signed))

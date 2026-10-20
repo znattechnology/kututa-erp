@@ -21,7 +21,13 @@ class L10nAoReportsClosing(models.TransientModel):
     _name = 'l10n_ao_reports.closing'
     _description = 'Encerramento do exercício (PGC)'
 
-    company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company)
+    company_id = fields.Many2one(
+        'res.company',
+        required=True,
+        default=lambda self: self.env.company.root_id,
+        domain=lambda self: [('id', 'in', self.env.companies.ids), ('parent_id', '=', False)],
+        help='O encerramento é da entidade (empresa-mãe) e inclui as sucursais.',
+    )
     operation = fields.Selection(
         [
             ('close', 'Apuramento de resultados (classes 6 e 7 → 82 a 88)'),
@@ -34,7 +40,7 @@ class L10nAoReportsClosing(models.TransientModel):
     year = fields.Integer(
         string='Exercício',
         required=True,
-        default=lambda self: fields.Date.context_today(self).year - 1,
+        default=lambda self: self._default_year(),
         help='Ano em que termina o exercício.',
     )
     date_from = fields.Date(compute='_compute_dates')
@@ -58,6 +64,14 @@ class L10nAoReportsClosing(models.TransientModel):
     )
     currency_id = fields.Many2one(related='company_id.currency_id')
 
+    @api.model
+    def _default_year(self):
+        company = self.env.company.root_id
+        previous_end = company.compute_fiscalyear_dates(fields.Date.context_today(self))['date_from'] - timedelta(
+            days=1
+        )
+        return previous_end.year
+
     @api.depends('company_id', 'year')
     def _compute_dates(self):
         for wizard in self:
@@ -65,9 +79,8 @@ class L10nAoReportsClosing(models.TransientModel):
                 wizard.date_from = wizard.date_to = False
                 continue
             company = wizard.company_id
-            dates = company.compute_fiscalyear_dates(
-                date(wizard.year, int(company.fiscalyear_last_month), company.fiscalyear_last_day)
-            )
+            # O último dia do exercício pode não existir no ano (29/02): usa-se o dia 1 do mês.
+            dates = company.compute_fiscalyear_dates(date(wizard.year, int(company.fiscalyear_last_month), 1))
             wizard.date_from, wizard.date_to = dates['date_from'], dates['date_to']
 
     @api.depends('operation', 'date_to')
@@ -110,7 +123,8 @@ class L10nAoReportsClosing(models.TransientModel):
             return self.journal_id
         journal_model = self.env['account.journal']
         journal = journal_model.search(
-            [('company_id', '=', self.company_id.id), ('code', '=', CLOSING_JOURNAL_CODE)], limit=1
+            [('company_id', '=', self.company_id.id), ('code', '=', CLOSING_JOURNAL_CODE), ('type', '=', 'general')],
+            limit=1,
         )
         return journal or journal_model.create(
             {
@@ -122,15 +136,16 @@ class L10nAoReportsClosing(models.TransientModel):
         )
 
     def _existing(self, operation, year):
-        return self.env['account.move'].search(
+        """Lançamentos de encerramento em vigor (nem cancelados nem estornados)."""
+        moves = self.env['account.move'].search(
             [
                 ('company_id', '=', self.company_id.id),
                 ('l10n_ao_closing_type', '=', operation),
                 ('l10n_ao_closing_year', '=', year),
                 ('state', '!=', 'cancel'),
-            ],
-            limit=1,
+            ]
         )
+        return moves.filtered(lambda move: not move.reversal_move_ids.filtered(lambda r: r.state == 'posted'))
 
     def _group_balances(self, date_from, date_to):
         """Saldo por grupo de 2 dígitos e por conta das classes 6, 7 e 82 a 88 no intervalo."""
@@ -146,12 +161,29 @@ class L10nAoReportsClosing(models.TransientModel):
                 accounts[code] += balance
         return groups, accounts
 
+    def _check_access(self):
+        if self.company_id not in self.env.companies:
+            raise UserError(self.env._('Não tem acesso à empresa %s.', self.company_id.name))
+        if self.company_id.parent_id:
+            raise UserError(self.env._('Escolha a empresa-mãe: o encerramento inclui as sucursais.'))
+
+    def _check_lock_dates(self):
+        locks = self.company_id._get_lock_date_violations(self.date, sale=False, purchase=False, tax=False)
+        if locks:
+            raise UserError(
+                self.env._(
+                    'A data %(date)s está num período bloqueado (%(locks)s): o lançamento seria datado noutro '
+                    'exercício. Altere as datas de bloqueio da empresa primeiro.',
+                    date=self.date.strftime('%d/%m/%Y'),
+                    locks=self.company_id._format_lock_dates(locks),
+                )
+            )
+
     def _check_close(self):
         currency = self.company_id.currency_id
-        if self._existing('close', self.year):
-            raise UserError(self.env._('O exercício %s já foi apurado.', self.year))
-        if not self.date_from <= self.date <= self.date_to:
-            raise UserError(self.env._('O apuramento tem de ser lançado dentro do exercício %s.', self.year))
+        # O apuramento é sempre no último dia do exercício: os saldos cobrem o exercício inteiro.
+        self.date = self.date_to
+        self._check_lock_dates()
         previous, _accounts = self._group_balances(None, self.date_from - timedelta(days=1))
         pending = sorted(g for g, balance in previous.items() if g[:1] in '67' and not currency.is_zero(balance))
         if pending:
@@ -162,13 +194,17 @@ class L10nAoReportsClosing(models.TransientModel):
                     ', '.join(pending),
                 )
             )
-        drafts = self.env['account.move'].search_count(
-            [
-                ('company_id', 'child_of', self.company_id.id),
-                ('state', '=', 'draft'),
-                ('date', '>=', self.date_from),
-                ('date', '<=', self.date_to),
-            ]
+        drafts = (
+            self.env['account.move']
+            .sudo()
+            .search_count(
+                [
+                    ('company_id', 'child_of', self.company_id.id),
+                    ('state', '=', 'draft'),
+                    ('date', '>=', self.date_from),
+                    ('date', '<=', self.date_to),
+                ]
+            )
         )
         if drafts:
             raise UserError(
@@ -237,16 +273,24 @@ class L10nAoReportsClosing(models.TransientModel):
             }
         )
         move.action_post()
+        if move.date != self.date:
+            raise UserError(self.env._('O lançamento ficou com a data %s, fora do exercício.', move.date))
         return move
 
     def action_confirm(self):
         self.ensure_one()
+        self._check_access()
         if self.operation == 'close':
             self._check_close()
             lines = self._close_lines()
+            existing = self._existing('close', self.year)
             if not lines:
+                if existing:
+                    raise UserError(self.env._('O exercício %s já foi apurado e não há nada a apurar.', self.year))
                 raise UserError(self.env._('Não há proveitos nem custos lançados no exercício %s.', self.year))
-            move = self._create_move('close', lines, f'Apuramento de resultados do exercício {self.year}')
+            # Um segundo apuramento no mesmo exercício só leva o que foi lançado depois do primeiro.
+            label = 'Apuramento complementar' if existing else 'Apuramento'
+            move = self._create_move('close', lines, f'{label} de resultados do exercício {self.year}')
         else:
             move = self._transfer()
         return {
@@ -261,10 +305,14 @@ class L10nAoReportsClosing(models.TransientModel):
             raise UserError(self.env._('Faça primeiro o apuramento de resultados do exercício %s.', self.year))
         if self._existing('transfer', self.year):
             raise UserError(self.env._('O resultado do exercício %s já foi transferido.', self.year))
-        if self.date < self.date_to:
-            raise UserError(self.env._('A transferência não pode ser anterior ao fim do exercício.'))
-        _groups, accounts = self._group_balances(None, self.date_to)
-        net = sum(balance for code, balance in accounts.items() if code[:2] == '88')
+        if self.date <= self.date_to:
+            raise UserError(self.env._('A transferência faz-se no exercício seguinte, depois da aprovação das contas.'))
+        self._check_lock_dates()
+        # O resultado do exercício é o que os apuramentos desse exercício deixaram na 88.
+        closing_lines = self._existing('close', self.year).line_ids.filtered(
+            lambda line: line.account_id.code.startswith('88')
+        )
+        net = sum(closing_lines.mapped('balance'))
         if self.company_id.currency_id.is_zero(net):
             raise UserError(self.env._('O resultado líquido (88) do exercício %s é nulo.', self.year))
         return self._create_move(

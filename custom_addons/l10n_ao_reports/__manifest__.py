@@ -1,6 +1,6 @@
 {
     'name': 'Kututa Mbongo - Demonstrações Financeiras PGC',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Balanço, Demonstração de Resultados, Balancete e encerramento do exercício (Decreto n.º 82/01)',
     'description': """
 Kututa Mbongo: demonstrações financeiras do Plano Geral de Contabilidade angolano.

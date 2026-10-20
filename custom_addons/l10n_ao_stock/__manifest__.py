@@ -1,6 +1,6 @@
 {
     'name': 'Kututa Mbongo - Inventário AGT',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'SAF-T de inventário anual (DP n.º 71/25, art. 24.º; Circular n.º 05/GACA/GJ/DSF/AGT/2026)',
     'description': """
 Ficheiro de inventário das existências a 31 de Dezembro, a submeter até 15 de Fevereiro.

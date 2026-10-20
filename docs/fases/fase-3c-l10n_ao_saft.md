@@ -1,6 +1,8 @@
 # Fase 3c: SAF-T (AO) (`l10n_ao_saft`)
 
-**Estado:** concluída a 2026-10-20. Testes: 6 (`make test m=l10n_ao_saft`); a bateria dos sete módulos tem 144 testes, 0 falhas. Na base `kututa_demo`, os três tipos de ficheiro de 2026 validam pelo XSD.
+> **Revisto na auditoria de 2026-10-21** (`auditoria-fase-3.md`): moeda estrangeira convertida para AOA; empresa escolhida e sucursais; documentos antigos filtrados por data e sem nova assinatura; TransactionID no ficheiro F; IEC/IS nas linhas; PaymentAmount em AOA; mensagens de erro com a linha do XML.
+
+**Estado:** concluída a 2026-10-20. Testes: 8 (`make test m=l10n_ao_saft`). Na base `kututa_demo`, os três tipos de ficheiro de 2026 validam pelo XSD.
 
 **Fontes** (`docs/referencias/saft-ao/`, ver `FONTE.md` e `RESUMO.md`):
 - XSD SAFTAO1.01_01 (repositório ASSOFT/AGT, versão de 2024-10-16);

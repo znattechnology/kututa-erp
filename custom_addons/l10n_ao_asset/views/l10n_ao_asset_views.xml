@@ -27,11 +27,12 @@
         <field name="arch" type="xml">
             <form string="Ficha de imobilizado">
                 <header>
-                    <button name="action_confirm" type="object" string="Confirmar" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_compute_board" type="object" string="Calcular plano" invisible="state != 'draft'"/>
-                    <button name="action_post_depreciation" type="object" string="Lançar quotas vencidas" invisible="state != 'open'"/>
-                    <button name="action_dispose" type="object" string="Alienar / abater" invisible="state not in ('open', 'close')"/>
-                    <button name="action_reset_draft" type="object" string="Voltar a rascunho" invisible="state != 'open'"/>
+                    <button name="action_confirm" type="object" string="Confirmar" class="btn-primary" invisible="state != 'draft'" groups="account.group_account_invoice"/>
+                    <button name="action_compute_board" type="object" string="Calcular plano" invisible="state != 'draft'" groups="account.group_account_invoice"/>
+                    <button name="action_post_depreciation" type="object" string="Lançar quotas vencidas" invisible="state != 'open'" groups="account.group_account_invoice"/>
+                    <button name="action_dispose" type="object" string="Alienar / abater" invisible="state not in ('open', 'close')" groups="account.group_account_invoice"/>
+                    <button name="action_reset_draft" type="object" string="Voltar a rascunho" invisible="state not in ('open', 'close')" groups="account.group_account_invoice"/>
+                    <button name="action_cancel_disposal" type="object" string="Anular alienação" invisible="state != 'disposed'" groups="account.group_account_invoice" confirm="Cancela o lançamento de alienação e repõe o plano de amortização. Continuar?"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,open,close"/>
                 </header>
                 <sheet>
@@ -59,9 +60,11 @@
                             <field name="method_period" readonly="state != 'draft'"/>
                             <field name="low_value" readonly="state != 'draft'"/>
                             <field name="original_value" readonly="state != 'draft'"/>
+                            <field name="quantity" readonly="state != 'draft'"/>
                             <field name="salvage_value" readonly="state != 'draft'"/>
                             <field name="opening_depreciation" readonly="state != 'draft'"/>
                             <field name="opening_date" readonly="state != 'draft'" invisible="not opening_depreciation"/>
+                            <field name="opening_depreciation_prior" readonly="state != 'draft'" invisible="not opening_depreciation"/>
                             <field name="depreciated_amount"/>
                             <field name="book_value"/>
                             <field name="disposal_date" invisible="not disposal_date"/>
@@ -206,11 +209,20 @@
         <field name="arch" type="xml">
             <form string="Alienação / abate">
                 <group>
-                    <field name="asset_id" readonly="1"/>
-                    <field name="disposal_type" widget="radio"/>
-                    <field name="date"/>
-                    <field name="loss_account_id"/>
-                    <field name="company_id" invisible="1"/>
+                    <group>
+                        <field name="asset_id" readonly="1"/>
+                        <field name="disposal_type" widget="radio"/>
+                        <field name="date"/>
+                        <field name="loss_account_id"/>
+                        <field name="company_id" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    <group string="Efeito">
+                        <field name="to_post_count"/>
+                        <field name="to_drop_count"/>
+                        <field name="depreciated_amount"/>
+                        <field name="book_value"/>
+                    </group>
                 </group>
                 <div class="text-muted">
                     As quotas vão até ao mês (ou ano) anterior ao da alienação ou abate (CII, art. 29.º, n.º 4).
@@ -231,7 +243,7 @@
             <form string="Mapa de reintegrações e amortizações">
                 <group>
                     <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
-                    <field name="year" options="{'format': false}"/>
+                    <field name="year" options="{'enable_formatting': false}"/>
                 </group>
                 <footer>
                     <button name="action_print_pdf" type="object" string="PDF" class="btn-primary"/>
@@ -247,6 +259,17 @@
         <field name="res_model">l10n_ao_asset.report</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
+    </record>
+
+    <record id="product_template_form_view_l10n_ao_asset" model="ir.ui.view">
+        <field name="name">product.template.form.l10n_ao_asset</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="account.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <field name="property_account_expense_id" position="after">
+                <field name="l10n_ao_asset_category_id" groups="account.group_account_invoice"/>
+            </field>
+        </field>
     </record>
 
     <!-- Factura de fornecedor: botão para as fichas criadas -->
@@ -281,7 +304,7 @@
         </field>
     </record>
 
-    <menuitem id="menu_l10n_ao_asset" name="Imobilizado" parent="account.menu_finance_entries" sequence="60">
+    <menuitem id="menu_l10n_ao_asset" name="Imobilizado" parent="account.menu_finance" sequence="6" groups="account.group_account_invoice,account.group_account_readonly">
         <menuitem id="menu_l10n_ao_asset_asset" action="action_l10n_ao_asset_asset" sequence="10"/>
     </menuitem>
     <menuitem id="menu_l10n_ao_asset_report" action="action_l10n_ao_asset_report" parent="l10n_ao_reports.menu_l10n_ao_reports" sequence="30"/>

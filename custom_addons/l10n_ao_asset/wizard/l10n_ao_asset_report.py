@@ -17,7 +17,8 @@ COLUMNS = [
     ('depreciation', 'Amortizações do exercício'),
     ('depreciated_end', 'Amortizações acumuladas no fim'),
     ('book_value', 'Valor líquido'),
-    ('disposed', 'Alienações / abates'),
+    ('disposed', 'Abates: valor bruto'),
+    ('disposed_depreciation', 'Abates: amortizações'),
     ('not_accepted', 'Amortização não aceite'),
 ]
 AMOUNT_COLUMNS = (
@@ -27,6 +28,7 @@ AMOUNT_COLUMNS = (
     'depreciated_end',
     'book_value',
     'disposed',
+    'disposed_depreciation',
     'not_accepted',
 )
 
@@ -44,9 +46,8 @@ class L10nAoAssetReport(models.TransientModel):
     def _compute_dates(self):
         for wizard in self:
             company = wizard.company_id
-            dates = company.compute_fiscalyear_dates(
-                date(wizard.year or 2000, int(company.fiscalyear_last_month), company.fiscalyear_last_day)
-            )
+            # O último dia do exercício pode não existir no ano (29 de Fevereiro): usa-se o dia 1 do mês.
+            dates = company.compute_fiscalyear_dates(date(wizard.year or 2000, int(company.fiscalyear_last_month), 1))
             wizard.date_from, wizard.date_to = dates['date_from'], dates['date_to']
 
     def _get_report_data(self):
@@ -85,6 +86,7 @@ class L10nAoAssetReport(models.TransientModel):
                     'depreciated_end': 0.0 if disposed else end,
                     'book_value': 0.0 if disposed else asset.original_value - end,
                     'disposed': asset.original_value if disposed else 0.0,
+                    'disposed_depreciation': end if disposed else 0.0,
                     'not_accepted': asset.currency_id.round(depreciation * asset._fiscal_excess_ratio()),
                 }
                 rows.append(row)

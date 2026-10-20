@@ -47,14 +47,14 @@
                     <group>
                         <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         <field name="operation" widget="radio"/>
-                        <field name="year" options="{'format': false}"/>
+                        <field name="year" options="{'enable_formatting': false}"/>
                         <label for="date_from" string="Período"/>
                         <div class="o_row">
                             <field name="date_from" readonly="1"/> a <field name="date_to" readonly="1"/>
                         </div>
                     </group>
                     <group>
-                        <field name="date"/>
+                        <field name="date" readonly="operation == 'close'"/>
                         <field name="journal_id" options="{'no_create': True}"/>
                         <field name="result_amount" invisible="operation != 'close'"/>
                         <field name="currency_id" invisible="1"/>
@@ -87,13 +87,14 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='ref']" position="after">
                 <field name="l10n_ao_closing_type" invisible="not l10n_ao_closing_type"/>
-                <field name="l10n_ao_closing_year" invisible="not l10n_ao_closing_type" options="{'format': false}"/>
+                <field name="l10n_ao_closing_year" invisible="not l10n_ao_closing_type" options="{'enable_formatting': false}"/>
             </xpath>
         </field>
     </record>
 
     <menuitem id="menu_l10n_ao_reports" name="Angola (PGC)" parent="account.menu_finance_reports" sequence="1">
-        <menuitem id="menu_l10n_ao_reports_wizard" action="action_l10n_ao_reports_wizard" sequence="10"/>
+        <menuitem id="menu_l10n_ao_reports_wizard" action="action_l10n_ao_reports_wizard" sequence="10"
+                  groups="account.group_account_readonly,account.group_account_manager"/>
         <menuitem
             id="menu_l10n_ao_reports_closing"
             action="action_l10n_ao_reports_closing"
