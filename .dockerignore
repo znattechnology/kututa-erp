@@ -1,0 +1,9 @@
+.git
+odoo/.git
+.venv
+.local
+decretos
+docs
+tools
+**/__pycache__
+.env

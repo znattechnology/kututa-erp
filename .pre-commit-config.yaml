@@ -1,0 +1,21 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: .venv/bin/ruff check --fix
+        language: system
+        types: [python]
+        files: ^(custom_addons|tools)/
+      - id: ruff-format
+        name: ruff format
+        entry: .venv/bin/ruff format
+        language: system
+        types: [python]
+        files: ^(custom_addons|tools)/
+      - id: pylint-odoo
+        name: pylint-odoo
+        entry: .venv/bin/pylint --rcfile=.pylintrc --disable=manifest-required-author,manifest-deprecated-key,missing-readme
+        language: system
+        types: [python]
+        files: ^custom_addons/

@@ -1,0 +1,32 @@
+# Produção genérica: Odoo + PostgreSQL. Cada cliente = uma base de dados (dbfilter por subdomínio).
+# Uso: cp .env.example .env  &&  docker compose -f docker-compose.prod.yml up -d
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  odoo:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on: [db]
+    command: >
+      -c /etc/odoo/odoo.conf
+      --db_host=db --db_user=${DB_USER} --db_password=${DB_PASSWORD}
+      --admin_passwd=${ODOO_MASTER_PASSWORD}
+    ports:
+      - "8069:8069"
+      - "8072:8072"
+    volumes:
+      - odoo-data:/var/lib/odoo
+
+volumes:
+  db-data:
+  odoo-data:

@@ -1,0 +1,16 @@
+[MASTER]
+load-plugins=pylint_odoo
+score=n
+
+[ODOOLINT]
+valid-odoo-versions=20.0
+manifest-required-keys=license
+license-allowed=LGPL-3,OPL-1,Other proprietary
+
+[MESSAGES CONTROL]
+disable=all
+enable=odoolint,
+       pointless-statement,
+       unused-import,
+       undefined-variable,
+       dangerous-default-value

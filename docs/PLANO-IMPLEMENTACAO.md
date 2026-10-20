@@ -139,6 +139,30 @@ Decisões tomadas:
 | `edu_university` | **Novo, o secPed não o tem:** licenciaturas, semestres, ECTS, unidades curriculares, precedências, épocas (normal, recurso, especial), defesa |
 | `edu_migration_secped` | Importação idempotente a partir de um dump PostgreSQL do secPed para staging e daí para o Odoo, reaproveitando a lógica de `scripts/migracao-vovo-eva/` |
 
+### Integração do académico com os outros módulos
+Regra: **o académico não duplica o que o Odoo já faz.** Cada função transversal usa o módulo padrão ou `l10n_ao*` correspondente, através de chaves Many2one e de eventos, nunca de cópias de dados.
+
+| Área académica | Integra com | Como |
+|---|---|---|
+| Propinas, emolumentos, multas, exames pagos, cartão | `account` + `l10n_ao_edi` | Cada cobrança é uma `account.move` (FT/FR) e cada pagamento um `account.payment` → recibo RC. Ficam certificadas na AGT e entram no SAF-T automaticamente. As bolsas e descontos são linhas e posições fiscais; a isenção de IVA do ensino é o código **M21** (art. 12.º n.º 1 l) do CIVA). |
+| Contabilidade por escola, curso e turma | `account` analítica + `l10n_ao_reports` | Plano analítico Escola › Curso › Turma, que dá a receita e o custo por curso nos relatórios PGC |
+| Professores e funcionários | `hr`, `l10n_ao_hr`, `l10n_ao_payroll` | O professor é um `hr.employee`. Os tempos lectivos dados (`edu_attendance`) alimentam a carga lectiva paga à aula, por isso o recibo de salário lê as aulas registadas. Faltas do professor → `hr.leave` |
+| Alunos e encarregados | `res.partner` + `portal` | O encarregado é o cliente das facturas. O portal mostra notas, faltas, facturas e pagamentos online |
+| Reprografia, uniformes, livros, material | `stock`, `purchase`, `point_of_sale` + `l10n_ao_edi_pos` | Venda no balcão da escola pelo POS (talão TV certificado). Compras a fornecedores com `validarDocumento` AGT. Consumo de papel e toner em stock |
+| Biblioteca | `stock` (exemplares) ou modelo próprio + `account` | As multas de atraso geram uma factura certificada |
+| Cantina e transporte (futuro) | `point_of_sale`, `fleet` | Pagamento por cartão de estudante |
+| Calendário, avisos e mensagens | `calendar`, `mail`/Discuss, `sms` | Calendário escolar nacional; notificações a encarregados |
+| Candidaturas online | `website` + `edu_enrollment` | Formulário público que cria uma candidatura e uma factura de inscrição |
+| Documentos oficiais | `report` (QWeb), `documents` / `ir.attachment` | Os pedidos de documentos pagos geram uma factura. A emissão só é possível depois do pagamento (bloqueio de devedores) |
+| Infra-estruturas | `maintenance` | Salas e equipamentos |
+
+Normas de referência para o `edu_evaluation`, todas em `decretos/` com OCR em `docs/referencias/avaliacao/`:
+- **Decreto Executivo n.º 424/25:** regime de avaliação do ensino geral;
+- **Despacho n.º 60/08:** regime de avaliação do ensino técnico-profissional (EMT);
+- **Resumo do Regime de Avaliação 2026/2027.**
+
+As normas das universidades serão partilhadas pelo utilizador antes da fase 7.
+
 Mapeamentos de plataforma:
 - RBAC do secPed (433 permissões) → grupos Odoo e `ir.rule` por escola.
 - Mensagens → `mail`/Discuss.

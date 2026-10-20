@@ -1,0 +1,15 @@
+target-version = "py312"
+line-length = 120
+extend-exclude = ["odoo"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "PL"]
+ignore = ["PLR0913", "PLR2004", "PLR0912", "PLR0915"]
+
+[lint.isort]
+known-first-party = ["odoo"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"__manifest__.py" = ["B018"]
