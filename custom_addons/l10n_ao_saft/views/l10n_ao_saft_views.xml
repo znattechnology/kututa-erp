@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_saft_export_form" model="ir.ui.view">
+        <field name="name">l10n_ao_saft.export.form</field>
+        <field name="model">l10n_ao_saft.export</field>
+        <field name="arch" type="xml">
+            <form string="Exportar SAF-T (AO)">
+                <group>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        <field name="file_type" widget="radio"/>
+                    </group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                </group>
+                <div class="text-muted">
+                    <p>
+                        O SAF-T de contabilidade do exercício entrega-se no Portal do Contribuinte até 10 de Abril do ano
+                        seguinte (DP n.º 71/25, art. 24.º). Obrigatório a partir do exercício de 2026.
+                    </p>
+                    <p>
+                        Quem emite facturação electrónica está dispensado do SAF-T de facturação (comunicado da AGT de
+                        20/03/2026); o ficheiro de facturação continua disponível para pedidos da AGT.
+                    </p>
+                    <p>O ficheiro é validado pelo esquema SAF-T (AO) 1.01_01 antes de ser descarregado.</p>
+                </div>
+                <footer>
+                    <button name="action_export" type="object" string="Gerar ficheiro" class="btn-primary"/>
+                    <button special="cancel" string="Fechar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_saft_export" model="ir.actions.act_window">
+        <field name="name">SAF-T (AO)</field>
+        <field name="res_model">l10n_ao_saft.export</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_saft_export" action="action_l10n_ao_saft_export" parent="l10n_ao_reports.menu_l10n_ao_reports" sequence="40"/>
+
+    <record id="view_company_form_l10n_ao_saft" model="ir.ui.view">
+        <field name="name">res.company.form.l10n_ao_saft</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="l10n_ao_edi.view_company_form_l10n_ao_edi"/>
+        <field name="arch" type="xml">
+            <field name="l10n_ao_edi_software_validation_number" position="after">
+                <field name="l10n_ao_saft_producer_tax_id"/>
+                <field name="l10n_ao_saft_producer_name"/>
+            </field>
+        </field>
+    </record>
+</odoo>

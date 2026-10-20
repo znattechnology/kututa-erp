@@ -512,4 +512,5 @@ class L10nAoReportsEngine(models.AbstractModel):
 
     @api.model
     def _code_sort_key(self, code):
-        return [int(part) if part.isdigit() else part for part in re.split(r'[.]', code)]
+        # Códigos com letras (contas criadas à mão) ordenam-se depois dos numéricos do mesmo nível.
+        return [(0, int(part), '') if part.isdigit() else (1, 0, part) for part in re.split(r'[.]', code or '')]
