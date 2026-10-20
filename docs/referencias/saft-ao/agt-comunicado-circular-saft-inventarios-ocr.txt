@@ -1,0 +1,196 @@
+AGT
+ADMINISTRAÇÃO
+GERAL
+
+TRIBUTARIA
+
+COMUNICADO
+
+SOBRE A PRORROGAÇÃO DO PRAZO PARA A SUBMISSÃO DO FICHEIRO SAFT DE
+INVENTÁRIOS
+A Administração Geral Tributária (AGT) comunica aos contribuintes que, devido a constrangimentos
+administrativos ao nível do sistema, a obrigação de submissão do ficheiro SAFT de inventários referente
+ao exercício 2025 prevista na alínea d) do n.º 1 do artigo 24.º do Regime Jurídico das Facturas, aprovado
+pelo Decreto Presidencial n.º 71/25, de 20 de Dezembro, cujo prazo termina no dia 15 de Fevereiro de
+2026, pode ser cumprida sem qualquer penalidade até ao dia 15 de Abril de 2026.
+
+Informa-se ainda que o ficheiro SAFT de inventários deve conter uma tabela de inventário, com
+identificação de cada produto, obedecendo a estrutura de informação constante da Circular nº
+05/GACA/GJ/DSF/AGT/2026, de 13 de Fevereiro.
+
+A AGT agradece toda colaboração que tem sido demostrada pelos contribuintes no âmbito do processo
+de reforma e modernização tecnológica, dando nota que esta Administração está totalmente engajada
+em garantir um acesso mais simples, rápido e eficaz para submissão dos ficheiros SAFT de inventário.
+
+Para mais informações, contacte-nos através da Central de Apoio ao Contribuinte (CAC), pelo
+contacto telefónico (+244) 923 167 010 ou pelo correio electrónico apoio .agt(Ominfin.gov.ao.
+
+GABINETE DE COMUNICAÇÃO INSTITUCIONAL, em Luanda, aos 13 de Fevereiro de 2026
+
+4
+PAL k
+SS É
+
+zo
+
+Saydi H. M. Leitão
+
+AGT SEDE | EDÍFICIO SKY BUSINESS
+Rua Marechal Broz Tito, n.º 59 - Bairro Patrice Lumumba, CP 1254
+Municipio de Luanda | Distrito Urbano da Ingombota | Telefone: (+244) 222 706 000
+Website: www.agt minfin.gov.ao | E-mail: correspondencia.agt(Qminfin.gov.ao
+Página 1 de 1
+
+À acr
+ADMIN
+GERAL
+
+TRIBUTÁRIA
+
+CIRCULAR NS. O: GACA/GJ/DSFIAGT/2026
+SOBRE A SUBMISSÃO ELECTRÓNICA DO FICHEIRO SAF-T DE INVENTÁRIOS
+
+Considerando que o Regime Jurídico das Facturas, aprovado pelo Decreto Presidencial n.º 71/25, de 20
+de Março, estabelece a obrigatoriedade de os contribuintes comunicarem à Administração Geral Tributária,
+via electrónica, os ficheiros de inventários referentes a 31 de Dezembro do exercício anterior, até ao dia
+15 do mês de Fevereiro de cada ano;
+
+Atendendo que a comunicação dos inventários visa proporcionar uma informação fidedigna relativamente
+às quantidades dos bens existentes em inventário, de forma a permitir o controlo dos custos dos bens
+vendidos e consumidos e do resultado obtido no final de cada exercício económico pelos sujeitos passivos,
+relevantes para efeitos da determinação do respectivo lucro tributável:
+
+Convindo esclarecer e uniformizar a estrutura e características do ficheiro para comunicação dos
+inventários pelos contribuintes;
+
+Em conformidade com o disposto na alínea m) do n.º 1 do artigo 16.º do Estatuto Orgânico da
+Administração Geral Tributária, aprovado pelo Decreto Presidencial n.º 92/25, de 29 de Abril, e ouvido o
+Conselho de Administração, esclarece-se o seguinte:
+
+1. Na comunicação electrónica do ficheiro SAF-T do inventário, os contribuintes devem mencionar o
+Número de Identificação Fiscal, indicar o período de tributação a que se refere o inventário e a data
+de geração do ficheiro, conforme representado na tabela de cabeçalho abaixo:
+
+Tabela de Cabeçalho
+
+Parâmetro Obrigatório Designação Tipo de Dados Nuúmer
+o de
+
+caract
+eres
+
+1 Header Sim
+
+114 Assinatura Sim Assinatura digital String 500
+
+1.2  TaxRegistrationNum Sim NIF String 30
+ber
+
+1.3  DateCreated Sim Data de geração Data
+
+14 — SoftwareValidationN Sim Número de certificado de String 1
+umber Software de Webservice
+
+1.5  ProductiD Sim Nome do software String 255
+
+1.6  ProductVersion Sim Versão do software String 20
+
+1.7 - AMA Sim Período de tributação Ano 4
+
+1.8 'Semoperações Não Este campo deve ser preenchido String 3
+
+quando o contribuinte não tem (Sim)
+
+inventário para comunicar
+
+2. O período de tributação a que se refere a comunicação do ficheiro SAF-T do inventário corresponde a cada
+exercício económico, isto é, cada ano civil, conforme determina o artigo 77.º do Código do Imposto Industrial.
+
+AGT SEDE | EDÍFICIO SKY BUSINESS
+Rua Marechal Broz Tito, n.º 59 — Bairro Patrice Lumbumba, CP 1254
+Município de Ingombota | Telefone; (+244) 222 706 000
+Website: www. aa! minfin.gov, ao | E-mail: correspondencia agtQminfin gov.ao
+Página 1 de 2
+
+3. Os contribuintes que não possuem inventários no final de cada período de tributação reportam este
+facto electronicamente, submetendo um ficheiro sem operações, até ao dia 15 do mês de Fevereiro
+de cada ano, nos termos da alínea d) do artigo 24.º do Regime Jurídico das Facturas.
+
+4. A comunicação do ficheiro SAF-T de inventários é efectuada por submissão electrónica, via Portal do
+Contribuinte, de um ficheiro que poderá assumir o formato XML, JSON ou EXCEL.
+
+5. O ficheiro com formato XML deve conter tabelas com as seguintes epígrafes: Cabeçalho
+(StockHeader) e Tabela de Inventário (Stock).
+
+6. O ficheiro SAF-T deve conter uma tabela de inventário, com identificação de cada produto,
+obedecendo a estrutura de informação abaixo indicada:
+
+Indicedo
+campo
+
+Obrigatório
+
+-
+
+Estrutura de dados do SAF-T de inventário
+
+Nome do campo Notas tecnicas
+
+Método de custeio Indicar o método de custeio da empresa.
+Deve ser preenchido com uma das seguintes letras:
+FIFO
+LIFO
+CMP
+
+Descrição: Identificador do tipo de produto.
+Tipo de produto (Product) Deve ser preenchido com uma das seguintes letras:
+M- Mercadorias
+P — Matérias-primas, subsidiárias e de consumo
+A = Produtos acabados e intermédios
+S - subprodutos, desperdícios e refugos
+T - produtos e trabalhos em curso
+B — Activos biológicos
+
+Identificador único do produto (ProductCode) Código único do produto na lista de produtos. Este
+código deverá corresponder ao mesmo código
+utilizado na estrutura de dados da facturação.
+
+Descrição do produto (ProductDescription) Descrição do produto.
+
+Quantidade (Quantity) Quantidade de existência final relativa ao período a
+que reporta
+
+Unidade de medida (UnitOfMeasure) Unidade de medida usada (exemplo: kg, cm, mº,
+unidades)
+
+Valor Valor da existência final relativa ao período a que
+reporta
+
+Formato
+
+String
+
+String
+
+String
+String
+Number
+String
+
+Number
+
+7. A não submissão do ficheiro SAF-T de inventário dentro do prazo legal é passível de multa, nos
+termos do Regime Jurídico das Facturas.
+
+8. A presente Circular entra em vigor na data da sua assinatura.
+
+ADMINISTRAÇÃO GERAL TRIBUTÁRIA, em Luanda, 13.FEV 2026
+
+O Presidente do Constlho de Administração
+
+AGT SEDE | EDÍFICIO SKY BUSINESS
+Rua Marechal Broz Tito, n.º 59 - Bairro Patrice Lumbumba, CP 1254
+Município de Ingombota | Telefone: (+244) 222 706 000
+Website: yoyw,a3t.minfin.sov.ao | E-mail: correspondencia. agtOminfin gov.ao
+Página 2 de 2
+

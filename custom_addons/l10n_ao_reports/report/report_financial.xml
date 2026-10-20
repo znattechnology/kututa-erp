@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_financial" model="report.paperformat">
+        <field name="name">Demonstrações financeiras (A4)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">25</field>
+        <field name="margin_bottom">18</field>
+        <field name="margin_left">12</field>
+        <field name="margin_right">12</field>
+        <field name="header_spacing">20</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_financial" model="ir.actions.report">
+        <field name="name">Demonstração financeira (PDF)</field>
+        <field name="model">l10n_ao_reports.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_ao_reports.report_financial</field>
+        <field name="print_report_name">'%s - %s' % (dict(object._fields['report'].selection)[object.report], object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_financial"/>
+    </record>
+
+    <record id="action_report_financial_html" model="ir.actions.report">
+        <field name="name">Demonstração financeira (pré-visualização)</field>
+        <field name="model">l10n_ao_reports.wizard</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">l10n_ao_reports.report_financial</field>
+    </record>
+
+    <template id="report_financial">
+        <t t-call="web.html_container">
+            <t t-foreach="reports" t-as="r">
+                <t t-call="web.internal_layout">
+                    <t t-set="company" t-value="r['company']"/>
+                    <div class="page o_l10n_ao_reports">
+                        <style>
+                            .o_l10n_ao_reports table { width: 100%; font-size: 12px; border-collapse: collapse; }
+                            .o_l10n_ao_reports td, .o_l10n_ao_reports th { padding: 2px 6px; }
+                            .o_l10n_ao_reports th { border-bottom: 1px solid #000; text-align: center; }
+                            .o_l10n_ao_reports .num { text-align: right; white-space: nowrap; }
+                            .o_l10n_ao_reports .r_title td { font-weight: bold; font-size: 13px; padding-top: 10px; }
+                            .o_l10n_ao_reports .r_header td { font-weight: bold; font-style: italic; padding-top: 6px; }
+                            .o_l10n_ao_reports .r_total td { font-weight: bold; border-top: 1px solid #000; }
+                            .o_l10n_ao_reports .r_grand_total td { font-weight: bold; border-top: 1px solid #000; border-bottom: 3px double #000; }
+                            .o_l10n_ao_reports .r_line td:first-child { padding-left: 18px; }
+                        </style>
+                        <div class="mb-3">
+                            <h4 class="mb-0" t-out="company.name"/>
+                            <div>NIF: <span t-out="company.vat or ''"/></div>
+                            <h5 class="mt-2 mb-0" t-out="r['subtitle']"/>
+                            <div class="text-end">Valores expressos em <span t-out="r['unit_label']"/></div>
+                            <div t-if="not r['posted_only']" class="text-danger">Inclui lançamentos em rascunho.</div>
+                        </div>
+
+                        <t t-if="r['report'] != 'trial_balance'">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="text-start">Rubricas</th>
+                                        <th style="width: 50px;">Notas</th>
+                                        <th t-foreach="r['columns']" t-as="col" style="width: 120px;" t-out="col"/>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="r['lines']" t-as="line" t-att-class="'r_' + line['style']">
+                                        <td t-out="line['name']"/>
+                                        <td class="text-center" t-out="line['note']"/>
+                                        <t t-if="line['amounts']">
+                                            <td t-foreach="line['amounts']" t-as="amount" class="num" t-out="r['fmt'](amount)"/>
+                                        </t>
+                                        <t t-else="">
+                                            <td t-foreach="r['columns']" t-as="col"/>
+                                        </t>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p t-if="any(abs(u) &gt;= 0.01 for u in r.get('unmapped') or [])" class="text-danger mt-2">
+                                Há saldos em contas fora do PGC que não entraram no Balanço.
+                            </p>
+                        </t>
+
+                        <t t-else="">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="text-start">Conta</th>
+                                        <th class="text-start">Designação</th>
+                                        <th t-foreach="r['columns']" t-as="col" style="width: 95px;" t-out="col"/>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="r['lines']" t-as="line" t-att-class="'r_total' if line['depth'] == 0 else ''">
+                                        <td t-out="line['code']"/>
+                                        <td t-att-style="'padding-left: %spx' % (6 + 12 * line['depth'])" t-out="line['name']"/>
+                                        <td t-foreach="line['amounts']" t-as="amount" class="num" t-out="r['fmt'](amount)"/>
+                                    </tr>
+                                    <tr class="r_grand_total">
+                                        <td/>
+                                        <td>TOTAIS</td>
+                                        <td t-foreach="r['totals']" t-as="amount" class="num" t-out="r['fmt'](amount)"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

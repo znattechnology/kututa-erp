@@ -1,0 +1,511 @@
+# Árvore de elementos gerada a partir de SAFTAO1.01_01.xsd (assoft-portugal/SAF-T-AO, master ed86c7d5, ModificationDate 2024-10-16)
+# [n] = minOccurs..maxOccurs ; [1] = obrigatório ; tipos/facetas a seguir
+AuditFile [1]
+  Header [1]
+    AuditFileVersion [1] string pattern=1.01_01
+    CompanyID [1] string minLength=1 maxLength=50
+    TaxRegistrationNumber [1] SAFAOAngolaVatNumber: string minLength=10 maxLength=15
+    TaxAccountingBasis [1] string ENUM{A|C|F|I|P|Q|R|S|E}
+    CompanyName [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+    BusinessName [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+    CompanyAddress [1] type=AddressStructureAO
+      BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+      StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+      AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+      City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+      PostalCode [0..1] PostalCodeAO: string minLength=0 maxLength=10
+      Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+      Country [1]
+    FiscalYear [1] integer minInclusive=2000 maxInclusive=9999
+    StartDate [1] SAFAODateSpan: date minInclusive=2000-01-01 maxInclusive=9999-12-31
+    EndDate [1] SAFAODateSpan: date minInclusive=2000-01-01 maxInclusive=9999-12-31
+    CurrencyCode [1] string ENUM{AOA|USD}
+    DateCreated [1] SAFAODateSpan: date minInclusive=2000-01-01 maxInclusive=9999-12-31
+    TaxEntity [1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+    ProductCompanyTaxID [1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+    SoftwareValidationNumber [1] SAFAOtextValidationNumber: string minLength=1 maxLength=70 pattern=\d+/AGT/\d{4}|[0]
+    ProductID [1] SAFAOProductID: string pattern=[^/]+/[^/]+ minLength=3 maxLength=255
+    ProductVersion [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+    HeaderComment [0..1] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+    Telephone [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+    Fax [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+    Email [0..1] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+    Website [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+  MasterFiles [1]
+    GeneralLedgerAccounts [0..n]
+      Account [1..n]
+        AccountID [1] SAFAOGLAccountID: string pattern=(([0-9a-zA-Z\-/._+*]*)) minLength=1 maxLength=30
+        AccountDescription [1] SAFAOtextTypeMandatoryMax100Car: string minLength=1 maxLength=100
+        OpeningDebitBalance [1] SAFmonetaryType: decimal minInclusive=0.00
+        OpeningCreditBalance [1] SAFmonetaryType: decimal minInclusive=0.00
+        ClosingDebitBalance [1] SAFmonetaryType: decimal minInclusive=0.00
+        ClosingCreditBalance [1] SAFmonetaryType: decimal minInclusive=0.00
+        GroupingCategory [1] string ENUM{GR|GA|GM|AR|AA|AM}
+        GroupingCode [0..1] SAFAOGLAccountID: string pattern=(([0-9a-zA-Z\-/._+*]*)) minLength=1 maxLength=30
+    Customer [0..n]
+      CustomerID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+      AccountID [1] string pattern=(([0-9a-zA-Z\-/._+*]*)|Desconhecido) minLength=1 maxLength=30
+      CustomerTaxID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+      CompanyName [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+      Contact [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+      BillingAddress [1] type=AddressStructure
+        BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+        StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+        AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+        City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+        PostalCode [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+        Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+        Country [1] string ISO-3166-1-alfa2 (+Desconhecido) minLength=2
+      ShipToAddress [0..n] type=AddressStructure
+        BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+        StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+        AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+        City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+        PostalCode [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+        Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+        Country [1] string ISO-3166-1-alfa2 (+Desconhecido) minLength=2
+      Telephone [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+      Fax [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+      Email [0..1] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+      Website [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+      SelfBillingIndicator [1] integer minInclusive=0 maxInclusive=1
+    Supplier [0..n]
+      SupplierID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+      AccountID [1] string pattern=(([0-9a-zA-Z\-/._+*]*)|Desconhecido) minLength=1 maxLength=30
+      SupplierTaxID [1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+      CompanyName [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+      Contact [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+      BillingAddress [1] type=SupplierAddressStructure
+        BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+        StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+        AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+        City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+        PostalCode [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+        Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+        Country [1] SupplierCountry: string ISO-3166-1-alfa2 length=2
+      ShipFromAddress [0..n] type=SupplierAddressStructure
+        BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+        StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+        AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+        City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+        PostalCode [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+        Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+        Country [1] SupplierCountry: string ISO-3166-1-alfa2 length=2
+      Telephone [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+      Fax [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+      Email [0..1] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+      Website [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+      SelfBillingIndicator [1] integer minInclusive=0 maxInclusive=1
+    Product [0..n]
+      ProductType [1] string ENUM{P|S|O|E|I}
+      ProductCode [1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+      ProductGroup [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+      ProductDescription [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+      ProductNumberCode [1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+      CustomsDetails [0..1] type=CustomsDetails
+        UNNumber [0..n] SAFAOUNNumber: string pattern=[0-9]{4} length=4
+    TaxTable [0..1]
+      TaxTableEntry [1..n]
+        TaxType [1] string ENUM{IVA|IS|NS}
+        TaxCountryRegion [0..1] string ISO-3166-1-alfa2 (+AO-CAB, PT-AC, PT-MA) minLength=2 maxLength=6
+        TaxCode [1] TaxTableEntryTaxCode: string pattern=RED|INT|NOR|ISE|OUT|([0-9.])*|NS|NA minLength=1 maxLength=10
+        Description [1] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+        TaxExpirationDate [0..1] SAFdateType: date
+        <choice 1>
+          TaxPercentage [1] SAFdecimalType: decimal minInclusive=0.00
+          TaxAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+  GeneralLedgerEntries [0..1]
+    NumberOfEntries [1] nonNegativeInteger
+    TotalDebit [1] SAFmonetaryType: decimal minInclusive=0.00
+    TotalCredit [1] SAFmonetaryType: decimal minInclusive=0.00
+    Journal [0..n]
+      JournalID [1] SAFAOJournalID: string pattern=[^ ]{1,30} minLength=1 maxLength=30
+      Description [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+      Transaction [0..n]
+        TransactionID [1] SAFAOTransactionID: string pattern=[1-9][0-9]{3}-[01][0-9]-[0-3][0-9] [^ ]{1,30} [^ ]{1,20} minLength=1 maxLength=70
+        Period [1] SAFAOAccountingPeriod: integer minInclusive=1 maxInclusive=16
+        TransactionDate [1] SAFdateType: date
+        SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        Description [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+        DocArchivalNumber [1] SAFTAODocArchivalNumber: string pattern=[^ ]{1,20} minLength=1 maxLength=20
+        TransactionType [1] string ENUM{N|R|A|J}
+        GLPostingDate [1] SAFdateType: date
+        <choice 1>
+          CustomerID [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          SupplierID [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        Lines [1]
+          <group DebitLineGroup 1..n>
+            DebitLine [1]
+              RecordID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+              AccountID [1] SAFAOGLAccountID: string pattern=(([0-9a-zA-Z\-/._+*]*)) minLength=1 maxLength=30
+              SourceDocumentID [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+              SystemEntryDate [1] SAFdateTimeType: dateTime
+              Description [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+              DebitAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          <group CreditLineGroup 1..n>
+            CreditLine [1]
+              RecordID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+              AccountID [1] SAFAOGLAccountID: string pattern=(([0-9a-zA-Z\-/._+*]*)) minLength=1 maxLength=30
+              SourceDocumentID [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+              SystemEntryDate [1] SAFdateTimeType: dateTime
+              Description [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+              CreditAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+  SourceDocuments [0..1]
+    SalesInvoices [0..1]
+      NumberOfEntries [1] nonNegativeInteger
+      TotalDebit [1] SAFmonetaryType: decimal minInclusive=0.00
+      TotalCredit [1] SAFmonetaryType: decimal minInclusive=0.00
+      Invoice [0..n]
+        InvoiceNo [1] string pattern=[^ ]+ [^/^ ]+/[0-9]+ minLength=1 maxLength=60
+        DocumentStatus [1]
+          InvoiceStatus [1] string ENUM{N|S|A|R}
+          InvoiceStatusDate [1] SAFdateTimeType: dateTime
+          Reason [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+          SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          SourceBilling [1] SAFTAOSourceBilling: string ENUM{P|I|M}
+        Hash [1] SAFAOtextTypeMandatoryMax172Car: string minLength=1 maxLength=172
+        HashControl [1] SAFAOtextTypeMandatoryMax70Car: string minLength=1 maxLength=70
+        Period [0..1] integer minInclusive=1 maxInclusive=12
+        InvoiceDate [1] SAFdateType: date
+        InvoiceType [1] string ENUM{FT|FR|GF|FG|AC|AR|ND|NC|AF|TV|RP|RE|CS|LD|RA}
+        SpecialRegimes [1] type=SpecialRegimes
+          SelfBillingIndicator [1] integer minInclusive=0 maxInclusive=1
+          CashVATSchemeIndicator [1] integer minInclusive=0 maxInclusive=1
+          ThirdPartiesBillingIndicator [1] integer minInclusive=0 maxInclusive=3
+        SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        EACCode [0..1] string pattern=(([0-9]*)) length=5
+        SystemEntryDate [1] SAFdateTimeType: dateTime
+        TransactionID [0..1] SAFAOTransactionID: string pattern=[1-9][0-9]{3}-[01][0-9]-[0-3][0-9] [^ ]{1,30} [^ ]{1,20} minLength=1 maxLength=70
+        CustomerID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        ShipTo [0..1] type=ShippingPointStructure
+          DeliveryID [0..n] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+          DeliveryDate [0..1] SAFdateType: date
+          <sequence 0..n>
+            WarehouseID [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            LocationID [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          Address [0..1] type=AddressStructure
+            BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+            StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+            AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+            City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            PostalCode [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+            Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            Country [1] string ISO-3166-1-alfa2 (+Desconhecido) minLength=2
+        ShipFrom [0..1] type=ShippingPointStructure
+          DeliveryID [0..n] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+          DeliveryDate [0..1] SAFdateType: date
+          <sequence 0..n>
+            WarehouseID [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            LocationID [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          Address [0..1] type=AddressStructure
+            BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+            StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+            AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+            City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            PostalCode [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+            Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            Country [1] string ISO-3166-1-alfa2 (+Desconhecido) minLength=2
+        MovementEndTime [0..1] SAFdateTimeType: dateTime
+        MovementStartTime [0..1] SAFdateTimeType: dateTime
+        Line [1..n]
+          LineNumber [1] nonNegativeInteger
+          OrderReferences [0..n] type=OrderReferences
+            OriginatingON [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+            OrderDate [0..1] SAFdateType: date
+          ProductCode [1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+          ProductDescription [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+          Quantity [1] SAFdecimalType: decimal minInclusive=0.00
+          UnitOfMeasure [1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+          UnitPrice [1] SAFmonetaryType: decimal minInclusive=0.00
+          TaxBase [0..1] SAFmonetaryType: decimal minInclusive=0.00
+          TaxPointDate [1] SAFdateType: date
+          References [0..n] type=References
+            Reference [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+            Reason [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+          Description [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+          ProductSerialNumber [0..1] type=ProductSerialNumber
+            SerialNumber [1..n] SAFAOtextTypeMandatoryMax100Car: string minLength=1 maxLength=100
+          <choice 1>
+            DebitAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            CreditAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          Tax [1] type=Tax
+            TaxType [1] string ENUM{IVA|IS|NS}
+            TaxCountryRegion [0..1] string ISO-3166-1-alfa2 (+AO-CAB, PT-AC, PT-MA) minLength=2 maxLength=6
+            TaxCode [1] string pattern=RED|INT|NOR|ISE|OUT|([0-9.])*|NS|NA minLength=1 maxLength=10
+            <choice 1>
+              TaxPercentage [1] SAFdecimalType: decimal minInclusive=0.00
+              TaxAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          <group TaxExemptions 0..1>
+            TaxExemptionReason [1] SAFAOTaxExemption: string minLength=6 maxLength=60
+            TaxExemptionCode [1] SAFAOTaxExemptionCode: string pattern=(M[0-9]{2})+
+          SettlementAmount [0..1] SAFmonetaryType: decimal minInclusive=0.00
+          CustomsInformation [0..1] type=CustomsInformation
+            ARCNo [0..n] SAFAOtextTypeMandatoryMax21Car: string minLength=1 maxLength=20
+            IECAmount [0..1] SAFmonetaryType: decimal minInclusive=0.00
+        DocumentTotals [1]
+          TaxPayable [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          NetTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          GrossTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          Currency [0..1] type=Currency
+            CurrencyCode [1] string ISO-4217 length=3
+            CurrencyAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            ExchangeRate [1] SAFdecimalType: decimal minInclusive=0.00
+          Settlement [0..n] type=Settlement
+            SettlementDiscount [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+            SettlementAmount [0..1] SAFmonetaryType: decimal minInclusive=0.00
+            SettlementDate [0..1] SAFdateType: date
+            PaymentTerms [0..1] SAFAOtextTypeMandatoryMax100Car: string minLength=1 maxLength=100
+          Payment [0..n] type=PaymentMethod
+            PaymentMechanism [0..1] string ENUM{CC|CD|CH|CI|CO|CS|DE|MB|NU|OU|PR|TB}
+            PaymentAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            PaymentDate [1] SAFdateType: date
+        WithholdingTax [0..n] type=WithholdingTax
+          WithholdingTaxType [1] string ENUM{IRT|II|IS|IVA|IPU|IAC|OU}
+          WithholdingTaxDescription [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+          WithholdingTaxAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+    MovementOfGoods [0..1]
+      NumberOfMovementLines [1] nonNegativeInteger
+      TotalQuantityIssued [1] SAFdecimalType: decimal minInclusive=0.00
+      StockMovement [0..n]
+        DocumentNumber [1] string pattern=[^ ]+ [^/^ ]+/[0-9]+ minLength=1 maxLength=60
+        DocumentStatus [1]
+          MovementStatus [1] string ENUM{N|T|A|F|R}
+          MovementStatusDate [1] SAFdateTimeType: dateTime
+          Reason [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+          SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          SourceBilling [1] SAFTAOSourceBilling: string ENUM{P|I|M}
+        Hash [1] SAFAOtextTypeMandatoryMax172Car: string minLength=1 maxLength=172
+        HashControl [1] SAFAOtextTypeMandatoryMax70Car: string minLength=1 maxLength=70
+        Period [0..1] integer minInclusive=1 maxInclusive=12
+        MovementDate [1] SAFdateType: date
+        MovementType [1] string ENUM{GR|GT|GA|GD}
+        SystemEntryDate [1] SAFdateTimeType: dateTime
+        TransactionID [0..1] SAFAOTransactionID: string pattern=[1-9][0-9]{3}-[01][0-9]-[0-3][0-9] [^ ]{1,30} [^ ]{1,20} minLength=1 maxLength=70
+        <choice 1>
+          CustomerID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          SupplierID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        EACCode [0..1] string pattern=(([0-9]*)) length=5
+        MovementComments [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+        ShipTo [0..1] type=ShippingPointStructure
+          DeliveryID [0..n] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+          DeliveryDate [0..1] SAFdateType: date
+          <sequence 0..n>
+            WarehouseID [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            LocationID [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          Address [0..1] type=AddressStructure
+            BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+            StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+            AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+            City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            PostalCode [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+            Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            Country [1] string ISO-3166-1-alfa2 (+Desconhecido) minLength=2
+        ShipFrom [0..1] type=ShippingPointStructure
+          DeliveryID [0..n] SAFAOtextTypeMandatoryMax255Car: string minLength=1 maxLength=255
+          DeliveryDate [0..1] SAFdateType: date
+          <sequence 0..n>
+            WarehouseID [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            LocationID [0..1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          Address [0..1] type=AddressStructure
+            BuildingNumber [0..1] SAFAOtextTypeMandatoryMax15Car: string minLength=1 maxLength=15
+            StreetName [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+            AddressDetail [1] SAFAOtextTypeMandatoryMax250Car: string minLength=1 maxLength=250
+            City [1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            PostalCode [0..1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+            Province [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+            Country [1] string ISO-3166-1-alfa2 (+Desconhecido) minLength=2
+        MovementEndTime [0..1] SAFdateTimeType: dateTime
+        MovementStartTime [1] SAFdateTimeType: dateTime
+        AGTDocCodeID [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+        Line [1..n]
+          LineNumber [1] nonNegativeInteger
+          OrderReferences [0..n] type=OrderReferences
+            OriginatingON [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+            OrderDate [0..1] SAFdateType: date
+          ProductCode [1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+          ProductDescription [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+          Quantity [1] SAFdecimalType: decimal minInclusive=0.00
+          UnitOfMeasure [1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+          UnitPrice [1] SAFmonetaryType: decimal minInclusive=0.00
+          Description [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+          ProductSerialNumber [0..1] type=ProductSerialNumber
+            SerialNumber [1..n] SAFAOtextTypeMandatoryMax100Car: string minLength=1 maxLength=100
+          <choice 1>
+            DebitAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            CreditAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          Tax [0..1] type=MovementTax
+            TaxType [1] SAFTAOMovementTaxType: string ENUM{IVA|NS}
+            TaxCountryRegion [0..1] string ISO-3166-1-alfa2 (+AO-CAB, PT-AC, PT-MA) minLength=2 maxLength=6
+            TaxCode [1] SAFTAOMovementTaxCode: string pattern=RED|INT|NOR|ISE|OUT|NS|NA minLength=1 maxLength=3
+            TaxPercentage [1] SAFdecimalType: decimal minInclusive=0.00
+          <group TaxExemptions 0..1>
+            TaxExemptionReason [1] SAFAOTaxExemption: string minLength=6 maxLength=60
+            TaxExemptionCode [1] SAFAOTaxExemptionCode: string pattern=(M[0-9]{2})+
+          SettlementAmount [0..1] SAFmonetaryType: decimal minInclusive=0.00
+          CustomsInformation [0..1] type=CustomsInformation
+            ARCNo [0..n] SAFAOtextTypeMandatoryMax21Car: string minLength=1 maxLength=20
+            IECAmount [0..1] SAFmonetaryType: decimal minInclusive=0.00
+        DocumentTotals [1]
+          TaxPayable [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          NetTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          GrossTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          Currency [0..1] type=Currency
+            CurrencyCode [1] string ISO-4217 length=3
+            CurrencyAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            ExchangeRate [1] SAFdecimalType: decimal minInclusive=0.00
+    WorkingDocuments [0..1]
+      NumberOfEntries [1] nonNegativeInteger
+      TotalDebit [1] SAFmonetaryType: decimal minInclusive=0.00
+      TotalCredit [1] SAFmonetaryType: decimal minInclusive=0.00
+      WorkDocument [0..n]
+        DocumentNumber [1] string pattern=[^ ]+ [^/^ ]+/[0-9]+ minLength=1 maxLength=60
+        DocumentStatus [1]
+          WorkStatus [1] string ENUM{N|A|F}
+          WorkStatusDate [1] SAFdateTimeType: dateTime
+          Reason [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+          SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          SourceBilling [1] SAFTAOSourceBilling: string ENUM{P|I|M}
+        Hash [1] SAFAOtextTypeMandatoryMax172Car: string minLength=1 maxLength=172
+        HashControl [1] SAFAOtextTypeMandatoryMax70Car: string minLength=1 maxLength=70
+        Period [0..1] integer minInclusive=1 maxInclusive=12
+        WorkDate [1] SAFdateType: date
+        WorkType [1] string ENUM{CM|CC|GR|NR|FO|NE|OU|OR|PF|DC|RP|RE|CS|LD|RA|PP|GC}
+        SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        EACCode [0..1] string pattern=(([0-9]*)) length=5
+        SystemEntryDate [1] SAFdateTimeType: dateTime
+        TransactionID [0..1] SAFAOTransactionID: string pattern=[1-9][0-9]{3}-[01][0-9]-[0-3][0-9] [^ ]{1,30} [^ ]{1,20} minLength=1 maxLength=70
+        CustomerID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        Line [1..n]
+          LineNumber [1] nonNegativeInteger
+          OrderReferences [0..n] type=OrderReferences
+            OriginatingON [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+            OrderDate [0..1] SAFdateType: date
+          ProductCode [1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+          ProductDescription [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+          Quantity [1] SAFdecimalType: decimal minInclusive=0.00
+          UnitOfMeasure [1] SAFAOtextTypeMandatoryMax20Car: string minLength=1 maxLength=20
+          UnitPrice [1] SAFmonetaryType: decimal minInclusive=0.00
+          TaxBase [0..1] SAFmonetaryType: decimal minInclusive=0.00
+          TaxPointDate [1] SAFdateType: date
+          Description [1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+          References [0..n] type=References
+            Reference [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+            Reason [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+          ProductSerialNumber [0..1] type=ProductSerialNumber
+            SerialNumber [1..n] SAFAOtextTypeMandatoryMax100Car: string minLength=1 maxLength=100
+          <choice 1>
+            DebitAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            CreditAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          Tax [0..1] type=Tax
+            TaxType [1] string ENUM{IVA|IS|NS}
+            TaxCountryRegion [0..1] string ISO-3166-1-alfa2 (+AO-CAB, PT-AC, PT-MA) minLength=2 maxLength=6
+            TaxCode [1] string pattern=RED|INT|NOR|ISE|OUT|([0-9.])*|NS|NA minLength=1 maxLength=10
+            <choice 1>
+              TaxPercentage [1] SAFdecimalType: decimal minInclusive=0.00
+              TaxAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          <group TaxExemptions 0..1>
+            TaxExemptionReason [1] SAFAOTaxExemption: string minLength=6 maxLength=60
+            TaxExemptionCode [1] SAFAOTaxExemptionCode: string pattern=(M[0-9]{2})+
+          SettlementAmount [0..1] SAFmonetaryType: decimal minInclusive=0.00
+          CustomsInformation [0..1] type=CustomsInformation
+            ARCNo [0..n] SAFAOtextTypeMandatoryMax21Car: string minLength=1 maxLength=20
+            IECAmount [0..1] SAFmonetaryType: decimal minInclusive=0.00
+        DocumentTotals [1]
+          TaxPayable [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          NetTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          GrossTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          Currency [0..1] type=Currency
+            CurrencyCode [1] string ISO-4217 length=3
+            CurrencyAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            ExchangeRate [1] SAFdecimalType: decimal minInclusive=0.00
+    Payments [0..1]
+      NumberOfEntries [1] nonNegativeInteger
+      TotalDebit [1] SAFmonetaryType: decimal minInclusive=0.00
+      TotalCredit [1] SAFmonetaryType: decimal minInclusive=0.00
+      Payment [0..n]
+        PaymentRefNo [1] string pattern=[^ ]+ [^/^ ]+/[0-9]+ minLength=1 maxLength=60
+        Period [0..1] integer minInclusive=1 maxInclusive=12
+        TransactionID [0..1] SAFAOTransactionID: string pattern=[1-9][0-9]{3}-[01][0-9]-[0-3][0-9] [^ ]{1,30} [^ ]{1,20} minLength=1 maxLength=70
+        TransactionDate [1] SAFdateType: date
+        PaymentType [1] SAFTAOPaymentType: string ENUM{RC|RG|AR}
+        Description [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+        SystemID [0..1] SAFAOtextTypeMandatoryMax35Car: string minLength=1 maxLength=35
+        DocumentStatus [1]
+          PaymentStatus [1] string ENUM{N|A}
+          PaymentStatusDate [1] SAFdateTimeType: dateTime
+          Reason [0..1] SAFAOtextTypeMandatoryMax50Car: string minLength=1 maxLength=50
+          SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+          SourcePayment [1] SAFTAOSourcePayment: string ENUM{P|I|M}
+        PaymentMethod [0..n] type=PaymentMethod
+          PaymentMechanism [0..1] string ENUM{CC|CD|CH|CI|CO|CS|DE|MB|NU|OU|PR|TB}
+          PaymentAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          PaymentDate [1] SAFdateType: date
+        SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        SystemEntryDate [1] SAFdateTimeType: dateTime
+        CustomerID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        Line [1..n]
+          LineNumber [1] nonNegativeInteger
+          SourceDocumentID [1..n]
+            OriginatingON [1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+            InvoiceDate [1] SAFdateType: date
+            Description [0..1] SAFAOtextTypeMandatoryMax200Car: string minLength=1 maxLength=200
+          SettlementAmount [0..1] SAFmonetaryType: decimal minInclusive=0.00
+          <choice 1>
+            DebitAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            CreditAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          Tax [0..1] type=PaymentTax
+            TaxType [1] string ENUM{IVA|IS|NS}
+            TaxCountryRegion [0..1] string ISO-3166-1-alfa2 (+AO-CAB, PT-AC, PT-MA) minLength=2 maxLength=6
+            TaxCode [1] PaymentTaxCode: string pattern=RED|INT|NOR|ISE|OUT|([0-9.])*|NA|NS minLength=1 maxLength=10
+            <choice 1>
+              TaxPercentage [1] SAFdecimalType: decimal minInclusive=0.00
+              TaxAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          <group TaxExemptions 0..1>
+            TaxExemptionReason [1] SAFAOTaxExemption: string minLength=6 maxLength=60
+            TaxExemptionCode [1] SAFAOTaxExemptionCode: string pattern=(M[0-9]{2})+
+        DocumentTotals [1]
+          TaxPayable [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          NetTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          GrossTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          Settlement [0..1]
+            SettlementAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+          Currency [0..1] type=Currency
+            CurrencyCode [1] string ISO-4217 length=3
+            CurrencyAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            ExchangeRate [1] SAFdecimalType: decimal minInclusive=0.00
+        WithholdingTax [0..n] type=WithholdingTax
+          WithholdingTaxType [1] string ENUM{IRT|II|IS|IVA|IPU|IAC|OU}
+          WithholdingTaxDescription [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+          WithholdingTaxAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+    PurchaseInvoices [0..1]
+      NumberOfEntries [1] nonNegativeInteger
+      Invoice [0..n]
+        InvoiceNo [1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+        References [0..n] type=PurchaseReferences
+          Reference [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+          InvoiceDate [0..1] SAFdateType: date
+        Hash [1] SAFAOtextTypeMandatoryMax172Car: string minLength=1 maxLength=172
+        SourceID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        Period [0..1] integer minInclusive=1 maxInclusive=12
+        InvoiceDate [1] SAFdateType: date
+        PurchaseType [1] string ENUM{FT|FR|GF|FG|AC|AR|AF|TV|NL|NC|RC}
+        SupplierID [1] SAFAOtextTypeMandatoryMax30Car: string minLength=1 maxLength=30
+        DocumentTotals [1]
+          TaxPayable [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          NetTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          GrossTotal [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+          <group DeductibleTaxes 0..n>
+            Deductible [1]
+              TaxBase [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+              DeductibleAmount [1] SAFMonetaryType2DecimalPlaces: decimal pattern=\d+(\.\d{2}) minInclusive=0.00
+              DeductiblePercentage [1] SAFdecimalType: decimal minInclusive=0.00
+              DeductibleTaxType [1] string ENUM{MFI|INV|OBC|SERV|IMPT|SCE}
+          Currency [0..1] type=Currency
+            CurrencyCode [1] string ISO-4217 length=3
+            CurrencyAmount [1] SAFmonetaryType: decimal minInclusive=0.00
+            ExchangeRate [1] SAFdecimalType: decimal minInclusive=0.00
+        WithholdingTax [0..n] type=WithholdingTax
+          WithholdingTaxType [1] string ENUM{IRT|II|IS|IVA|IPU|IAC|OU}
+          WithholdingTaxDescription [0..1] SAFAOtextTypeMandatoryMax60Car: string minLength=1 maxLength=60
+          WithholdingTaxAmount [1] SAFmonetaryType: decimal minInclusive=0.00

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_reports_wizard_form" model="ir.ui.view">
+        <field name="name">l10n_ao_reports.wizard.form</field>
+        <field name="model">l10n_ao_reports.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Demonstrações financeiras PGC">
+                <group>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        <field name="report" widget="radio"/>
+                    </group>
+                    <group>
+                        <field name="date_from" invisible="report == 'balance_sheet'"/>
+                        <field name="date_to" string="Data" invisible="report != 'balance_sheet'"/>
+                        <field name="date_to" invisible="report == 'balance_sheet'"/>
+                        <field name="comparative" invisible="report == 'trial_balance'"/>
+                        <field name="unit" invisible="report == 'trial_balance'"/>
+                        <field name="trial_depth" invisible="report != 'trial_balance'"/>
+                        <field name="hide_empty"/>
+                        <field name="posted_only"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_preview" type="object" string="Ver" class="btn-primary"/>
+                    <button name="action_print_pdf" type="object" string="PDF"/>
+                    <button name="action_export_xlsx" type="object" string="Excel"/>
+                    <button special="cancel" string="Fechar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_reports_wizard" model="ir.actions.act_window">
+        <field name="name">Demonstrações financeiras PGC</field>
+        <field name="res_model">l10n_ao_reports.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="l10n_ao_reports_closing_form" model="ir.ui.view">
+        <field name="name">l10n_ao_reports.closing.form</field>
+        <field name="model">l10n_ao_reports.closing</field>
+        <field name="arch" type="xml">
+            <form string="Encerramento do exercício">
+                <group>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        <field name="operation" widget="radio"/>
+                        <field name="year" options="{'format': false}"/>
+                        <label for="date_from" string="Período"/>
+                        <div class="o_row">
+                            <field name="date_from" readonly="1"/> a <field name="date_to" readonly="1"/>
+                        </div>
+                    </group>
+                    <group>
+                        <field name="date"/>
+                        <field name="journal_id" options="{'no_create': True}"/>
+                        <field name="result_amount" invisible="operation != 'close'"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                </group>
+                <div class="text-muted">
+                    O apuramento transfere os proveitos e custos (classes 6 e 7) para as contas 82 a 86 pelas subcontas
+                    x.9 e estas para a conta 88 (Resultado líquido do exercício). Depois da aprovação das contas,
+                    a transferência leva o resultado da conta 88 para a 81 (Resultados transitados).
+                </div>
+                <footer>
+                    <button name="action_confirm" type="object" string="Lançar" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_reports_closing" model="ir.actions.act_window">
+        <field name="name">Encerramento do exercício</field>
+        <field name="res_model">l10n_ao_reports.closing</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_move_form_l10n_ao_reports" model="ir.ui.view">
+        <field name="name">account.move.form.l10n_ao_reports</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ref']" position="after">
+                <field name="l10n_ao_closing_type" invisible="not l10n_ao_closing_type"/>
+                <field name="l10n_ao_closing_year" invisible="not l10n_ao_closing_type" options="{'format': false}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_reports" name="Angola (PGC)" parent="account.menu_finance_reports" sequence="1">
+        <menuitem id="menu_l10n_ao_reports_wizard" action="action_l10n_ao_reports_wizard" sequence="10"/>
+        <menuitem
+            id="menu_l10n_ao_reports_closing"
+            action="action_l10n_ao_reports_closing"
+            sequence="20"
+            groups="account.group_account_manager"
+        />
+    </menuitem>
+</odoo>
