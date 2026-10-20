@@ -1,1 +1,9 @@
-from . import test_edi_flow, test_jws, test_numbering, test_payload
+from . import (
+    test_contingency,
+    test_edi_flow,
+    test_jws,
+    test_numbering,
+    test_payload,
+    test_receipts,
+    test_vendor_and_series,
+)

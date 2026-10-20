@@ -85,3 +85,13 @@ class AccountChartTemplate(models.AbstractModel):
         if self._l10n_ao_is_ao_template(company):
             return self.with_company(company).ref('ao_76_7')
         return super()._get_bank_fees_reco_account(company)
+
+    def _post_load_data(self, template_code, company, template_data):
+        result = super()._post_load_data(template_code, company, template_data)
+        if template_code == 'ao':
+            # O plano é carregado depois de os diários calcularem os métodos de pagamento: volta-se a ligar
+            # as contas de valores em trânsito agora que existem (como no l10n_ma).
+            bank_journals = company.bank_journal_ids
+            bank_journals._assign_outstanding_account_to_payment_method_lines('inbound', chart_template='ao')
+            bank_journals._assign_outstanding_account_to_payment_method_lines('outbound', chart_template='ao')
+        return result

@@ -40,8 +40,17 @@ class L10nAoEdiCommon(AccountTestInvoicingCommon):
                     'state': 'active',
                 }
             )
-            for doc_type in ('FT', 'FR', 'NC', 'ND')
+            for doc_type in ('FT', 'FR', 'NC', 'ND', 'RC')
         }
+        cls.contingency_series = Series.create(
+            {
+                'document_type': 'FT',
+                'year': TODAY.year,
+                'code': f'FT{TODAY.year % 100}C1',
+                'contingency': True,
+                'state': 'active',
+            }
+        )
         cls.partner_ao = cls.env['res.partner'].create(
             {'name': 'Cliente Angola, Lda', 'country_id': cls.env.ref('base.ao').id, 'vat': '5000000002'}
         )
@@ -102,3 +111,15 @@ class L10nAoEdiCommon(AccountTestInvoicingCommon):
         documents = Document.sudo().search([('state', '=', 'sent')])
         documents.write({'next_poll': fields.Datetime.now()})
         Document._cron_poll()
+
+    def register_payment(self, invoices, amount=None, **values):
+        wizard = (
+            self.env['account.payment.register']
+            .with_context(active_model='account.move', active_ids=invoices.ids)
+            .create({'amount': amount, **values} if amount is not None else values)
+        )
+        return wizard._create_payments()
+
+    def mark_sent(self, *records):
+        for record in records:
+            record.l10n_ao_edi_state = 'sent'

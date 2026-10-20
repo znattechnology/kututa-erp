@@ -25,3 +25,15 @@ class AccountJournal(models.Model):
             }
         )
         return account_id
+
+    # Pagamentos por contas de valores em trânsito (48.1/48.2): permite registar diferenças de pagamento
+    # (retenções na fonte sofridas, IVA cativo, descontos) no próprio recebimento.
+    def _compute_inbound_payment_method_line_ids(self):
+        result = super()._compute_inbound_payment_method_line_ids()
+        self._assign_outstanding_account_to_payment_method_lines('inbound', chart_template='ao')
+        return result
+
+    def _compute_outbound_payment_method_line_ids(self):
+        result = super()._compute_outbound_payment_method_line_ids()
+        self._assign_outstanding_account_to_payment_method_lines('outbound', chart_template='ao')
+        return result

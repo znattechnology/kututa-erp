@@ -5,6 +5,10 @@
         <field name="model">l10n_ao_edi.series</field>
         <field name="arch" type="xml">
             <list decoration-muted="state == 'closed'" decoration-info="state == 'draft'">
+                <header>
+                    <button name="action_l10n_ao_edi_sync_series" type="object" string="Sincronizar com a AGT"
+                            display="always"/>
+                </header>
                 <field name="document_type"/>
                 <field name="year" options="{'format': false}"/>
                 <field name="establishment"/>

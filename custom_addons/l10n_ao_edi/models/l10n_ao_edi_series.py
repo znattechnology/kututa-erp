@@ -136,6 +136,70 @@ class L10nAoEdiSeries(models.Model):
             limit=1,
         )
 
+    @api.model
+    def _l10n_ao_edi_next_number(self, company, document_type, year):
+        """Série activa (normal ou de contingência, conforme o modo da empresa) e o próximo número reservado."""
+        contingency = company.l10n_ao_edi_contingency
+        series = self._l10n_ao_edi_find(company, document_type, year, contingency=contingency)
+        if not series:
+            raise UserError(
+                self.env._(
+                    'Não existe uma série AGT %(kind)sactiva para %(type)s em %(year)s (estabelecimento %(est)s). '
+                    'Peça a série em Facturação > Configuração > Angola (AGT) > Séries AGT.',
+                    kind=self.env._('de contingência ') if contingency else '',
+                    type=document_type,
+                    year=year,
+                    est=company.l10n_ao_edi_establishment or 'SEDE',
+                )
+            )
+        return series, series._l10n_ao_edi_reserve_number()
+
+    @api.model
+    def action_l10n_ao_edi_sync_series(self):
+        """Importa as séries registadas na AGT em nome da empresa (listarSeries)."""
+        company = self.env.company
+        if company.l10n_ao_edi_environment != 'demo':
+            company._l10n_ao_edi_check_configuration()
+        nif = company.partner_id._l10n_ao_normalize_nif(company.vat)
+        payload = {
+            **company._l10n_ao_edi_request_envelope(),
+            'jwsSignature': company._l10n_ao_edi_sign({'taxRegistrationNumber': nif}),
+        }
+        status, body = company._l10n_ao_edi_call('listarSeries', payload)
+        if status != 200:
+            errors = self.env['l10n_ao_edi.document']._format_errors((body or {}).get('errorList') or [])
+            raise UserError(self.env._('A AGT recusou a listagem de séries: %s', errors or status))
+        created = self.browse()
+        valid_types = dict(AGT_DOCUMENT_TYPES)
+        # A documentação da AGT escreve «seriresInfo» num exemplo e «seriesInfo» na tabela.
+        for info in (body or {}).get('seriesInfo') or (body or {}).get('seriresInfo') or []:
+            code = info.get('seriesCode')
+            if not code or info.get('documentType') not in valid_types:
+                continue
+            if self.search_count([('company_id', '=', company.id), ('code', '=', code)]):
+                continue
+            created |= self.create(
+                {
+                    'company_id': company.id,
+                    'code': code,
+                    'document_type': info['documentType'],
+                    'year': int(info.get('seriesYear') or fields.Date.context_today(self).year),
+                    'establishment': info.get('establishmentNumber') or company.l10n_ao_edi_establishment or 'SEDE',
+                    'contingency': info.get('seriesContingencyIndicator') == 'C',
+                    'state': 'active',
+                }
+            )
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': self.env._('Séries AGT'),
+                'message': self.env._('%s série(s) nova(s) importada(s) da AGT.', len(created)),
+                'type': 'success',
+                'next': {'type': 'ir.actions.act_window_close'},
+            },
+        }
+
     def _l10n_ao_edi_reserve_number(self):
         """Reserva o próximo número da série, sem falhas: a linha da série fica bloqueada até ao fim da transacção."""
         self.ensure_one()

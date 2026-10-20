@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_payment_receipt_document_l10n_ao_edi" inherit_id="account.report_payment_receipt_document">
+        <xpath expr="//div[hasclass('page')]/h3" position="attributes">
+            <attribute name="t-if">not o.l10n_ao_edi_document_no</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/h3" position="before">
+            <h3 t-if="o.l10n_ao_edi_document_no">
+                <strong>Recibo <span t-field="o.l10n_ao_edi_document_no">RC RC26S1/1</span></strong>
+            </h3>
+        </xpath>
+        <xpath expr="//table[@name='invoices']" position="after">
+            <div id="l10n_ao_edi_qrcode" class="d-flex mt-4 avoid-page-break-inside" t-if="o.l10n_ao_edi_qr_url">
+                <div class="me-3">
+                    <img t-att-src="'/report/barcode/?barcode_type=QR&amp;barLevel=M&amp;width=140&amp;height=140&amp;value=%s' % quote_plus(o.l10n_ao_edi_qr_url)"
+                         style="width: 35mm; height: 35mm;" alt="QR Code AGT"/>
+                </div>
+                <div class="d-inline text-muted lh-sm small">
+                    <p class="mb-1">Documento consultável no Portal da AGT.</p>
+                    <p class="mb-1" t-if="o.company_id.l10n_ao_edi_software_validation_number">
+                        Processado por programa validado n.º
+                        <span t-field="o.company_id.l10n_ao_edi_software_validation_number"/>/AGT
+                    </p>
+                    <p class="mb-0 fw-bold" t-if="o.l10n_ao_edi_contingency and o.l10n_ao_edi_state != 'valid'">
+                        Emitido em contingência, pendente de autorização
+                    </p>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

@@ -123,3 +123,6 @@ class TestL10nAoEdiFlow(L10nAoEdiCommon):
         series = self.env['l10n_ao_edi.series'].create({'document_type': 'RC', 'year': 2026})
         series.action_request_series()
         self.assertEqual(series.state, 'active')
+        contingency = self.env['l10n_ao_edi.series'].create({'document_type': 'RC', 'year': 2026, 'contingency': True})
+        contingency.action_request_series()
+        self.assertNotEqual(contingency.code, series.code, 'Séries normal e de contingência têm códigos distintos')

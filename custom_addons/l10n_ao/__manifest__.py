@@ -1,6 +1,6 @@
 {
     'name': 'Kututa Kwanza - Contabilidade Angola',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Plano Geral de Contabilidade (Decreto n.º 82/01), IVA e dados mestre da AGT',
     'description': """
 Kututa Kwanza: localização angolana do Kututa ERP.

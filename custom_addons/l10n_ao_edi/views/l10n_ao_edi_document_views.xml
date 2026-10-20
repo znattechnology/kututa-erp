@@ -8,6 +8,7 @@
                 <field name="create_date" string="Data"/>
                 <field name="request_id"/>
                 <field name="move_ids" widget="many2many_tags"/>
+                <field name="payment_ids" widget="many2many_tags" optional="show"/>
                 <field name="result_code"/>
                 <field name="poll_count" optional="hide"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
@@ -38,6 +39,7 @@
                         </group>
                     </group>
                     <field name="move_ids" widget="many2many_tags"/>
+                    <field name="payment_ids" widget="many2many_tags" invisible="not payment_ids"/>
                     <notebook>
                         <page string="Erros" name="errors" invisible="not error_message">
                             <field name="error_message"/>

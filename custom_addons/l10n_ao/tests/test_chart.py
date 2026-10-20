@@ -54,6 +54,9 @@ class TestL10nAoChart(AccountTestInvoicingCommon):
         self.assertEqual(company.default_cash_difference_expense_account_id.code, '78.11.9')
         self.assertEqual(company.income_currency_exchange_account_id.code, '66.2.1')
         self.assertEqual(company.account_default_pos_receivable_account_id.code, '31.1.2.9')
+        bank = journals.filtered(lambda j: j.type == 'bank')[:1]
+        self.assertEqual(bank.inbound_payment_method_line_ids.payment_account_id.mapped('code'), ['48.1'])
+        self.assertEqual(bank.outbound_payment_method_line_ids.payment_account_id.mapped('code'), ['48.2'])
         self.assertEqual(company.account_journal_suspense_account_id.code, '48.3')
 
     def test_invoice_with_vat_14(self):

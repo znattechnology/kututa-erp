@@ -25,6 +25,8 @@ TARGET = ROOT.parent / 'custom_addons' / 'l10n_ao' / 'data' / 'template' / 'acco
 # Subcontas-modelo do decreto, a desenvolver por cada empresa.
 PLACEHOLDER_NAMES = {'Banco', 'Caixa', 'Entidade', 'Ano'}
 # Contas que têm de ser agregadoras mesmo sem subcontas no template (o Odoo cria as filhas).
+# Contas de retenção na fonte / cativação sofridas pela empresa: tipo AGT (withholdingTaxType) comunicado nos recibos.
+WITHHOLDING_TYPES = {'34.1.2': 'II', '34.2.4': 'IVA'}
 FORCED_PARENTS = {'43.1', '43.2', '45.1'}  # 43.1/45.1: diários em Kz; 43.2: bancos em moeda estrangeira
 
 # (prefixo, tipo, reconciliável) — o prefixo mais longo prevalece.
@@ -130,7 +132,19 @@ def main():
     TARGET.parent.mkdir(parents=True, exist_ok=True)
     with TARGET.open('w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f, lineterminator='\n')
-        writer.writerow(['id', 'parent_id', 'active', 'name', 'code', 'account_type', 'reconcile', 'non_trade'])
+        writer.writerow(
+            [
+                'id',
+                'parent_id',
+                'active',
+                'name',
+                'code',
+                'account_type',
+                'reconcile',
+                'non_trade',
+                'l10n_ao_withholding_type',
+            ]
+        )
         for code in sorted(accounts, key=key):
             data = accounts[code]
             account_type, reconcile = account_type_for(code)
@@ -148,6 +162,7 @@ def main():
                     account_type,
                     'True' if reconcile and not is_group else '',
                     '',
+                    WITHHOLDING_TYPES.get(code, ''),
                 ]
             )
     groups = sum(1 for c in accounts if c in has_children)

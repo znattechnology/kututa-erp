@@ -26,6 +26,14 @@ class L10nAoEdiDocument(models.Model):
     move_ids = fields.Many2many(
         'account.move', 'l10n_ao_edi_document_move_rel', 'document_id', 'move_id', string='Documentos', readonly=True
     )
+    payment_ids = fields.Many2many(
+        'account.payment',
+        'l10n_ao_edi_document_payment_rel',
+        'document_id',
+        'payment_id',
+        string='Recibos',
+        readonly=True,
+    )
     request_id = fields.Char(string='requestID', readonly=True, index=True)
     submission_uuid = fields.Char(string='submissionUUID', readonly=True)
     state = fields.Selection(
@@ -54,25 +62,48 @@ class L10nAoEdiDocument(models.Model):
         moves = self.env['account.move'].search(
             [('l10n_ao_edi_state', '=', 'to_send'), ('state', '=', 'posted')], order='company_id, id'
         )
-        self._send_moves(moves)
+        payments = self.env['account.payment'].search([('l10n_ao_edi_state', '=', 'to_send')], order='company_id, id')
+        self._send_records(moves, payments)
 
     @api.model
     def _send_moves(self, moves):
-        # Os pedidos são registos técnicos de auditoria: criados com privilégios de sistema.
-        self = self.sudo()  # noqa: PLW0642
-        # As facturas mantêm o utilizador original (autor das alterações de estado no histórico).
-        moves = moves.filtered(lambda m: m.l10n_ao_edi_state == 'to_send').sorted('id')
-        for company, company_moves in moves.grouped('company_id').items():
-            for start in range(0, len(company_moves), AGT_BATCH_SIZE):
-                self._send_batch(company, company_moves[start : start + AGT_BATCH_SIZE])
-                if not self.env.context.get('l10n_ao_edi_no_commit'):
-                    # Cada chamada à AGT fica gravada antes da seguinte (o efeito externo já aconteceu).
-                    self.env['ir.cron']._commit_progress(processed=len(company_moves[start : start + AGT_BATCH_SIZE]))
+        self._send_records(moves, self.env['account.payment'])
 
     @api.model
-    def _send_batch(self, company, moves):
+    def _send_records(self, moves, payments):
+        """Envia documentos pendentes (facturas e recibos), por empresa e em lotes de 30.
+
+        Não envia nada das empresas em contingência, nem recibos cujos documentos de origem
+        ainda não foram aceites na recepção da AGT (seriam rejeitados por referência desconhecida).
+        """
+        # Os pedidos são registos técnicos de auditoria: criados com privilégios de sistema.
+        self = self.sudo()  # noqa: PLW0642
+        # Os documentos mantêm o utilizador original (autor das alterações de estado no histórico).
+        moves = moves.filtered(lambda m: m.l10n_ao_edi_state == 'to_send').sorted('id')
+        payments = payments.filtered(lambda p: p.l10n_ao_edi_state == 'to_send' and p._l10n_ao_edi_sources_sent())
+        companies = (moves.company_id | payments.company_id).filtered(lambda c: not c.l10n_ao_edi_contingency)
+        for company in companies:
+            records = list(moves.filtered(lambda m, c=company: m.company_id == c)) + list(
+                payments.filtered(lambda p, c=company: p.company_id == c).sorted('id')
+            )
+            for start in range(0, len(records), AGT_BATCH_SIZE):
+                batch = records[start : start + AGT_BATCH_SIZE]
+                self._send_batch(company, batch)
+                if not self.env.context.get('l10n_ao_edi_no_commit'):
+                    # Cada chamada à AGT fica gravada antes da seguinte (o efeito externo já aconteceu).
+                    self.env['ir.cron']._commit_progress(processed=len(batch))
+
+    @api.model
+    def _split_records(self, records):
+        moves = self.env['account.move'].union(*[r for r in records if r._name == 'account.move'])
+        payments = self.env['account.payment'].union(*[r for r in records if r._name == 'account.payment'])
+        return moves, payments
+
+    @api.model
+    def _send_batch(self, company, records):
         company._l10n_ao_edi_check_configuration()
-        documents = [move._l10n_ao_edi_document_values() for move in moves]
+        moves, payments = self._split_records(records)
+        documents = [record._l10n_ao_edi_document_values() for record in records]
         payload = {
             **company._l10n_ao_edi_request_envelope(),
             'numberOfEntries': len(documents),
@@ -86,6 +117,7 @@ class L10nAoEdiDocument(models.Model):
             {
                 'company_id': company.id,
                 'move_ids': [fields.Command.set(moves.ids)],
+                'payment_ids': [fields.Command.set(payments.ids)],
                 'request_id': request_id,
                 'submission_uuid': payload['submissionUUID'],
                 'payload': json.dumps(payload, ensure_ascii=False, indent=1),
@@ -93,7 +125,8 @@ class L10nAoEdiDocument(models.Model):
             }
         )
         if status == 200 and request_id and not errors:
-            moves.write({'l10n_ao_edi_state': 'sent', 'l10n_ao_edi_error': False})
+            for record in records:
+                record.write({'l10n_ao_edi_state': 'sent', 'l10n_ao_edi_error': False})
             document.next_poll = fields.Datetime.now() + timedelta(minutes=POLL_DELAYS[0])
             self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_poll')._trigger(document.next_poll)
             return document
@@ -106,13 +139,14 @@ class L10nAoEdiDocument(models.Model):
         for error in errors:
             if isinstance(error, dict) and error.get('documentNo'):
                 by_document.setdefault(error['documentNo'], []).append(error)
-        for move in moves:
-            if move.name in by_document:
-                move.write(
-                    {'l10n_ao_edi_state': 'invalid', 'l10n_ao_edi_error': self._format_errors(by_document[move.name])}
+        for record in records:
+            number = record._l10n_ao_edi_number()
+            if number in by_document:
+                record.write(
+                    {'l10n_ao_edi_state': 'invalid', 'l10n_ao_edi_error': self._format_errors(by_document[number])}
                 )
             else:
-                move.l10n_ao_edi_error = message
+                record.l10n_ao_edi_error = message
         return document
 
     # -------------------------------------------------------------------------
@@ -159,17 +193,18 @@ class L10nAoEdiDocument(models.Model):
                 }
             )
             self.move_ids.write({'l10n_ao_edi_state': 'to_send'})
+            self.payment_ids.write({'l10n_ao_edi_state': 'to_send'})
             return
 
         statuses = {item.get('documentNo'): item for item in body.get('documentStatusList') or []}
-        for move in self.move_ids:
-            item = statuses.get(move.name)
+        for record in list(self.move_ids) + list(self.payment_ids):
+            item = statuses.get(record._l10n_ao_edi_number())
             if not item:
                 continue
             if item.get('documentStatus') == 'V':
-                move.write({'l10n_ao_edi_state': 'valid', 'l10n_ao_edi_error': False})
+                record.write({'l10n_ao_edi_state': 'valid', 'l10n_ao_edi_error': False})
             else:
-                move.write(
+                record.write(
                     {
                         'l10n_ao_edi_state': 'invalid',
                         'l10n_ao_edi_error': self._format_errors(item.get('errorList') or [], code_key='errorCode'),

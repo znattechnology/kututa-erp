@@ -11,6 +11,13 @@
             <header position="inside">
                 <button name="action_l10n_ao_edi_send_now" type="object" string="Enviar à AGT"
                         invisible="l10n_ao_edi_state != 'to_send'" groups="account.group_account_invoice"/>
+                <button name="action_l10n_ao_edi_vendor_confirm" type="object" string="Confirmar na AGT"
+                        invisible="move_type not in ('in_invoice', 'in_refund') or state != 'posted' or l10n_ao_edi_vendor_state or country_code != 'AO'"
+                        groups="account.group_account_invoice"/>
+                <button name="action_l10n_ao_edi_vendor_reject" type="object" string="Rejeitar na AGT"
+                        invisible="move_type not in ('in_invoice', 'in_refund') or state != 'posted' or l10n_ao_edi_vendor_state or country_code != 'AO'"
+                        confirm="Rejeitar este documento do fornecedor na AGT?"
+                        groups="account.group_account_invoice"/>
             </header>
             <header position="after">
                 <field name="l10n_ao_edi_required" invisible="1"/>
@@ -19,10 +26,19 @@
                     Corrija-o (voltar a rascunho e confirmar) para emitir o documento de correcção.
                     <field name="l10n_ao_edi_error" class="d-block mt-1"/>
                 </div>
+                <div class="alert alert-warning mb-0" role="alert"
+                     invisible="not l10n_ao_edi_contingency or l10n_ao_edi_state == 'valid'">
+                    Emitido em contingência, pendente de autorização da AGT.
+                </div>
                 <div class="alert alert-info mb-0" role="alert" invisible="l10n_ao_edi_state not in ('to_send', 'sent')">
                     <field name="l10n_ao_edi_state" readonly="1" class="fw-bold"/>
                 </div>
             </header>
+            <field name="ref" position="after">
+                <field name="l10n_ao_edi_vendor_document_no"
+                       invisible="move_type not in ('in_invoice', 'in_refund') or country_code != 'AO'"/>
+                <field name="l10n_ao_edi_vendor_state" invisible="not l10n_ao_edi_vendor_state"/>
+            </field>
             <page name="other_info" position="inside">
                 <group string="Facturação electrónica (AGT)" name="l10n_ao_edi" invisible="not l10n_ao_edi_required">
                     <group>

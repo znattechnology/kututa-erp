@@ -7,7 +7,6 @@ from odoo.tools import float_round
 from .l10n_ao_edi_series import AGT_DOCUMENT_TYPES
 
 AGT_QR_URL = 'https://quiosqueagt.minfin.gov.ao/facturacao-eletronica/consultar-fe'
-FINAL_CONSUMER_NIF = '999999999'
 EDI_LOCKED_STATES = ('to_send', 'sent', 'valid')
 
 
@@ -59,6 +58,25 @@ class AccountMove(models.Model):
         copy=False,
     )
     l10n_ao_edi_qr_url = fields.Char(compute='_compute_l10n_ao_edi_qr_url')
+    l10n_ao_edi_contingency = fields.Boolean(
+        string='Emitido em contingência',
+        readonly=True,
+        copy=False,
+        help='Emitido numa série de contingência (art. 18.º).',
+    )
+    # Facturas recebidas (fornecedores): confirmação/rejeição na AGT (serviço validarDocumento).
+    l10n_ao_edi_vendor_document_no = fields.Char(
+        string='N.º AGT do documento do fornecedor',
+        copy=False,
+        help='Número do documento electrónico emitido pelo fornecedor (ex.: «FT FT26S1/123»).',
+    )
+    l10n_ao_edi_vendor_state = fields.Selection(
+        selection=[('confirmed', 'Confirmado na AGT'), ('rejected', 'Rejeitado na AGT')],
+        string='Validação AGT (fornecedor)',
+        readonly=True,
+        copy=False,
+        tracking=True,
+    )
 
     # -------------------------------------------------------------------------
     # Computes
@@ -121,6 +139,10 @@ class AccountMove(models.Model):
             )
         return result
 
+    def _l10n_ao_edi_number(self):
+        self.ensure_one()
+        return self.name
+
     def _l10n_ao_edi_uses_agt_numbering(self):
         self.ensure_one()
         return bool(self.l10n_ao_edi_series_id)
@@ -143,21 +165,16 @@ class AccountMove(models.Model):
     def _l10n_ao_edi_assign_number(self):
         self.ensure_one()
         date = self.invoice_date or fields.Date.context_today(self)
-        series = self.env['l10n_ao_edi.series']._l10n_ao_edi_find(
+        series, number = self.env['l10n_ao_edi.series']._l10n_ao_edi_next_number(
             self.company_id, self.l10n_ao_document_type, date.year
         )
-        if not series:
-            raise UserError(
-                self.env._(
-                    'Não existe uma série AGT activa para %(type)s em %(year)s (estabelecimento %(est)s). '
-                    'Peça a série em Facturação > Configuração > Séries AGT.',
-                    type=self.l10n_ao_document_type,
-                    year=date.year,
-                    est=self.company_id.l10n_ao_edi_establishment or 'SEDE',
-                )
-            )
-        number = series._l10n_ao_edi_reserve_number()
-        self.write({'l10n_ao_edi_series_id': series.id, 'name': f'{self.l10n_ao_document_type} {series.code}/{number}'})
+        self.write(
+            {
+                'l10n_ao_edi_series_id': series.id,
+                'l10n_ao_edi_contingency': series.contingency,
+                'name': f'{self.l10n_ao_document_type} {series.code}/{number}',
+            }
+        )
 
     # -------------------------------------------------------------------------
     # Validação antes da emissão (DP n.º 71/25)
@@ -203,6 +220,7 @@ class AccountMove(models.Model):
                 # Como o Odoo faz ao confirmar: a data da factura é a data de emissão.
                 move.invoice_date = fields.Date.context_today(move)
             move.company_id._l10n_ao_edi_check_configuration()
+            move.company_id._l10n_ao_edi_check_communication_lock()
             move._l10n_ao_edi_check_before_post()
             if move.l10n_ao_edi_state == 'invalid':
                 # Correcção de um documento rejeitado: novo número, com referência ao rejeitado (documentStatus «C»).
@@ -256,6 +274,60 @@ class AccountMove(models.Model):
         if self.filtered('l10n_ao_edi_series_id'):
             raise UserError(self.env._('Não é possível apagar documentos com numeração AGT.'))
 
+    # -------------------------------------------------------------------------
+    # Facturas de fornecedor: confirmar / rejeitar na AGT (validarDocumento)
+    # -------------------------------------------------------------------------
+
+    def _l10n_ao_edi_vendor_deduct_all(self):
+        """AD: todo o IVA da factura é dedutível; ND: nenhum (deductAllVAT)."""
+        self.ensure_one()
+        deductible_account = (
+            self.env['account.chart.template'].with_company(self.company_id).ref('ao_34_2_3', raise_if_not_found=False)
+        )
+        tax_lines = self.line_ids.filtered('tax_line_id')
+        return 'AD' if tax_lines and all(line.account_id == deductible_account for line in tax_lines) else 'ND'
+
+    def _l10n_ao_edi_vendor_validate(self, action):
+        for move in self:
+            if move.move_type not in ('in_invoice', 'in_refund') or move.state != 'posted':
+                raise UserError(self.env._('Só se validam na AGT facturas de fornecedor confirmadas.'))
+            document_no = (move.l10n_ao_edi_vendor_document_no or move.ref or '').strip()
+            if not document_no:
+                raise UserError(self.env._('Indique o n.º AGT do documento do fornecedor.'))
+            company = move.company_id
+            company._l10n_ao_edi_check_configuration()
+            nif = company.partner_id._l10n_ao_normalize_nif(company.vat)
+            payload = {
+                **company._l10n_ao_edi_request_envelope(),
+                'jwsSignature': company._l10n_ao_edi_sign({'taxRegistrationNumber': nif, 'documentNo': document_no}),
+                'documentNo': document_no,
+                'action': action,
+            }
+            if action == 'C':
+                payload['deductAllVAT'] = move._l10n_ao_edi_vendor_deduct_all()
+            status, body = company._l10n_ao_edi_call('validarDocumento', payload)
+            result = (body or {}).get('confirmRejectResult') or {}
+            if status != 200 or result.get('actionResultCode') != f'{action}_OK':
+                errors = self.env['l10n_ao_edi.document']._format_errors(
+                    result.get('errorList') or (body or {}).get('errorList') or [], code_key='errorCode'
+                )
+                raise UserError(
+                    self.env._('A AGT não aceitou a validação: %s', errors or result.get('actionResultCode') or status)
+                )
+            move.write(
+                {
+                    'l10n_ao_edi_vendor_document_no': document_no,
+                    'l10n_ao_edi_vendor_state': 'confirmed' if action == 'C' else 'rejected',
+                }
+            )
+        return True
+
+    def action_l10n_ao_edi_vendor_confirm(self):
+        return self._l10n_ao_edi_vendor_validate('C')
+
+    def action_l10n_ao_edi_vendor_reject(self):
+        return self._l10n_ao_edi_vendor_validate('R')
+
     def action_l10n_ao_edi_send_now(self):
         self.env['l10n_ao_edi.document'].with_context(l10n_ao_edi_no_commit=True)._send_moves(self)
         return True
@@ -268,11 +340,7 @@ class AccountMove(models.Model):
         return (self.l10n_ao_edi_reason or self.ref or '').strip()
 
     def _l10n_ao_edi_customer_tax_id(self):
-        partner = self.commercial_partner_id
-        if partner.country_id and partner.country_id.code != 'AO':
-            return (partner.vat or FINAL_CONSUMER_NIF)[:50]
-        nif = partner._l10n_ao_normalize_nif(partner.vat)
-        return nif if nif and partner._l10n_ao_is_valid_nif(nif) else FINAL_CONSUMER_NIF
+        return self.commercial_partner_id._l10n_ao_edi_customer_tax_id()
 
     @api.model
     def _l10n_ao_edi_round_up(self, amount):

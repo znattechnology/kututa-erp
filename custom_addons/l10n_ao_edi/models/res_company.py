@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import timedelta
 
 import requests
 
@@ -16,6 +17,7 @@ AGT_ENDPOINTS = {
 }
 AGT_SCHEMA_VERSION = '2.0'
 AGT_TIMEOUT = 30
+AGT_COMMUNICATION_LOCK_DAYS = 60
 
 
 class ResCompany(models.Model):
@@ -63,6 +65,13 @@ class ResCompany(models.Model):
         help='Código do estabelecimento registado no Portal do Contribuinte («SEDE» se houver um só).',
     )
     l10n_ao_edi_last_communication = fields.Datetime(string='Última comunicação com a AGT', readonly=True)
+    l10n_ao_edi_contingency = fields.Boolean(
+        string='Modo de contingência',
+        help='Art. 18.º do DP n.º 71/25: sem comunicação com a AGT, os documentos são emitidos numa série de '
+        'contingência, com a menção «emitido em contingência, pendente de autorização», e enviados quando o '
+        'modo for desligado. A AGT tem de ser informada de imediato.',
+    )
+    l10n_ao_edi_contingency_start = fields.Datetime(string='Contingência desde', readonly=True)
 
     # -------------------------------------------------------------------------
     # Pedidos à API
@@ -86,6 +95,37 @@ class ResCompany(models.Model):
                     'Configuração AGT incompleta na empresa %(company)s: %(fields)s.',
                     company=self.name,
                     fields=', '.join(missing),
+                )
+            )
+
+    def write(self, vals):
+        if 'l10n_ao_edi_contingency' in vals:
+            vals['l10n_ao_edi_contingency_start'] = fields.Datetime.now() if vals['l10n_ao_edi_contingency'] else False
+        result = super().write(vals)
+        if vals.get('l10n_ao_edi_contingency') is False:
+            # Fim da contingência: os documentos emitidos entretanto seguem para a AGT.
+            self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_send')._trigger()
+        return result
+
+    def _l10n_ao_edi_check_communication_lock(self):
+        """Art. 17.º/5 do DP n.º 71/25: falha de comunicação superior a 60 dias bloqueia a emissão."""
+        self.ensure_one()
+        limit = fields.Datetime.now() - timedelta(days=AGT_COMMUNICATION_LOCK_DAYS)
+        if self.l10n_ao_edi_last_communication and self.l10n_ao_edi_last_communication >= limit:
+            return
+        domain = [
+            ('company_id', '=', self.id),
+            ('l10n_ao_edi_state', '=', 'to_send'),
+            ('l10n_ao_edi_system_entry_date', '<', limit),
+        ]
+        if self.env['account.move'].sudo().search_count(domain, limit=1) or self.env[
+            'account.payment'
+        ].sudo().search_count(domain, limit=1):
+            raise UserError(
+                self.env._(
+                    'Emissão bloqueada: há documentos por comunicar à AGT há mais de %(days)s dias '
+                    '(art. 17.º, n.º 5 do DP n.º 71/25). Restabeleça a comunicação e envie os documentos pendentes.',
+                    days=AGT_COMMUNICATION_LOCK_DAYS,
                 )
             )
 
@@ -152,18 +192,42 @@ class ResCompany(models.Model):
                 .sudo()
                 .search([('request_id', '=', payload.get('requestID')), ('company_id', '=', self.id)], limit=1)
             )
+            numbers = document.move_ids.mapped('name') + document.payment_ids.mapped('l10n_ao_edi_document_no')
             return 200, {
                 'requestID': payload.get('requestID'),
                 'resultCode': '0',
-                'documentStatusList': [
-                    {'documentNo': name, 'documentStatus': 'V'} for name in document.move_ids.mapped('name')
-                ],
+                'documentStatusList': [{'documentNo': number, 'documentStatus': 'V'} for number in numbers],
             }
         if service == 'solicitarSerie':
             year = str(payload['seriesYear'])[-2:]
-            code = f'{payload["documentType"]}{year}DEMO{payload["establishmentNumber"][:4].upper()}'
+            # Como nos exemplos da AGT («LD6325S2042N»): o código termina em N (normal) ou C (contingência).
+            indicator = payload.get('seriesContingencyIndicator') or 'N'
+            code = f'{payload["documentType"]}{year}DEMO{payload["establishmentNumber"][:4].upper()}{indicator}'
             return 200, {
                 'resultCode': 1,
                 'seriesFEResult': {'seriesCode': code, 'firstDocumentNo': '1', 'lastDocumentNo': '999999999999'},
+            }
+        if service == 'validarDocumento':
+            action = payload.get('action')
+            return 200, {
+                'confirmRejectResult': {
+                    'actionResultCode': f'{action}_OK',
+                    'documentStatusCode': 'S_RG',
+                    'errorList': [],
+                }
+            }
+        if service == 'listarSeries':
+            series = self.env['l10n_ao_edi.series'].search([('company_id', '=', self.id), ('code', '!=', False)])
+            return 200, {
+                'seriesResultCount': len(series),
+                'seriesInfo': [
+                    {
+                        'seriesCode': s.code,
+                        'seriesYear': s.year,
+                        'documentType': s.document_type,
+                        'establishmentNumber': s.establishment,
+                    }
+                    for s in series
+                ],
             }
         return 200, {}
