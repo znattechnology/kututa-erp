@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_stock_inventory_export_form" model="ir.ui.view">
+        <field name="name">l10n_ao_stock.inventory.export.form</field>
+        <field name="model">l10n_ao_stock.inventory.export</field>
+        <field name="arch" type="xml">
+            <form string="SAF-T de inventário (AGT)">
+                <div class="alert alert-warning" role="alert" invisible="not warning">
+                    <field name="warning"/>
+                </div>
+                <group>
+                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                    <field name="year" options="{'format': false}"/>
+                    <field name="file_format" widget="radio"/>
+                </group>
+                <div class="text-muted">
+                    Existências a 31 de Dezembro, a submeter no Portal do Contribuinte até 15 de Fevereiro
+                    (DP n.º 71/25, art. 24.º; Circular n.º 05/GACA/GJ/DSF/AGT/2026). Sem existências, o ficheiro sai
+                    «sem operações».
+                </div>
+                <footer>
+                    <button name="action_export" type="object" string="Gerar ficheiro" class="btn-primary"/>
+                    <button special="cancel" string="Fechar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_stock_inventory_export" model="ir.actions.act_window">
+        <field name="name">SAF-T de inventário (AGT)</field>
+        <field name="res_model">l10n_ao_stock.inventory.export</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_stock_inventory_export" action="action_l10n_ao_stock_inventory_export"
+              parent="stock.menu_warehouse_report" sequence="200"/>
+    <menuitem id="menu_l10n_ao_stock_inventory_export_accounting" action="action_l10n_ao_stock_inventory_export"
+              parent="l10n_ao_reports.menu_l10n_ao_reports" sequence="50"/>
+
+    <record id="product_category_form_view_l10n_ao_stock" model="ir.ui.view">
+        <field name="name">product.category.form.l10n_ao_stock</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <field name="parent_id" position="after">
+                <field name="l10n_ao_stock_product_type"/>
+            </field>
+        </field>
+    </record>
+</odoo>
