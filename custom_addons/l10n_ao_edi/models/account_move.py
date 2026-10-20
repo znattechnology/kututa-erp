@@ -64,6 +64,12 @@ class AccountMove(models.Model):
         copy=False,
         help='Emitido numa série de contingência (art. 18.º).',
     )
+    l10n_ao_edi_print_count = fields.Integer(
+        string='Impressões do documento AGT',
+        readonly=True,
+        copy=False,
+        help='Cada PDF gerado conta como impressão: o primeiro é o «Original», os seguintes levam «2.ª via».',
+    )
     # Facturas recebidas (fornecedores): confirmação/rejeição na AGT (serviço validarDocumento).
     l10n_ao_edi_vendor_document_no = fields.Char(
         string='N.º AGT do documento do fornecedor',
@@ -113,6 +119,11 @@ class AccountMove(models.Model):
             else:
                 move.l10n_ao_edi_qr_url = False
 
+    def _l10n_ao_edi_copy_label(self):
+        """Menção da impressão em curso (o contador já inclui a impressão que está a ser gerada)."""
+        self.ensure_one()
+        return 'Original' if self.l10n_ao_edi_print_count <= 1 else '2.ª via'
+
     def _l10n_ao_edi_document_title(self):
         self.ensure_one()
         return {
@@ -142,6 +153,10 @@ class AccountMove(models.Model):
     def _l10n_ao_edi_number(self):
         self.ensure_one()
         return self.name
+
+    def _l10n_ao_edi_ready_to_send(self):
+        self.ensure_one()
+        return self.state == 'posted'
 
     def _l10n_ao_edi_uses_agt_numbering(self):
         self.ensure_one()

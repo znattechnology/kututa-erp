@@ -58,36 +58,53 @@ class L10nAoEdiDocument(models.Model):
     # -------------------------------------------------------------------------
 
     @api.model
+    def _queue_fields(self):
+        """Modelos com documentos AGT na fila de envio, pela ordem de envio, e o campo do pedido que os liga.
+
+        Cada modelo implementa ``l10n_ao_edi_state``, ``company_id``, ``_l10n_ao_edi_number()``,
+        ``_l10n_ao_edi_ready_to_send()`` e ``_l10n_ao_edi_document_values()``.
+        """
+        return {'account.move': 'move_ids', 'account.payment': 'payment_ids'}
+
+    @api.model
     def _cron_send(self):
-        moves = self.env['account.move'].search(
-            [('l10n_ao_edi_state', '=', 'to_send'), ('state', '=', 'posted')], order='company_id, id'
-        )
-        payments = self.env['account.payment'].search([('l10n_ao_edi_state', '=', 'to_send')], order='company_id, id')
-        self._send_records(moves, payments)
+        recordsets = []
+        for model in self._queue_fields():
+            # A fila inclui documentos de outras aplicações (ex.: talões do POS) a que o utilizador pode não ter
+            # acesso; quando o tem, os registos mantêm o utilizador (autor das alterações de estado no histórico).
+            records = self.env[model].sudo().search([('l10n_ao_edi_state', '=', 'to_send')], order='company_id, id')
+            recordsets.append(records.sudo(False) if self.env[model].has_access('write') else records)
+        self._send_records(*recordsets)
 
     @api.model
     def _send_moves(self, moves):
-        self._send_records(moves, self.env['account.payment'])
+        self._send_records(moves)
 
     @api.model
-    def _send_records(self, moves, payments):
-        """Envia documentos pendentes (facturas e recibos), por empresa e em lotes de 30.
+    def _send_records(self, *recordsets):
+        """Envia documentos pendentes (facturas, recibos, talões...), por empresa e em lotes de 30.
 
-        Não envia nada das empresas em contingência, nem recibos cujos documentos de origem
+        Não envia nada das empresas em contingência, nem documentos cujos documentos de origem
         ainda não foram aceites na recepção da AGT (seriam rejeitados por referência desconhecida).
         """
         # Os pedidos são registos técnicos de auditoria: criados com privilégios de sistema.
         self = self.sudo()  # noqa: PLW0642
         # Os documentos mantêm o utilizador original (autor das alterações de estado no histórico).
-        moves = moves.filtered(lambda m: m.l10n_ao_edi_state == 'to_send').sorted('id')
-        payments = payments.filtered(lambda p: p.l10n_ao_edi_state == 'to_send' and p._l10n_ao_edi_sources_sent())
-        companies = (moves.company_id | payments.company_id).filtered(lambda c: not c.l10n_ao_edi_contingency)
-        for company in companies:
-            records = list(moves.filtered(lambda m, c=company: m.company_id == c)) + list(
-                payments.filtered(lambda p, c=company: p.company_id == c).sorted('id')
-            )
-            for start in range(0, len(records), AGT_BATCH_SIZE):
-                batch = records[start : start + AGT_BATCH_SIZE]
+        order = list(self._queue_fields())
+        records = sorted(
+            (
+                record
+                for recordset in recordsets
+                for record in recordset
+                if record.l10n_ao_edi_state == 'to_send' and record._l10n_ao_edi_ready_to_send()
+            ),
+            key=lambda r: (order.index(r._name), r.id),
+        )
+        companies = self.env['res.company'].union(*(r.company_id for r in records))
+        for company in companies.filtered(lambda c: not c.l10n_ao_edi_contingency):
+            company_records = [r for r in records if r.company_id == company]
+            for start in range(0, len(company_records), AGT_BATCH_SIZE):
+                batch = company_records[start : start + AGT_BATCH_SIZE]
                 self._send_batch(company, batch)
                 if not self.env.context.get('l10n_ao_edi_no_commit'):
                     # Cada chamada à AGT fica gravada antes da seguinte (o efeito externo já aconteceu).
@@ -95,14 +112,20 @@ class L10nAoEdiDocument(models.Model):
 
     @api.model
     def _split_records(self, records):
-        moves = self.env['account.move'].union(*[r for r in records if r._name == 'account.move'])
-        payments = self.env['account.payment'].union(*[r for r in records if r._name == 'account.payment'])
-        return moves, payments
+        """{campo do pedido: registos} para ligar os documentos de um lote ao pedido."""
+        return {
+            field: self.env[model].union(*[r for r in records if r._name == model])
+            for model, field in self._queue_fields().items()
+        }
+
+    def _queued_records(self):
+        self.ensure_one()
+        return [record for field in self._queue_fields().values() for record in self[field]]
 
     @api.model
     def _send_batch(self, company, records):
         company._l10n_ao_edi_check_configuration()
-        moves, payments = self._split_records(records)
+        linked = self._split_records(records)
         documents = [record._l10n_ao_edi_document_values() for record in records]
         payload = {
             **company._l10n_ao_edi_request_envelope(),
@@ -116,8 +139,7 @@ class L10nAoEdiDocument(models.Model):
         document = self.create(
             {
                 'company_id': company.id,
-                'move_ids': [fields.Command.set(moves.ids)],
-                'payment_ids': [fields.Command.set(payments.ids)],
+                **{field: [fields.Command.set(linked_records.ids)] for field, linked_records in linked.items()},
                 'request_id': request_id,
                 'submission_uuid': payload['submissionUUID'],
                 'payload': json.dumps(payload, ensure_ascii=False, indent=1),
@@ -192,12 +214,12 @@ class L10nAoEdiDocument(models.Model):
                     'error_message': self.env._('Processamento cancelado pela AGT.'),
                 }
             )
-            self.move_ids.write({'l10n_ao_edi_state': 'to_send'})
-            self.payment_ids.write({'l10n_ao_edi_state': 'to_send'})
+            for field in self._queue_fields().values():
+                self[field].write({'l10n_ao_edi_state': 'to_send'})
             return
 
         statuses = {item.get('documentNo'): item for item in body.get('documentStatusList') or []}
-        for record in list(self.move_ids) + list(self.payment_ids):
+        for record in self._queued_records():
             item = statuses.get(record._l10n_ao_edi_number())
             if not item:
                 continue

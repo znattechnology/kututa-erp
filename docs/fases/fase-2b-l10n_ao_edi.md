@@ -52,6 +52,6 @@ A emissão de facturas e recibos é recusada quando há documentos por comunicar
 | Tema | Motivo / entrega |
 |---|---|
 | `anularFactura` | A AGT ainda não publicou a especificação do serviço |
-| «Original» / «2.ª via» | Exige tratar o arquivo de PDFs do Odoo; vai com o POS (2c) |
+| «Original» / «2.ª via» | Feito na 2c (`fase-2c-l10n_ao_edi_pos.md`) |
 | `consultarFactura`, `listarFacturas`, `estenderSerie` | Consulta/auditoria; sem impacto na emissão |
 | Recibos de NC compensadas com facturas (RE / regularizações) | A clarificar com a AGT |

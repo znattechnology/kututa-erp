@@ -6,6 +6,7 @@
             <t t-if="o.l10n_ao_edi_series_id" t-set="layout_document_title">
                 <span t-out="o._l10n_ao_edi_document_title()">Factura</span>
                 <span t-field="o.name">FT FT26S1/1</span>
+                <small class="ms-2 fw-normal" name="l10n_ao_edi_copy_label" t-out="o._l10n_ao_edi_copy_label()">Original</small>
             </t>
         </xpath>
         <xpath expr="//div[@name='invoice_date']" position="attributes">

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_order_tree_l10n_ao_edi" model="ir.ui.view">
+        <field name="name">pos.order.list.l10n_ao_edi</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_order_tree"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="l10n_ao_edi_document_no" optional="show"/>
+                <field name="l10n_ao_edi_state" widget="badge" optional="show"
+                       decoration-success="l10n_ao_edi_state == 'valid'"
+                       decoration-info="l10n_ao_edi_state in ('to_send', 'sent')"
+                       decoration-danger="l10n_ao_edi_state == 'invalid'"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_pos_order_form_l10n_ao_edi" model="ir.ui.view">
+        <field name="name">pos.order.form.l10n_ao_edi</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_l10n_ao_edi_send_now" type="object" string="Enviar à AGT"
+                        invisible="l10n_ao_edi_state != 'to_send'"/>
+            </xpath>
+            <xpath expr="//header" position="after">
+                <div class="alert alert-danger mb-0" role="alert" invisible="l10n_ao_edi_state != 'invalid'">
+                    <strong>Documento rejeitado pela AGT.</strong>
+                    <field name="l10n_ao_edi_error" class="d-block mt-1"/>
+                </div>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="AGT" name="l10n_ao_edi" invisible="not l10n_ao_edi_document_no">
+                    <group>
+                        <group>
+                            <field name="l10n_ao_edi_document_no"/>
+                            <field name="l10n_ao_document_type"/>
+                            <field name="l10n_ao_edi_series_id"/>
+                            <field name="l10n_ao_edi_state" widget="badge"
+                                   decoration-success="l10n_ao_edi_state == 'valid'"
+                                   decoration-info="l10n_ao_edi_state in ('to_send', 'sent')"
+                                   decoration-danger="l10n_ao_edi_state == 'invalid'"/>
+                        </group>
+                        <group>
+                            <field name="l10n_ao_edi_system_entry_date"/>
+                            <field name="l10n_ao_edi_contingency" invisible="not l10n_ao_edi_contingency"/>
+                            <field name="l10n_ao_edi_reason" invisible="l10n_ao_document_type != 'NC'"/>
+                            <field name="l10n_ao_edi_print_count"/>
+                        </group>
+                    </group>
+                    <field name="l10n_ao_edi_document_ids" readonly="1"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="l10n_ao_edi_document_view_list_pos" model="ir.ui.view">
+        <field name="name">l10n_ao_edi.document.list.pos</field>
+        <field name="model">l10n_ao_edi.document</field>
+        <field name="inherit_id" ref="l10n_ao_edi.l10n_ao_edi_document_view_list"/>
+        <field name="arch" type="xml">
+            <field name="payment_ids" position="before">
+                <field name="pos_order_ids" widget="many2many_tags" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="l10n_ao_edi_document_view_form_pos" model="ir.ui.view">
+        <field name="name">l10n_ao_edi.document.form.pos</field>
+        <field name="model">l10n_ao_edi.document</field>
+        <field name="inherit_id" ref="l10n_ao_edi.l10n_ao_edi_document_view_form"/>
+        <field name="arch" type="xml">
+            <field name="payment_ids" position="before">
+                <field name="pos_order_ids" widget="many2many_tags" invisible="not pos_order_ids"/>
+            </field>
+        </field>
+    </record>
+</odoo>

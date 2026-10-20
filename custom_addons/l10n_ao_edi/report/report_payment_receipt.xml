@@ -7,6 +7,7 @@
         <xpath expr="//div[hasclass('page')]/h3" position="before">
             <h3 t-if="o.l10n_ao_edi_document_no">
                 <strong>Recibo <span t-field="o.l10n_ao_edi_document_no">RC RC26S1/1</span></strong>
+                <small class="ms-2" name="l10n_ao_edi_copy_label" t-out="o._l10n_ao_edi_copy_label()">Original</small>
             </h3>
         </xpath>
         <xpath expr="//table[@name='invoices']" position="after">

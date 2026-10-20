@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="l10n_ao_edi_pos.RefundReasonPopup">
+        <Dialog title.translate="Motivo da devolução (AGT)">
+            <div class="mb-3">
+                <label for="l10n_ao_edi_reason_select" class="form-label">Motivo comunicado na nota de crédito</label>
+                <select class="form-select mb-2" id="l10n_ao_edi_reason_select" t-model.proxy="this.state.selected">
+                    <t t-foreach="this.reasons" t-as="reason" t-key="reason">
+                        <option t-att-value="reason" t-out="reason"/>
+                    </t>
+                </select>
+                <input type="text" class="form-control" maxlength="60" name="l10n_ao_edi_reason"
+                       placeholder="Ou escreva outro motivo (até 60 caracteres)" t-model.proxy="this.state.custom"/>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary o-default-button" t-att-disabled="!this.isValid"
+                        t-on-click="this.confirm">Confirmar</button>
+            </t>
+        </Dialog>
+    </t>
+
+</templates>

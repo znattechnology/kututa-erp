@@ -16,6 +16,7 @@ Kututa Mukanda: facturação electrónica angolana.
 * Contingência (art. 18.º) e bloqueio da emissão após 60 dias sem comunicação (art. 17.º)
 * Confirmação/rejeição na AGT das facturas de fornecedores (validarDocumento)
 * Sincronização das séries registadas na AGT (listarSeries)
+* Menção «Original» / «2.ª via» nas facturas e recibos impressos
     """,
     'author': 'Kututa ERP',
     'countries': ['ao'],

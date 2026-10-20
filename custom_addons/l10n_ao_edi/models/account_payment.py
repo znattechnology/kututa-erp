@@ -32,6 +32,12 @@ class AccountPayment(models.Model):
     l10n_ao_edi_error = fields.Text(string='Erros AGT', readonly=True, copy=False)
     l10n_ao_edi_system_entry_date = fields.Datetime(string='Data de registo (AGT)', readonly=True, copy=False)
     l10n_ao_edi_contingency = fields.Boolean(string='Emitido em contingência', readonly=True, copy=False)
+    l10n_ao_edi_print_count = fields.Integer(
+        string='Impressões do documento AGT',
+        readonly=True,
+        copy=False,
+        help='Cada PDF gerado conta como impressão: o primeiro é o «Original», os seguintes levam «2.ª via».',
+    )
     l10n_ao_edi_document_ids = fields.Many2many(
         'l10n_ao_edi.document',
         'l10n_ao_edi_document_payment_rel',
@@ -62,6 +68,11 @@ class AccountPayment(models.Model):
             else:
                 payment.l10n_ao_edi_qr_url = False
 
+    def _l10n_ao_edi_copy_label(self):
+        """Menção da impressão em curso (o contador já inclui a impressão que está a ser gerada)."""
+        self.ensure_one()
+        return 'Original' if self.l10n_ao_edi_print_count <= 1 else '2.ª via'
+
     def _l10n_ao_edi_number(self):
         self.ensure_one()
         return self.l10n_ao_edi_document_no
@@ -89,6 +100,9 @@ class AccountPayment(models.Model):
         return all(
             invoice.l10n_ao_edi_state in ('sent', 'valid') for invoice, _amount in self._l10n_ao_edi_source_partials()
         )
+
+    def _l10n_ao_edi_ready_to_send(self):
+        return self._l10n_ao_edi_sources_sent()
 
     # -------------------------------------------------------------------------
     # Emissão do recibo
@@ -129,9 +143,7 @@ class AccountPayment(models.Model):
         return True
 
     def action_l10n_ao_edi_send_now(self):
-        self.env['l10n_ao_edi.document'].with_context(l10n_ao_edi_no_commit=True)._send_records(
-            self.env['account.move'], self
-        )
+        self.env['l10n_ao_edi.document'].with_context(l10n_ao_edi_no_commit=True)._send_records(self)
         return True
 
     # -------------------------------------------------------------------------

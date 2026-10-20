@@ -118,9 +118,8 @@ class ResCompany(models.Model):
             ('l10n_ao_edi_state', '=', 'to_send'),
             ('l10n_ao_edi_system_entry_date', '<', limit),
         ]
-        if self.env['account.move'].sudo().search_count(domain, limit=1) or self.env[
-            'account.payment'
-        ].sudo().search_count(domain, limit=1):
+        queue_models = self.env['l10n_ao_edi.document']._queue_fields()
+        if any(self.env[model].sudo().search_count(domain, limit=1) for model in queue_models):
             raise UserError(
                 self.env._(
                     'Emissão bloqueada: há documentos por comunicar à AGT há mais de %(days)s dias '
@@ -192,7 +191,7 @@ class ResCompany(models.Model):
                 .sudo()
                 .search([('request_id', '=', payload.get('requestID')), ('company_id', '=', self.id)], limit=1)
             )
-            numbers = document.move_ids.mapped('name') + document.payment_ids.mapped('l10n_ao_edi_document_no')
+            numbers = [record._l10n_ao_edi_number() for record in document._queued_records()]
             return 200, {
                 'requestID': payload.get('requestID'),
                 'resultCode': '0',
