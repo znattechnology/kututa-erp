@@ -1,0 +1,16 @@
+id,name,model_id,group_id/id,operation,domain
+access_l10n_ao_asset_rate_user,access_l10n_ao_asset_rate_user,l10n_ao_asset.rate,base.group_user,r,
+access_l10n_ao_asset_rate_manager,access_l10n_ao_asset_rate_manager,l10n_ao_asset.rate,account.group_account_manager,crud,
+access_l10n_ao_asset_category_user,access_l10n_ao_asset_category_user,l10n_ao_asset.category,account.group_account_invoice,r,
+access_l10n_ao_asset_category_readonly,access_l10n_ao_asset_category_readonly,l10n_ao_asset.category,account.group_account_readonly,r,
+access_l10n_ao_asset_category_manager,access_l10n_ao_asset_category_manager,l10n_ao_asset.category,account.group_account_manager,crud,
+access_l10n_ao_asset_asset_user,access_l10n_ao_asset_asset_user,l10n_ao_asset.asset,account.group_account_invoice,crud,
+access_l10n_ao_asset_asset_readonly,access_l10n_ao_asset_asset_readonly,l10n_ao_asset.asset,account.group_account_readonly,r,
+access_l10n_ao_asset_line_user,access_l10n_ao_asset_line_user,l10n_ao_asset.depreciation.line,account.group_account_invoice,crud,
+access_l10n_ao_asset_line_readonly,access_l10n_ao_asset_line_readonly,l10n_ao_asset.depreciation.line,account.group_account_readonly,r,
+access_l10n_ao_asset_disposal,access_l10n_ao_asset_disposal,l10n_ao_asset.disposal,account.group_account_invoice,crud,
+access_l10n_ao_asset_report,access_l10n_ao_asset_report,l10n_ao_asset.report,account.group_account_readonly,crud,
+access_l10n_ao_asset_report_invoice,access_l10n_ao_asset_report_invoice,l10n_ao_asset.report,account.group_account_invoice,crud,
+l10n_ao_asset_category_comp_rule,Categorias de imobilizado multi-empresa,l10n_ao_asset.category,,crud,"[('company_id', 'in', company_ids)]"
+l10n_ao_asset_asset_comp_rule,Imobilizado multi-empresa,l10n_ao_asset.asset,,crud,"[('company_id', 'in', company_ids)]"
+l10n_ao_asset_line_comp_rule,Quotas de amortização multi-empresa,l10n_ao_asset.depreciation.line,,crud,"[('company_id', 'in', company_ids)]"

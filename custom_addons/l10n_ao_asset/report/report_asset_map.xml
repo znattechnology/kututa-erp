@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_asset_map" model="report.paperformat">
+        <field name="name">Mapa de amortizações (A4 horizontal)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">20</field>
+        <field name="margin_bottom">15</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_spacing">15</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_asset_map" model="ir.actions.report">
+        <field name="name">Mapa de reintegrações e amortizações</field>
+        <field name="model">l10n_ao_asset.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_ao_asset.report_asset_map</field>
+        <field name="print_report_name">'Mapa de amortizações %s' % object.year</field>
+        <field name="paperformat_id" ref="paperformat_asset_map"/>
+    </record>
+
+    <template id="report_asset_map">
+        <t t-call="web.html_container">
+            <t t-foreach="reports" t-as="r">
+                <t t-call="web.internal_layout">
+                    <t t-set="company" t-value="r['company']"/>
+                    <div class="page o_l10n_ao_asset_map">
+                        <style>
+                            .o_l10n_ao_asset_map table { width: 100%; font-size: 10px; border-collapse: collapse; }
+                            .o_l10n_ao_asset_map th { border-bottom: 1px solid #000; text-align: center; padding: 2px; }
+                            .o_l10n_ao_asset_map td { padding: 1px 3px; }
+                            .o_l10n_ao_asset_map .num { text-align: right; white-space: nowrap; }
+                            .o_l10n_ao_asset_map .group td { font-weight: bold; padding-top: 6px; }
+                            .o_l10n_ao_asset_map .subtotal td { font-weight: bold; border-top: 1px solid #000; }
+                            .o_l10n_ao_asset_map .total td { font-weight: bold; border-top: 1px solid #000; border-bottom: 3px double #000; }
+                        </style>
+                        <h5 class="mb-0" t-out="company.name"/>
+                        <div>NIF: <span t-out="company.vat or ''"/></div>
+                        <h5 class="mt-2"><span t-out="r['title']"/> - <span t-out="r['subtitle']"/></h5>
+                        <table>
+                            <thead>
+                                <tr><th t-foreach="r['columns']" t-as="col" t-out="col[1]"/></tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="r['groups']" t-as="group">
+                                    <tr class="group"><td t-att-colspan="len(r['columns'])" t-out="group['name']"/></tr>
+                                    <tr t-foreach="group['rows']" t-as="row">
+                                        <t t-foreach="r['columns']" t-as="col">
+                                            <td t-if="col[0] in r['amount_columns']" class="num" t-out="r['fmt'](row[col[0]])"/>
+                                            <td t-elif="col[0] == 'rate'" class="num" t-out="'%.2f' % row['rate']"/>
+                                            <td t-else="" t-out="row[col[0]]"/>
+                                        </t>
+                                    </tr>
+                                    <tr class="subtotal">
+                                        <t t-foreach="r['columns']" t-as="col">
+                                            <td t-if="col[0] in r['amount_columns']" class="num" t-out="r['fmt'](group['subtotal'][col[0]])"/>
+                                            <td t-else=""/>
+                                        </t>
+                                    </tr>
+                                </t>
+                                <tr class="total">
+                                    <t t-foreach="r['columns']" t-as="col">
+                                        <td t-if="col[0] in r['amount_columns']" class="num" t-out="r['fmt'](r['totals'][col[0]])"/>
+                                        <td t-elif="col[0] == 'name'">TOTAL</td>
+                                        <td t-else=""/>
+                                    </t>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="mt-2 small">
+                            Taxas do Decreto Presidencial n.º 207/15, método das quotas constantes. Só incluem as
+                            amortizações contabilizadas (Código do Imposto Industrial, art. 25.º, n.º 3).
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

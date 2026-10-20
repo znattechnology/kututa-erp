@@ -1,0 +1,480 @@
+id,code,group,name,rate,life_years
+rate_a_1_1,A.1.1,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Instalações","Barragens, diques, condutas e redes de rega e depósitos de elevação",4,25
+rate_a_1_2,A.1.2,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Instalações","Outras instalações em tijolo, pedra ou betão incluindo armazéns, celeiros, silos e outras feitas destes materiais ou materiais similares",5,20
+rate_a_1_3,A.1.3,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Instalações","Instalações feitas de materiais ligeiros, tais como de madeira, de zinco, de fibrocimento e de outros materiais similares",10,10
+rate_a_1_4,A.1.4,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Instalações","Poços, furos, cercas e vedações",20,5
+rate_a_2_1,A.2.1,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Máquinas e equipamentos","Equipamentos motorizados incluindo tractores, ceifeiras-debulhadoras, moto-cultivadores, enfardadeiras, atomizadores, pulverizadores, etc.",16.66,6
+rate_a_2_2,A.2.2,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Máquinas e equipamentos",Equipamentos não motorizados,12.5,8
+rate_a_2_3,A.2.3,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Máquinas e equipamentos","Máquinas de preparação, selecção, lavagem, empacotamento e embalagem",16.66,6
+rate_a_2_4,A.2.4,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Máquinas e equipamentos",Máquinas secadoras,6.67,15
+rate_a_2_5,A.2.5,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Máquinas e equipamentos",Equipamento de ordenha,12.5,8
+rate_a_2_6,A.2.6,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Máquinas e equipamentos",Incubadoras,10,10
+rate_a_2_7,A.2.7,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Máquinas e equipamentos",Outras máquinas e equipamentos da exploração agrícola ou pecuária,10,10
+rate_a_3_1,A.3.1,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Plantações",Pomares,6.67,15
+rate_a_3_2,A.3.2,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Plantações",Plantações várias,10,10
+rate_a_4_1,A.4.1,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Animais vivos","Gado bovino, suíno, caprino, ovino e cavalar",20,5
+rate_a_4_2,A.4.2,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Animais vivos","Galos, galinhas, patos e perus e outros ovíparos de criação rápida",50,2
+rate_a_4_3,A.4.3,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Animais vivos",Outros animais vivos,14.28,7
+rate_a_5_1,A.5.1,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Terrenos em exploração",Agricultura,4,25
+rate_a_5_2,A.5.2,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Terrenos em exploração",Silvicultura,4,25
+rate_a_5_3,A.5.3,"A - Agricultura, pecuária, silvicultura, aquicultura, avicultura e piscatória / Terrenos em exploração",Aquicultura,2,50
+rate_b_1_1,B.1.1,B - Pesca / Barcos de pesca,Costeiros (traineiras e embarcações de pequeno calado),12.5,8
+rate_b_1_2,B.1.2,B - Pesca / Barcos de pesca,De alto mar - de ferro,7.14,14
+rate_b_1_3,B.1.3,B - Pesca / Barcos de pesca,De alto mar - de madeira,10,10
+rate_b_1_4,B.1.4,B - Pesca / Barcos de pesca,De alto mar - de fibra de vidro,10,10
+rate_b_1_5,B.1.5,B - Pesca / Barcos de pesca,Navios-fábricas e navios-frigoríficos,7.14,14
+rate_b_1_6,B.1.6,B - Pesca / Barcos de pesca,"Aparelhos localizadores, detectores, de telefonia, de radiogoniometria e de radar",20,5
+rate_b_1_7,B.1.7,B - Pesca / Barcos de pesca,Aprestos de pesca,33.33,3
+rate_b_2_1,B.2.1,B - Pesca / Instalações,Embarcadouros e instalações de carga e descarga,7.14,14
+rate_b_2_2,B.2.2,B - Pesca / Instalações,Viveiros,8.33,12
+rate_b_2_3,B.2.3,B - Pesca / Instalações,Secadores,6.67,15
+rate_b_2_4,B.2.4,B - Pesca / Instalações,Instalações para limpeza e primeira preparação dos produtos da pesca,5,20
+rate_b_2_5,B.2.5,B - Pesca / Instalações,Instalações de conservação e congelação dos produtos da pesca,10,10
+rate_b_3_1,B.3.1,B - Pesca / Máquinas e equipamentos,Máquinas e equipamentos para secagem,12.5,8
+rate_b_3_2,B.3.2,B - Pesca / Máquinas e equipamentos,"Máquinas e equipamentos de preparação, conservação, embalagem e congelação",12.5,8
+rate_b_4_1,B.4.1,B - Pesca / Ponte-Cais,De betão,3.33,3
+rate_b_4_2,B.4.2,B - Pesca / Ponte-Cais,De madeira,6.25,16
+rate_b_4_3,B.4.3,B - Pesca / Ponte-Cais,De ferro,8.33,12
+rate_c_1_2,C.1.2,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Terrenos",Destinados a entulheiras,4,25
+rate_c_2_1,C.2.1,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Instalações",Instalações para a separação e tratamento primário,12.5,8
+rate_c_2_2,C.2.2,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Instalações","Instalações para trituração, moagem e classificação",12.5,8
+rate_c_2_3,C.2.3,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Instalações",Instalações auxiliares,10,10
+rate_c_2_4,C.2.4,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Instalações",Vias férreas e respectivo material circulante,6.67,15
+rate_c_3_1,C.3.1,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Máquinas e equipamentos",Equipamento mineiro fixo - de superfície,12.5,8
+rate_c_3_2,C.3.2,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Máquinas e equipamentos",Equipamento mineiro fixo - de subsolo,20,5
+rate_c_3_3,C.3.3,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Máquinas e equipamentos",Equipamento móvel sobre rodas ou lagartas,20,5
+rate_c_3_4,C.3.4,"C - Indústrias extractivas, excepto indústria petrolífera e indústria mineira / Máquinas e equipamentos",Ferramentas e utensílios de uso específico,33.33,3
+rate_da_1_1,DA.1.1,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústrias alimentares",Silos,5,20
+rate_da_1_2,DA.1.2,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústrias alimentares",Depósitos e tanques,6.67,15
+rate_da_1_3,DA.1.3,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústrias alimentares",Fornos fixos,12.5,8
+rate_da_1_4,DA.1.4,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústrias alimentares",Fornos móveis,16.67,6
+rate_da_1_5,DA.1.5,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústrias alimentares",Máquinas e equipamentos de recepção e de produção (a),12.5,8
+rate_da_1_6,DA.1.6,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústrias alimentares",Máquinas e equipamentos de embalagem e rotulagem,10,10
+rate_da_1_7,DA.1.7,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústrias alimentares",Máquinas e equipamentos de cozinha,14.28,7
+rate_da_1_8,DA.1.8,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústrias alimentares",Instalações frigorificas e de ventilação,12.5,8
+rate_da_2_1,DA.2.1,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria das bebidas","Instalações de captação, poços e depósitos de água",5,20
+rate_da_2_2,DA.2.2,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria das bebidas","Tanques, cubas e depósitos metálicos",6.66,15
+rate_da_2_3,DA.2.3,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria das bebidas","Tanques, cubas e depósitos de betão e similares",5,20
+rate_da_2_4,DA.2.4,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria das bebidas",Caldeiras e alambiques,6.66,15
+rate_da_2_5,DA.2.5,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria das bebidas",Máquinas e equipamentos de recepção e de produção (b),12.5,8
+rate_da_2_6,DA.2.6,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria das bebidas","Máquinas e equipamentos de enchimento, engarrafamento, rotulagem e embalagem",10,10
+rate_da_2_7,DA.2.7,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria das bebidas",Instalações frigoríficas e de ventilação,12.5,8
+rate_da_3_1,DA.3.1,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria do tabaco",Câmaras de secagem de betão ou alvenaria,5,20
+rate_da_3_2,DA.3.2,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria do tabaco",Câmaras de secagem de construção ligeira,12.5,8
+rate_da_3_3,DA.3.3,"DA - Indústrias alimentares, das bebidas e do tabaco / Indústria do tabaco",Maquinaria e instalações de uso específico,12.5,8
+rate_db_1_1,DB.1.1,DB - Indústria têxtil / Fabricação de têxteis,Máquinas e equipamentos para o fabrico de fio de malha e tecidos,12.5,8
+rate_db_1_2,DB.1.2,DB - Indústria têxtil / Fabricação de têxteis,"Máquinas e equipamentos para o branqueamento, tinturaria e estamparia",14.28,7
+rate_db_1_3,DB.1.3,DB - Indústria têxtil / Fabricação de têxteis,"Máquinas e equipamentos para o fabrico de cordas, cabos, redes e outras fibras duras",12.5,8
+rate_db_1_4,DB.1.4,DB - Indústria têxtil / Fabricação de têxteis,Teares para a indústria de tapeçarias,12.5,8
+rate_db_1_5,DB.1.5,DB - Indústria têxtil / Fabricação de têxteis,Outras máquinas e equipamentos de uso especifico,10,10
+rate_db_2_1,DB.2.1,DB - Indústria têxtil / Indústria do vestuário,Máquinas e equipamentos para a confecção de peças de vestuário,12.5,8
+rate_dc_1_1,DC.1.1,DC - Indústria do couro e de produtos de couro / Indústria de curtumes,Instalações industriais de uso específico,12.5,8
+rate_dc_1_2,DC.1.2,DC - Indústria do couro e de produtos de couro / Indústria de curtumes,Máquinas e equipamentos de uso especifico,14.28,7
+rate_dc_2_1,DC.2.1,DC - Indústria do couro e de produtos de couro / Indústria do calçado,Máquinas e equipamentos de uso especifico,12.5,8
+rate_dc_2_2,DC.2.2,DC - Indústria do couro e de produtos de couro / Indústria do calçado,Caldeiras para a produção de vapor,20,5
+rate_dc_2_3,DC.2.3,DC - Indústria do couro e de produtos de couro / Indústria do calçado,Moldes e formas,33.33,3
+rate_dd_1_1,DD.1.1,DD - Indústrias da madeira e da cortiça e suas obras / Indústria da madeira,Silos e depósitos de uso especifico,6.67,15
+rate_dd_1_2,DD.1.2,DD - Indústrias da madeira e da cortiça e suas obras / Indústria da madeira,"Máquinas e equipamentos de serração, arrasto, elevação e carga",12.5,8
+rate_dd_1_3,DD.1.3,DD - Indústrias da madeira e da cortiça e suas obras / Indústria da madeira,"Máquinas e equipamentos de corte, trituração, prensagem, secagem, etc.",12.5,8
+rate_dd_2_1,DD.2.1,"DD - Indústrias da madeira e da cortiça e suas obras / Fabricação de obras de madeira, de cortiça, de cestaria e de espartaria",Silos e depósitos de uso especifico,6.67,15
+rate_dd_2_2,DD.2.2,"DD - Indústrias da madeira e da cortiça e suas obras / Fabricação de obras de madeira, de cortiça, de cestaria e de espartaria",Caldeiras a vapor,20,5
+rate_dd_2_3,DD.2.3,"DD - Indústrias da madeira e da cortiça e suas obras / Fabricação de obras de madeira, de cortiça, de cestaria e de espartaria",Autoclaves de cocção,14.28,7
+rate_dd_2_4,DD.2.4,"DD - Indústrias da madeira e da cortiça e suas obras / Fabricação de obras de madeira, de cortiça, de cestaria e de espartaria",Fornos de fogo semidirecto,12.5,8
+rate_dd_2_5,DD.2.5,"DD - Indústrias da madeira e da cortiça e suas obras / Fabricação de obras de madeira, de cortiça, de cestaria e de espartaria","Outras máquinas e equipamentos para o fabrico de folheados, contraplacados, lacados e aglomerados de partículas e de fibras de madeira",12.5,8
+rate_dd_2_6,DD.2.6,"DD - Indústrias da madeira e da cortiça e suas obras / Fabricação de obras de madeira, de cortiça, de cestaria e de espartaria",Outras máquinas e equipamentos de uso específico,10,10
+rate_de_1_1,DE.1.1,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Indústrias de pasta de papel, de papel e cartão e seus artigos",Depósitos para a preparação de pasta de papel,6.67,15
+rate_de_1_2,DE.1.2,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Indústrias de pasta de papel, de papel e cartão e seus artigos",Máquinas e equipamentos para a produção de pasta de papel (a),12.5,8
+rate_de_1_3,DE.1.3,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Indústrias de pasta de papel, de papel e cartão e seus artigos",Máquinas e equipamentos para a produção de papel e cartão (b),10,10
+rate_de_1_4,DE.1.4,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Indústrias de pasta de papel, de papel e cartão e seus artigos",Máquinas e equipamentos para transformação de papel e cartão,14.28,7
+rate_de_2_1,DE.2.1,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Edição, impressão e serviços relacionados","Máquinas e equipamentos para composição de jornais, revistas e outras publicações periódicas",20,5
+rate_de_2_2,DE.2.2,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Edição, impressão e serviços relacionados",Máquinas e equipamentos de impressão por laser,14.28,7
+rate_de_2_3,DE.2.3,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Edição, impressão e serviços relacionados",Máquinas e equipamentos de impressão por outros sistemas (c),12.5,8
+rate_de_2_4,DE.2.4,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Edição, impressão e serviços relacionados",Outras máquinas e apetrechos de uso específico,10,10
+rate_de_2_5,DE.2.5,"DE - Industrias de pasta de papel, de papel e cartão e seus artigos; Edição e impressão / Edição, impressão e serviços relacionados",Moldes e matrizes,33.33,3
+rate_df_1_1,DF.1.1,DF - Fabricação de coque e de produtos petrolíferos refinados / Fabricação de produtos petrolíferos refinados,Instalações industriais sujeitas a corrosão,14.28,7
+rate_df_1_2,DF.1.2,DF - Fabricação de coque e de produtos petrolíferos refinados / Fabricação de produtos petrolíferos refinados,Outras instalações industriais,10,10
+rate_df_1_3,DF.1.3,DF - Fabricação de coque e de produtos petrolíferos refinados / Fabricação de produtos petrolíferos refinados,Oleodutos e instalações de distribuição e transporte,8.33,12
+rate_df_1_4,DF.1.4,DF - Fabricação de coque e de produtos petrolíferos refinados / Fabricação de produtos petrolíferos refinados,Reservatórios,5,20
+rate_df_1_5,DF.1.5,DF - Fabricação de coque e de produtos petrolíferos refinados / Fabricação de produtos petrolíferos refinados,Bombas de gás (petróleo),10,10
+rate_dg_1_1,DG.1.1,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Fornos reactores para síntese,16.66,6
+rate_dg_1_2,DG.1.2,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Fornos reactores para fusão,16.66,6
+rate_dg_1_3,DG.1.3,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Instalações de electrólise e electrossíntese,16.66,6
+rate_dg_1_4,DG.1.4,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Instalações para fabrico de ácidos,16.66,6
+rate_dg_1_5,DG.1.5,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Outras instalações industriais,10,10
+rate_dg_1_6,DG.1.6,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Máquinas e equipamentos de uso específico sujeitos a corrosão,14.28,7
+rate_dg_1_7,DG.1.7,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Outras máquinas e equipamentos de uso especifico,10,10
+rate_dg_1_8,DG.1.8,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Reservatórios,5,20
+rate_dg_1_9,DG.1.9,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de produtos químicos de base,Material de distribuição de gases (embalagens para ar comprimido),12.5,8
+rate_dg_2_1,DG.2.1,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de outros produtos químicos,Instalações para fabrico de produtos farmacêuticos,16.66,6
+rate_dg_2_2,DG.2.2,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de outros produtos químicos,Outras instalações industriais,10,10
+rate_dg_2_3,DG.2.3,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de outros produtos químicos,Máquinas e equipamentos de uso específico sujeitos a corrosão,14.28,7
+rate_dg_2_4,DG.2.4,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de outros produtos químicos,Outras máquinas e equipamentos de uso especifico,10,10
+rate_dg_2_5,DG.2.5,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de outros produtos químicos,Reservatórios,5,20
+rate_dg_2_6,DG.2.6,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de outros produtos químicos,Aparelhos e utensílios de laboratório,20,5
+rate_dg_3_1,DG.3.1,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de fibras sintéticas ou artificiais,Máquinas e equipamentos de uso especifico sujeitos a corrosão,14.28,7
+rate_dg_3_2,DG.3.2,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de fibras sintéticas ou artificiais,Outras máquinas e equipamentos de uso especifico,10,10
+rate_dg_3_3,DG.3.3,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de fibras sintéticas ou artificiais,Prensas,6.67,15
+rate_dg_3_4,DG.3.4,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de fibras sintéticas ou artificiais,Moldes e formas,33.33,3
+rate_dg_3_5,DG.3.5,DG - Fabricação de produtos químicos e de fibras sintéticas ou artificiais / Fabricação de fibras sintéticas ou artificiais,Aparelhos e utensílios de laboratório,20,5
+rate_dh_1_1,DH.1.1,DH - Fabricação de artigos de borracha e de matérias plásticas / Fabricação de artigos de borracha,Máquinas e equipamentos de uso especifico sujeitos a corrosão,14.28,7
+rate_dh_1_2,DH.1.2,DH - Fabricação de artigos de borracha e de matérias plásticas / Fabricação de artigos de borracha,Outras máquinas e equipamentos de uso específico,10,10
+rate_dh_1_3,DH.1.3,DH - Fabricação de artigos de borracha e de matérias plásticas / Fabricação de artigos de borracha,Moldes e formas,33.33,3
+rate_dh_2_1,DH.2.1,DH - Fabricação de artigos de borracha e de matérias plásticas / Fabricação de matérias plásticas,Máquinas e equipamentos de uso específico sujeitos a corrosão,14.28,7
+rate_dh_2_2,DH.2.2,DH - Fabricação de artigos de borracha e de matérias plásticas / Fabricação de matérias plásticas,Outras máquinas e equipamentos de uso específico,10,10
+rate_dh_2_3,DH.2.3,DH - Fabricação de artigos de borracha e de matérias plásticas / Fabricação de matérias plásticas,Moldes e formas,33.33,3
+rate_dh_2_4,DH.2.4,DH - Fabricação de artigos de borracha e de matérias plásticas / Fabricação de matérias plásticas,Ferramentas e utensílios de uso específico,33.33,3
+rate_di_1_1,DI.1.1,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de vidro e artigos de vidro,"Máquinas e equipamentos de trituração, moagem e mistura",12.5,8
+rate_di_1_2,DI.1.2,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de vidro e artigos de vidro,Outras máquinas e equipamentos industriais de uso específico,10,10
+rate_di_1_3,DI.1.3,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de vidro e artigos de vidro,Fornos,14.28,7
+rate_di_1_4,DI.1.4,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de vidro e artigos de vidro,Moldes e outras ferramentas e utensílios de uso específico,33.33,3
+rate_di_2_1,DI.2.1,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de produtos minerais não metálicos n. e. (a),"Terrenos de exploração, incluindo pedreiras (b)",10,10
+rate_di_2_2,DI.2.2,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de produtos minerais não metálicos n. e. (a),"Máquinas e equipamentos de sondagem, de extracção e de remoção",14.28,7
+rate_di_2_3,DI.2.3,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de produtos minerais não metálicos n. e. (a),"Máquinas e equipamentos de compressão, trituração, selecção, corte, etc.",14.28,7
+rate_di_2_4,DI.2.4,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de produtos minerais não metálicos n. e. (a),Outras máquinas e equipamentos industriais,12.5,8
+rate_di_2_5,DI.2.5,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de produtos minerais não metálicos n. e. (a),Silos e depósitos,6.67,15
+rate_di_2_6,DI.2.6,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de produtos minerais não metálicos n. e. (a),Fornos e muflas,14.28,7
+rate_di_2_7,DI.2.7,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de produtos minerais não metálicos n. e. (a),Moldes e matrizes,33.33,3
+rate_di_2_8,DI.2.8,DI - Fabricação de outros produtos minerais não metálicos / Fabricação de produtos minerais não metálicos n. e. (a),Ferramentas e utensílios de uso específico,33.33,3
+rate_dj_1_1,DJ.1.1,DJ - Indústrias metalúrgicos de base e de produtos metálicos / Indústrias metalúrgicos de base,Fornos para fundição,12.5,8
+rate_dj_1_2,DJ.1.2,DJ - Indústrias metalúrgicos de base e de produtos metálicos / Indústrias metalúrgicos de base,Instalações para electrólise e outros processos químicos,16.66,6
+rate_dj_1_3,DJ.1.3,DJ - Indústrias metalúrgicos de base e de produtos metálicos / Indústrias metalúrgicos de base,Máquinas e equipamentos industriais de uso específico,14.28,7
+rate_dj_1_4,DJ.1.4,DJ - Indústrias metalúrgicos de base e de produtos metálicos / Indústrias metalúrgicos de base,Ferramentas e utensílios de uso específico,20,5
+rate_dj_2_1,DJ.2.1,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Fornos e estufas,14.28,7
+rate_dj_2_2,DJ.2.2,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Instalações de vácuo,20,5
+rate_dj_2_3,DJ.2.3,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Instalações para electrólise e outros processos químicos,16.66,6
+rate_dj_2_4,DJ.2.4,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Máquinas e equipamentos industriais de uso específico (a),12.5,8
+rate_dj_2_5,DJ.2.5,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Máquinas de bobinar,25,4
+rate_dj_2_6,DJ.2.6,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Prensas e compressores,12.5,8
+rate_dj_2_7,DJ.2.7,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Máquinas e aparelhos para soldadura,16.66,6
+rate_dj_2_8,DJ.2.8,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Moldes e matrizes,33.33,3
+rate_dj_2_9,DJ.2.9,"DJ - Indústrias metalúrgicos de base e de produtos metálicos / Fabricação de produtos metálicos, excepto máquinas e equipamentos",Outras ferramentas e utensílios de uso específico,20,5
+rate_dk_1_1,DK.1.1,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Fornos e estufas,14.28,7
+rate_dk_1_2,DK.1.2,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Instalações de vácuo,20,5
+rate_dk_1_3,DK.1.3,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Instalações para electrólise e outros processos químicos,16.66,6
+rate_dk_1_4,DK.1.4,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Máquinas e equipamentos industriais de uso específico (a),12.5,8
+rate_dk_1_5,DK.1.5,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Máquinas de bobinar,25,4
+rate_dk_1_6,DK.1.6,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Prensas e compressores,12.5,8
+rate_dk_1_7,DK.1.7,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Máquinas e aparelhos para soldadura,16.66,6
+rate_dk_1_8,DK.1.8,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Moldes e matrizes,33.33,3
+rate_dk_1_9,DK.1.9,DK - Fabricação de máquinas e de equipamentos não especificados / Fabricação de máquinas de uso geral e específico e de aparelhos domésticos,Outras ferramentas e utensílios de uso específico,20,5
+rate_dl_1_1,DL.1.1,DL - Fabricação de equipamento eléctrico e de óptica / Fabricação de equipamento eléctrico e de óptica,Fornos e estufas,14.28,7
+rate_dl_1_2,DL.1.2,DL - Fabricação de equipamento eléctrico e de óptica / Fabricação de equipamento eléctrico e de óptica,Máquinas e equipamentos industriais de uso especifico,12.5,8
+rate_dl_1_3,DL.1.3,DL - Fabricação de equipamento eléctrico e de óptica / Fabricação de equipamento eléctrico e de óptica,Prensas e compressores,12.5,8
+rate_dl_1_4,DL.1.4,DL - Fabricação de equipamento eléctrico e de óptica / Fabricação de equipamento eléctrico e de óptica,Máquinas e aparelhos para soldadura,16.66,6
+rate_dl_1_5,DL.1.5,DL - Fabricação de equipamento eléctrico e de óptica / Fabricação de equipamento eléctrico e de óptica,Moldes e matrizes,33.33,3
+rate_dl_1_6,DL.1.6,DL - Fabricação de equipamento eléctrico e de óptica / Fabricação de equipamento eléctrico e de óptica,Outras ferramentas e utensílios de uso especifico,20,5
+rate_dm_1_1,DM.1.1,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Pistas de ensaio e prova,6.67,15
+rate_dm_1_2,DM.1.2,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Superfícies de estacionamento sem cobertura,5,20
+rate_dm_1_3,DM.1.3,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Fornos para fundição,12.5,8
+rate_dm_1_4,DM.1.4,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Linhas de montagem,14.28,7
+rate_dm_1_5,DM.1.5,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Máquinas e equipamentos para aplicação de pintura,12.5,8
+rate_dm_1_6,DM.1.6,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Transportadores e máquinas de alimentação de peças,12.5,8
+rate_dm_1_7,DM.1.7,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Contentores de transporte interno,14.28,7
+rate_dm_1_8,DM.1.8,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Máquinas e equipamentos de ensaio e medida,14.28,7
+rate_dm_1_9,DM.1.9,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Moldes e matrizes,33.33,3
+rate_dm_1_10,DM.1.10,"DM - Fabricação de material de transporte / Fabricação de veículos automóveis, reboques e semi-reboques (a)",Outras ferramentas e utensílios de uso específico,33.33,3
+rate_dm_2_1,DM.2.1,DM - Fabricação de material de transporte / Construção e reparação naval,Docas flutuantes,8.33,12
+rate_dm_2_2,DM.2.2,DM - Fabricação de material de transporte / Construção e reparação naval,"Docas secas, cais e pontes-cais",5,20
+rate_dm_2_3,DM.2.3,DM - Fabricação de material de transporte / Construção e reparação naval,Rebocadores e embarcações similares,7.14,14
+rate_dm_2_4,DM.2.4,DM - Fabricação de material de transporte / Construção e reparação naval,"Gruas, guindastes e pórticos",12.5,8
+rate_dm_2_5,DM.2.5,DM - Fabricação de material de transporte / Construção e reparação naval,Fornos e estufas,14.28,7
+rate_dm_2_6,DM.2.6,DM - Fabricação de material de transporte / Construção e reparação naval,Instalações de vácuo,20,5
+rate_dm_2_7,DM.2.7,DM - Fabricação de material de transporte / Construção e reparação naval,Instalações para electrólise e outros processos químicos,16.66,6
+rate_dm_2_8,DM.2.8,DM - Fabricação de material de transporte / Construção e reparação naval,Máquinas e equipamentos industriais de uso específico (a),12.5,8
+rate_dm_2_9,DM.2.9,DM - Fabricação de material de transporte / Construção e reparação naval,Prensas e compressores,12.5,8
+rate_dm_2_10,DM.2.10,DM - Fabricação de material de transporte / Construção e reparação naval,Máquinas e aparelhos para soldadura,16.66,6
+rate_dm_2_11,DM.2.11,DM - Fabricação de material de transporte / Construção e reparação naval,Moldes e matrizes,33.33,3
+rate_dm_2_12,DM.2.12,DM - Fabricação de material de transporte / Construção e reparação naval,Outras ferramentas e utensílios de uso especifico,20,5
+rate_dn_1_1,DN.1.1,DN - Indústrias transformadoras n. e / Fabricação de imobiliário; outras indústrias transformadoras não especificadas,Máquinas de serração e corte,14.28,7
+rate_dn_1_2,DN.1.2,DN - Indústrias transformadoras n. e / Fabricação de imobiliário; outras indústrias transformadoras não especificadas,Caldeiras e estufas,12.5,8
+rate_dn_1_3,DN.1.3,DN - Indústrias transformadoras n. e / Fabricação de imobiliário; outras indústrias transformadoras não especificadas,Prensas e compressores,12.5,8
+rate_dn_1_4,DN.1.4,DN - Indústrias transformadoras n. e / Fabricação de imobiliário; outras indústrias transformadoras não especificadas,Máquinas e aparelhos para soldadura,16.66,6
+rate_dn_1_5,DN.1.5,DN - Indústrias transformadoras n. e / Fabricação de imobiliário; outras indústrias transformadoras não especificadas,Outras máquinas e equipamentos de uso especifico,14.28,7
+rate_dn_1_6,DN.1.6,DN - Indústrias transformadoras n. e / Fabricação de imobiliário; outras indústrias transformadoras não especificadas,Moldes e matrizes,33.33,3
+rate_dn_1_7,DN.1.7,DN - Indústrias transformadoras n. e / Fabricação de imobiliário; outras indústrias transformadoras não especificadas,Outras ferramentas e utensílios de uso específico,20,5
+rate_e_1_1,E.1.1,"E - Produção e distribuição de electricidade, de gás e de água / Produção, transporte e distribuição de electricidade",Obras hidráulicas fixas,3.33,30
+rate_e_1_2_1,E.1.2.1,"E - Produção e distribuição de electricidade, de gás e de água / Equipamentos de centrais",Hidroeléctricas,5,20
+rate_e_1_2_2,E.1.2.2,"E - Produção e distribuição de electricidade, de gás e de água / Equipamentos de centrais",Termoeléctricas,7.14,14
+rate_e_1_2_3,E.1.2.3,"E - Produção e distribuição de electricidade, de gás e de água / Equipamentos de centrais",Eólicas,8.33,12
+rate_e_1_2_4,E.1.2.4,"E - Produção e distribuição de electricidade, de gás e de água / Equipamentos de centrais",Fotovoltaicas,8.33,12
+rate_e_1_3,E.1.3,"E - Produção e distribuição de electricidade, de gás e de água / Equipamentos de centrais",Subestações e postos de transformação,5,20
+rate_e_1_4,E.1.4,"E - Produção e distribuição de electricidade, de gás e de água / Equipamentos de centrais",Linhas de transporte (AT e BT) e suportes,5,20
+rate_e_1_5,E.1.5,"E - Produção e distribuição de electricidade, de gás e de água / Equipamentos de centrais",Aparelhos de medida e controlo,10,10
+rate_e_1_6,E.1.6,"E - Produção e distribuição de electricidade, de gás e de água / Equipamentos de centrais",Outras instalações técnicas,8.33,12
+rate_e_2_1,E.2.1,"E - Produção e distribuição de electricidade, de gás e de água / Produção, transporte e distribuição de gás",Instalações de produção,8.33,12
+rate_e_2_2,E.2.2,"E - Produção e distribuição de electricidade, de gás e de água / Produção, transporte e distribuição de gás",Gasómetros e depósitos para armazenagem de gás,6.25,16
+rate_e_2_3,E.2.3,"E - Produção e distribuição de electricidade, de gás e de água / Produção, transporte e distribuição de gás",Redes de transporte e distribuição,5,20
+rate_e_2_4,E.2.4,"E - Produção e distribuição de electricidade, de gás e de água / Produção, transporte e distribuição de gás",Máquinas e outras instalações de uso especifico,12.5,8
+rate_e_2_5,E.2.5,"E - Produção e distribuição de electricidade, de gás e de água / Produção, transporte e distribuição de gás",Aparelhos de medida e controlo,10,10
+rate_e_3_1,E.3.1,"E - Produção e distribuição de electricidade, de gás e de água / Produção e distribuição vapor e de água quente; produção de gelo",Máquinas e outras instalações de uso específico,12.5,8
+rate_e_3_2,E.3.2,"E - Produção e distribuição de electricidade, de gás e de água / Produção e distribuição vapor e de água quente; produção de gelo",Aparelhos de medida e controlo,10,10
+rate_e_4_1,E.4.1,"E - Produção e distribuição de electricidade, de gás e de água / Captação, tratamento e distribuição de água",Obras hidráulicas fixas,3.33,30
+rate_e_4_2,E.4.2,"E - Produção e distribuição de electricidade, de gás e de água / Captação, tratamento e distribuição de água",Comportas,5,20
+rate_e_4_3,E.4.3,"E - Produção e distribuição de electricidade, de gás e de água / Captação, tratamento e distribuição de água","Reservatórios, tanques e instalações elevatórias",4,25
+rate_e_4_4,E.4.4,"E - Produção e distribuição de electricidade, de gás e de água / Captação, tratamento e distribuição de água",Redes de distribuição,5,20
+rate_e_4_5,E.4.5,"E - Produção e distribuição de electricidade, de gás e de água / Captação, tratamento e distribuição de água",Máquinas e equipamentos de uso especifico,10,10
+rate_e_4_6,E.4.6,"E - Produção e distribuição de electricidade, de gás e de água / Captação, tratamento e distribuição de água",Aparelhos de medida e controlo,10,10
+rate_e_4_7,E.4.7,"E - Produção e distribuição de electricidade, de gás e de água / Captação, tratamento e distribuição de água",Motores e geradores eléctricos abaixo de 22 kvas,20,5
+rate_e_4_8,E.4.8,"E - Produção e distribuição de electricidade, de gás e de água / Captação, tratamento e distribuição de água",Motores e geradores eléctricos acima de 22 kvas,10,10
+rate_f_1,F.1,F - Construção,Construções ligeiras não afectas a obras em curso,12.5,8
+rate_f_2,F.2,F - Construção,"Material de desenho, de topografia e de ensaio e medida",14.28,7
+rate_f_3_1,F.3.1,F - Construção / Materiais auxiliares de construção,Andaimes,14.28,7
+rate_f_3_2,F.3.2,F - Construção / Materiais auxiliares de construção,Cofragem,25,4
+rate_f_3_3,F.3.3,F - Construção / Materiais auxiliares de construção,Materiais diversos,20,5
+rate_f_4_1,F.4.1,F - Construção / Equipamentos,Gruas e guindastes,12.5,8
+rate_f_4_2,F.4.2,F - Construção / Equipamentos,Equipamentos de transporte geral,25,4
+rate_f_4_3,F.4.3,F - Construção / Equipamentos,Equipamentos de oficinas de carpintaria e de serralharia,16.66,6
+rate_f_4_4,F.4.4,F - Construção / Equipamentos,Equipamentos para produção e distribuição de energia eléctrica,14.28,7
+rate_f_4_5,F.4.5,F - Construção / Equipamentos,Equipamentos para movimentação e armazenagem de materiais,14.28,7
+rate_f_4_6,F.4.6,F - Construção / Equipamentos,Equipamentos para trabalhos de ar comprimido,25,4
+rate_f_4_7,F.4.7,F - Construção / Equipamentos,Equipamentos para trabalhos de escavação e terraplanagem,20,5
+rate_f_4_8,F.4.8,F - Construção / Equipamentos,Equipamentos de sondagens e fundações,20,5
+rate_f_4_9,F.4.9,F - Construção / Equipamentos,"Equipamentos para exploração de pedreiras, fabricação e aplicação de betões e argamassas",20,5
+rate_f_4_10,F.4.10,F - Construção / Equipamentos,Equipamentos para construção de estradas,20,5
+rate_f_4_11,F.4.11,F - Construção / Equipamentos,Equipamentos para obras hidráulicas,6.25,16
+rate_f_5,F.5,F - Construção,Ferramentas e equipamentos individuais,33.33,3
+rate_g_1_1,G.1.1,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Edifícios industriais,4,25
+rate_g_1_2,G.1.2,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Edifícios industriais sujeitos a corrosão,5,20
+rate_g_1_3,G.1.3,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Edifícios comerciais e administrativos,4,25
+rate_g_1_4,G.1.4,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Edifícios habitacionais,2,50
+rate_g_1_5,G.1.5,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções","Edifícios destinados exclusivamente a serviços de saúde, de ensino, e a serviços recreativos de ensino, e a serviços recreativos e culturais",4,25
+rate_g_1_6,G.1.6,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções","Construções ligeiras em fibrocimento, madeira, metais, etc.",12.5,8
+rate_g_1_7,G.1.7,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções","Obras hidráulicas, incluindo poços de água",10,10
+rate_g_1_8,G.1.8,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções","Obras de pavimentação (em pedra, cimento, betão, asfalto, etc.)",10,10
+rate_g_1_9,G.1.9,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Pontes e aquedutos em betão ou alvenaria,3.33,30
+rate_g_1_10,G.1.10,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Pontes e aquedutos metálicos,8.33,12
+rate_g_1_11,G.1.11,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Pontes e aquedutos em madeira,20,5
+rate_g_1_12,G.1.12,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções","Silos, reservatórios e outros depósitos",5,20
+rate_g_1_13,G.1.13,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Muros,6.67,15
+rate_g_1_14,G.1.14,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Vedações ligeiras (madeira. arame. etc.),25,4
+rate_g_1_15,G.1.15,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Arranjos urbanísticos,25,4
+rate_g_1_16,G.1.16,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Via-férrea (actividade ferroviária),2,50
+rate_g_1_17,G.1.17,"G - Comércio, serviços gerais e elementos comuns / Edifícios e outras construções",Pontes e obras de arte (actividade ferroviária),2.5,40
+rate_g_2_1,G.2.1,"G - Comércio, serviços gerais e elementos comuns / Instalações","De água, electricidade, ar comprimido e refrigeração central (inclui centrais de cogeração de energia eléctrica)",10,10
+rate_g_2_2,G.2.2,"G - Comércio, serviços gerais e elementos comuns / Instalações",Redes de cabos aéreos e respectivos suportes,6.67,15
+rate_g_2_3,G.2.3,"G - Comércio, serviços gerais e elementos comuns / Instalações",Postos de transformação,10,10
+rate_g_2_4,G.2.4,"G - Comércio, serviços gerais e elementos comuns / Instalações","Ascensores, monta-cargas e escadas mecânicas",10,10
+rate_g_2_5,G.2.5,"G - Comércio, serviços gerais e elementos comuns / Instalações",De captação e distribuição de água (instalações privativas),12.5,8
+rate_g_2_6,G.2.6,"G - Comércio, serviços gerais e elementos comuns / Instalações","De carga, descarga e embarque (instalações privativas)",7.14,14
+rate_g_2_7,G.2.7,"G - Comércio, serviços gerais e elementos comuns / Instalações","Centrais telefónicas e outras comunicações (radiofónicas, radiotelegráficas e de televisão)",16.66,6
+rate_g_2_8,G.2.8,"G - Comércio, serviços gerais e elementos comuns / Instalações",De distribuição de combustíveis líquidos,10,10
+rate_g_2_9,G.2.9,"G - Comércio, serviços gerais e elementos comuns / Instalações","De segurança, detecção e extinção de incêndios",12.5,8
+rate_g_2_10,G.2.10,"G - Comércio, serviços gerais e elementos comuns / Instalações",Instalações divisórias em escritórios,20,5
+rate_g_2_11_1,G.2.11.1,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",De betão,5,20
+rate_g_2_11_2,G.2.11.2,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",De madeira,20,5
+rate_g_2_11_3,G.2.11.3,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",Metálicas,12.5,8
+rate_g_2_12,G.2.12,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",Reservatórios para combustíveis líquidos,6.66,15
+rate_g_2_13,G.2.13,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",Refeitórios e cozinhas privativas,10,10
+rate_g_2_14,G.2.14,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",Vitrinas e estantes fixas,20,5
+rate_g_2_15,G.2.15,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito","Vitrinas, estantes e expositores móveis",33.33,3
+rate_g_2_16,G.2.16,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",Estações (actividade ferroviária),4,25
+rate_g_2_17,G.2.17,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",Apeadeiros (actividade ferroviária),4,25
+rate_g_2_18,G.2.18,"G - Comércio, serviços gerais e elementos comuns / Instalações de armazenagem e de depósito",Não especificadas,10,10
+rate_g_3_1,G.3.1,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Computadores e outros equipamentos para tratamento de informação,33.33,3
+rate_g_3_2,G.3.2,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos","Equipamentos electrónicos destinados a automatização, regulação e supervisão de maquinas, processos industriais, comerciais e de serviços",20,5
+rate_g_3_3,G.3.3,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos","Máquinas e equipamentos de cópia (fotocopiadoras, «scanners», telecopiadores (vulgo fax), etc.)",25,4
+rate_g_3_4,G.3.4,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Impressoras,33.33,3
+rate_g_3_5,G.3.5,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos","Televisores, plasmas, monitores, projectores de vídeo («datashow»), etc.",25,4
+rate_g_3_6,G.3.6,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Outras máquinas e equipamentos electrónicos,20,5
+rate_g_3_7,G.3.7,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Máquinas e equipamentos de conservação e manutenção,12.5,8
+rate_g_3_8,G.3.8,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos","Motores, incluindo geradores",25,4
+rate_g_3_9,G.3.9,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Máquinas-ferramentas ligeiras,20,5
+rate_g_3_10,G.3.10,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Máquinas-ferramentas pesadas,12.5,8
+rate_g_3_11,G.3.11,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Material contra incêndios (extintores e outros),25,4
+rate_g_3_12,G.3.12,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Aparelhos de ar condicionado e de ventilação,12.5,8
+rate_g_3_13,G.3.13,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Aparelhos de laboratório e precisão,14.28,7
+rate_g_3_14,G.3.14,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Aparelhos de medida e controlo,12.5,8
+rate_g_3_15,G.3.15,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Telefones fixos,16.67,6
+rate_g_3_16,G.3.16,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos",Telefones móveis,33.33,3
+rate_g_3_17,G.3.17,"G - Comércio, serviços gerais e elementos comuns / Máquinas, equipamentos e aparelhos","Máquinas, equipamentos e aparelhos não especificados",12.5,8
+rate_g_4_1_1,G.4.1.1,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Pesados,16.67,6
+rate_g_4_1_2,G.4.1.2,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Ligeiros,25,4
+rate_g_4_1_3,G.4.1.3,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Mistos,20,5
+rate_g_4_2,G.4.2,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Veículos funerários,20,5
+rate_g_4_3,G.4.3,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis","Tractores e atrelados, empilhadores e camiões basculantes",14.28,7
+rate_g_4_4,G.4.4,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Bicicletas e motociclos,25,4
+rate_g_4_5,G.4.5,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Barcos de ferro,7.14,14
+rate_g_4_6,G.4.6,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Barcos de madeira,10,10
+rate_g_4_7,G.4.7,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Barcos de borracha,12.5,8
+rate_g_4_8,G.4.8,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Barcos de fibra de vidro,20,5
+rate_g_4_9,G.4.9,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Locomotivas e automotoras,5,20
+rate_g_4_10,G.4.10,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Vagões,4,25
+rate_g_4_11,G.4.11,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Vias-férreas,4,25
+rate_g_4_12,G.4.12,"G - Comércio, serviços gerais e elementos comuns / Veículos automóveis",Aeronaves,5,20
+rate_g_5_1,G.5.1,"G - Comércio, serviços gerais e elementos comuns / Mobiliário, ferramentas e utensílios",Artigos de conforto e decoração,20,5
+rate_g_5_2,G.5.2,"G - Comércio, serviços gerais e elementos comuns / Mobiliário, ferramentas e utensílios",Equipamento publicitário colocado na via pública,12.5,8
+rate_g_5_3,G.5.3,"G - Comércio, serviços gerais e elementos comuns / Mobiliário, ferramentas e utensílios","Filmes, discos e cassetes",25,4
+rate_g_5_4,G.5.4,"G - Comércio, serviços gerais e elementos comuns / Mobiliário, ferramentas e utensílios",Material de desenho e topografia,12.5,8
+rate_g_5_5_1,G.5.5.1,"G - Comércio, serviços gerais e elementos comuns / Mobiliário",Mobiliário de madeira,16.67,6
+rate_g_5_5_2,G.5.5.2,"G - Comércio, serviços gerais e elementos comuns / Mobiliário",Mobiliário de outros materiais,12.5,8
+rate_g_5_6,G.5.6,"G - Comércio, serviços gerais e elementos comuns / Mobiliário","Moldes, matrizes, formas e cunhos",25,4
+rate_g_5_7,G.5.7,"G - Comércio, serviços gerais e elementos comuns / Mobiliário","Taras, vasilhame e outras embalagens de madeira",20,5
+rate_g_5_8,G.5.8,"G - Comércio, serviços gerais e elementos comuns / Mobiliário","Taras, vasilhame e outras embalagens de metal",14.28,7
+rate_g_5_9,G.5.9,"G - Comércio, serviços gerais e elementos comuns / Mobiliário",Contentores,8.33,12
+rate_g_5_10,G.5.10,"G - Comércio, serviços gerais e elementos comuns / Mobiliário",Encerados,50,2
+rate_g_5_11,G.5.11,"G - Comércio, serviços gerais e elementos comuns / Mobiliário",Ferramentas e utensílios de oficinas,14.28,7
+rate_g_5_12,G.5.12,"G - Comércio, serviços gerais e elementos comuns / Mobiliário",Outras ferramentas e utensílios,25,4
+rate_h_1_1,H.1.1,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares",Edifícios destinados exclusivamente para a hotelaria e a restauração,4,25
+rate_h_1_2,H.1.2,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares","Decorações interiores, incluindo tapeçarias (a)",25,4
+rate_h_1_3,H.1.3,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares","Máquinas e equipamentos de lavandaria, centrifugação e secagem",20,5
+rate_h_1_4,H.1.4,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares","Equipamentos sanitários, de cozinha, e outros de uso específico",14.28,7
+rate_h_1_5,H.1.5,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares",Equipamentos desportivos e de recreio,10,10
+rate_h_1_6,H.1.6,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares","Mobiliário de quartos, salas e salões, e outras dependências",10,10
+rate_h_1_7,H.1.7,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares",Colchoaria e cobertores,33.33,3
+rate_h_1_8,H.1.8,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares",Roupas brancas e atoalhados,50,2
+rate_h_1_9,H.1.9,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares","Louças e objectos de vidro, excepto decorativos",33.33,3
+rate_h_1_10,H.1.10,"H - Alojamento e restauração (restaurantes e similares) / Hotéis, restaurantes, cafés e bares, cantinas e actividades similares",Talheres e utensílios de cozinha,50,2
+rate_i_1_1_1,I.1.1.1,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Túneis e obras de arte,2,50
+rate_i_1_1_2,I.1.1.2,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Redes e canalizações subterrâneas,5,20
+rate_i_1_1_3,I.1.1.3,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Vias férreas,6.67,15
+rate_i_1_1_4,I.1.1.4,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Subestações de electricidade e postos de transformação,5,20
+rate_i_1_1_5,I.1.1.5,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Linhas eléctricas e respectivas instalações,5,20
+rate_i_1_1_6,I.1.1.6,"I - Transportes, armazenagem e comunicações / Transportes ferroviários","Instalações de sinalização, de controlo e de comunicação",12.5,8
+rate_i_1_1_7,I.1.1.7,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Locomotivas e automotoras,7.14,14
+rate_i_1_1_8,I.1.1.8,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Vagões,6.25,16
+rate_i_1_1_9,I.1.1.9,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Carruagens,5,20
+rate_i_1_1_10,I.1.1.10,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Máquinas e equipamentos de carga e descarga,8.33,12
+rate_i_1_1_11,I.1.1.11,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Máquinas e equipamentos de manutenção da via,10,10
+rate_i_1_1_12,I.1.1.12,"I - Transportes, armazenagem e comunicações / Transportes ferroviários",Máquinas e equipamentos de oficinas de reparação e revisão,12.5,8
+rate_i_1_2_1,I.1.2.1,"I - Transportes, armazenagem e comunicações / Transportes rodoviários (a)","Veículos automóveis de serviço público: pesados, ligeiros e mistos",25,4
+rate_i_1_2_2,I.1.2.2,"I - Transportes, armazenagem e comunicações / Transportes rodoviários (a)",Equipamentos de comunicação,25,4
+rate_i_1_2_3,I.1.2.3,"I - Transportes, armazenagem e comunicações / Transportes rodoviários (a)",Máquinas e equipamentos de carga e descarga,12.5,8
+rate_i_1_2_4,I.1.2.4,"I - Transportes, armazenagem e comunicações / Transportes rodoviários (a)",Máquinas e equipamentos de oficinas de reparação e revisão,12.5,8
+rate_i_2_1,I.2.1,"I - Transportes, armazenagem e comunicações / Transportes por água",Navios de carga geral e navios mistos de passageiros e de carga,10,10
+rate_i_2_2,I.2.2,"I - Transportes, armazenagem e comunicações / Transportes por água","Navios de passageiros, ferries, graneleiros, porta-contentores, navios-tanque, navios-frigorífico e outros navios especializados",8.33,12
+rate_i_2_3,I.2.3,"I - Transportes, armazenagem e comunicações / Transportes por água","Dragas, gruas flutuantes, barcaças, etc. de ferro",8.33,12
+rate_i_2_4,I.2.4,"I - Transportes, armazenagem e comunicações / Transportes por água","Fragatas, barcaças e outras embarcações de madeira",10,10
+rate_i_2_5,I.2.5,"I - Transportes, armazenagem e comunicações / Transportes por água",Embarcações de borracha,10,10
+rate_i_2_6,I.2.6,"I - Transportes, armazenagem e comunicações / Transportes por água",Embarcações de fibra de vidro,25,4
+rate_i_2_7,I.2.7,"I - Transportes, armazenagem e comunicações / Transportes por água",Máquinas e instalações portuárias,10,10
+rate_i_2_8,I.2.8,"I - Transportes, armazenagem e comunicações / Transportes por água",Máquinas e equipamentos de oficinas de reparação e revisão,12.5,8
+rate_i_3_1,I.3.1,"I - Transportes, armazenagem e comunicações / Transportes aéreos",Aviões com motores de reacção,10,10
+rate_i_3_2,I.3.2,"I - Transportes, armazenagem e comunicações / Transportes aéreos",Aviões com motores a turbo-hélice,12.5,8
+rate_i_3_3,I.3.3,"I - Transportes, armazenagem e comunicações / Transportes aéreos",Aviões com motores convencionais,25,4
+rate_i_3_4,I.3.4,"I - Transportes, armazenagem e comunicações / Transportes aéreos",Frota terrestre,20,5
+rate_i_3_5,I.3.5,"I - Transportes, armazenagem e comunicações / Transportes aéreos","Equipamentos auxiliares, nos aeroportos, para carga, embarque, etc.",10,10
+rate_i_3_6,I.3.6,"I - Transportes, armazenagem e comunicações / Transportes aéreos",Máquinas e equipamentos de oficinas de reparação e revisão,12.5,8
+rate_i_4_1,I.4.1,"I - Transportes, armazenagem e comunicações / Telecomunicações",Centrais de transmissão e de recepção por satélite,20,5
+rate_i_4_2,I.4.2,"I - Transportes, armazenagem e comunicações / Telecomunicações",Outras centrais de transmissão e de recepção,20,5
+rate_i_4_3,I.4.3,"I - Transportes, armazenagem e comunicações / Telecomunicações",Redes aéreas e respectivos suportes,5,20
+rate_i_4_4,I.4.4,"I - Transportes, armazenagem e comunicações / Telecomunicações",Cabos subterrâneos,10,10
+rate_i_4_5,I.4.5,"I - Transportes, armazenagem e comunicações / Telecomunicações",Cabos submarinos,5,20
+rate_i_4_6,I.4.6,"I - Transportes, armazenagem e comunicações / Telecomunicações","Equipamentos de sincronização, de controlo e de comutação analógica e digital",20,5
+rate_i_4_7,I.4.7,"I - Transportes, armazenagem e comunicações / Telecomunicações",Antenas de radiocomunicação,10,10
+rate_i_4_8,I.4.8,"I - Transportes, armazenagem e comunicações / Telecomunicações",Postos públicos e particulares,10,10
+rate_i_5_1,I.5.1,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Pavimento flexível de pista de aviação,6.67,15
+rate_i_5_2,I.5.2,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Pavimento flexível de caminhos de circulação de avião,8.33,12
+rate_i_5_3,I.5.3,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Pavimento rígido de pista de avião,5,20
+rate_i_5_4,I.5.4,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Pavimento rígido para caminho de circulação,6.67,15
+rate_i_5_5,I.5.5,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Pavimento flexível da placa de estacionamento de aeronaves,6.67,15
+rate_i_5_6,I.5.6,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Heliportos de pavimento flexível,6.67,15
+rate_i_5_7,I.5.7,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Helidecks suportados por navios,7.15,14
+rate_i_5_8,I.5.8,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Terminais de passageiros em alvenaria,6.67,15
+rate_i_5_9,I.5.9,"I - Transportes, armazenagem e comunicações / Infra-estruturas aeroportuárias",Outras infra-estruturas,10,10
+rate_i_6_1,I.6.1,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",ILS,10,10
+rate_i_6_2,I.6.2,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",HF,12.5,8
+rate_i_6_3,I.6.3,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",VHF,10,10
+rate_i_6_4,I.6.4,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",CVOR,12.5,8
+rate_i_6_5,I.6.5,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",DVOR,10,10
+rate_i_6_6,I.6.6,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",ADS-C,8.33,12
+rate_i_6_7,I.6.7,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",RADAR secundário,7.15,14
+rate_i_6_8,I.6.8,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",Simulador do tráfego aéreo,14.28,7
+rate_i_6_9,I.6.9,"I - Transportes, armazenagem e comunicações / Equipamentos aeronáuticos",PAPI,16.67,6
+rate_i_7_1,I.7.1,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Mangas ou escadas telescópica,10,10
+rate_i_7_2,I.7.2,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Loader (carregador de porão de aeronave),5,20
+rate_i_7_3,I.7.3,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Trailer,5,20
+rate_i_7_4,I.7.4,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Tractor rebocador,10,10
+rate_i_7_5,I.7.5,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Veiculo lavabos,10,10
+rate_i_7_6,I.7.6,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Ambolice (transporte de passageiros com incapacidade física),6.67,15
+rate_i_7_7,I.7.7,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Aspirador de bordo da aeronave,20,5
+rate_i_7_8,I.7.8,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Autocarro de passageiro com suspensão pneumática,6.67,15
+rate_i_7_9,I.7.9,"I - Transportes, armazenagem e comunicações / Equipamentos de assistência em terra as aeronaves",Autocarro VIP,10,10
+rate_i_8_1,I.8.1,"I - Transportes, armazenagem e comunicações / Equipamentos de combate a incêndio a aeronave",Veículos de combate a incêndios de aeronave,10,10
+rate_i_8_2,I.8.2,"I - Transportes, armazenagem e comunicações / Equipamentos de combate a incêndio a aeronave",Espuma para incêndio,10,10
+rate_i_8_3,I.8.3,"I - Transportes, armazenagem e comunicações / Equipamentos de combate a incêndio a aeronave",Vestuário de protecção ao fogo,10,10
+rate_i_9_1,I.9.1,"I - Transportes, armazenagem e comunicações / Equipamentos de segurança",Raio-X,20,5
+rate_i_9_2,I.9.2,"I - Transportes, armazenagem e comunicações / Equipamentos de segurança",Pórtico detector de metais,20,5
+rate_i_9_3,I.9.3,"I - Transportes, armazenagem e comunicações / Equipamentos de segurança",Detector portátil de metais,20,5
+rate_i_9_4,I.9.4,"I - Transportes, armazenagem e comunicações / Equipamentos de segurança",Circuito fechado de TV (CCTV),50,2
+rate_i_9_5,I.9.5,"I - Transportes, armazenagem e comunicações / Equipamentos de segurança",Sistema de detecção de explosivos (EDS),10,10
+rate_i_10_1,I.10.1,"I - Transportes, armazenagem e comunicações / Material circulante",Locomotivas,7.15,14
+rate_i_10_2,I.10.2,"I - Transportes, armazenagem e comunicações / Material circulante",Vagões,5.55,18
+rate_i_10_3,I.10.3,"I - Transportes, armazenagem e comunicações / Material circulante",Carruagens,5.55,18
+rate_i_10_4,I.10.4,"I - Transportes, armazenagem e comunicações / Material circulante",Furgões,5.55,18
+rate_i_10_5,I.10.5,"I - Transportes, armazenagem e comunicações / Material circulante",Powercar,5.55,18
+rate_i_10_6,I.10.6,"I - Transportes, armazenagem e comunicações / Material circulante",Porta contentor,5.55,18
+rate_i_10_7,I.10.7,"I - Transportes, armazenagem e comunicações / Material circulante",Cisterna de Combustível,5.55,18
+rate_i_10_8,I.10.8,"I - Transportes, armazenagem e comunicações / Material circulante","Automóvel de linha (zorras, locotractores)",5.55,18
+rate_j_1_1,J.1.1,J - Telecomunicações e tecnologias de informação,Aparelho de medição e orientação,10,10
+rate_j_1_2,J.1.2,J - Telecomunicações e tecnologias de informação,Equipamento de processamento de dados,33.33,3
+rate_j_1_3,J.1.3,J - Telecomunicações e tecnologias de informação,Grupos electrogéneos e conversores rotativos eléctricos,16.66,6
+rate_j_1_4,J.1.4,J - Telecomunicações e tecnologias de informação,"Transformadores eléctricos, conversores eléctricos estáticos",20,5
+rate_j_1_5,J.1.5,J - Telecomunicações e tecnologias de informação,Máquina electromecânica de motor eléctrico para tosquiar,20,5
+rate_j_1_6,J.1.6,J - Telecomunicações e tecnologias de informação,"Fornos eléctricos industriais ou de laboratório, incluídos os que perdas dieléctricas",10,10
+rate_j_1_7,J.1.7,J - Telecomunicações e tecnologias de informação,"Máquina e aparelho para soldar eléctrico, a laser ou outros feixes de luz ou de fotões, a ultra-som, a feixes de electrões, a impulsos magnéticos, ou jacto de plasma",10,10
+rate_j_1_8,J.1.8,J - Telecomunicações e tecnologias de informação,"Aparelhos eléctricos para aquecimento de ambientes, do solo ou para usos semelhantes",10,10
+rate_j_1_9,J.1.9,J - Telecomunicações e tecnologias de informação,Gravadores de dados de voo,20,5
+rate_j_1_10,J.1.10,J - Telecomunicações e tecnologias de informação,"Aparelhos de radiodetecção e de radio sondagem (radar), radionavegação e radio telecomando",16.66,6
+rate_j_1_11,J.1.11,J - Telecomunicações e tecnologias de informação,"Binóculos, lunetas, incluídas as astronómicas, telescópios ópticos e suas armações, excepto os aparelhos de radioastronomia",16.66,6
+rate_j_1_12,J.1.12,J - Telecomunicações e tecnologias de informação,"Microscópios ópticos e não ópticos, incluídos os microscópios para fotomicrografia, cinefotomicrografia ou microprojecção, difratógrafos difratógrafos",10,10
+rate_j_1_13,J.1.13,J - Telecomunicações e tecnologias de informação,"Bússolas, incluídas as agulhas de marear, aparelho de navegação",10,10
+rate_j_1_14,J.1.14,J - Telecomunicações e tecnologias de informação,"Instrumentos e aparelhos de geodesia, topografia, agrimensura nivelamento, fotogrametria, hidrografia, oceanografia, meteorologia ou de geofísica, excepto bússolas, telémetros",6.66,15
+rate_j_1_15,J.1.15,J - Telecomunicações e tecnologias de informação,Estação Meteorológica,20,5
+rate_j_1_16,J.1.16,J - Telecomunicações e tecnologias de informação,Estação Sísmica,10,10
+rate_j_1_17,J.1.17,J - Telecomunicações e tecnologias de informação,Centrais de transmissão e de recepção por satélite,20,5
+rate_j_1_18,J.1.18,J - Telecomunicações e tecnologias de informação,Cabos subterrâneos,8.33,12
+rate_j_1_19,J.1.19,J - Telecomunicações e tecnologias de informação,Cabos submarinos,6.66,1.20
+rate_j_1_20,J.1.20,J - Telecomunicações e tecnologias de informação,Outros instrumentos e aparelhos não especificados,10,10
+rate_k_1_1,K.1.1,K - Actividades financeiras,"Equipamentos de segurança, prevenção e vigilância",12.5,8
+rate_k_1_2,K.1.2,K - Actividades financeiras,Cofres e casas fortes,6.67,15
+rate_k_1_3,K.1.3,K - Actividades financeiras,Caixas automáticas de operações bancárias para uso público (ATM),16.67,6
+rate_k_1_4,K.1.4,K - Actividades financeiras,Terminais de pagamento de serviços (POS),20,5
+rate_k_1_5,K.1.5,K - Actividades financeiras,Máquinas electrónicas de contagem de dinheiro,20,5
+rate_k_1_6,K.1.6,K - Actividades financeiras,Outras máquinas e equipamentos de uso específico,20,5
+rate_l_1_1,L.1.1,L - Saúde e acção social / Saúde e acção social,Edifícios destinados exclusivamente á prestação de serviços de saúde,2.5,40
+rate_l_1_2,L.1.2,L - Saúde e acção social / Saúde e acção social,"Equipamentos, aparelhagem, instrumentos e outro material médico-cirúrgico",25,4
+rate_l_1_3,L.1.3,L - Saúde e acção social / Saúde e acção social,"Decorações interiores, incluindo tapeçarias",20,5
+rate_l_1_4,L.1.4,L - Saúde e acção social / Saúde e acção social,"Máquinas e equipamentos de lavandaria, centrifugação e secagem",12.5,8
+rate_l_1_5,L.1.5,L - Saúde e acção social / Saúde e acção social,"Equipamentos sanitários, de cozinha, e outros de uso específico",14.28,7
+rate_l_1_6,L.1.6,L - Saúde e acção social / Saúde e acção social,Mobiliário de quartos e enfermarias,12.5,8
+rate_l_1_7,L.1.7,L - Saúde e acção social / Saúde e acção social,"Mobiliário de salas e salões, e outras dependências",10,10
+rate_l_1_8,L.1.8,L - Saúde e acção social / Saúde e acção social,Colchoaria e cobertores,20,5
+rate_l_1_9,L.1.9,L - Saúde e acção social / Saúde e acção social,Roupas brancas e atoalhados,50,2
+rate_l_1_10,L.1.10,L - Saúde e acção social / Saúde e acção social,"Louças e objectos de vidro, excepto decorativos",33.33,3
+rate_l_1_11,L.1.11,L - Saúde e acção social / Saúde e acção social,Talheres e utensílios de cozinha,25,4
+rate_l_1_12,L.1.12,L - Saúde e acção social / Saúde e acção social,"Outro material, aparelhos, utensílios e instalações de uso específico",14.28,7
+rate_l_1_13,L.1.13,L - Saúde e acção social / Saúde e acção social,Ambulâncias e seus apetrechos,20,5
+rate_m_1_1,M.1.1,"M - Outras actividades de serviços colectivos, sociais e pessoais / Saneamento, higiene pública e actividades similares",Veículos de limpeza urbana e de recolha de lixo urbano,20,5
+rate_m_1_2,M.1.2,"M - Outras actividades de serviços colectivos, sociais e pessoais / Saneamento, higiene pública e actividades similares",Contentores urbanos de lixo - metálicos,20,5
+rate_m_1_3,M.1.3,"M - Outras actividades de serviços colectivos, sociais e pessoais / Saneamento, higiene pública e actividades similares",Contentores urbanos de lixo - plásticos,25,4
+rate_m_1_4,M.1.4,"M - Outras actividades de serviços colectivos, sociais e pessoais / Saneamento, higiene pública e actividades similares","Máquinas e equipamentos de uso específico, tais como compactadores, carregadores e lava-contententores",14.28,7
+rate_m_2_1,M.2.1,"M - Outras actividades de serviços colectivos, sociais e pessoais / Actividades de rádio, de televisão e de multimédia",Instalações técnicas de radiodifusão e de televisão,16.66,6
+rate_m_2_2,M.2.2,"M - Outras actividades de serviços colectivos, sociais e pessoais / Actividades de rádio, de televisão e de multimédia",Instalações técnicas de radiocomunicação,10,10
+rate_m_2_3,M.2.3,"M - Outras actividades de serviços colectivos, sociais e pessoais / Actividades de rádio, de televisão e de multimédia",Equipamento móvel de radiodifusão e televisão,20,5
+rate_m_2_4,M.2.4,"M - Outras actividades de serviços colectivos, sociais e pessoais / Actividades de rádio, de televisão e de multimédia",Equipamento de sincronização e controlo,14.28,7
+rate_m_2_5,M.2.5,"M - Outras actividades de serviços colectivos, sociais e pessoais / Actividades de rádio, de televisão e de multimédia",Equipamento de gravação e registo,25,4
+rate_m_2_6,M.2.6,"M - Outras actividades de serviços colectivos, sociais e pessoais / Actividades de rádio, de televisão e de multimédia","Videocâmaras, videoprojectores, misturadores, digitalisadores, etc.",25,4
+rate_m_2_7,M.2.7,"M - Outras actividades de serviços colectivos, sociais e pessoais / Actividades de rádio, de televisão e de multimédia","Retroprojectores, projectores de diapositivos, monitores, equipamentos de tradução simultânea, etc.",20,5
+rate_m_2_8,M.2.8,"M - Outras actividades de serviços colectivos, sociais e pessoais / Actividades de rádio, de televisão e de multimédia",Tripés e equipamentos de iluminação,16.66,6
+rate_m_3_1,M.3.1,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas","Cabines e salas de projecção, montagem, dobragem, revelação, cópia, etc.",12.5,8
+rate_m_3_2,M.3.2,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas","Máquinas e equipamentos de som, de projecção, montagem, dobragem, revelação e cópia",14.28,7
+rate_m_3_3,M.3.3,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas","Máquinas e equipamentos de rodagem, incluindo câmaras, projectores, cabos, etc.",25,4
+rate_m_3_4,M.3.4,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas","Produções cinematográficas, fonográficas e de vídeo",33.33,3
+rate_m_3_5,M.3.5,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas",Edifícios destinados exclusivamente a espectáculos,4,50
+rate_m_3_6,M.3.6,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas","Decorações interiores, incluindo tapeçarias",20,5
+rate_m_3_7,M.3.7,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas",Cortinas metálicas contra incêndio,5,20
+rate_m_3_8,M.3.8,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas",Instalações desmontáveis,20,5
+rate_m_3_9,M.3.9,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas",Máquinas recreativas e de jogos de azar,20,5
+rate_m_3_10,M.3.10,"M - Outras actividades de serviços colectivos, sociais e pessoais / Outras actividades recreativas, culturais e desportivas",Outros equipamentos e aparelhos de uso específico,12.5,8
+rate_m_4_1_1,M.4.1.1,"M - Outras actividades de serviços colectivos, sociais e pessoais / Lavandarias","Máquinas de lavagem, de centrifugação e de secagem",12.5,8
+rate_m_4_1_2,M.4.1.2,"M - Outras actividades de serviços colectivos, sociais e pessoais / Lavandarias",Máquinas de limpeza a seco,12.5,8
+rate_m_4_1_3,M.4.1.3,"M - Outras actividades de serviços colectivos, sociais e pessoais / Lavandarias",Outras máquinas e equipamentos de uso específico,14.28,7
+rate_m_4_2_1,M.4.2.1,"M - Outras actividades de serviços colectivos, sociais e pessoais / Salões de cabeleireiro e institutos de beleza",Cadeiras articuladas para salões de cabeleireiro e camas de massagens e estética,12.5,8
+rate_m_4_2_2,M.4.2.2,"M - Outras actividades de serviços colectivos, sociais e pessoais / Salões de cabeleireiro e institutos de beleza","Aparelhos e instrumentos para massagens, depilação, secagem e trabalhos similares",14.28,7
+rate_m_4_2_3,M.4.2.3,"M - Outras actividades de serviços colectivos, sociais e pessoais / Salões de cabeleireiro e institutos de beleza",Instalações de uso específico,10,10
+rate_m_4_2_4,M.4.2.4,"M - Outras actividades de serviços colectivos, sociais e pessoais / Salões de cabeleireiro e institutos de beleza",Roupas e fardas,33.33,3
+rate_m_4_2_5,M.4.2.5,"M - Outras actividades de serviços colectivos, sociais e pessoais / Salões de cabeleireiro e institutos de beleza","Aparelho eléctrico de sinalização acústica ou visual, sirenes contra roubos, alarmes, quadros indicadores",16.66,6
+rate_m_4_2_6,M.4.2.6,"M - Outras actividades de serviços colectivos, sociais e pessoais / Salões de cabeleireiro e institutos de beleza","Painéis indicadores com dispositivos de cristais líquidos, lcd, led para publicitários",20,5
+rate_n_1,N.1,N - Activo incorpóreo,"Despesas de investigação e desenvolvimento, incluindo elementos de propriedade industrial como patentes, marcas, alvarás e processos de fabrico",20,5
+rate_cii_39_3,CII.39.3,N - Activo incorpóreo,"Incorpóreo com período de utilidade não determinável (CII, art. 39.º, n.º 3)",20,5
+rate_cii_39_4,CII.39.4,N - Activo incorpóreo,"Programas informáticos (CII, art. 39.º, n.º 4)",33.33,3
