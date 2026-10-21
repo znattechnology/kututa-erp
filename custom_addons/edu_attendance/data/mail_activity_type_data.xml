@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_activity_type_absence" model="mail.activity.type">
+        <field name="name">Faltas: aluno em risco</field>
+        <field name="icon">fa-user-times</field>
+        <field name="res_model">edu.enrollment</field>
+        <field name="delay_count">2</field>
+    </record>
+</odoo>

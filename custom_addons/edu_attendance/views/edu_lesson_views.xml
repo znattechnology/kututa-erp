@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_lesson_list" model="ir.ui.view">
+        <field name="name">edu.lesson.list</field>
+        <field name="model">edu.lesson</field>
+        <field name="arch" type="xml">
+            <list string="Aulas" decoration-muted="state == 'cancelled'" decoration-info="state == 'scheduled'">
+                <field name="date"/>
+                <field name="hour_from" widget="float_time" optional="show"/>
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <field name="lesson_number" optional="show"/>
+                <field name="teacher_id" optional="show"/>
+                <field name="summary" optional="show"/>
+                <field name="absent_count" optional="show"/>
+                <field name="trimester_id" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-info="state == 'scheduled'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_lesson_form" model="ir.ui.view">
+        <field name="name">edu.lesson.form</field>
+        <field name="model">edu.lesson</field>
+        <field name="arch" type="xml">
+            <form string="Aula">
+                <header>
+                    <button name="action_open_roll_call" type="object" string="Abrir a chamada" class="btn-primary"
+                            invisible="state == 'cancelled' or attendance_ids"/>
+                    <button name="action_done" type="object" string="Aula dada" class="btn-primary"
+                            invisible="state != 'scheduled' or not attendance_ids"/>
+                    <button name="action_cancel" type="object" string="Não se realizou" invisible="state != 'scheduled'"/>
+                    <button name="action_reset" type="object" string="Voltar a prevista" invisible="state == 'scheduled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="scheduled,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h2><field name="display_name" readonly="1"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="class_id" options="{'no_create': True}" readonly="schedule_id"/>
+                            <field name="subject_id" options="{'no_create': True}" readonly="schedule_id"/>
+                            <field name="teacher_id" options="{'no_create': True}"/>
+                            <field name="schedule_id" invisible="not schedule_id"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <label for="hour_from" string="Hora"/>
+                            <div class="o_row">
+                                <field name="hour_from" widget="float_time"/> - <field name="hour_to" widget="float_time"/>
+                            </div>
+                            <field name="room_id" options="{'no_create': True}"/>
+                            <field name="trimester_id"/>
+                            <field name="lesson_number" invisible="not lesson_number"/>
+                        </group>
+                    </group>
+                    <group string="Sumário">
+                        <field name="summary" nolabel="1" placeholder="O que foi leccionado nesta aula"/>
+                    </group>
+                    <notebook>
+                        <page string="Chamada" name="roll_call">
+                            <field name="attendance_ids">
+                                <list editable="bottom" create="0" decoration-danger="state == 'absent'" decoration-warning="state == 'late'" decoration-muted="state == 'excused'">
+                                    <field name="order_number"/>
+                                    <field name="student_id"/>
+                                    <field name="enrollment_id" column_invisible="1"/>
+                                    <field name="state" widget="radio" options="{'horizontal': true}"/>
+                                    <field name="justification" optional="show"/>
+                                    <field name="note" optional="hide"/>
+                                    <field name="justified_by_id" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observações" name="note"><field name="note" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_lesson_search" model="ir.ui.view">
+        <field name="name">edu.lesson.search</field>
+        <field name="model">edu.lesson</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <field name="teacher_id"/>
+                <filter name="mine" string="As minhas aulas" domain="[('teacher_id.user_id', '=', uid)]"/>
+                <filter name="today" string="Hoje" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="scheduled" string="Por dar" domain="[('state', '=', 'scheduled')]"/>
+                <filter name="no_summary" string="Sem sumário" domain="[('state', '=', 'done'), ('summary', '=', False)]"/>
+                <filter name="date" string="Data" date="date"/>
+                <group>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                    <filter name="group_subject" string="Disciplina" context="{'group_by': 'subject_id'}"/>
+                    <filter name="group_teacher" string="Professor" context="{'group_by': 'teacher_id'}"/>
+                    <filter name="group_trimester" string="Trimestre" context="{'group_by': 'trimester_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_lesson" model="ir.actions.act_window">
+        <field name="name">Aulas e sumários</field>
+        <field name="res_model">edu.lesson</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Gere as aulas da semana a partir do horário</p>
+            <p>Em cada aula: abra a chamada, marque as faltas, escreva o sumário e dê a aula por dada.</p>
+        </field>
+    </record>
+
+    <record id="edu_lesson_attendance_list" model="ir.ui.view">
+        <field name="name">edu.lesson.attendance.list</field>
+        <field name="model">edu.lesson.attendance</field>
+        <field name="arch" type="xml">
+            <list string="Faltas" editable="bottom" create="0" decoration-danger="state == 'absent'" decoration-muted="state == 'excused'">
+                <field name="date" readonly="1"/>
+                <field name="class_id" readonly="1"/>
+                <field name="subject_id" readonly="1"/>
+                <field name="student_id" readonly="1"/>
+                <field name="state"/>
+                <field name="justification"/>
+                <field name="justified_by_id" optional="show"/>
+                <field name="justified_date" optional="hide"/>
+                <button name="action_justify" type="object" string="Justificar" icon="fa-check" invisible="state != 'absent'"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_lesson_attendance_search" model="ir.ui.view">
+        <field name="name">edu.lesson.attendance.search</field>
+        <field name="model">edu.lesson.attendance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="student_id"/>
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <filter name="absent" string="Por justificar" domain="[('state', '=', 'absent')]"/>
+                <filter name="excused" string="Justificadas" domain="[('state', '=', 'excused')]"/>
+                <group>
+                    <filter name="group_student" string="Aluno" context="{'group_by': 'student_id'}"/>
+                    <filter name="group_subject" string="Disciplina" context="{'group_by': 'subject_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_edu_lesson_attendance" model="ir.actions.act_window">
+        <field name="name">Justificação de faltas</field>
+        <field name="res_model">edu.lesson.attendance</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('state', 'in', ('absent', 'excused')), ('lesson_state', '=', 'done')]</field>
+        <field name="context">{'search_default_absent': 1}</field>
+    </record>
+
+    <menuitem id="menu_edu_lesson" action="action_edu_lesson" parent="edu_core.menu_edu_academic" sequence="50"/>
+    <menuitem id="menu_edu_lesson_generate" action="action_edu_lesson_generate" parent="edu_core.menu_edu_academic" sequence="52"
+              groups="edu_core.group_edu_user"/>
+    <menuitem id="menu_edu_lesson_attendance" action="action_edu_lesson_attendance" parent="edu_core.menu_edu_academic" sequence="55"
+              groups="edu_core.group_edu_user"/>
+</odoo>

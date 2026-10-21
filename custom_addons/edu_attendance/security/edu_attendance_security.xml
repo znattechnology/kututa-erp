@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_core.menu_edu_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(4, ref('edu_core.group_edu_teacher'))]"/>
+    </record>
+</odoo>

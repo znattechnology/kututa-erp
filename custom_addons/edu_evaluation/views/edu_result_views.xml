@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Mini-pauta (por trimestre) -->
+    <record id="edu_term_result_list" model="ir.ui.view">
+        <field name="name">edu.term.result.list</field>
+        <field name="model">edu.term.result</field>
+        <field name="arch" type="xml">
+            <list string="Mini-pauta" create="0" edit="0" decoration-danger="has_mt and mt &lt; 10">
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <field name="trimester_id"/>
+                <field name="order_number"/>
+                <field name="student_id"/>
+                <field name="mac"/>
+                <field name="npt"/>
+                <field name="mt"/>
+                <field name="has_mt" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_term_result_search" model="ir.ui.view">
+        <field name="name">edu.term.result.search</field>
+        <field name="model">edu.term.result</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <field name="student_id"/>
+                <field name="trimester_id"/>
+                <group>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                    <filter name="group_subject" string="Disciplina" context="{'group_by': 'subject_id'}"/>
+                    <filter name="group_trimester" string="Trimestre" context="{'group_by': 'trimester_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_edu_term_result" model="ir.actions.act_window">
+        <field name="name">Mini-pautas</field>
+        <field name="res_model">edu.term.result</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_group_class': 1, 'search_default_group_subject': 1, 'search_default_group_trimester': 1}</field>
+    </record>
+
+    <!-- Pauta anual -->
+    <record id="edu_subject_result_list" model="ir.ui.view">
+        <field name="name">edu.subject.result.list</field>
+        <field name="model">edu.subject.result</field>
+        <field name="arch" type="xml">
+            <list string="Pauta" create="0" edit="0" decoration-danger="complete and not passed" decoration-warning="borderline">
+                <field name="class_id"/>
+                <field name="order_number"/>
+                <field name="student_id"/>
+                <field name="subject_id"/>
+                <field name="mt1"/>
+                <field name="mt2"/>
+                <field name="mt3"/>
+                <field name="cf"/>
+                <field name="pg" optional="show"/>
+                <field name="national" optional="show"/>
+                <field name="annual"/>
+                <field name="council_points" optional="show"/>
+                <field name="final"/>
+                <field name="cfd" optional="hide"/>
+                <field name="complete" optional="hide"/>
+                <field name="passed"/>
+                <field name="borderline" column_invisible="1"/>
+                <button name="action_grant_one" type="object" string="+1" invisible="not borderline"/>
+                <button name="action_grant_two" type="object" string="+2" invisible="not borderline"/>
+                <button name="action_council_vote" type="object" string="Votar +2" invisible="not borderline"/>
+                <button name="action_remove_points" type="object" string="Retirar" invisible="not council_points"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_subject_result_form" model="ir.ui.view">
+        <field name="name">edu.subject.result.form</field>
+        <field name="model">edu.subject.result</field>
+        <field name="arch" type="xml">
+            <form string="Resultado anual" create="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="student_id"/>
+                            <field name="class_id"/>
+                            <field name="subject_id"/>
+                            <field name="terminal_subject"/>
+                        </group>
+                        <group>
+                            <field name="mt1"/>
+                            <field name="mt2"/>
+                            <field name="mt3"/>
+                            <field name="cf"/>
+                            <field name="has_imported_cf" groups="edu_core.group_edu_manager"/>
+                            <field name="imported_cf" invisible="not has_imported_cf" groups="edu_core.group_edu_manager"/>
+                            <field name="pg" invisible="not has_global_exam"/>
+                            <field name="national" invisible="not has_national"/>
+                            <field name="has_global_exam" invisible="1"/>
+                            <field name="has_national" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="annual"/>
+                            <field name="council_points"/>
+                            <field name="council_source" invisible="not council_points"/>
+                            <field name="special_exam" invisible="not has_special_exam"/>
+                            <field name="has_special_exam" invisible="1"/>
+                            <field name="final"/>
+                            <field name="cfd"/>
+                            <field name="complete"/>
+                            <field name="passed"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="edu_subject_result_pivot" model="ir.ui.view">
+        <field name="name">edu.subject.result.pivot</field>
+        <field name="model">edu.subject.result</field>
+        <field name="arch" type="xml">
+            <pivot string="Pauta">
+                <field name="student_id" type="row"/>
+                <field name="subject_id" type="col"/>
+                <field name="final" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="edu_subject_result_search" model="ir.ui.view">
+        <field name="name">edu.subject.result.search</field>
+        <field name="model">edu.subject.result</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="class_id"/>
+                <field name="student_id"/>
+                <field name="subject_id"/>
+                <filter name="negative" string="Negativas" domain="[('complete', '=', True), ('passed', '=', False)]"/>
+                <separator/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <group>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                    <filter name="group_student" string="Aluno" context="{'group_by': 'student_id'}"/>
+                    <filter name="group_subject" string="Disciplina" context="{'group_by': 'subject_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_edu_subject_result" model="ir.actions.act_window">
+        <field name="name">Pautas</field>
+        <field name="res_model">edu.subject.result</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="context">{'search_default_current_year': 1, 'search_default_group_class': 1}</field>
+    </record>
+</odoo>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_council_session_form" model="ir.ui.view">
+        <field name="name">edu.council.session.form</field>
+        <field name="model">edu.council.session</field>
+        <field name="arch" type="xml">
+            <form string="Conselho de turma">
+                <header>
+                    <button name="action_realize" type="object" string="Realizar o conselho" class="btn-primary" invisible="state != 'open'"
+                            confirm="Realizado o conselho, a pauta fecha e calculam-se as decisões de transição. Continuar?"/>
+                    <button name="action_reopen" type="object" string="Reabrir" invisible="state != 'realized'" groups="edu_core.group_edu_manager"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="class_id" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="director_id"/>
+                            <field name="academic_year_id"/>
+                        </group>
+                        <group>
+                            <field name="realized_by_id" invisible="not realized_by_id"/>
+                            <field name="realized_date" invisible="not realized_date"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Casos limite" name="borderline">
+                            <field name="borderline_ids" readonly="1">
+                                <list>
+                                    <field name="order_number"/>
+                                    <field name="student_id"/>
+                                    <field name="subject_id"/>
+                                    <field name="annual"/>
+                                    <field name="borderline" column_invisible="1"/>
+                                    <button name="action_council_vote" type="object" string="Abrir votação (+2)"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Votações" name="votes">
+                            <field name="vote_ids" readonly="1">
+                                <list>
+                                    <field name="student_id"/>
+                                    <field name="subject_id"/>
+                                    <field name="base"/>
+                                    <field name="favor"/>
+                                    <field name="against"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'applied'" decoration-danger="state == 'rejected'"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="edu_council_session_list" model="ir.ui.view">
+        <field name="name">edu.council.session.list</field>
+        <field name="model">edu.council.session</field>
+        <field name="arch" type="xml">
+            <list string="Conselhos de turma">
+                <field name="class_id"/>
+                <field name="director_id"/>
+                <field name="realized_date"/>
+                <field name="state" widget="badge" decoration-success="state == 'realized'"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_edu_council_session" model="ir.actions.act_window">
+        <field name="name">Conselhos de turma</field>
+        <field name="res_model">edu.council.session</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="edu_council_vote_form" model="ir.ui.view">
+        <field name="name">edu.council.vote.form</field>
+        <field name="model">edu.council.vote</field>
+        <field name="arch" type="xml">
+            <form string="Votação">
+                <header>
+                    <button name="action_vote_favor" type="object" string="Voto a favor" class="btn-primary" invisible="state != 'open'"/>
+                    <button name="action_vote_against" type="object" string="Voto contra" invisible="state != 'open'"/>
+                    <button name="action_close" type="object" string="Fechar a votação" invisible="state != 'open'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="session_id" readonly="1"/>
+                            <field name="student_id"/>
+                            <field name="subject_id"/>
+                            <field name="base"/>
+                        </group>
+                        <group>
+                            <field name="favor"/>
+                            <field name="against"/>
+                        </group>
+                    </group>
+                    <field name="ballot_ids" readonly="1">
+                        <list>
+                            <field name="teacher_id"/>
+                            <field name="in_favor"/>
+                        </list>
+                    </field>
+                    <div class="text-muted">Votação nominal, sem abstenção: +2 valores aprovados por maioria dos votos. No técnico, votam pelo menos metade dos professores da turma.</div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

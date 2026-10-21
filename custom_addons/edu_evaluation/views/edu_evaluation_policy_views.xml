@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_evaluation_policy_list" model="ir.ui.view">
+        <field name="name">edu.evaluation.policy.list</field>
+        <field name="model">edu.evaluation.policy</field>
+        <field name="arch" type="xml">
+            <list string="Regimes de avaliação">
+                <field name="level_id"/>
+                <field name="regime"/>
+                <field name="scale_max"/>
+                <field name="pass_grade"/>
+                <field name="rounding"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_evaluation_policy_form" model="ir.ui.view">
+        <field name="name">edu.evaluation.policy.form</field>
+        <field name="model">edu.evaluation.policy</field>
+        <field name="arch" type="xml">
+            <form string="Regime de avaliação">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group string="Escala">
+                            <field name="level_id" options="{'no_create': True}"/>
+                            <field name="regime"/>
+                            <field name="scale_max"/>
+                            <field name="pass_grade"/>
+                            <field name="floor"/>
+                            <field name="rounding"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Fórmulas">
+                            <field name="mac_weight" invisible="regime == 'technical'"/>
+                            <field name="exam_classes" invisible="regime == 'technical'"/>
+                            <field name="national_exam_weight" invisible="regime == 'technical'"/>
+                            <field name="national_exam_weight_12" invisible="regime == 'technical'"/>
+                            <field name="cf_weight" invisible="regime != 'technical'"/>
+                            <field name="technical_ca_precise" invisible="regime != 'technical'"/>
+                            <field name="course_formula" invisible="regime != 'technical'"/>
+                        </group>
+                        <group string="Transição">
+                            <field name="conditional_classes"/>
+                            <field name="conditional_max"/>
+                            <field name="forbidden_pairs"/>
+                            <field name="exam_max"/>
+                            <field name="auto_promote_classes"/>
+                            <field name="structuring_codes"/>
+                            <field name="min_attendance"/>
+                            <field name="max_retentions"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_evaluation_policy" model="ir.actions.act_window">
+        <field name="name">Regimes de avaliação</field>
+        <field name="res_model">edu.evaluation.policy</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p>Os regimes são criados com os valores do RAA e do Despacho 60/08 na primeira avaliação de cada nível.</p>
+        </field>
+    </record>
+</odoo>

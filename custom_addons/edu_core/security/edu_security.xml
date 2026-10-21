@@ -11,6 +11,14 @@
         <field name="category_id" ref="module_category_secretaria_express"/>
     </record>
 
+    <record id="group_edu_teacher" model="res.groups">
+        <field name="name">Professor</field>
+        <field name="sequence">5</field>
+        <field name="privilege_id" ref="res_groups_privilege_edu"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Sumários, chamada e notas das turmas e disciplinas em que está colocado (e da turma que dirige).</field>
+    </record>
+
     <record id="group_edu_user" model="res.groups">
         <field name="name">Secretaria</field>
         <field name="sequence">10</field>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_assessment_list" model="ir.ui.view">
+        <field name="name">edu.assessment.list</field>
+        <field name="model">edu.assessment</field>
+        <field name="arch" type="xml">
+            <list string="Avaliações">
+                <field name="trimester_id"/>
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <field name="name"/>
+                <field name="assessment_type"/>
+                <field name="date" optional="show"/>
+                <field name="max_score" optional="hide"/>
+                <field name="weight" optional="hide"/>
+                <field name="graded_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_assessment_form" model="ir.ui.view">
+        <field name="name">edu.assessment.form</field>
+        <field name="model">edu.assessment</field>
+        <field name="arch" type="xml">
+            <form string="Avaliação">
+                <header>
+                    <button name="action_fill_students" type="object" string="Carregar os alunos" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="1.º teste, trabalho de grupo, prova do I trimestre…"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="class_id" options="{'no_create': True}"/>
+                            <field name="subject_id" options="{'no_create': True}"/>
+                            <field name="academic_year_id" invisible="1"/>
+                            <field name="trimester_id" options="{'no_create': True}"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="assessment_type"/>
+                            <field name="date"/>
+                            <field name="max_score"/>
+                            <field name="weight" invisible="assessment_type != 'continuous'"/>
+                        </group>
+                    </group>
+                    <field name="grade_ids">
+                        <list editable="bottom" create="0" decoration-muted="not graded" decoration-danger="graded and score &lt; 10">
+                            <field name="order_number"/>
+                            <field name="student_id"/>
+                            <field name="enrollment_id" column_invisible="1"/>
+                            <field name="score"/>
+                            <field name="absent" column_invisible="parent.assessment_type not in ('global_exam', 'national_exam', 'trimester_test')"/>
+                            <field name="graded" readonly="1"/>
+                            <field name="note" optional="show"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_assessment_search" model="ir.ui.view">
+        <field name="name">edu.assessment.search</field>
+        <field name="model">edu.assessment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <field name="trimester_id"/>
+                <separator/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <group>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                    <filter name="group_subject" string="Disciplina" context="{'group_by': 'subject_id'}"/>
+                    <filter name="group_trimester" string="Trimestre" context="{'group_by': 'trimester_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_assessment" model="ir.actions.act_window">
+        <field name="name">Avaliações e notas</field>
+        <field name="res_model">edu.assessment</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_current_year': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crie a primeira avaliação</p>
+            <p>Escolha a turma, a disciplina e o trimestre, carregue os alunos e lance as notas. As médias calculam-se sozinhas.</p>
+        </field>
+    </record>
+
+    <record id="edu_grade_edit_permission_list" model="ir.ui.view">
+        <field name="name">edu.grade.edit.permission.list</field>
+        <field name="model">edu.grade.edit.permission</field>
+        <field name="arch" type="xml">
+            <list string="Autorizações de lançamento" decoration-muted="not active_now">
+                <field name="teacher_id"/>
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <field name="trimester_id"/>
+                <field name="date_expiry"/>
+                <field name="reason"/>
+                <field name="active_now"/>
+                <button name="action_revoke" type="object" string="Revogar" icon="fa-ban" invisible="not active_now"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_grade_edit_permission_form" model="ir.ui.view">
+        <field name="name">edu.grade.edit.permission.form</field>
+        <field name="model">edu.grade.edit.permission</field>
+        <field name="arch" type="xml">
+            <form string="Autorização de lançamento">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="teacher_id" options="{'no_create': True}"/>
+                            <field name="class_id" options="{'no_create': True}"/>
+                            <field name="subject_id" options="{'no_create': True}"/>
+                            <field name="academic_year_id" invisible="1"/>
+                            <field name="trimester_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="date_expiry"/>
+                            <field name="active_now"/>
+                            <field name="revoked"/>
+                        </group>
+                    </group>
+                    <field name="reason" placeholder="Motivo (lançamento em atraso, correcção…)"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_grade_edit_permission" model="ir.actions.act_window">
+        <field name="name">Autorizações de lançamento</field>
+        <field name="res_model">edu.grade.edit.permission</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

@@ -177,12 +177,23 @@ class EduTrimester(models.Model):
     def action_close(self):
         """Fecho do trimestre (Decreto Executivo n.º 424/25, arts. 35.º a 38.º): a pauta afixada é documento
         oficial; depois do fecho as notas só se corrigem por reapreciação."""
-        for trimester in self.filtered(lambda t: t.state == 'open'):
+        for trimester in self.filtered(lambda t: t.state == 'open').sorted('number'):
+            earlier = trimester.academic_year_id.trimester_ids.filtered(
+                lambda t, n=trimester.number: t.number < n and t.state == 'open'
+            )
+            if earlier:
+                raise UserError(self.env._('Feche primeiro o %s.', earlier.sorted('number')[0].name))
             trimester.write({'state': 'closed', 'closed_date': fields.Datetime.now(), 'closed_by_id': self.env.uid})
         return True
 
     def action_reopen(self):
         if not self.env.user.has_group('edu_core.group_edu_manager'):
             raise UserError(self.env._('Só a direcção reabre um trimestre fechado.'))
-        self.write({'state': 'open', 'closed_date': False, 'closed_by_id': False})
+        for trimester in self.sorted('number', reverse=True):
+            later = trimester.academic_year_id.trimester_ids.filtered(
+                lambda t, n=trimester.number: t.number > n and t.state == 'closed'
+            )
+            if later:
+                raise UserError(self.env._('Reabra primeiro o %s.', later.sorted('number')[-1].name))
+            trimester.write({'state': 'open', 'closed_date': False, 'closed_by_id': False})
         return True

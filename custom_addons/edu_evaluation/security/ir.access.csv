@@ -1,0 +1,44 @@
+id,name,model_id,group_id/id,operation,domain
+access_edu_evaluation_policy_user,access_edu_evaluation_policy_user,edu.evaluation.policy,edu_core.group_edu_user,r,
+access_edu_evaluation_policy_manager,access_edu_evaluation_policy_manager,edu.evaluation.policy,edu_core.group_edu_manager,crud,
+access_edu_evaluation_policy_teacher,access_edu_evaluation_policy_teacher,edu.evaluation.policy,edu_core.group_edu_teacher,r,
+access_edu_assessment_user,access_edu_assessment_user,edu.assessment,edu_core.group_edu_user,crud,
+access_edu_assessment_teacher,access_edu_assessment_teacher,edu.assessment,edu_core.group_edu_teacher,crud,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_grade_user,access_edu_grade_user,edu.grade,edu_core.group_edu_user,crud,
+access_edu_grade_teacher,access_edu_grade_teacher,edu.grade,edu_core.group_edu_teacher,crud,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_term_result_user,access_edu_term_result_user,edu.term.result,edu_core.group_edu_user,crud,
+access_edu_term_result_teacher,access_edu_term_result_teacher,edu.term.result,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_subject_result_user,access_edu_subject_result_user,edu.subject.result,edu_core.group_edu_user,crud,
+access_edu_subject_result_teacher,access_edu_subject_result_teacher,edu.subject.result,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_year_result_user,access_edu_year_result_user,edu.year.result,edu_core.group_edu_user,crud,
+access_edu_year_result_teacher,access_edu_year_result_teacher,edu.year.result,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_exam_requirement_user,access_edu_exam_requirement_user,edu.exam.requirement,edu_core.group_edu_user,crud,
+access_edu_exam_requirement_teacher,access_edu_exam_requirement_teacher,edu.exam.requirement,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_council_session_user,access_edu_council_session_user,edu.council.session,edu_core.group_edu_user,crud,
+access_edu_council_session_teacher,access_edu_council_session_teacher,edu.council.session,edu_core.group_edu_teacher,cru,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_council_vote_user,access_edu_council_vote_user,edu.council.vote,edu_core.group_edu_user,crud,
+access_edu_council_vote_teacher,access_edu_council_vote_teacher,edu.council.vote,edu_core.group_edu_teacher,cru,"['|', ('session_id.class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('session_id.class_id.director_id.user_id', '=', user.id)]"
+access_edu_council_ballot_user,access_edu_council_ballot_user,edu.council.ballot,edu_core.group_edu_user,crud,
+access_edu_council_ballot_teacher,access_edu_council_ballot_teacher,edu.council.ballot,edu_core.group_edu_teacher,cru,"[('teacher_id.user_id', '=', user.id)]"
+access_edu_grade_appeal_user,access_edu_grade_appeal_user,edu.grade.appeal,edu_core.group_edu_user,crud,
+access_edu_grade_appeal_teacher,access_edu_grade_appeal_teacher,edu.grade.appeal,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_grade_edit_permission_user,access_edu_grade_edit_permission_user,edu.grade.edit.permission,edu_core.group_edu_user,crud,
+access_edu_grade_edit_permission_teacher,access_edu_grade_edit_permission_teacher,edu.grade.edit.permission,edu_core.group_edu_teacher,r,"[('teacher_id.user_id', '=', user.id)]"
+access_edu_rdec_user,access_edu_rdec_user,edu.rdec,edu_core.group_edu_user,crud,
+access_edu_rdec_teacher,access_edu_rdec_teacher,edu.rdec,edu_core.group_edu_teacher,crud,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_rdec_line_user,access_edu_rdec_line_user,edu.rdec.line,edu_core.group_edu_user,crud,
+access_edu_rdec_line_teacher,access_edu_rdec_line_teacher,edu.rdec.line,edu_core.group_edu_teacher,crud,"['|', ('rdec_id.class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('rdec_id.class_id.director_id.user_id', '=', user.id)]"
+edu_evaluation_policy_comp_rule,edu.evaluation.policy multi-empresa,edu.evaluation.policy,,crud,"[('company_id', 'in', company_ids)]"
+edu_assessment_comp_rule,edu.assessment multi-empresa,edu.assessment,,crud,"[('company_id', 'in', company_ids)]"
+edu_grade_comp_rule,edu.grade multi-empresa,edu.grade,,crud,"[('company_id', 'in', company_ids)]"
+edu_term_result_comp_rule,edu.term.result multi-empresa,edu.term.result,,crud,"[('company_id', 'in', company_ids)]"
+edu_subject_result_comp_rule,edu.subject.result multi-empresa,edu.subject.result,,crud,"[('company_id', 'in', company_ids)]"
+edu_year_result_comp_rule,edu.year.result multi-empresa,edu.year.result,,crud,"[('company_id', 'in', company_ids)]"
+edu_exam_requirement_comp_rule,edu.exam.requirement multi-empresa,edu.exam.requirement,,crud,"[('company_id', 'in', company_ids)]"
+edu_council_session_comp_rule,edu.council.session multi-empresa,edu.council.session,,crud,"[('company_id', 'in', company_ids)]"
+edu_council_vote_comp_rule,edu.council.vote multi-empresa,edu.council.vote,,crud,"[('company_id', 'in', company_ids)]"
+edu_council_ballot_comp_rule,edu.council.ballot multi-empresa,edu.council.ballot,,crud,"[('company_id', 'in', company_ids)]"
+edu_grade_appeal_comp_rule,edu.grade.appeal multi-empresa,edu.grade.appeal,,crud,"[('company_id', 'in', company_ids)]"
+edu_grade_edit_permission_comp_rule,edu.grade.edit.permission multi-empresa,edu.grade.edit.permission,,crud,"[('company_id', 'in', company_ids)]"
+edu_rdec_comp_rule,edu.rdec multi-empresa,edu.rdec,,crud,"[('company_id', 'in', company_ids)]"
+edu_rdec_line_comp_rule,edu.rdec.line multi-empresa,edu.rdec.line,,crud,"[('company_id', 'in', company_ids)]"

@@ -48,6 +48,9 @@ class TestEduCore(TransactionCase):
     def test_trimester_close(self):
         self.year.action_generate_trimesters()
         first = self.year.trimester_ids.filtered(lambda t: t.number == 1)
+        second = self.year.trimester_ids.filtered(lambda t: t.number == 2)
+        with self.assertRaises(UserError):
+            second.action_close()  # fecham-se por ordem
         first.action_close()
         self.assertEqual(first.state, 'closed')
         self.assertEqual(first.closed_by_id, self.env.user)

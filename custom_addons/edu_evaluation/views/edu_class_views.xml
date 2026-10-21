@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_class_form_evaluation" model="ir.ui.view">
+        <field name="name">edu.class.form.evaluation</field>
+        <field name="model">edu.class</field>
+        <field name="inherit_id" ref="edu_core.edu_class_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_pauta" type="object" class="oe_stat_button" icon="fa-table" string="Pauta"/>
+                <button name="action_open_council" type="object" class="oe_stat_button" icon="fa-gavel" string="Conselho de turma"/>
+                <button name="action_compute_year_results" type="object" class="oe_stat_button" icon="fa-flag-checkered" string="Resultados do ano"/>
+            </div>
+        </field>
+    </record>
+</odoo>

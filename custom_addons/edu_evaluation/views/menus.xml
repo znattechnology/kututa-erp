@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_edu_evaluation" name="Avaliação" parent="edu_core.menu_edu_root" sequence="30">
+        <menuitem id="menu_edu_assessment" action="action_edu_assessment" sequence="10"/>
+        <menuitem id="menu_edu_term_result" action="action_edu_term_result" sequence="20"/>
+        <menuitem id="menu_edu_subject_result" action="action_edu_subject_result" sequence="30"/>
+        <menuitem id="menu_edu_council_session" action="action_edu_council_session" sequence="40"/>
+        <menuitem id="menu_edu_year_result" action="action_edu_year_result" sequence="50"/>
+        <menuitem id="menu_edu_exam_requirement" action="action_edu_exam_requirement" sequence="60" groups="edu_core.group_edu_user"/>
+        <menuitem id="menu_edu_grade_appeal" action="action_edu_grade_appeal" sequence="70" groups="edu_core.group_edu_user"/>
+        <menuitem id="menu_edu_grade_edit_permission" action="action_edu_grade_edit_permission" sequence="80" groups="edu_core.group_edu_user"/>
+        <menuitem id="menu_edu_rdec" action="action_edu_rdec" sequence="90"/>
+    </menuitem>
+    <menuitem id="menu_edu_evaluation_policy" action="action_edu_evaluation_policy" parent="edu_core.menu_edu_config" sequence="28"/>
+</odoo>

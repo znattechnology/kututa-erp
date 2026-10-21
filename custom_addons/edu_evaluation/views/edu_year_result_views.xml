@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_year_result_list" model="ir.ui.view">
+        <field name="name">edu.year.result.list</field>
+        <field name="model">edu.year.result</field>
+        <field name="arch" type="xml">
+            <list string="Resultados do ano" create="0" decoration-danger="status == 'retained'" decoration-warning="status in ('conditional', 'exam')" decoration-muted="status == 'pending'">
+                <field name="class_id"/>
+                <field name="order_number"/>
+                <field name="student_id"/>
+                <field name="average"/>
+                <field name="negative_count"/>
+                <field name="negative_subject_ids" widget="many2many_tags" optional="show"/>
+                <field name="absence_excluded" optional="show"/>
+                <field name="pending_exam_count" optional="show"/>
+                <field name="manual" optional="show"/>
+                <field name="requires_review" optional="show"/>
+                <field name="status" widget="badge" decoration-success="status in ('promoted', 'graduated')" decoration-warning="status in ('conditional', 'exam')" decoration-danger="status == 'retained'"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_year_result_form" model="ir.ui.view">
+        <field name="name">edu.year.result.form</field>
+        <field name="model">edu.year.result</field>
+        <field name="arch" type="xml">
+            <form string="Resultado do ano" create="0">
+                <header>
+                    <button name="action_recompute" type="object" string="Recalcular" invisible="manual"/>
+                    <button name="action_manual_promote" type="object" string="Decidir: transita" groups="edu_core.group_edu_manager"/>
+                    <button name="action_manual_retain" type="object" string="Decidir: retido" groups="edu_core.group_edu_manager"/>
+                    <button name="action_reset_automatic" type="object" string="Voltar à decisão automática" invisible="not manual" groups="edu_core.group_edu_manager"/>
+                    <field name="status" widget="statusbar" statusbar_visible="pending,promoted,retained"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="not requires_review">
+                        Excede o número de retenções permitidas no nível: a decisão é da direcção.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="student_id"/>
+                            <field name="class_id"/>
+                            <field name="average"/>
+                            <field name="negative_count"/>
+                            <field name="negative_subject_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <field name="reason"/>
+                            <field name="absence_excluded"/>
+                            <field name="attendance_rate" widget="percentage"/>
+                            <field name="retention_count"/>
+                            <field name="manual"/>
+                            <field name="decided_by_id" invisible="not manual"/>
+                            <field name="requires_review" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Exames especiais" name="exams">
+                            <field name="requirement_ids">
+                                <list editable="bottom" create="0" decoration-success="passed" decoration-danger="state == 'done' and not passed">
+                                    <field name="subject_id"/>
+                                    <field name="kind"/>
+                                    <field name="previous"/>
+                                    <field name="score" readonly="state == 'done'"/>
+                                    <field name="date" readonly="state == 'done'"/>
+                                    <field name="resulting"/>
+                                    <field name="passed"/>
+                                    <field name="state" widget="badge"/>
+                                    <button name="action_record" type="object" string="Lançar" icon="fa-check" invisible="state == 'done'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observações" name="note"><field name="note" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="edu_year_result_search" model="ir.ui.view">
+        <field name="name">edu.year.result.search</field>
+        <field name="model">edu.year.result</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="class_id"/>
+                <field name="student_id"/>
+                <filter name="retained" string="Retidos" domain="[('status', '=', 'retained')]"/>
+                <filter name="exams" string="Com exames" domain="[('status', 'in', ('conditional', 'exam'))]"/>
+                <filter name="review" string="Para decisão da direcção" domain="[('requires_review', '=', True)]"/>
+                <separator/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <group>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                    <filter name="group_status" string="Decisão" context="{'group_by': 'status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_edu_year_result" model="ir.actions.act_window">
+        <field name="name">Resultados do ano</field>
+        <field name="res_model">edu.year.result</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_current_year': 1}</field>
+    </record>
+
+    <record id="edu_exam_requirement_list" model="ir.ui.view">
+        <field name="name">edu.exam.requirement.list</field>
+        <field name="model">edu.exam.requirement</field>
+        <field name="arch" type="xml">
+            <list string="Exames especiais" editable="bottom" create="0" decoration-success="passed" decoration-danger="state == 'done' and not passed">
+                <field name="class_id" readonly="1"/>
+                <field name="student_id" readonly="1"/>
+                <field name="subject_id" readonly="1"/>
+                <field name="kind"/>
+                <field name="previous"/>
+                <field name="score" readonly="state == 'done'"/>
+                <field name="date" readonly="state == 'done'"/>
+                <field name="resulting"/>
+                <field name="passed"/>
+                <field name="state" widget="badge"/>
+                <button name="action_record" type="object" string="Lançar" icon="fa-check" invisible="state == 'done'"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_edu_exam_requirement" model="ir.actions.act_window">
+        <field name="name">Exames especiais</field>
+        <field name="res_model">edu.exam.requirement</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('state', '=', 'pending')]</field>
+    </record>
+</odoo>

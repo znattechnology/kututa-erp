@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_absence_summary_list" model="ir.ui.view">
+        <field name="name">edu.absence.summary.list</field>
+        <field name="model">edu.absence.summary</field>
+        <field name="arch" type="xml">
+            <list string="Mapa de faltas" create="0" decoration-danger="status == 'failed'" decoration-warning="status == 'at_risk'">
+                <field name="class_id"/>
+                <field name="order_number"/>
+                <field name="student_id"/>
+                <field name="subject_id"/>
+                <field name="trimester_id"/>
+                <field name="lessons"/>
+                <field name="present" optional="hide"/>
+                <field name="late" optional="show"/>
+                <field name="excused"/>
+                <field name="absent"/>
+                <field name="year_absent" optional="show"/>
+                <field name="weekly_hours" optional="hide"/>
+                <field name="limit"/>
+                <field name="status" widget="badge" decoration-danger="status == 'failed'" decoration-warning="status == 'at_risk'" decoration-success="status == 'ok'"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_absence_summary_pivot" model="ir.ui.view">
+        <field name="name">edu.absence.summary.pivot</field>
+        <field name="model">edu.absence.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="Faltas">
+                <field name="student_id" type="row"/>
+                <field name="subject_id" type="col"/>
+                <field name="absent" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="edu_absence_summary_search" model="ir.ui.view">
+        <field name="name">edu.absence.summary.search</field>
+        <field name="model">edu.absence.summary</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="student_id"/>
+                <field name="class_id"/>
+                <field name="subject_id"/>
+                <filter name="risk" string="Em risco ou reprovados" domain="[('status', 'in', ('at_risk', 'failed'))]"/>
+                <separator/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <group>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                    <filter name="group_student" string="Aluno" context="{'group_by': 'student_id'}"/>
+                    <filter name="group_trimester" string="Trimestre" context="{'group_by': 'trimester_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_edu_absence_summary" model="ir.actions.act_window">
+        <field name="name">Mapa de faltas</field>
+        <field name="res_model">edu.absence.summary</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="context">{'search_default_current_year': 1, 'search_default_risk': 1}</field>
+    </record>
+    <menuitem id="menu_edu_absence_summary" action="action_edu_absence_summary" parent="edu_core.menu_edu_academic" sequence="60"/>
+</odoo>

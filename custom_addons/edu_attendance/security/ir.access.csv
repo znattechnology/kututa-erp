@@ -1,0 +1,16 @@
+id,name,model_id,group_id/id,operation,domain
+access_edu_lesson_user,access_edu_lesson_user,edu.lesson,edu_core.group_edu_user,crud,
+access_edu_lesson_attendance_user,access_edu_lesson_attendance_user,edu.lesson.attendance,edu_core.group_edu_user,crud,
+access_edu_absence_summary_user,access_edu_absence_summary_user,edu.absence.summary,edu_core.group_edu_user,r,
+access_edu_absence_alert_user,access_edu_absence_alert_user,edu.absence.alert,edu_core.group_edu_user,crud,
+access_edu_lesson_generate_user,access_edu_lesson_generate_user,edu.lesson.generate,edu_core.group_edu_user,crud,
+access_edu_lesson_teacher,access_edu_lesson_teacher,edu.lesson,edu_core.group_edu_teacher,cru,"['|', '|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id), ('teacher_id.user_id', '=', user.id)]"
+access_edu_lesson_attendance_teacher,access_edu_lesson_attendance_teacher,edu.lesson.attendance,edu_core.group_edu_teacher,crud,"['|', '|', ('lesson_id.class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('lesson_id.class_id.director_id.user_id', '=', user.id), ('lesson_id.teacher_id.user_id', '=', user.id)]"
+access_edu_absence_summary_teacher,access_edu_absence_summary_teacher,edu.absence.summary,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_absence_alert_teacher,access_edu_absence_alert_teacher,edu.absence.alert,edu_core.group_edu_teacher,cr,"['|', ('enrollment_id.class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('enrollment_id.class_id.director_id.user_id', '=', user.id)]"
+access_edu_enrollment_teacher,access_edu_enrollment_teacher,edu.enrollment,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
+access_edu_student_teacher,access_edu_student_teacher,edu.student,edu_core.group_edu_teacher,r,"['|', ('enrollment_ids.class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('enrollment_ids.class_id.director_id.user_id', '=', user.id)]"
+edu_lesson_comp_rule,edu.lesson multi-empresa,edu.lesson,,crud,"[('company_id', 'in', company_ids)]"
+edu_lesson_attendance_comp_rule,edu.lesson.attendance multi-empresa,edu.lesson.attendance,,crud,"[('company_id', 'in', company_ids)]"
+edu_absence_summary_comp_rule,edu.absence.summary multi-empresa,edu.absence.summary,,r,"[('company_id', 'in', company_ids)]"
+edu_absence_alert_comp_rule,edu.absence.alert multi-empresa,edu.absence.alert,,crud,"[('company_id', 'in', company_ids)]"

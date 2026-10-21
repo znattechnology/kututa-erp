@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_lesson_generate_form" model="ir.ui.view">
+        <field name="name">edu.lesson.generate.form</field>
+        <field name="model">edu.lesson.generate</field>
+        <field name="arch" type="xml">
+            <form string="Gerar aulas">
+                <group>
+                    <field name="class_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <div class="text-muted">
+                    Cria uma aula prevista por cada tempo do horário entre as datas, saltando as aulas sem realização
+                    registadas. As que já existem não se repetem.
+                </div>
+                <footer>
+                    <button name="action_generate" type="object" string="Gerar" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_lesson_generate" model="ir.actions.act_window">
+        <field name="name">Gerar aulas do horário</field>
+        <field name="res_model">edu.lesson.generate</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

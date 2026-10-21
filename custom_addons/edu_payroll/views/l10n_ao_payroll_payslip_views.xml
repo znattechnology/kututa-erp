@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_payroll_payslip_form_edu" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.payslip.form.edu</field>
+        <field name="model">l10n_ao_payroll.payslip</field>
+        <field name="inherit_id" ref="l10n_ao_payroll.l10n_ao_payroll_payslip_form"/>
+        <field name="arch" type="xml">
+            <page name="extra" position="before">
+                <page string="Carga lectiva" name="edu_load" invisible="not lesson_rate">
+                    <group>
+                        <group>
+                            <field name="edu_planned"/>
+                            <field name="edu_exceptions"/>
+                            <field name="edu_replacement_out"/>
+                            <field name="edu_replacement_in"/>
+                            <field name="edu_adjustment" readonly="state != 'draft'"/>
+                            <field name="lesson_count" string="Tempos a pagar"/>
+                            <field name="edu_lesson_manual" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        Tempos a pagar = previstos − aulas sem realização − dadas por substitutos + substituições dadas + acerto.
+                        Recalcule o recibo depois de alterar o acerto. Desmarque «escritos à mão» para voltar ao cálculo.
+                    </div>
+                </page>
+            </page>
+        </field>
+    </record>
+</odoo>
