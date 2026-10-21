@@ -6,9 +6,9 @@
         <field name="inherit_id" ref="edu_core.edu_class_form"/>
         <field name="arch" type="xml">
             <div name="button_box" position="inside">
-                <button name="action_view_pauta" type="object" class="oe_stat_button" icon="fa-table" string="Pauta"/>
-                <button name="action_open_council" type="object" class="oe_stat_button" icon="fa-gavel" string="Conselho de turma"/>
-                <button name="action_compute_year_results" type="object" class="oe_stat_button" icon="fa-flag-checkered" string="Resultados do ano"/>
+                <button name="action_view_pauta" type="object" class="oe_stat_button" icon="table" string="Pauta"/>
+                <button name="action_open_council" type="object" class="oe_stat_button" icon="gavel" string="Conselho de turma"/>
+                <button name="action_compute_year_results" type="object" class="oe_stat_button" icon="sports_score" string="Resultados do ano"/>
             </div>
         </field>
     </record>

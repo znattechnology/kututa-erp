@@ -16,3 +16,10 @@ class TestKututaWeb(TransactionCase):
         self.assertEqual(action, {
             'type': 'ir.actions.act_url', 'url': f'/report/pdf/{report.report_name}/1,2', 'target': 'new',
         })  # fmt: skip
+
+    def test_no_odoo_onboarding(self):
+        # Nem tours de boas-vindas nem a conversa do OdooBot em inglês.
+        user = self.env['res.users'].create({'name': 'Secretaria', 'login': 'secretaria_kw'})
+        self.assertFalse(user.tour_enabled)
+        self.assertFalse(user._init_odoobot())
+        self.assertEqual(user.odoobot_state, 'disabled')

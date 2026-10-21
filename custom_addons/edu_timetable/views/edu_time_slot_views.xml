@@ -39,7 +39,7 @@
         <field name="inherit_id" ref="edu_core.edu_shift_list"/>
         <field name="arch" type="xml">
             <field name="hour_to" position="after">
-                <button name="action_generate_slots" type="object" string="Criar a grelha de tempos" icon="fa-th"/>
+                <button name="action_generate_slots" type="object" string="Criar a grelha de tempos" icon="grid_view"/>
             </field>
         </field>
     </record>

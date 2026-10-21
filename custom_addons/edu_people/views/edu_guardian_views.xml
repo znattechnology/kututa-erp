@@ -22,7 +22,7 @@
             <form string="Encarregado de educação">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_students" type="object" class="oe_stat_button" icon="fa-child">
+                        <button name="action_view_students" type="object" class="oe_stat_button" icon="child_care">
                             <field name="student_count" widget="statinfo" string="Educandos"/>
                         </button>
                     </div>

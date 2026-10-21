@@ -19,3 +19,8 @@ repos:
         language: system
         types: [python]
         files: ^custom_addons/
+      - id: no-fontawesome-icons
+        name: ícones Material (o Odoo 20 não tem os fa-*)
+        entry: 'icon="fa-|class="fa |"fa fa-'
+        language: pygrep
+        files: ^custom_addons/.*\.(xml|js)$

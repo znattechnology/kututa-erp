@@ -26,7 +26,7 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_classes" type="object" class="oe_stat_button" icon="fa-users">
+                        <button name="action_view_classes" type="object" class="oe_stat_button" icon="group">
                             <field name="class_count" widget="statinfo" string="Turmas"/>
                         </button>
                     </div>
@@ -50,9 +50,9 @@
                             <field name="date_end"/>
                             <field name="is_current" widget="boolean_toggle"/>
                             <field name="state" widget="badge" decoration-success="state == 'open'"/>
-                            <button name="action_close" type="object" string="Fechar" icon="fa-lock" invisible="state != 'open'"
+                            <button name="action_close" type="object" string="Fechar" icon="lock" invisible="state != 'open'"
                                     confirm="Fechado o trimestre, as notas só se corrigem por reapreciação. Continuar?"/>
-                            <button name="action_reopen" type="object" string="Reabrir" icon="fa-unlock" invisible="state != 'closed'" groups="edu_core.group_edu_manager"/>
+                            <button name="action_reopen" type="object" string="Reabrir" icon="lock_open" invisible="state != 'closed'" groups="edu_core.group_edu_manager"/>
                         </list>
                     </field>
                 </sheet>

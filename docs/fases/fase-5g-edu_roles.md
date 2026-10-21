@@ -9,7 +9,7 @@
 |---|---|---|---|
 | Professor | TEACHER | `edu_core.group_edu_teacher` | «A minha docência» (as minhas aulas, turmas, avaliações, horário, vigilâncias), Pedagógico e Avaliação das suas turmas |
 | Secretaria | ADMIN_SERVICOS | `edu_core.group_edu_user` | Alunos, encarregados, turmas, matrículas, candidaturas, transferências, exames, arquivo e documentos; lê as bolsas. **Não factura nem recebe** |
-| Tesouraria | ADMIN_FINANCAS | `edu_fees.group_edu_finance` (novo; implica a facturação do `account`) | Propinas: planos, facturas, pagamentos, serviços, bolsas, multas, devedores e a lista de alunos (só leitura) |
+| Tesouraria | ADMIN_FINANCAS | `edu_fees.group_edu_finance` (novo; implica a facturação do `account`) | Propinas: planos, facturas, pagamentos, serviços, bolsas, multas, devedores; e o menu «Alunos» (só leitura), o mesmo da Secretaria |
 | Direcção | SCHOOL_ADMIN | `edu_core.group_edu_manager` (implica Secretaria e Tesouraria) | Tudo o que a Secretaria e a Tesouraria vêem, mais a configuração académica; «A minha docência» só se também for professor |
 | RH, contabilidade | — | grupos do Odoo (`hr`, `account`) | As aplicações respectivas |
 | Alunos e encarregados | STUDENT, GUARDIAN | portal | Fase 6 (`edu_portal`) |
@@ -25,6 +25,8 @@
 - Os botões «Receber pagamento», «Cobrar serviço» e o contador de facturas na ficha do aluno só aparecem à Tesouraria.
 
 ## Testes
+- Teste de fumo: cada perfil abre a lista e a ficha de todos os menus `edu.*` que vê, com os campos das vistas (incluindo as sub-listas).
+- Perfil público dos funcionários: a Secretaria e os professores lêem os campos de professor sem acesso ao RH (`hr.employee.public`).
 - Menus visíveis por perfil, tal como na interface (um menu só conta se todos os ascendentes forem visíveis; o `_visible_menu_ids` do Odoo devolve folhas com o pai escondido).
 - Acessos: a Secretaria não cria facturas; a Tesouraria não lê candidaturas nem aulas; o professor não lê candidaturas, só cria aulas das suas turmas e «As minhas turmas» devolve só as suas.
 

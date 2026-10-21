@@ -102,7 +102,7 @@
                 <field name="date_expiry"/>
                 <field name="reason"/>
                 <field name="active_now"/>
-                <button name="action_revoke" type="object" string="Revogar" icon="fa-ban" invisible="not active_now"/>
+                <button name="action_revoke" type="object" string="Revogar" icon="block" invisible="not active_now"/>
             </list>
         </field>
     </record>

@@ -10,7 +10,7 @@
                 <button name="action_charge_service" type="object" string="Cobrar serviço" groups="edu_fees.group_edu_finance"/>
             </header>
             <div name="button_box" position="inside">
-                <button name="action_view_invoices" type="object" class="oe_stat_button" icon="fa-money" groups="edu_fees.group_edu_finance">
+                <button name="action_view_invoices" type="object" class="oe_stat_button" icon="payments" groups="edu_fees.group_edu_finance">
                     <div class="o_stat_info">
                         <field name="edu_open_amount" widget="monetary" class="o_stat_value"/>
                         <span class="o_stat_text">Em aberto</span>

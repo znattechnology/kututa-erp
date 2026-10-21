@@ -177,7 +177,7 @@
                 <field name="subsystem"/>
                 <field name="class_from"/>
                 <field name="class_to"/>
-                <button name="action_materialize_plan" type="object" string="Criar o plano do tronco comum" icon="fa-magic"
+                <button name="action_materialize_plan" type="object" string="Criar o plano do tronco comum" icon="wand_stars"
                         groups="edu_core.group_edu_manager"/>
             </list>
         </field>

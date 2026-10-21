@@ -6,10 +6,10 @@
         <field name="inherit_id" ref="edu_core.edu_class_form"/>
         <field name="arch" type="xml">
             <div name="button_box" position="inside">
-                <button name="action_view_lessons" type="object" class="oe_stat_button" icon="fa-book">
+                <button name="action_view_lessons" type="object" class="oe_stat_button" icon="book">
                     <field name="lesson_count" widget="statinfo" string="Aulas"/>
                 </button>
-                <button name="action_view_absences" type="object" class="oe_stat_button" icon="fa-user-times" string="Faltas"/>
+                <button name="action_view_absences" type="object" class="oe_stat_button" icon="person_remove" string="Faltas"/>
             </div>
         </field>
     </record>

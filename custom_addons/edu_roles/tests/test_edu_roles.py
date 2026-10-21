@@ -1,5 +1,7 @@
 from datetime import date
 
+from lxml import etree
+
 from odoo import Command
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
@@ -73,12 +75,68 @@ class TestEduRoles(TransactionCase):
         self.assertNotIn('edu_roles.menu_my_lessons', clerk)
         cashier = self._menus(self.cashier)
         self.assertIn('edu_fees.menu_edu_debtors', cashier)
-        self.assertIn('edu_fees.menu_edu_fee_students', cashier)
+        # A tesouraria consulta os alunos no mesmo menu da secretaria (um só «Alunos» para a direcção).
+        self.assertIn('edu_people.menu_edu_student', cashier)
         self.assertNotIn('edu_enrollment.menu_edu_application', cashier)
         self.assertNotIn('edu_evaluation.menu_edu_assessment', cashier)
         director = self._menus(self.director)
         for xmlid in ('edu_core.menu_edu_config', 'edu_fees.menu_edu_debtors', 'edu_enrollment.menu_edu_application'):
             self.assertIn(xmlid, director)
+
+    def test_default_app(self):
+        # Sem acção inicial, o Odoo abre a primeira aplicação do menu: tem de ser a Secretaria Express, não o chat.
+        root = self.env.ref('edu_core.menu_edu_root').id
+        for user in (self.clerk, self.cashier, self.teacher_user, self.director):
+            menus = self.env['ir.ui.menu'].with_user(user).load_menus(False)
+            self.assertEqual(menus['root']['children'][0], root, user.login)
+
+    def test_teacher_fields_without_hr(self):
+        # Sem acesso ao RH, os funcionários lêem-se pelo perfil público: os campos de professor têm de lá estar.
+        fields = ['name', 'edu_is_teacher', 'edu_specialization', 'edu_coordination_id', 'edu_subject_ids']
+        for user in (self.clerk, self.teacher_user):
+            values = self.env['hr.employee'].with_user(user).browse(self.teacher.id).read(fields)[0]
+            self.assertTrue(values['edu_is_teacher'], user.login)
+        form = self.env['edu.class'].with_user(self.clerk).browse(self.class_a.id)
+        form.web_read({'director_id': {'fields': {'edu_is_teacher': {}}}, 'assignment_ids': {'fields': {
+            'teacher_id': {'fields': {'edu_specialization': {}, 'edu_coordination_id': {}}}}}})  # fmt: skip
+
+    @staticmethod
+    def _spec(node, model):
+        """Campos de uma vista (com os das sub-listas), como o cliente web os pede."""
+        spec = {}
+        for field in node.iterchildren():
+            if field.tag != 'field':
+                spec.update(TestEduRoles._spec(field, model))
+                continue
+            name = field.get('name')
+            if name not in model._fields:
+                continue
+            sub = next((v for v in field.iterchildren() if v.tag in ('list', 'form', 'kanban')), None)
+            comodel = model.env.get(model._fields[name].comodel_name) if model._fields[name].relational else None
+            spec[name] = {'fields': TestEduRoles._spec(sub, comodel)} if sub is not None and comodel is not None else {}
+        return spec
+
+    def test_menus_open_without_access_errors(self):
+        # Cada perfil abre a lista e a ficha de todos os menus que vê, com os campos das próprias vistas.
+        checked = 0
+        for user in (self.clerk, self.cashier, self.teacher_user, self.director):
+            Menu = self.env['ir.ui.menu'].with_user(user)
+            ids = Menu._visible_menu_ids()
+            for menu in Menu.sudo().browse(ids):
+                action = menu.action
+                if not action or action._name != 'ir.actions.act_window' or not action.res_model.startswith('edu.'):
+                    continue
+                if not all(int(i) in ids for i in menu.parent_path.split('/')[:-1]):
+                    continue
+                Model = self.env[action.res_model].with_user(user)
+                views = Model.get_views([(False, 'list'), (False, 'form')])['views']
+                for kind in ('list', 'form'):
+                    spec = self._spec(etree.fromstring(views[kind]['arch']), Model)
+                    with self.subTest(user=user.login, menu=menu.complete_name, view=kind):
+                        Model.web_search_read([], spec, limit=1)
+                        Model.search([], limit=1).web_read(spec)
+                        checked += 1
+        self.assertGreater(checked, 50)
 
     def test_data_access(self):
         # A secretaria não factura nem recebe; a tesouraria não mexe nas matrículas nem nas aulas.

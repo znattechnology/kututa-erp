@@ -24,7 +24,7 @@
 
 ## 2. Achados no Kututa
 
-### P0: defeitos visíveis (corrigir já, esforço pequeno)
+### P0: defeitos visíveis (corrigir já, esforço pequeno): **feito a 2026-10-21**
 
 | # | Achado | Prova | Correcção |
 |---|---|---|---|
@@ -99,7 +99,7 @@ Nota: a combinação areia com laranja aproxima-se de um padrão muito comum em 
 
 | Passo | Conteúdo | Esforço |
 |---|---|---|
-| 1 | P0: ícones (A2), tour (A3), traduções `pt_AO` (A4), menu duplicado (A5), acção inicial provisória (A1) | 0,5 dia |
+| 1 | P0: ícones (A2), tour (A3), traduções `pt_AO` (A4), menu duplicado (A5), acção inicial provisória (A1). **Feito** | 0,5 dia |
 | 2 | Tema `kututa_web` com os tokens (C1) e o widget de nota azul/vermelho (B4) | 1 dia |
 | 3 | Widget «Pauta da disciplina» para lançar e consultar (B2, B3) | 2–3 dias |
 | 4 | Painéis por perfil `edu_home` (B1) | 2 dias |
@@ -110,3 +110,15 @@ Nota: a combinação areia com laranja aproxima-se de um padrão muito comum em 
 - **Largura de telemóvel no Kututa:** não foi possível redimensionar a janela do browser. O menu lateral do `kututa_web` esconde-se em ecrãs pequenos (`ui.isSmall`), mas a chamada e a pauta não foram vistas no telemóvel.
 - **Ecrãs do secPed vistos ao vivo:** só os do professor e da secretaria. Os de finanças e dos portais vêm do inventário do código.
 - **PDF «cores e tipos de letra.pdf» na raiz do secPed:** é o guia de marca de outro projecto (VisaPower), não do secPed.
+
+## 6. Passo 1 feito (2026-10-21)
+
+| # | O que se fez |
+|---|---|
+| A1 | A Secretaria Express passou a ser a primeira aplicação do menu (sequência 1). Sem acção inicial, cada perfil entra na sua área, e não nas Discussões. O OdooBot deixou de enviar a conversa de boas-vindas em inglês. Os painéis por perfil (B1) vão substituir isto |
+| A2 | Os 20 ícones `fa-*` passaram para nomes Material Symbols que existem no subconjunto do Odoo 20. O pre-commit rejeita `icon="fa-` e `class="fa ` |
+| A3 | Os tours de boas-vindas do Odoo ficaram desligados para todos os utilizadores (`kututa_web`) |
+| A4 | Há uma camada de traduções no `kututa_web` (`static/src/l10n/terms_pt_ao.js`) para os textos mais visíveis do núcleo (inglês ou português do Brasil), e «N registos» nos grupos das listas, que o Odoo 20 escreve em inglês fixo. **Falta:** o `pt.po` do núcleo tem mais de mil textos por traduzir só no `mail` e no `web`. Uma tradução completa para `pt_AO` é um trabalho à parte |
+| A5 | A Tesouraria consulta os alunos no mesmo menu «Alunos» da Secretaria. Já não há duplicado para a Direcção |
+| Novo | **Erro de acesso na ficha da turma** para quem não é do RH (Secretaria, professores). A grelha do horário lia campos de professor que não existiam no perfil público dos funcionários. Os campos passaram a existir em `hr.employee.public`. Há também um teste de fumo por perfil: abre a lista e a ficha de todos os menus visíveis |
+

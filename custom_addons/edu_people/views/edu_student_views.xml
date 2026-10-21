@@ -77,7 +77,7 @@
                                     <field name="can_pickup"/>
                                     <field name="can_access_portal" optional="hide"/>
                                     <field name="receive_notifications" optional="hide"/>
-                                    <button name="action_make_primary" type="object" string="Tornar principal" icon="fa-star-o"
+                                    <button name="action_make_primary" type="object" string="Tornar principal" icon="star"
                                             invisible="is_primary or not id"/>
                                 </list>
                             </field>

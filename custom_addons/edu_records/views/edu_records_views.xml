@@ -194,7 +194,7 @@
         <field name="inherit_id" ref="edu_people.edu_student_form"/>
         <field name="arch" type="xml">
             <div name="button_box" position="inside">
-                <button name="action_view_history" type="object" class="oe_stat_button" icon="fa-history" string="Histórico escolar"/>
+                <button name="action_view_history" type="object" class="oe_stat_button" icon="history" string="Histórico escolar"/>
             </div>
             <field name="enrollment_date" position="before">
                 <field name="process_number"/>

@@ -65,7 +65,7 @@
                                     <field name="resulting"/>
                                     <field name="passed"/>
                                     <field name="state" widget="badge"/>
-                                    <button name="action_record" type="object" string="Lançar" icon="fa-check" invisible="state == 'done'"/>
+                                    <button name="action_record" type="object" string="Lançar" icon="check" invisible="state == 'done'"/>
                                 </list>
                             </field>
                         </page>
@@ -117,7 +117,7 @@
                 <field name="resulting"/>
                 <field name="passed"/>
                 <field name="state" widget="badge"/>
-                <button name="action_record" type="object" string="Lançar" icon="fa-check" invisible="state == 'done'"/>
+                <button name="action_record" type="object" string="Lançar" icon="check" invisible="state == 'done'"/>
             </list>
         </field>
     </record>

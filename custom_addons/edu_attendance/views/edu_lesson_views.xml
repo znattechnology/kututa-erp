@@ -127,7 +127,7 @@
                 <field name="justification"/>
                 <field name="justified_by_id" optional="show"/>
                 <field name="justified_date" optional="hide"/>
-                <button name="action_justify" type="object" string="Justificar" icon="fa-check" invisible="state != 'absent'"/>
+                <button name="action_justify" type="object" string="Justificar" icon="check" invisible="state != 'absent'"/>
             </list>
         </field>
     </record>
