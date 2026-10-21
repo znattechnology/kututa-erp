@@ -45,6 +45,7 @@
                             <field name="conditional_max"/>
                             <field name="forbidden_pairs"/>
                             <field name="exam_max"/>
+                            <field name="exam_floor"/>
                             <field name="auto_promote_classes"/>
                             <field name="structuring_codes"/>
                             <field name="min_attendance"/>

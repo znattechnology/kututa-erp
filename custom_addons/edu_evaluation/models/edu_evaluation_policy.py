@@ -12,7 +12,8 @@ LEVEL_DEFAULTS = {
         'floor': 0,
         'conditional_max': 0,
         'exam_classes': '6',
-        'exam_max': 3,
+        'exam_max': 2,  # 6.ª: duas negativas entre 3 e 4 (art. 31.º, n.º 5)
+        'exam_floor': 3,
         'auto_promote_classes': '1,3,5',
         'min_attendance': 2 / 3,
     },
@@ -20,17 +21,28 @@ LEVEL_DEFAULTS = {
         'regime': GENERAL,
         'conditional_classes': '7,8',
         'exam_classes': '9',
-        'exam_max': 4,
+        'exam_max': 3,  # 9.ª: até três negativas entre 6 e 9 (art. 31.º, n.º 6)
+        'exam_floor': 6,
         'forbidden_pairs': 'LP+MAT',
     },
     'SECUNDARIO_II_CICLO': {
         'regime': GENERAL,
         'conditional_classes': '10,11',
         'exam_classes': '12',
-        'exam_max': 4,
+        'exam_max': 3,  # 12.ª: até três negativas entre 6 e 9 (art. 31.º, n.º 7)
+        'exam_floor': 6,
         'forbidden_pairs': 'LP+MAT',
     },
-    'TECNICO': {'regime': TECHNICAL, 'conditional_classes': '10,11,12', 'exam_max': 5, 'forbidden_pairs': ''},
+    # Despacho 60/08, art. 29.º a 31.º: transita com até duas negativas, sem nota mínima (os 7 valores são do ano
+    # terminal da disciplina, art. 28.º); faltas pelos tempos lectivos, não pela frequência de 2/3; até 5 exames.
+    'TECNICO': {
+        'regime': TECHNICAL,
+        'conditional_classes': '10,11,12',
+        'floor': 0,
+        'exam_max': 5,
+        'forbidden_pairs': '',
+        'min_attendance': 0,
+    },
     'MAGISTERIO': {'regime': GENERAL, 'conditional_classes': '10,11,12', 'exam_max': 4, 'forbidden_pairs': 'LP+MAT'},
 }
 
@@ -91,6 +103,10 @@ class EduEvaluationPolicy(models.Model):
     )
     exam_classes = fields.Char(string='Classes de exame nacional', help='Por exemplo: 6 ou 9 ou 12')
     exam_max = fields.Integer(string='Negativas que admitem exame de recurso', default=4)
+    exam_floor = fields.Float(
+        string='Mínimo das negativas para recurso',
+        help='Ensino geral: 3 valores na 6.ª, 6 na 9.ª e na 12.ª (Dec. 424/25, art. 31.º). 0 = sem mínimo.',
+    )
     auto_promote_classes = fields.Char(string='Classes de transição automática')
     min_attendance = fields.Float(
         string='Frequência mínima',
@@ -149,6 +165,7 @@ class EduEvaluationPolicy(models.Model):
             conditional_max=self.conditional_max if number in int_list(self.conditional_classes) else 0,
             forbidden_pairs=self._pairs(edu_class.course_id),
             exam_max=self.exam_max if (exam_class or self.regime == TECHNICAL or terminal) else 0,
+            exam_floor=self.exam_floor or None,
             auto_promote=self.regime == 'preschool' or number in int_list(self.auto_promote_classes),
             terminal=terminal,
         )

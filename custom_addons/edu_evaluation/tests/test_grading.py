@@ -24,6 +24,7 @@ from odoo.addons.edu_evaluation.tools.grading import (
     special_exam_result,
     technical_ca,
     technical_ct,
+    technical_subject_approved,
     weighted_mean,
     with_adjustment,
 )
@@ -132,3 +133,24 @@ class TestGrading(BaseCase):
         self.assertEqual(decide({'LP': 4}, primary).status, RETAINED)
         self.assertEqual(decide({'LP': 6}, primary).status, PROMOTED)
         self.assertEqual(decide({'LP': 6}, primary, low_attendance=True).status, RETAINED)
+        # Recurso (Dec. 424/25, art. 31.º): 9.ª e 12.ª até três negativas entre 6 e 9; 6.ª duas entre 3 e 4.
+        ninth = Rules(terminal=True, exam_max=3, exam_floor=6, forbidden_pairs=[('LP', 'MAT')])
+        self.assertEqual(decide({'LP': 9, 'FIS': 8, 'QUI': 6}, ninth).status, EXAM)
+        self.assertEqual(decide({'LP': 9, 'FIS': 8, 'QUI': 5}, ninth).status, RETAINED)
+        self.assertEqual(decide({'LP': 9, 'FIS': 8, 'QUI': 7, 'BIO': 9}, ninth).status, RETAINED)
+        sixth = Rules(pass_grade=5, floor=None, terminal=True, exam_max=2, exam_floor=3)
+        self.assertEqual(decide({'LP': 4, 'CN': 3}, sixth).status, EXAM)
+        self.assertEqual(decide({'LP': 4, 'CN': 2}, sixth).status, RETAINED)
+        self.assertEqual(decide({'LP': 4, 'CN': 3, 'EMP': 4}, sixth).status, RETAINED)
+        # Técnico (Despacho 60/08, art. 29.º): até duas negativas, sem nota mínima; 3 a 5 vão a recurso.
+        technical = Rules(conditional_max=2, floor=None, exam_max=5)
+        self.assertEqual(decide({'LP': 3, 'FIS': 9}, technical).status, CONDITIONAL)
+        self.assertEqual(decide({'LP': 3, 'FIS': 9, 'QUI': 9}, technical).status, EXAM)
+
+    def test_technical_multi_year_subject(self):
+        # Art. 28.º, n.º 2: CFD ≥ 10, pelo menos 7 no ano terminal e sem negativa em dois anos seguidos.
+        self.assertTrue(technical_subject_approved(12, 11, 13))
+        self.assertTrue(technical_subject_approved(10, 12, 8))
+        self.assertFalse(technical_subject_approved(11, 6, 16))
+        self.assertFalse(technical_subject_approved(10, 9, 9))
+        self.assertFalse(technical_subject_approved(9, 12, None))

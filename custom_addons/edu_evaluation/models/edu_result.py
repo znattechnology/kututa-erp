@@ -201,6 +201,13 @@ class EduSubjectResult(models.Model):
         help='Disciplina plurianual: média das classificações anuais, no último ano.',
     )
     terminal_subject = fields.Boolean(string='Último ano da disciplina')
+    transition_grade = fields.Float(
+        string='Nota para a transição',
+        digits=(4, 2),
+        aggregator='avg',
+        help='A que conta nas negativas: a classificação final; no técnico, numa disciplina plurianual no ano '
+        'terminal, a CFD (negativa se faltarem os 7 valores do ano ou houver negativa em dois anos seguidos).',
+    )
     complete = fields.Boolean(string='Completa')
     passed = fields.Boolean(string='Aprovado')
     pass_grade = fields.Float(compute='_compute_display_flags')
@@ -308,6 +315,15 @@ class EduSubjectResult(models.Model):
                     ]
                 )
                 cfd = grading.multi_year_final([*previous.mapped('final'), final], round_fn) if terminal else None
+            transition = final
+            passed = complete and final is not None and final >= policy.pass_grade
+            if policy.regime == TECHNICAL and len(span) > 1 and terminal and final is not None and cfd is not None:
+                last = previous.sorted(lambda r: r.academic_year_id.date_start)[-1:]
+                approved = grading.technical_subject_approved(
+                    cfd, final, last.final if last else None, policy.pass_grade
+                )
+                transition = cfd if approved else min(cfd, final)
+                passed = complete and approved
             vals.update(
                 {
                     'cf': cf or 0.0,
@@ -319,8 +335,9 @@ class EduSubjectResult(models.Model):
                     'final': final or 0.0,
                     'cfd': cfd or 0.0,
                     'terminal_subject': terminal,
+                    'transition_grade': transition or 0.0,
                     'complete': complete,
-                    'passed': complete and final is not None and final >= policy.pass_grade,
+                    'passed': passed,
                 }
             )
             result.write(vals)

@@ -84,29 +84,21 @@
 - **secPed:** sem regras próprias. Segue a política configurada (2 casas decimais, MAC a 40 %), e a regra da 12.ª do ensino geral aplica-se-lhe por engano.
 - **Odoo:** usa o regime geral, com transição condicional em 10.ª–12.ª e recurso na 13.ª. Não há regulamento do magistério no repositório: **a confirmar**.
 
-## 3. O que corrigir no Odoo
+## 3. Correcções feitas no Odoo (2026-10-21)
+1. **Recurso do ensino geral.**
+   - **Nova regra:** campo novo «Mínimo das negativas para recurso» (`exam_floor`), aplicado em `grading.decide`.
+   - **Valores da lei:**
+     - 6.ª: até 2 negativas, entre 3 e 4;
+     - 9.ª e 12.ª: até 3 negativas, entre 6 e 9.
+   - **Migração:** a 20.0.1.1.0 do `edu_evaluation` actualiza as políticas que ainda tinham os valores antigos (3 e 4).
+2. **Técnico (Despacho 60/08):**
+   - **Transição:** com até duas negativas e sem nota mínima (`floor` 0).
+   - **Negativas que vêm de trás:** contam as das disciplinas terminais das classes anteriores ainda por recuperar, dos anos em que o aluno transitou (`_prior_terminal_negatives`).
+   - **Disciplina plurianual no ano terminal** (art. 28.º, n.º 2): passa a contar pela «nota para a transição» (`transition_grade`). É a CFD, ou uma negativa se faltarem os 7 valores do ano ou se houver negativa em dois anos seguidos. Só fica aprovada nessas condições.
+   - **Sem classificação em dois trimestres:** depois de fechado o último trimestre, fica sem aproveitamento (retido) (`_ungraded_subjects`).
+3. **Frequência mínima:** sai da política técnica (fica 0) e a migração do secPed deixa de a copiar para o técnico.
 
-**Pela lei:**
-1. **Recurso do ensino geral:**
-   - 6.ª: até 2 negativas, entre 3 e 4;
-   - 9.ª e 12.ª: até 3 negativas, entre 6 e 9.
-   Para isso é preciso uma «nota mínima para recurso» na política. Hoje o `exam_max` é 3/4 e não há nota mínima.
-2. **Técnico:**
-   - contar as negativas das disciplinas terminais de classes anteriores;
-   - proibir negativa em dois anos seguidos da mesma disciplina;
-   - nota mínima de 7 só no ano terminal da disciplina;
-   - «sem classificação em dois trimestres» passa a sem aproveitamento.
-
-**Da migração:**
-3. A política técnica da Vovó Eva ficou com `min_attendance` = 2/3, copiada do secPed, onde não se aplica. Assim que houver chamada em 2026/27, o Odoo reteria por frequência alunos que o Despacho 60/08 só exclui pelas faltas (3 × tempos). Deve passar a 0 no técnico.
-
-**Coerência interna:**
-4. **Dois pontos de decisão do subsistema:** as faltas usam o `nível.subsistema` e a avaliação usa o `regime` da política. Convém que as faltas leiam também a política.
-
-**Diferenças do Odoo que seguem a lei e não se devem copiar do secPed:**
-- 7.ª/8.ª/10.ª/11.ª: transita com disciplinas em atraso e exame extraordinário;
-- primário: frequência de 2/3;
-- tecto da bonificação pela escala;
-- conselho com a mesma nota da pauta;
-- recurso técnico sem PG;
-- arredondamento único.
+**Por fazer:**
+- as faltas lerem o regime da política em vez do `nível.subsistema`;
+- os pares proibidos no recurso da 12.ª: a lei proíbe «LP e/ou MAT com uma específica», mas o Odoo usa os pares da transição (LP+MAT e LP+área);
+- o regulamento do magistério.

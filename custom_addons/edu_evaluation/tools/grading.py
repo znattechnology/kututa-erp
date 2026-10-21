@@ -20,6 +20,7 @@ RETAINED = 'retained'
 PENDING = 'pending'
 
 GLOBAL_EXAM_CF_WEIGHT = 0.6
+TECHNICAL_TERMINAL_MIN = 7  # Despacho 60/08, art. 28.º, n.º 2: mínimo no ano terminal da disciplina plurianual
 GLOBAL_EXAM_MIN_HOURS = 3
 # Sem prova global: componente técnica/prática e estágio, e as disciplinas práticas (Despacho 60/08, art. 18.º).
 NO_GLOBAL_EXAM_WORDS = (
@@ -158,6 +159,13 @@ def with_adjustment(base, points, scale_max=20):
     return min(scale_max, base + (points or 0))
 
 
+def technical_subject_approved(cfd, terminal_final, previous_final, pass_grade=10):
+    """Disciplina plurianual do técnico no ano terminal (art. 28.º, n.º 2): CFD positiva, pelo menos 7 valores no
+    ano terminal e sem negativa em dois anos seguidos."""
+    consecutive = previous_final is not None and previous_final < pass_grade and terminal_final < pass_grade
+    return cfd >= pass_grade and terminal_final >= TECHNICAL_TERMINAL_MIN and not consecutive
+
+
 def multi_year_final(annuals, round_fn=round_units):
     """CFD de uma disciplina plurianual: média das classificações anuais, arredondada."""
     return general_final(annuals, round_fn)
@@ -184,6 +192,7 @@ class Rules:
     conditional_max: int = 0  # negativas toleradas (0 = classe terminal ou sem tolerância)
     forbidden_pairs: list = field(default_factory=list)  # [(código, código)] que não podem ser ambas negativas
     exam_max: int = 0  # negativas que ainda admitem exame de recurso
+    exam_floor: float | None = None  # nota mínima das negativas admitidas a recurso (Dec. 424/25, art. 31.º)
     auto_promote: bool = False
     terminal: bool = False
 
@@ -221,7 +230,8 @@ def decide(averages, rules, complete=True, excluded_absence=False, low_attendanc
     below_floor = rules.floor is not None and any(averages[code] < rules.floor for code in negatives)
     if len(negatives) <= rules.conditional_max and not below_floor and not pair:
         return Decision(CONDITIONAL, negatives, 'Transita com disciplinas em atraso')
-    if len(negatives) <= rules.exam_max and not pair:
+    below_exam_floor = rules.exam_floor is not None and any(averages[code] < rules.exam_floor for code in negatives)
+    if len(negatives) <= rules.exam_max and not pair and not below_exam_floor:
         return Decision(EXAM, negatives, 'Admitido a exame de recurso')
     return Decision(RETAINED, negatives, 'Negativas acima do permitido')
 

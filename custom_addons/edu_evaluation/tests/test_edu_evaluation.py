@@ -254,6 +254,52 @@ class TestEduEvaluation(TransactionCase):
         result._recompute()
         self.assertEqual(result.annual, 11)
 
+    def test_technical_transition_rules(self):
+        """Despacho 60/08, art. 30.º: as negativas das disciplinas terminais da classe anterior contam para o máximo
+        de duas; Resumo do regime, IV.7: sem classificação em dois trimestres, sem aproveitamento."""
+        ana = self.students[0]
+        self.next_year.action_generate_trimesters()
+        class11 = self._class(self.tec, 11, year=self.next_year)
+        lines = self.tec.curriculum_id.line_ids
+
+        def span(subject):
+            return set(lines.filtered(lambda line: line.subject_id == subject).mapped('year_id.class_number'))
+
+        only10 = self.class10.subject_line_ids.subject_id.filtered(lambda s: span(s) == {10})[:1]
+        self.assertTrue(only10, 'o plano de Enfermagem tem disciplinas só da 10.ª')
+
+        def grade(enrollment, scores):
+            Result = self.env['edu.subject.result']
+            for subject in enrollment.subject_ids:
+                result = Result.search([('enrollment_id', '=', enrollment.id), ('subject_id', '=', subject.id)])
+                vals = {'has_imported_cf': True, 'imported_cf': scores.get(subject, 12)}
+                result = result or Result.create({'enrollment_id': enrollment.id, 'subject_id': subject.id})
+                result.write(vals)
+                result._recompute()
+
+        e10 = self._enroll(self.class10, ana, self.class10.subject_line_ids.subject_id.mapped('code'))
+        grade(e10, {only10: 8})
+        self.env['edu.year.result'].create({'enrollment_id': e10.id, 'status': 'conditional', 'manual': True})
+        e11 = self._enroll(class11, ana, class11.subject_line_ids.subject_id.mapped('code'))
+        first, second = e11.subject_ids[:2]
+        grade(e11, {first: 9})
+        result = self.env['edu.year.result']._compute_for_classes(class11)
+        # Uma negativa da 11.ª mais a da disciplina terminal da 10.ª: duas, transita com disciplinas em atraso.
+        self.assertEqual((result.status, result.negative_count), ('conditional', 2))
+        grade(e11, {first: 9, second: 3})
+        result.action_recompute()
+        # Três negativas (sem nota mínima no técnico): recurso.
+        self.assertEqual((result.status, result.negative_count), ('exam', 3))
+        # Sem classificação em dois trimestres, depois de fechado o ano: sem aproveitamento.
+        grade(e11, {})
+        missing = self.env['edu.subject.result'].search([('enrollment_id', '=', e11.id), ('subject_id', '=', first.id)])
+        missing.write({'has_imported_cf': False})
+        result.action_recompute()
+        self.assertEqual(result.status, 'pending')
+        self.next_year.trimester_ids.sorted('number')[-1].state = 'closed'
+        result.action_recompute()
+        self.assertEqual((result.status, result.reason), ('retained', 'Sem classificação em dois trimestres'))
+
     def test_council_vote(self):
         ana = self.students[0]
         self._enroll(self.class10, ana, ['LP'])

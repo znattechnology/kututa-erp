@@ -101,7 +101,16 @@ class EduYearResult(models.Model):
             taught = enrollment.class_id.assignment_ids.subject_id or subjects
             counted = subject_results.filtered(lambda r, taught=taught: r.subject_id in taught)
             complete = bool(counted) and all(counted.mapped('complete')) and len(counted) == len(subjects & taught)
-            averages = {r.subject_id.code or str(r.subject_id.id): r.final for r in counted if r.complete}
+            finals = {r.subject_id.code or str(r.subject_id.id): r.final for r in counted if r.complete}
+            # As negativas contam pela nota para a transição (no técnico, a CFD das disciplinas que terminam aqui).
+            averages = {r.subject_id.code or str(r.subject_id.id): r.transition_grade for r in counted if r.complete}
+            technical = policy.regime == grading.TECHNICAL
+            if technical:
+                # Despacho 60/08, art. 30.º e 31.º, n.º 2: as negativas das disciplinas terminais das classes
+                # anteriores ainda por recuperar também contam para o máximo de duas.
+                for prior in result._prior_terminal_negatives():
+                    code = prior.subject_id.code or str(prior.subject_id.id)
+                    averages[f'{code} ({prior.class_id.class_number}ª)'] = prior.transition_grade
             rate = result._attendance()
             low_attendance = bool(policy.min_attendance and rate is not None and rate < policy.min_attendance)
             rules = policy._rules(enrollment.class_id)
@@ -116,10 +125,15 @@ class EduYearResult(models.Model):
                 and all(code in decision.negatives for code in structuring)
             ):
                 decision = grading.Decision(grading.RETAINED, decision.negatives, 'Negativa em todas as estruturantes')
+            ungraded = result._ungraded_subjects(counted) if technical else counted.browse()
+            if ungraded and decision.status != grading.RETAINED:
+                # Resumo do regime (técnico), IV.7: sem classificação em dois trimestres, sem aproveitamento no ano.
+                codes = [r.subject_id.code or str(r.subject_id.id) for r in ungraded]
+                decision = grading.Decision(grading.RETAINED, codes, 'Sem classificação em dois trimestres')
             codes = set(decision.negatives)
             negatives = counted.filtered(lambda r, codes=codes: (r.subject_id.code or str(r.subject_id.id)) in codes)
             prior = result._prior_retentions()
-            average = grading.mean(list(averages.values()))
+            average = grading.mean(list(finals.values()))
             values = {
                 'average': grading.rounder(policy.rounding)(average) if average is not None else 0.0,
                 'negative_count': len(decision.negatives),
@@ -141,6 +155,44 @@ class EduYearResult(models.Model):
                         self.env['edu.exam.requirement'].sudo().create(
                             {'year_result_id': result.id, 'subject_result_id': subject_result.id, 'kind': kind}
                         )
+
+    def _prior_terminal_negatives(self):
+        """Disciplinas terminais negativas de classes anteriores do mesmo nível, em anos em que o aluno transitou
+        (nos anos de que ficou retido, repete a classe e as disciplinas)."""
+        self.ensure_one()
+        progressed = self.sudo().search(
+            [
+                ('student_id', '=', self.student_id.id),
+                ('level_id', '=', self.level_id.id),
+                ('status', 'in', ('promoted', 'conditional')),
+                ('id', '!=', self.id),
+                ('academic_year_id.date_start', '<', self.academic_year_id.date_start),
+            ]
+        )
+        if not progressed:
+            return self.env['edu.subject.result']
+        policy = self._policy()
+        return (
+            self.env['edu.subject.result']
+            .sudo()
+            .search(
+                [
+                    ('enrollment_id', 'in', progressed.enrollment_id.ids),
+                    ('terminal_subject', '=', True),
+                    ('complete', '=', True),
+                    ('transition_grade', '<', policy.pass_grade),
+                ]
+            )
+        )
+
+    def _ungraded_subjects(self, subject_results):
+        """Disciplinas sem classificação em dois ou mais trimestres, depois de fechado o último trimestre (as que só
+        têm a classificação anual importada não contam)."""
+        self.ensure_one()
+        trimesters = self.academic_year_id.trimester_ids.sorted('number')
+        if not trimesters or trimesters[-1].state != 'closed':
+            return subject_results.browse()
+        return subject_results.filtered(lambda r: not r.has_imported_cf and r.trimesters_graded <= len(trimesters) - 2)
 
     def _prior_retentions(self):
         """Retenções anteriores do aluno no mesmo nível de ensino."""

@@ -81,7 +81,7 @@ Saída:
 | Achado | Casos | O que fica no Odoo |
 |---|---|---|
 | A escola faz prova global em disciplinas que o Despacho 60/08 e a regra do plano não prevêem (2 tempos, componente técnica) | 50 linhas do plano | As linhas ficam marcadas com prova global, como a escola pratica. Sem isso, a PG lançada não entrava na CA (no secPed, uma PG lançada conta sempre) |
-| Decisão assinada diferente do cálculo do regime | 331 de 1 633 | A decisão assinada, como manual. Os casos mais frequentes são «Transita» com 3 ou mais negativas (o cálculo dá recurso) e «Transita» com disciplinas sem CF (o cálculo dá pendente) |
+| Decisão assinada diferente do cálculo do regime | 270 de 1 633 (eram 331 antes das correcções às regras do técnico, `docs/analise-legal/05`) | A decisão assinada, como manual. Os casos mais frequentes são:<br>• «Transita» com 3 a 5 negativas (120): o cálculo dá recurso;<br>• «Transita» com uma disciplina sem classificação em dois trimestres (84): o regime dá «sem aproveitamento»; provavelmente são notas que faltam nas folhas entregues;<br>• «Não transita» com recurso possível (44) |
 | Choques de professor no horário | 3 tempos (Osvaldo Soque à 6.ª às 07:00 e 07:50; Manuel Menezes à 5.ª às 13:50) | Ficam como estão |
 | Epidemiologia Estatística na 12.ª de Análises Clínicas (A, B, C) sem estar no plano | 3 atribuições, 6 tempos | De fora, até a disciplina entrar no plano |
 | Segunda grelha da tarde (a da 12.ª, que retoma às 15:40) | 3 tempos | As aulas ficam com as suas horas, sem tempo da grelha associado |
@@ -103,6 +103,6 @@ No `edu_evaluation` há mais um teste (`test_technical_imported`): médias impor
 Pauta final da 12.ª A de Enfermagem (2025/26) gerada na base `vovo_eva`, com os nomes, as notas e as assinaturas da escola. Revelou um defeito do `edu_documents`: nas disciplinas classificadas só no fim do ano (Prática de Enfermagem), a pauta e o termo mostravam «00» nos CT. Corrigido: ficam vazios.
 
 ## Por fazer
-- Rever com a escola as 331 decisões em que o regime e a pauta assinada divergem. A regra que a escola aplica de facto pode pedir afinar o regime técnico, por exemplo o número de negativas que admite a transição.
+- Rever com a escola as 270 decisões em que o regime e a pauta assinada divergem. A regra que a escola aplica de facto pode pedir afinar o regime técnico, por exemplo o número de negativas que admite a transição.
 - Pôr a Epidemiologia Estatística no plano da 12.ª de AC, ou retirá-la do horário.
 - Entregar à escola as palavras-passe temporárias das 57 contas (base local: ficheiro fora do repositório) e pedir que as mudem no primeiro acesso.

@@ -520,12 +520,14 @@ class EduMigrationSecped(models.AbstractModel):
             policy = self.env['edu.evaluation.policy']._get(run.company, level)
             vals = {
                 'pass_grade': number(policy_row.get('minPassGrade')) or policy.pass_grade,
-                'min_attendance': number(policy_row.get('minAttendanceRate')) or policy.min_attendance,
                 'max_retentions': policy_row.get('maxRetentions') or policy.max_retentions,
                 'rounding': 'decimal2' if policy_row.get('roundingMode') == 'DECIMAL' else 'integer',
             }
             if policy.regime == 'technical':
                 vals['technical_ca_precise'] = True
+            else:
+                # No técnico a frequência não conta (faltas pelos tempos lectivos); no secPed o valor nem se aplicava.
+                vals['min_attendance'] = number(policy_row.get('minAttendanceRate')) or policy.min_attendance
             rule = rules.get(policy_row.get('level'))
             if rule and rule.get('maxNegatives') is not None:
                 vals['conditional_max'] = rule['maxNegatives']
