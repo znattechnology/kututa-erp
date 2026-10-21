@@ -127,6 +127,8 @@ class TestEduCore(TransactionCase):
         self.assertEqual(edu_class.curriculum_id, curriculum)
         self.assertEqual(edu_class.class_number, 10)
         self.assertEqual(edu_class.display_name, '10ª A · ENF · 2026/2027')
+        self.assertIn(edu_class.id, [r[0] for r in self.env['edu.class'].name_search('10ª A')])
+        self.assertIn(edu_class.id, [r[0] for r in self.env['edu.class'].name_search('ENF')])
         self.assertIn('TENF', edu_class.subject_line_ids.mapped('code'))
         with self.assertRaisesRegex(ValidationError, 'Sala 1'):
             self.env['edu.class'].create(

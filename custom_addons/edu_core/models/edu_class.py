@@ -11,8 +11,11 @@ class EduClass(models.Model):
     _inherit = ['mail.thread']
     _order = 'academic_year_id desc, class_number, course_id, name'
     _check_company_auto = True
+    _rec_name = 'complete_name'
+    _rec_names_search = ['complete_name']
 
     name = fields.Char(string='Turma', required=True, tracking=True, help='Letra ou designação: A, B, IG-1…')
+    complete_name = fields.Char(string='Designação completa', compute='_compute_complete_name', store=True, index=True)
     company_id = fields.Many2one(
         'res.company', string='Escola', required=True, default=lambda self: self.env.company, index=True
     )
@@ -73,15 +76,20 @@ class EduClass(models.Model):
             elif not edu_class.class_number:
                 edu_class.class_number = edu_class.course_id.level_id.class_from or 0
 
-    @api.depends('name', 'class_number', 'course_id', 'academic_year_id')
-    def _compute_display_name(self):
+    @api.depends('name', 'class_number', 'course_id.code', 'course_id.name', 'academic_year_id.name')
+    def _compute_complete_name(self):
         for edu_class in self:
             parts = [f'{edu_class.class_number}ª {edu_class.name or ""}'.strip()]
             if edu_class.course_id:
                 parts.append(edu_class.course_id.code or edu_class.course_id.name)
             if edu_class.academic_year_id:
                 parts.append(edu_class.academic_year_id.name)
-            edu_class.display_name = ' · '.join(parts)
+            edu_class.complete_name = ' · '.join(parts)
+
+    @api.depends('complete_name')
+    def _compute_display_name(self):
+        for edu_class in self:
+            edu_class.display_name = edu_class.complete_name or edu_class.name
 
     @api.constrains('class_number', 'course_id')
     def _check_class_number(self):
