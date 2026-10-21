@@ -69,6 +69,10 @@ class TestEduEnrollment(TransactionCase):
         second = self._enroll(ana, self.class_a)
         self.assertEqual(second.order_number, 2)
         self.assertEqual(self.class_a.student_count, 2)
+        # Num ano fechado, quem concluiu ou ficou retido continua a contar como aluno da turma.
+        second.state = 'completed'
+        self.assertEqual(self.class_a.student_count, 2)
+        second.state = 'active'
         # Turma completa.
         with self.assertRaisesRegex(UserError, 'completa'):
             self._enroll(bento, self.class_a)

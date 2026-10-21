@@ -146,6 +146,15 @@ class TestEduCore(TransactionCase):
         with self.assertRaises(ValidationError):
             self.env['edu.class'].create({'name': 'C', 'course_id': self.nursing.id, 'class_number': 7})
 
+    def test_class_list_opens_on_current_year(self):
+        # A lista de turmas abre no ano em curso; o painel dos anos lectivos deixa escolher outro.
+        action = self.env['edu.class'].action_open_classes()
+        self.assertEqual(action['res_model'], 'edu.class')
+        self.assertEqual(action['context']['searchpanel_default_academic_year_id'], self.year.id)
+        self.assertEqual(self.env.ref('edu_core.menu_edu_class').action, self.env.ref('edu_core.action_edu_class_open'))
+        search = self.env['edu.class'].get_views([(False, 'search')])['views']['search']['arch']
+        self.assertIn('<searchpanel', search)
+
     def test_subject_prerequisites(self):
         subjects = self.nursing.curriculum_id.line_ids.subject_id
         first, second = subjects[:2]

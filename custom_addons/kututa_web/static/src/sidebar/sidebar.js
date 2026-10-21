@@ -71,11 +71,21 @@ export class KututaSidebar extends Component {
         return this.actionService.currentController?.action?.id;
     }
 
+    /**
+     * O item da página aberta. Os menus que abrem por uma acção de servidor (por exemplo Turmas, que abre no ano
+     * em curso) chegam a uma acção com outro id: vale então o último item clicado.
+     */
     isActive(menu) {
-        return Boolean(menu.actionID) && menu.actionID === this.currentActionId;
+        const current = this.currentActionId;
+        if (menu.actionID && menu.actionID === current) {
+            return true;
+        }
+        const matched = this.blocks.some((block) => block.entries.some((entry) => entry.menu.actionID === current));
+        return !matched && menu.id === this.selectedMenuId;
     }
 
     async onClickMenu(menu) {
+        this.selectedMenuId = menu.id;
         await this.menuService.selectMenu(menu);
         render(this);
     }

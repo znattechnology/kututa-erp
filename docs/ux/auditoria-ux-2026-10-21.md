@@ -179,3 +179,11 @@ Pedido do utilizador: quando se abre um registo ou outro ecrã a partir de uma l
 - **Onde não aparece:** no primeiro nível, por exemplo uma lista aberta pelo menu.
 - **No telemóvel:** o Odoo já mostra uma seta de voltar, por isso o botão novo é só para o computador.
 - **Atalho:** o trilho de navegação do Odoo (texto pequeno por cima do título) continua lá.
+
+## 9. Turmas por ano lectivo (2026-10-21)
+Pedido: na lista de turmas, o ano em curso por omissão, com a possibilidade de escolher outro ano e abrir uma turma de um ano passado.
+
+- **Painel «Ano lectivo»:** a lista de turmas tem um painel à esquerda com os anos e o número de turmas de cada um, e ainda «Tudo».
+- **Abertura:** o menu Turmas abre por uma acção de servidor (`edu.class.action_open_classes`) que selecciona o ano em curso no painel. Um clique muda de ano.
+- **Alunos das turmas de anos fechados:** o contador «Alunos» e o filtro «Matriculados» passam a contar também as matrículas concluídas e retidas. Antes, uma turma de 2024/25 mostrava «Alunos 0». As vagas continuam a ser verificadas só com as matrículas em curso.
+- **Menu lateral:** os itens que abrem por acção de servidor ficam destacados pelo último clique.

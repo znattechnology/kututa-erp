@@ -78,7 +78,7 @@
                 <field name="matricula_number"/>
                 <field name="class_id"/>
                 <field name="course_id"/>
-                <filter name="enrolled" string="Matriculados" domain="[('state', 'in', ('active', 'irregular'))]"/>
+                <filter name="enrolled" string="Matriculados" domain="[('state', 'in', ('active', 'irregular', 'completed', 'retained'))]"/>
                 <filter name="pending" string="Pendentes" domain="[('state', '=', 'draft')]"/>
                 <filter name="irregular" string="Irregulares" domain="[('state', '=', 'irregular')]"/>
                 <filter name="left" string="Anulados e transferidos" domain="[('state', 'in', ('dropped', 'transferred'))]"/>

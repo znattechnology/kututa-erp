@@ -3,6 +3,9 @@ from odoo.exceptions import UserError
 
 from .edu_enrollment import SEAT_STATES
 
+# Alunos da turma: os matriculados e, num ano fechado, os que o concluíram ou ficaram retidos nela.
+MEMBER_STATES = (*SEAT_STATES, 'completed', 'retained')
+
 
 class EduClass(models.Model):
     _inherit = 'edu.class'
@@ -14,7 +17,7 @@ class EduClass(models.Model):
     @api.depends('enrollment_ids.state', 'capacity')
     def _compute_student_count(self):
         for edu_class in self:
-            count = len(edu_class.enrollment_ids.filtered(lambda e: e.state in SEAT_STATES))
+            count = len(edu_class.enrollment_ids.filtered(lambda e: e.state in MEMBER_STATES))
             edu_class.student_count = count
             edu_class.seats_available = max(edu_class.capacity - count, 0)
 

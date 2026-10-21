@@ -1,5 +1,6 @@
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools.safe_eval import safe_eval
 
 
 class EduClass(models.Model):
@@ -61,6 +62,15 @@ class EduClass(models.Model):
         'UNIQUE(company_id, academic_year_id, course_id, class_number, name)',
         'Já existe esta turma no ano lectivo.',
     )
+
+    @api.model
+    def action_open_classes(self, xmlid='edu_core.action_edu_class'):
+        """A lista de turmas abre no ano lectivo em curso; o painel à esquerda muda para outro ano."""
+        action = self.env['ir.actions.act_window']._for_xml_id(xmlid)
+        context = dict(safe_eval(action.get('context') or '{}'))
+        context['searchpanel_default_academic_year_id'] = self.env.company.edu_current_year_id.id or False
+        action['context'] = context
+        return action
 
     @api.depends('course_id')
     def _compute_curriculum_id(self):
