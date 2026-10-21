@@ -47,6 +47,12 @@ class PosOrder(models.Model):
     l10n_ao_edi_error = fields.Text(string='Erros AGT', readonly=True, copy=False)
     l10n_ao_edi_system_entry_date = fields.Datetime(string='Data de registo (AGT)', readonly=True, copy=False)
     l10n_ao_edi_contingency = fields.Boolean(string='Emitido em contingência', readonly=True, copy=False)
+    l10n_ao_edi_rejected_payloads = fields.Text(
+        string='Documentos rejeitados (JSON)',
+        readonly=True,
+        copy=False,
+        help='Documentos AGT anteriores deste registo, rejeitados e substituídos: ficam no SAF-T como anulados.',
+    )
     l10n_ao_edi_rejected_document_no = fields.Char(string='Documento rejeitado corrigido', readonly=True, copy=False)
     l10n_ao_edi_payload = fields.Text(string='Documento AGT (JSON)', readonly=True, copy=False)
     l10n_ao_edi_reason = fields.Char(
@@ -240,6 +246,10 @@ class PosOrder(models.Model):
         # A série é a do ano da emissão (uma venda offline de 31/12 sincronizada em Janeiro é emitida em Janeiro).
         year = fields.Date.context_today(self.with_context(tz='Africa/Luanda')).year
         series, number = self.env['l10n_ao_edi.series']._l10n_ao_edi_next_number(company, document_type, year)
+        if self.l10n_ao_edi_state == 'invalid' and self.l10n_ao_edi_payload:
+            history = json.loads(self.l10n_ao_edi_rejected_payloads or '[]')
+            history.append(json.loads(self.l10n_ao_edi_payload))
+            self.l10n_ao_edi_rejected_payloads = json.dumps(history, ensure_ascii=False)
         self.write(
             {
                 'l10n_ao_edi_rejected_document_no': self.l10n_ao_edi_document_no

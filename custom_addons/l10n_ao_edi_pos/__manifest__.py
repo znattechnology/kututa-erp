@@ -1,6 +1,6 @@
 {
     'name': 'Kitanda - Talões AGT no Ponto de Venda',
-    'version': '20.0.1.1.0',
+    'version': '20.0.1.2.0',
     'summary': 'Talões de venda (TV), facturas/recibo (FR) e notas de crédito certificados AGT no POS',
     'description': """
 Kitanda: o Ponto de Venda com facturação electrónica AGT.

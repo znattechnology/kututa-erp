@@ -87,6 +87,25 @@ class TestL10nAoAsset(AccountTestInvoicingCommon):
         with self.assertRaisesRegex(UserError, 'confirmadas'):
             bill.button_draft()
 
+    def test_vendor_refund(self):
+        account = self._account('11.5')
+        bill = self._bill(
+            [{'name': 'Servidor', 'quantity': 1, 'price_unit': 400_000, 'account_id': account.id, 'tax_ids': []}]
+        )
+        asset = bill.line_ids.l10n_ao_asset_ids
+        refund = bill._reverse_moves([{'invoice_date': '2026-02-20'}], cancel=False)
+        refund.invoice_line_ids.price_unit = 50_000
+        refund.action_post()
+        # Ficha em rascunho: o valor é abatido.
+        self.assertEqual(asset.original_value, 350_000)
+        asset.action_confirm()
+        refund2 = bill._reverse_moves([{'invoice_date': '2026-03-20'}], cancel=False)
+        refund2.invoice_line_ids.price_unit = 10_000
+        refund2.action_post()
+        # Ficha confirmada: fica uma actividade para regularizar.
+        self.assertEqual(asset.original_value, 350_000)
+        self.assertTrue(asset.activity_ids)
+
     def test_asset_from_vendor_bill(self):
         bill = self.env['account.move'].create(
             {

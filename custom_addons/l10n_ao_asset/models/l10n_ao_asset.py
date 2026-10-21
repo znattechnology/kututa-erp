@@ -35,7 +35,7 @@ class L10nAoAsset(models.Model):
     _check_company_auto = True
 
     name = fields.Char(string='Designação', required=True, tracking=True)
-    code = fields.Char(string='Referência', copy=False)
+    code = fields.Char(string='Referência', copy=False, index='btree_not_null')
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company, index=True)
     currency_id = fields.Many2one(related='company_id.currency_id')
     state = fields.Selection(
@@ -132,6 +132,10 @@ class L10nAoAsset(models.Model):
     # ------------------------------------------------------------------
     # Computes e validações
     # ------------------------------------------------------------------
+    _code_company_uniq = models.Constraint(
+        'UNIQUE(code, company_id)', 'A referência do bem tem de ser única na empresa.'
+    )
+
     @api.depends('category_id')
     def _compute_rate_id(self):
         for asset in self:

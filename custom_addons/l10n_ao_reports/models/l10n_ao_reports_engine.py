@@ -481,6 +481,14 @@ class L10nAoReportsEngine(models.AbstractModel):
             rows[account][1] += debit
             rows[account][2] += credit
 
+        if not hide_empty:
+            # Todas as contas de movimento, mesmo sem saldo nem movimentos.
+            for account in (
+                self.env['account.account']
+                .with_company(company)
+                .search([('company_ids', 'in', company.id), ('active', '=', True)])
+            ):
+                rows.setdefault(account, [0.0, 0.0, 0.0])
         aggregates = {}  # código -> linha; a classe (1 dígito) e as contas-mãe agregam as contas de movimento
         for account, (initial, debit, credit) in rows.items():
             chain = []
@@ -502,8 +510,10 @@ class L10nAoReportsEngine(models.AbstractModel):
                 continue
             initial, debit, credit = agg['values']
             final = initial + debit - credit
-            amounts = [initial, debit, credit, max(final, 0.0), max(-final, 0.0)]
-            if hide_empty and not any(company.currency_id.round(a) for a in amounts):
+            amounts = [
+                company.currency_id.round(a) + 0.0 for a in (initial, debit, credit, max(final, 0.0), max(-final, 0.0))
+            ]
+            if hide_empty and not any(amounts):
                 continue
             lines.append({'code': agg['code'], 'name': agg['name'], 'depth': agg['depth'], 'amounts': amounts})
             if agg['depth'] == 0:

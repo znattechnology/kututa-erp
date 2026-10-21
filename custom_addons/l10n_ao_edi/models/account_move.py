@@ -52,6 +52,12 @@ class AccountMove(models.Model):
     )
     l10n_ao_edi_error = fields.Text(string='Erros AGT', readonly=True, copy=False)
     l10n_ao_edi_system_entry_date = fields.Datetime(string='Data de registo (AGT)', readonly=True, copy=False)
+    l10n_ao_edi_rejected_payloads = fields.Text(
+        string='Documentos rejeitados (JSON)',
+        readonly=True,
+        copy=False,
+        help='Documentos AGT anteriores deste registo, rejeitados e substituídos: ficam no SAF-T como anulados.',
+    )
     l10n_ao_edi_rejected_document_no = fields.Char(
         string='Documento rejeitado corrigido',
         readonly=True,
@@ -358,6 +364,7 @@ class AccountMove(models.Model):
             if move.l10n_ao_edi_state == 'invalid':
                 # Correcção de um documento rejeitado: novo número, com referência ao rejeitado (documentStatus «C»).
                 move.l10n_ao_edi_rejected_document_no = move.name
+                move._l10n_ao_edi_archive_rejected_payload()
                 move.write({'name': '/', 'l10n_ao_edi_series_id': False, 'l10n_ao_edi_print_count': 0})
             if not move.l10n_ao_edi_series_id:
                 move._l10n_ao_edi_assign_number()
@@ -376,6 +383,13 @@ class AccountMove(models.Model):
                 move.l10n_ao_edi_payload = json.dumps(move._l10n_ao_edi_document_values(), ensure_ascii=False)
             self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_send').sudo()._trigger()
         return posted
+
+    def _l10n_ao_edi_archive_rejected_payload(self):
+        """Guarda o documento rejeitado antes de o substituir pelo de correcção (histórico para o SAF-T)."""
+        for record in self.filtered('l10n_ao_edi_payload'):
+            history = json.loads(record.l10n_ao_edi_rejected_payloads or '[]')
+            history.append(json.loads(record.l10n_ao_edi_payload))
+            record.l10n_ao_edi_rejected_payloads = json.dumps(history, ensure_ascii=False)
 
     def _l10n_ao_edi_payload_values(self):
         """Documento a enviar: o fixado na emissão (ou calculado agora, para documentos anteriores)."""

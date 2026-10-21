@@ -120,6 +120,24 @@ class TestL10nAoSaft(L10nAoEdiCommon):
             root.findtext('s:SourceDocuments/s:SalesInvoices/s:Invoice/s:InvoiceNo', namespaces=NS), invoice.name
         )
 
+    def test_rejected_document_history(self):
+        invoice = self._create_invoice()
+        self.mark_sent(invoice)
+        original = invoice.name
+        invoice.l10n_ao_edi_state = 'invalid'
+        invoice.button_draft()
+        invoice.action_post()
+        self.assertNotEqual(invoice.name, original)
+        root = self._export('F')
+        invoices = {
+            n.findtext('s:InvoiceNo', namespaces=NS): n for n in root.findall('.//s:SalesInvoices/s:Invoice', NS)
+        }
+        self.assertEqual(set(invoices), {original, invoice.name})
+        self.assertEqual(invoices[original].findtext('s:DocumentStatus/s:InvoiceStatus', namespaces=NS), 'A')
+        self.assertEqual(invoices[invoice.name].findtext('s:DocumentStatus/s:InvoiceStatus', namespaces=NS), 'N')
+        self.assertEqual(root.findtext('.//s:SalesInvoices/s:NumberOfEntries', namespaces=NS), '2')
+        self.assertEqual(root.findtext('.//s:SalesInvoices/s:TotalCredit', namespaces=NS), '1000.00')
+
     def test_accounting_file(self):
         self._scenario()
         root = self._export('C')

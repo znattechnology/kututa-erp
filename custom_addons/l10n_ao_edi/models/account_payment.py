@@ -35,6 +35,12 @@ class AccountPayment(models.Model):
     l10n_ao_edi_error = fields.Text(string='Erros AGT', readonly=True, copy=False)
     l10n_ao_edi_system_entry_date = fields.Datetime(string='Data de registo (AGT)', readonly=True, copy=False)
     l10n_ao_edi_contingency = fields.Boolean(string='Emitido em contingência', readonly=True, copy=False)
+    l10n_ao_edi_rejected_payloads = fields.Text(
+        string='Documentos rejeitados (JSON)',
+        readonly=True,
+        copy=False,
+        help='Documentos AGT anteriores deste registo, rejeitados e substituídos: ficam no SAF-T como anulados.',
+    )
     l10n_ao_edi_rejected_document_no = fields.Char(string='Recibo rejeitado corrigido', readonly=True, copy=False)
     l10n_ao_edi_source_move_ids = fields.Many2many(
         'account.move',
@@ -120,6 +126,12 @@ class AccountPayment(models.Model):
     def _l10n_ao_edi_ready_to_send(self):
         return self._l10n_ao_edi_sources_sent()
 
+    def _l10n_ao_edi_archive_rejected_payload(self):
+        for record in self.filtered('l10n_ao_edi_payload'):
+            history = json.loads(record.l10n_ao_edi_rejected_payloads or '[]')
+            history.append(json.loads(record.l10n_ao_edi_payload))
+            record.l10n_ao_edi_rejected_payloads = json.dumps(history, ensure_ascii=False)
+
     def _l10n_ao_edi_payload_values(self):
         self.ensure_one()
         return json.loads(self.l10n_ao_edi_payload) if self.l10n_ao_edi_payload else self._l10n_ao_edi_document_values()
@@ -146,6 +158,8 @@ class AccountPayment(models.Model):
             series, number = self.env['l10n_ao_edi.series']._l10n_ao_edi_next_number(
                 company, RECEIPT_DOCUMENT_TYPE, payment.date.year
             )
+            if payment.l10n_ao_edi_state == 'invalid':
+                payment._l10n_ao_edi_archive_rejected_payload()
             payment.write(
                 {
                     # Correcção de um recibo rejeitado: novo número, com referência ao rejeitado (documentStatus «C»).

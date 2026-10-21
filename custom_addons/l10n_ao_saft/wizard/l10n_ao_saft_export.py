@@ -224,6 +224,12 @@ class SaftBuilder:
             if model == 'account.move':
                 domain.append(('move_type', 'in', ('out_invoice', 'out_refund')))
             for record in self.env[model].sudo().search(domain, order='id'):
+                # Documentos rejeitados pela AGT e substituídos: saem como anulados, com o número original.
+                for old in json.loads(record.l10n_ao_edi_rejected_payloads or '[]'):
+                    old['_rejected'] = True
+                    day = fields.Date.to_date(old.get('documentDate'))
+                    if day and self.date_from <= day <= self.date_to:
+                        (receipts if 'paymentReceipt' in old else sales).append((record, old))
                 if record.l10n_ao_edi_payload:
                     payload = json.loads(record.l10n_ao_edi_payload)
                 else:
@@ -594,12 +600,14 @@ class SaftBuilder:
         reason = text(exemption.name or f'Isenção {code}', 60)
         return reason if len(reason) >= 6 else f'Isenção {code}'
 
-    def _status(self, record):
+    def _status(self, record, payload=None):
+        if payload and payload.get('_rejected'):
+            return 'A'
         return 'A' if getattr(record, 'l10n_ao_edi_state', False) == 'invalid' else 'N'
 
     def _build_sales(self, source, sales, tx_ids):
         container = self._el(source, 'SalesInvoices')
-        valid = [(r, p) for r, p in sales if self._status(r) == 'N']
+        valid = [(r, p) for r, p in sales if self._status(r, p) == 'N']
 
         def rate(payload):
             currency = payload['documentTotals'].get('currency')
@@ -616,7 +624,7 @@ class SaftBuilder:
     def _build_invoice(self, container, record, payload, tx_ids):
         node = self._el(container, 'Invoice')
         day = fields.Date.to_date(payload['documentDate'])
-        status = self._status(record)
+        status = self._status(record, payload)
         self._el(node, 'InvoiceNo', payload['documentNo'])
         doc_status = self._el(node, 'DocumentStatus')
         self._el(doc_status, 'InvoiceStatus', status)
@@ -732,7 +740,7 @@ class SaftBuilder:
 
     def _build_payments(self, source, receipts, tx_ids):
         container = self._el(source, 'Payments')
-        valid = [(r, p) for r, p in receipts if self._status(r) == 'N']
+        valid = [(r, p) for r, p in receipts if self._status(r, p) == 'N']
         credit = sum(s.get('creditAmount', 0.0) for _r, p in valid for s in p['paymentReceipt']['sourceDocuments'])
         debit = sum(s.get('debitAmount', 0.0) for _r, p in valid for s in p['paymentReceipt']['sourceDocuments'])
         self._el(container, 'NumberOfEntries', len(receipts))
@@ -740,7 +748,7 @@ class SaftBuilder:
         self._el(container, 'TotalCredit', amount2(credit))
         for record, payload in receipts:
             day = fields.Date.to_date(payload['documentDate'])
-            status = self._status(record)
+            status = self._status(record, payload)
             node = self._el(container, 'Payment')
             self._el(node, 'PaymentRefNo', payload['documentNo'])
             self._el(node, 'Period', self._period(day))

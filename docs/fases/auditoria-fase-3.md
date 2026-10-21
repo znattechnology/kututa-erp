@@ -63,18 +63,25 @@
 | 36 | Stock negativo exportado; exercício sem validação; quantidade com formatação de `float`; descrição com «[código]» | Corrigidos |
 | 37 | Contabilistas sem acesso ao assistente | Grupos de contabilidade adicionados |
 
+### Segunda passagem (2026-10-21)
+| # | Problema | Correcção |
+|---|---|---|
+| 38 | **Documento rejeitado pela AGT e corrigido:** o número original desaparecia do SAF-T, abrindo uma falha na sequência | Os documentos rejeitados ficam guardados (`l10n_ao_edi_rejected_payloads`, em facturas, recibos e talões) e saem no SAF-T como anulados (A), com o número original |
+| 39 | Notas de crédito de fornecedor não ajustavam as fichas de imobilizado | Abatem o valor às fichas em rascunho; nas confirmadas criam uma actividade para regularizar |
+| 40 | Balancete com «Omitir rubricas sem valor» desligado não mostrava as contas sem movimentos; valores «-0,0» | Corrigidos |
+| 41 | Excel das demonstrações sem os avisos de rascunhos e de saldos fora do PGC; anexos de exportações anteriores acumulavam | Avisos no Excel; os anexos antigos do utilizador são apagados |
+| 42 | Referência do bem repetida; categorias por omissão omitidas em silêncio quando falta uma conta | Referência única por empresa; aviso no registo |
+
 ## Testes
-- `l10n_ao_reports`: 15 (eram 11); `l10n_ao_asset`: 14 (eram 8); `l10n_ao_saft`: 8 (eram 4); `l10n_ao_stock`: 7 (eram 6).
-- Bateria dos oito módulos: ver o total no fim deste documento.
+- `l10n_ao_reports`: 15 (eram 11); `l10n_ao_asset`: 15 (eram 8); `l10n_ao_saft`: 9 (eram 4); `l10n_ao_stock`: 7 (eram 6).
+- Bateria dos oito módulos: 161 testes, 0 falhas.
 
 ## Por fazer ou a confirmar
 | Tema | Porquê |
 |---|---|
-| Documento rejeitado pela AGT e corrigido: o número original desaparece do SAF-T | O payload rejeitado é substituído (`l10n_ao_edi`); a guardar o histórico na Fase 2 |
 | IVA dedutível por tipo (`Deductible`) nas compras; `WorkingDocuments` e `MovementOfGoods` | Faltam os dados; ver fase-3c |
 | Hash dos documentos no SAF-T | DE 74/19 por obter |
-| Movimentos manuais nas contas 82 a 88 no exercício corrente | Saem em «Resultados transitados»; a prática é não lhes lançar à mão |
-| Balanço em milhares: o Activo e o Capital próprio + Passivo podem diferir em 1 por arredondamento | Sem rubrica de diferença no modelo do PGC |
-| Notas de crédito de fornecedor não ajustam as fichas de imobilizado | A tratar à mão (abate parcial) |
+| Movimentos manuais nas contas 82 a 88 no exercício corrente | Saem em «Resultados transitados»; a prática é não lhes lançar à mão (o apuramento faz-se pelo assistente) |
+| Balanço em milhares: o Activo e o Capital próprio + Passivo podem diferir em 1 por arredondamento | O modelo do PGC não tem rubrica de diferença; em Kwanzas fecha sempre |
 | Reduzido valor: a excepção dos conjuntos (art. 36.º/2) é manual (desmarcar) | — |
 | Etiquetas do inventário em XML/JSON | A confirmar com a AGT |

@@ -1,6 +1,6 @@
 {
     'name': 'Kututa Mukanda - Facturação Electrónica AGT',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Facturação electrónica certificada AGT (DP n.º 71/25, DE n.º 683/25)',
     'description': """
 Kututa Mukanda: facturação electrónica angolana.

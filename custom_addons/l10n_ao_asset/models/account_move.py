@@ -21,7 +21,55 @@ class AccountMove(models.Model):
     def _post(self, soft=True):
         posted = super()._post(soft)
         posted.filtered(lambda move: move.move_type == 'in_invoice')._l10n_ao_asset_create_from_bills()
+        posted.filtered(lambda move: move.move_type == 'in_refund')._l10n_ao_asset_adjust_from_refunds()
         return posted
+
+    def _l10n_ao_asset_adjust_from_refunds(self):
+        """Nota de crédito de fornecedor sobre uma factura com fichas: abate o valor às fichas em rascunho e
+        pede a correcção manual nas confirmadas (a amortização já começou)."""
+        for refund in self:
+            origin = refund.reversed_entry_id
+            by_account = self._l10n_ao_asset_categories_by_account(refund.company_id)
+            for line in refund.invoice_line_ids.filtered(lambda aml, a=by_account: aml.account_id in a and aml.balance):
+                assets = (
+                    origin.invoice_line_ids.filtered(
+                        lambda aml, acc=line.account_id: aml.account_id == acc
+                    ).l10n_ao_asset_ids
+                    if origin
+                    else self.env['l10n_ao_asset.asset']
+                )
+                credit = -line.balance  # a NC lança a crédito: balance negativo
+                total = sum(assets.mapped('original_value'))
+                for asset in assets:
+                    share = refund.company_currency_id.round(credit * asset.original_value / total) if total else 0.0
+                    if asset.state == 'draft' and share < asset.original_value:
+                        asset.sudo().original_value = asset.original_value - share
+                        asset.message_post(
+                            body=self.env._(
+                                'Valor abatido em %(amount)s pela nota de crédito %(ref)s.',
+                                amount=share,
+                                ref=refund.name,
+                            )
+                        )
+                    else:
+                        asset.activity_schedule(
+                            'mail.mail_activity_data_todo',
+                            summary=self.env._('Nota de crédito de fornecedor'),
+                            note=self.env._(
+                                'A nota de crédito %(ref)s abate %(amount)s a este bem: regularize a ficha '
+                                '(abate parcial ou nova ficha com o valor corrigido).',
+                                ref=refund.name,
+                                amount=share,
+                            ),
+                        )
+                if not assets:
+                    refund.message_post(
+                        body=self.env._(
+                            'A nota de crédito lança na conta de imobilizado %s sem factura de origem com fichas: '
+                            'verifique as fichas de imobilizado.',
+                            line.account_id.code,
+                        )
+                    )
 
     def button_draft(self):
         self._l10n_ao_asset_drop_draft_assets()

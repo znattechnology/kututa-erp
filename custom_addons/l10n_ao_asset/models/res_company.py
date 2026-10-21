@@ -1,4 +1,8 @@
+import logging
+
 from odoo import fields, models
+
+_logger = logging.getLogger(__name__)
 
 # (nome, conta do imobilizado, amortizações acumuladas, amortizações do exercício, taxa legal, viatura ligeira)
 DEFAULT_CATEGORIES = [
@@ -67,6 +71,12 @@ class ResCompany(models.Model):
             vals = []
             for sequence, (name, asset, depreciation, expense, rate_code, vehicle) in enumerate(DEFAULT_CATEGORIES):
                 if not all(code in accounts for code in (asset, depreciation, expense)):
+                    _logger.warning(
+                        'Imobilizado: categoria «%s» não criada na empresa %s (faltam contas %s).',
+                        name,
+                        company.name,
+                        ', '.join(c for c in (asset, depreciation, expense) if c not in accounts),
+                    )
                     continue
                 rate = self.env['l10n_ao_asset.rate'].search([('code', '=', rate_code)], limit=1)
                 vals.append(

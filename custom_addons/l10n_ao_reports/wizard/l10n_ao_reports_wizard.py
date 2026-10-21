@@ -165,6 +165,10 @@ class L10nAoReportsWizard(models.TransientModel):
         data = self._get_report_data()
         content = self._render_xlsx(data)
         filename = f'{data["title"]} - {self.company_id.name} - {self.date_to}.xlsx'
+        # Os ficheiros de exportações anteriores deste utilizador não ficam a acumular.
+        self.env['ir.attachment'].search(
+            [('res_model', '=', self._name), ('create_uid', '=', self.env.uid), ('id', '!=', False)]
+        ).unlink()
         attachment = self.env['ir.attachment'].create(
             {
                 'name': filename,
@@ -196,7 +200,14 @@ class L10nAoReportsWizard(models.TransientModel):
         sheet.write(1, 0, f'NIF: {company.vat or ""}')
         sheet.write(2, 0, data['subtitle'], bold)
         sheet.write(3, 0, f'Valores expressos em {data["unit_label"]}')
-        row = 5
+        row = 4
+        if not data['posted_only']:
+            sheet.write(row, 0, 'Inclui lançamentos em rascunho.', bold)
+            row += 1
+        if any(abs(u) >= 0.01 for u in data.get('unmapped') or []):
+            sheet.write(row, 0, 'Há saldos em contas fora do PGC que não entraram no Balanço.', bold)
+            row += 1
+        row = max(row, 5)
         if data['report'] == 'trial_balance':
             sheet.set_column(0, 0, 14)
             sheet.set_column(1, 1, 50)
