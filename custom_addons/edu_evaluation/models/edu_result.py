@@ -54,6 +54,9 @@ class EduTermResult(models.Model):
     has_mac = fields.Boolean()
     has_npt = fields.Boolean()
     has_mt = fields.Boolean(string='Com média')
+    imported = fields.Boolean(
+        string='Importada', readonly=True, help='Média da pauta assinada (migração): não se recalcula das notas.'
+    )
 
     _key_uniq = models.Constraint(
         'UNIQUE(enrollment_id, subject_id, trimester_id)', 'Já existe o resultado deste trimestre.'
@@ -85,6 +88,8 @@ class EduTermResult(models.Model):
                         ('trimester_id', '=', trimester.id),
                     ]
                 )
+                if result.imported:
+                    continue
                 if result:
                     result.write(values)
                 elif values['has_mac'] or values['has_npt'] or values['has_mt']:
@@ -168,7 +173,10 @@ class EduSubjectResult(models.Model):
         help='Técnico: classificação de frequência (cumulativa). Geral: média final.',
     )
     imported_cf = fields.Float(
-        string='CF importada', digits=(4, 2), aggregator='avg', help='Classificação anual assinada (migração).'
+        string='CF importada',
+        digits=(6, 4),
+        aggregator='avg',
+        help='Classificação de frequência assinada (migração), com as casas decimais todas: entra assim na CA.',
     )
     has_imported_cf = fields.Boolean(string='Com CF importada')
     has_global_exam = fields.Boolean(string='Com prova global')
@@ -259,7 +267,9 @@ class EduSubjectResult(models.Model):
             )
             pg = final_grades.filtered(lambda g: g.assessment_type == 'global_exam')[:1]
             national = final_grades.filtered(lambda g: g.assessment_type == 'national_exam')[:1]
-            pg_value = round_fn(pg.score) if pg else None
+            # Com o arredondamento único (técnico), a PG entra na CA sem ser arredondada antes.
+            precise_pg = policy.regime == TECHNICAL and policy.technical_ca_precise
+            pg_value = (pg.score if precise_pg else round_fn(pg.score)) if pg else None
             national_value = national.score if national else None
             if policy.regime == TECHNICAL:
                 precise = grading.frequency_classification(mts, TECHNICAL, (lambda v: v), imported)

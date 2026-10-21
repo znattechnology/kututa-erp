@@ -121,7 +121,7 @@
                                     <t t-foreach="subjects" t-as="s">
                                         <t t-set="r" t-value="results.get((e.id, s.id))"/>
                                         <t t-if="r">
-                                            <t t-set="values" t-value="technical and [r.mt1, r.mt2, r.mt3, r.pg if r.has_pg else None, r.final] or [r.mt1, r.mt2, r.mt3, r.final]"/>
+                                            <t t-set="values" t-value="technical and (r.trimesters_graded and [r.mt1, r.mt2, r.mt3] or [None, None, None]) + [r.pg if r.has_pg else None, r.final] or (r.trimesters_graded and [r.mt1, r.mt2, r.mt3] or [None, None, None]) + [r.final]"/>
                                             <td t-foreach="values" t-as="v" t-att-class="v is not None and h.color(v, policy.pass_grade) or ''" t-out="h.num(v, v is not None and bool(v or r.complete))"/>
                                             <td t-out="h.num(r.special_exam, r.has_special_exam)"/>
                                         </t>

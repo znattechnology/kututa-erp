@@ -221,6 +221,39 @@ class TestEduEvaluation(TransactionCase):
                 }  # fmt: skip
             )
 
+    def test_technical_imported(self):
+        """Pauta migrada: médias trimestrais importadas não se recalculam e, com o arredondamento único, a PG entra
+        na CA com as casas decimais."""
+        ana = self.students[0]
+        enrollment = self._enroll(self.class10, ana, ['LP'])
+        policy = self.env['edu.evaluation.policy']._get(self.env.company, self.class10.level_id)
+        policy.technical_ca_precise = True
+        subject = self._subject(self.class10, 'LP')
+        terms = self.env['edu.term.result'].create(
+            [
+                {
+                    'enrollment_id': enrollment.id,
+                    'subject_id': subject.id,
+                    'trimester_id': trimester.id,
+                    'mt': mt,
+                    'has_mt': True,
+                    'imported': True,
+                }
+                for trimester, mt in ((self.t1, 10.5), (self.t2, 10.75), (self.t3, 11))
+            ]
+        )
+        self.env['edu.subject.result'].create(
+            {'enrollment_id': enrollment.id, 'subject_id': subject.id, 'has_imported_cf': True, 'imported_cf': 11}
+        )
+        self._assess(self.class10, 'LP', self.t3, 'global_exam', {ana: 12.4})
+        self.assertEqual(terms.mapped('mt'), [10.5, 10.75, 11])
+        result = self._year_subject(enrollment, 'LP')
+        # 0,6 × 11 + 0,4 × 12,4 = 11,56 → 12 (com a PG arredondada antes: 0,6 × 11 + 0,4 × 12 = 11,4 → 11).
+        self.assertEqual((result.mt2, result.pg, result.annual, result.complete), (10.75, 12.4, 12, True))
+        policy.technical_ca_precise = False
+        result._recompute()
+        self.assertEqual(result.annual, 11)
+
     def test_council_vote(self):
         ana = self.students[0]
         self._enroll(self.class10, ana, ['LP'])

@@ -127,6 +127,9 @@ class EduSchedule(models.Model):
                 ('teacher_id', self.env._('O(A) professor(a) %(name)s já está ocupado(a): %(other)s.')),
                 ('room_id', self.env._('A sala %(name)s já está ocupada: %(other)s.')),
             ]
+            # Migração: o horário afixado entra como está, com os choques de professor e de sala; ficam no relatório.
+            if self.env.context.get('edu_schedule_import'):
+                checks = checks[:1]
             for field_name, message in checks:
                 if not schedule[field_name]:
                     continue

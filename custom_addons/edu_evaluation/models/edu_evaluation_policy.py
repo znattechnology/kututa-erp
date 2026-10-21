@@ -77,9 +77,9 @@ class EduEvaluationPolicy(models.Model):
     national_exam_weight_12 = fields.Float(string='Peso do exame nacional (12.ª)', default=0.5, digits=(3, 2))
     cf_weight = fields.Float(string='Peso da CF na CA (técnico)', default=0.6, digits=(3, 2))
     technical_ca_precise = fields.Boolean(
-        string='CA com a CF sem arredondamentos intermédios',
-        help='Como o secPed-Express: a CF entra na CA com todas as casas decimais. Desmarcado: a CF arredondada '
-        '(classificação atribuída pelo conselho de turma).',
+        string='CA com a CF e a PG sem arredondamentos intermédios',
+        help='Como o secPed-Express: a CF e a PG entram na CA com todas as casas decimais e arredonda-se uma vez. '
+        'Desmarcado: a CF e a PG arredondadas (classificação atribuída pelo conselho de turma).',
     )
     conditional_classes = fields.Char(string='Classes com transição condicional', help='Por exemplo: 7,8')
     conditional_max = fields.Integer(string='Negativas toleradas na transição', default=2)
