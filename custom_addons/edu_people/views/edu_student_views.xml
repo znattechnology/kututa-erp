@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_student_list" model="ir.ui.view">
+        <field name="name">edu.student.list</field>
+        <field name="model">edu.student</field>
+        <field name="arch" type="xml">
+            <list string="Alunos">
+                <field name="matricula_number"/>
+                <field name="name"/>
+                <field name="birth_date" optional="show"/>
+                <field name="gender" optional="hide"/>
+                <field name="id_number" optional="show"/>
+                <field name="primary_guardian_id" optional="show"/>
+                <field name="phone" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_student_form" model="ir.ui.view">
+        <field name="name">edu.student.form</field>
+        <field name="model">edu.student</field>
+        <field name="arch" type="xml">
+            <form string="Aluno">
+                <header>
+                    <button name="action_assign_matricula_number" type="object" string="Atribuir n.º de matrícula"
+                            invisible="matricula_number or not id"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box"/>
+                    <widget name="web_ribbon" title="Arquivado" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="image_1920" widget="image" class="oe_avatar" options="{'preview_image': 'image_128'}"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Nome completo do aluno" required="1"/></h1>
+                        <h3 invisible="not matricula_number">Matrícula n.º <field name="matricula_number" class="oe_inline"/></h3>
+                    </div>
+                    <group>
+                        <group string="Identificação">
+                            <field name="birth_date"/>
+                            <field name="age" invisible="not birth_date"/>
+                            <field name="gender"/>
+                            <field name="id_number"/>
+                            <field name="id_issuer"/>
+                            <field name="id_issue_date"/>
+                            <field name="nationality_id" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Naturalidade e filiação">
+                            <field name="birthplace"/>
+                            <field name="birth_state_id" options="{'no_create': True}"/>
+                            <field name="father_name"/>
+                            <field name="mother_name"/>
+                        </group>
+                        <group string="Contactos">
+                            <field name="phone" widget="phone"/>
+                            <field name="email" widget="email"/>
+                            <field name="street" placeholder="Rua, bairro"/>
+                            <field name="city" placeholder="Município"/>
+                            <field name="state_id" string="Província" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Matrícula">
+                            <field name="matricula_year" options="{'enable_formatting': false}" invisible="not matricula_number"/>
+                            <field name="enrollment_date"/>
+                            <field name="primary_guardian_id"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Encarregados" name="guardians">
+                            <field name="guardian_link_ids">
+                                <list editable="bottom" decoration-bf="is_primary">
+                                    <field name="guardian_id" context="{'default_company_id': parent.company_id}"/>
+                                    <field name="relationship"/>
+                                    <field name="phone"/>
+                                    <field name="is_primary" readonly="1"/>
+                                    <field name="is_emergency"/>
+                                    <field name="can_pickup"/>
+                                    <field name="can_access_portal" optional="hide"/>
+                                    <field name="receive_notifications" optional="hide"/>
+                                    <button name="action_make_primary" type="object" string="Tornar principal" icon="fa-star-o"
+                                            invisible="is_primary or not id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Necessidades especiais" name="special_needs">
+                            <field name="special_needs" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_student_search" model="ir.ui.view">
+        <field name="name">edu.student.search</field>
+        <field name="model">edu.student</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', '|', ('name', 'ilike', self), ('matricula_number', 'ilike', self), ('id_number', 'ilike', self)]"/>
+                <field name="primary_guardian_id"/>
+                <filter name="no_matricula" string="Sem n.º de matrícula" domain="[('matricula_number', '=', False)]"/>
+                <filter name="no_guardian" string="Sem encarregado" domain="[('guardian_link_ids', '=', False)]"/>
+                <separator/>
+                <filter name="archived" string="Arquivados" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_year" string="Ano da 1.ª matrícula" context="{'group_by': 'matricula_year'}"/>
+                    <filter name="group_gender" string="Sexo" context="{'group_by': 'gender'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_student" model="ir.actions.act_window">
+        <field name="name">Alunos</field>
+        <field name="res_model">edu.student</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Registe o primeiro aluno</p>
+            <p>O número de matrícula é atribuído na primeira matrícula e acompanha o aluno toda a vida escolar.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_edu_student" action="action_edu_student" parent="edu_core.menu_edu_students" sequence="10"/>
+</odoo>

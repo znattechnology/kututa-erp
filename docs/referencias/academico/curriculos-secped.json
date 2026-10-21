@@ -1,0 +1,2869 @@
+{
+ "templates": [
+  {
+   "code": "PRIM-BASE",
+   "name": "Plano Nacional — Ensino Primário (Base)",
+   "description": "Tronco comum do Ensino Primário (1ª–6ª classe), MED Angola.",
+   "type": "GERAL",
+   "level": "PRIMARIO",
+   "profileCode": null,
+   "startClass": 1,
+   "endClass": 6,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 1,
+     "name": "1ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 6,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 6,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EM",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMP",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMUS",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 2,
+     "name": "2ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 6,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 6,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EM",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMP",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMUS",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 3,
+     "name": "3ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 6,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 6,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EM",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMP",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMUS",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 4,
+     "name": "4ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 6,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 6,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EM",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMP",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMUS",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 5,
+     "classNumber": 5,
+     "name": "5ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CN",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "HIST",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMP",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMUS",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMC",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 6,
+     "classNumber": 6,
+     "name": "6ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CN",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "HIST",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMP",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMUS",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMC",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "SEC1-BASE",
+   "name": "Plano Nacional — Secundário I Ciclo (7ª–9ª)",
+   "description": "Tronco comum do I ciclo do Ensino Secundário Geral, sem ramificação.",
+   "type": "GERAL",
+   "level": "SECUNDARIO_I_CICLO",
+   "profileCode": null,
+   "startClass": 7,
+   "endClass": 9,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 7,
+     "name": "7ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FR",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "HIST",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "BIO",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIS",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMC",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EVP",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 8,
+     "name": "8ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FR",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "HIST",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "BIO",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIS",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMC",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EVP",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 9,
+     "name": "9ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FR",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "HIST",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "BIO",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIS",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EMC",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EVP",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "SEC2-BASE",
+   "name": "Plano Nacional — Secundário II Ciclo (Formação Geral)",
+   "description": "Componente de formação geral, social, cultural e artística, comum a todas as áreas.",
+   "type": "GERAL",
+   "level": "SECUNDARIO_II_CICLO",
+   "profileCode": null,
+   "startClass": 10,
+   "endClass": 12,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "name": "10ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "INF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "name": "11ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "INF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "name": "12ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "INF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "SEC2-CFB",
+   "name": "II Ciclo — Ciências Físicas e Biológicas",
+   "description": "Área científica: Matemática, Física, Química, Biologia, Geologia.",
+   "type": "GERAL",
+   "level": "SECUNDARIO_II_CICLO",
+   "profileCode": "SEC2-CFB",
+   "startClass": 10,
+   "endClass": 12,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "FIS",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "BIO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "FIS",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "BIO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "FIS",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "BIO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "GEOL",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "SEC2-CEJ",
+   "name": "II Ciclo — Ciências Económico-Jurídicas",
+   "description": "Área: Matemática, Economia, Direito, Geografia, Noções de Gestão.",
+   "type": "GERAL",
+   "level": "SECUNDARIO_II_CICLO",
+   "profileCode": "SEC2-CEJ",
+   "startClass": 10,
+   "endClass": 12,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "ECON",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DIR",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "ECON",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DIR",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "NGEST",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "MAT",
+       "weeklyHours": 5,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "ECON",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DIR",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "NGEST",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "SEC2-CH",
+   "name": "II Ciclo — Ciências Humanas",
+   "description": "Área: História, Geografia, Sociologia, Psicologia, Língua Estrangeira.",
+   "type": "GERAL",
+   "level": "SECUNDARIO_II_CICLO",
+   "profileCode": "SEC2-CH",
+   "startClass": 10,
+   "endClass": 12,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "HIST",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "FR",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "SOC",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "HIST",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "FR",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PSIG",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "HIST",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "SOC",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PSIG",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "SEC2-AV",
+   "name": "II Ciclo — Artes Visuais",
+   "description": "Área: Desenho, Geometria Descritiva, História da Arte, Educação Visual e Plástica.",
+   "type": "GERAL",
+   "level": "SECUNDARIO_II_CICLO",
+   "profileCode": "SEC2-AV",
+   "startClass": 10,
+   "endClass": 12,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "DES",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "GDESC",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "EVP",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "DES",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "GDESC",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "HARTE",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "EVP",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "DES",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "HARTE",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "EVP",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "MAG-BASE",
+   "name": "Plano Nacional — Magistério (Formação Geral)",
+   "description": "Tronco comum da Formação de Professores (10ª–13ª), MED Angola.",
+   "type": "FORMACAO_PROFESSORES",
+   "level": "MAGISTERIO",
+   "profileCode": null,
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "name": "10ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "name": "11ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "name": "12ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "name": "13ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "MAG-PRIM",
+   "name": "Magistério Primário — componente psicopedagógica",
+   "description": "Componente específica para formar professores do Ensino Primário.",
+   "type": "FORMACAO_PROFESSORES",
+   "level": "MAGISTERIO",
+   "profileCode": "MAG-PRIM",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "PED",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PSI",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "PED",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PSI",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DID",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "DID",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "SED",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PP",
+       "weeklyHours": 4,
+       "component": "ESTAGIO"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "OGE",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PP",
+       "weeklyHours": 6,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-BASE",
+   "name": "Plano Nacional — Técnico-Profissional (Formação Geral)",
+   "description": "Tronco comum a todos os cursos técnicos: Formação Sociocultural + Científica de base (inclui Informática na 10ª).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": null,
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "name": "10ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "INF",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "name": "11ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "name": "12ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "EMPR",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "name": "13ª Classe",
+     "subjects": [
+      {
+       "code": "LP",
+       "weeklyHours": 4,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "ING",
+       "weeklyHours": 3,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "FIL",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "EF",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "CID",
+       "weeklyHours": 1,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "MAT",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "EMPR",
+       "weeklyHours": 2,
+       "component": "SOCIO_CULTURAL"
+      },
+      {
+       "code": "PTEC",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-INFOGEST",
+   "name": "Técnico de Informática de Gestão",
+   "description": "Componente científica de área + técnica (programação, redes, dados, sistemas).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-INFOGEST",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "ARQC",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "SO",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "PROG",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "PROG",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "BDADOS",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "REDES",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "BDADOS",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "IAG",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "SI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "PROG",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "SI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-CONTAB",
+   "name": "Técnico de Contabilidade e Gestão",
+   "description": "Componente científica de área (economia, direito) + técnica (contabilidade).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-CONTAB",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "ECON",
+       "weeklyHours": 4,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DIR",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "CONT",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "CONT",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "ECON",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "CGES",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "CGES",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "FISC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "GEMP",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "CONT",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "FISC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-SAUDE-ENF",
+   "name": "Técnico de Enfermagem",
+   "description": "Componente científica de área (saúde) + técnica de enfermagem + estágio clínico.",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-SAUDE-ENF",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "BIO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "AFH",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TENF",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "FIS",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PSIG",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "AFH",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "FARM",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TENF",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "EPMC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "ESM",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "INFEC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "NUTD",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EPID",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "ETD",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "ESC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "SMUL",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "SCRI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-SAUDE-AC",
+   "name": "Técnico de Análises Clínicas",
+   "description": "Científica de área (saúde) + técnica laboratorial + estágio.",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-SAUDE-AC",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "BIO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "AFH",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "PSL",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "FIS",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PSIG",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "HEMA",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MIA",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "MICL",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "IMUN",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "BIOQ",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "ETD",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "IMHE",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MAA",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "QCLI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-ELET",
+   "name": "Técnico de Electricidade e Electrónica",
+   "description": "Científica de área + técnica (electricidade, electrónica, práticas oficinais).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-ELET",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "FIS",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DTEC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "ELEC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "FIS",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "ELEC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TPRO",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "POFI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "OGI",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "ELEC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EFEN",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "POFI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "ELEC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EFEN",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "POFI",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-CONST",
+   "name": "Técnico de Construção Civil",
+   "description": "Científica de área + técnica (materiais, estruturas, topografia, betão).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-CONST",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "FIS",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DCON",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MCON",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "FIS",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DCON",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "PCON",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "RMAT",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "MSOL",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "ESTB",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EBET",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TOPO",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "ESTB",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EBET",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TOPO",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-SECR",
+   "name": "Técnico de Secretariado",
+   "description": "Científica de área (economia, direito) + técnica de secretariado e gestão.",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-SECR",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "ECON",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "TSEC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "PTXT",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "DARQ",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "DIR",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "TSEC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "CCOM",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "CONT",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "GEMP",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "CONT",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "RPUB",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "CCOM",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "TSEC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "RPUB",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "DARQ",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-INFO",
+   "name": "Técnico de Informática",
+   "description": "Científica de área + técnica (programação, redes, hardware, sistemas).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-INFO",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "ARQC",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "FIS",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "SO",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "PROG",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "PROG",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "REDES",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "BDADOS",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MINF",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "REDES",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "BDADOS",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "SI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MINF",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "PROG",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "SI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "REDES",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-MEC",
+   "name": "Técnico de Mecânica e Frio",
+   "description": "Científica de área + técnica (tecnologia mecânica, refrigeração, oficinais).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-MEC",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "FIS",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "DTEC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TMEC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "FIS",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "TMEC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MAPL",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "POFI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "REFR",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MAPL",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MANT",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "POFI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "REFR",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MANT",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "POFI",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-AGRO",
+   "name": "Técnico de Agro-Pecuária",
+   "description": "Científica de área + técnica (produção vegetal e animal, solos, sanidade).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-AGRO",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "BIO",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "QUI",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "SOLO",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "PVEG",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "BIO",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "PVEG",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "PANI",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "FITO",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "PANI",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "SANI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MAGR",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "FITO",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "PVEG",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "PANI",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "MAGR",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "TEC-HOT",
+   "name": "Técnico de Hotelaria e Turismo",
+   "description": "Científica de área (economia, geografia) + técnica (recepção, restauração, gestão).",
+   "type": "TECNICO_PROFISSIONAL",
+   "level": "TECNICO",
+   "profileCode": "TEC-HOT",
+   "startClass": 10,
+   "endClass": 13,
+   "version": 1,
+   "years": [
+    {
+     "year": 1,
+     "classNumber": 10,
+     "subjects": [
+      {
+       "code": "ECON",
+       "weeklyHours": 3,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "GEO",
+       "weeklyHours": 2,
+       "component": "CIENTIFICA"
+      },
+      {
+       "code": "TREC",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "COZP",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 2,
+     "classNumber": 11,
+     "subjects": [
+      {
+       "code": "RMBA",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "COZP",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TREC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TURA",
+       "weeklyHours": 2,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 3,
+     "classNumber": 12,
+     "subjects": [
+      {
+       "code": "GHOT",
+       "weeklyHours": 4,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TURA",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "RMBA",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "COZP",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      }
+     ]
+    },
+    {
+     "year": 4,
+     "classNumber": 13,
+     "subjects": [
+      {
+       "code": "GHOT",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TURA",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "TREC",
+       "weeklyHours": 3,
+       "component": "TECNICA_PRATICA"
+      },
+      {
+       "code": "EST",
+       "weeklyHours": 8,
+       "component": "ESTAGIO"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "names": {
+  "LP": "Língua Portuguesa",
+  "MAT": "Matemática",
+  "EM": "Estudo do Meio",
+  "EMP": "Educação Manual e Plástica",
+  "EF": "Educação Física",
+  "EMUS": "Educação Musical",
+  "CN": "Ciências da Natureza",
+  "GEO": "Geografia",
+  "HIST": "História",
+  "EMC": "Educação Moral e Cívica",
+  "ING": "Língua Inglesa",
+  "FR": "Língua Francesa",
+  "BIO": "Biologia",
+  "FIS": "Física",
+  "QUI": "Química",
+  "EVP": "Educação Visual e Plástica",
+  "FIL": "Filosofia",
+  "CID": "Educação para a Cidadania",
+  "INF": "Informática",
+  "GEOL": "Geologia",
+  "ECON": "Economia",
+  "DIR": "Noções de Direito",
+  "NGEST": "Noções de Gestão",
+  "SOC": "Sociologia",
+  "PSIG": "Psicologia Geral",
+  "DES": "Desenho",
+  "GDESC": "Geometria Descritiva",
+  "HARTE": "História da Arte",
+  "PED": "Pedagogia",
+  "PSI": "Psicologia da Educação",
+  "DID": "Didáctica",
+  "SED": "Sociologia da Educação",
+  "PP": "Prática Pedagógica",
+  "OGE": "Organização e Gestão Escolar",
+  "EMPR": "Empreendedorismo",
+  "PTEC": "Projecto Tecnológico",
+  "ARQC": "Arquitectura de Computadores",
+  "SO": "Sistemas Operativos",
+  "PROG": "Técnicas e Linguagem de Programação",
+  "BDADOS": "Bases de Dados",
+  "REDES": "Redes de Computadores",
+  "IAG": "Informática Aplicada à Gestão",
+  "SI": "Sistemas de Informação",
+  "EST": "Estágio Profissional (Formação em Contexto de Trabalho)",
+  "CONT": "Contabilidade Geral",
+  "CGES": "Contabilidade Analítica e de Gestão",
+  "FISC": "Fiscalidade",
+  "GEMP": "Gestão de Empresas",
+  "AFH": "Anatomia e Fisiologia Humana",
+  "TENF": "Técnicas de Enfermagem",
+  "FARM": "Farmacologia",
+  "EPMC": "Enfermagem e Patologia Médico-Cirúrgica",
+  "ESM": "Enfermagem em Saúde Mental",
+  "INFEC": "Infecciologia",
+  "NUTD": "Nutrição e Dietética",
+  "EPID": "Epidemiologia e Estatística",
+  "ETD": "Ética e Deontologia",
+  "ESC": "Enfermagem em Saúde Colectiva",
+  "SMUL": "Saúde da Mulher",
+  "SCRI": "Saúde da Criança",
+  "PSL": "Protecção e Segurança no Laboratório",
+  "HEMA": "Hematologia",
+  "MIA": "Métodos Instrumentais de Análise",
+  "MICL": "Microbiologia Clínica",
+  "IMUN": "Imunologia",
+  "BIOQ": "Bioquímica Clínica",
+  "IMHE": "Imunohematologia",
+  "MAA": "Microbiologia de Águas e Alimentos",
+  "QCLI": "Química Clínica",
+  "DTEC": "Desenho Técnico",
+  "ELEC": "Electricidade e Electrónica",
+  "TPRO": "Tecnologia e Processos",
+  "POFI": "Práticas Oficinais",
+  "OGI": "Organização e Gestão Industrial",
+  "EFEN": "Eficiência Energética",
+  "DCON": "Desenho de Construção",
+  "MCON": "Materiais de Construção",
+  "PCON": "Processos Construtivos",
+  "RMAT": "Resistência dos Materiais",
+  "MSOL": "Mecânica dos Solos",
+  "ESTB": "Estabilidade das Construções",
+  "EBET": "Estruturas de Betão",
+  "TOPO": "Topografia",
+  "TSEC": "Técnicas de Secretariado",
+  "PTXT": "Processamento de Texto",
+  "DARQ": "Documentação e Arquivo",
+  "CCOM": "Correspondência e Técnicas de Comunicação",
+  "RPUB": "Relações Públicas e Protocolo",
+  "MINF": "Manutenção e Montagem de Computadores",
+  "TMEC": "Tecnologia Mecânica",
+  "MAPL": "Mecânica Aplicada",
+  "REFR": "Sistemas de Refrigeração e Climatização",
+  "MANT": "Manutenção",
+  "SOLO": "Solos e Fertilidade",
+  "PVEG": "Produção Vegetal",
+  "PANI": "Produção Animal (Zootecnia)",
+  "FITO": "Fitossanidade",
+  "SANI": "Sanidade Animal",
+  "MAGR": "Mecanização Agrícola",
+  "TREC": "Técnicas de Recepção e Andares",
+  "COZP": "Cozinha e Pastelaria",
+  "RMBA": "Restauração — Mesa e Bar",
+  "TURA": "Turismo e Animação",
+  "GHOT": "Gestão Hoteleira"
+ },
+ "catalog": {
+  "LP": "Língua Portuguesa",
+  "MAT": "Matemática",
+  "EM": "Estudo do Meio",
+  "CN": "Ciências da Natureza",
+  "GEO": "Geografia",
+  "HIST": "História",
+  "EMC": "Educação Moral e Cívica",
+  "EMP": "Educação Manual e Plástica",
+  "EF": "Educação Física",
+  "EMUS": "Educação Musical",
+  "ING": "Língua Inglesa",
+  "FIL": "Filosofia",
+  "CID": "Educação para a Cidadania",
+  "PED": "Pedagogia",
+  "PSI": "Psicologia da Educação",
+  "DID": "Didáctica",
+  "SED": "Sociologia da Educação",
+  "OGE": "Organização e Gestão Escolar",
+  "PP": "Prática Pedagógica",
+  "EMPR": "Empreendedorismo",
+  "INF": "Informática",
+  "EST": "Estágio Profissional (Formação em Contexto de Trabalho)",
+  "ARQC": "Arquitectura de Computadores",
+  "SO": "Sistemas Operativos",
+  "PROG": "Técnicas e Linguagem de Programação",
+  "BDADOS": "Bases de Dados",
+  "REDES": "Redes de Computadores",
+  "IAG": "Informática Aplicada à Gestão",
+  "SI": "Sistemas de Informação",
+  "ECON": "Economia",
+  "DIR": "Noções de Direito",
+  "CONT": "Contabilidade Geral",
+  "CGES": "Contabilidade Analítica e de Gestão",
+  "FISC": "Fiscalidade",
+  "GEMP": "Gestão de Empresas",
+  "PTEC": "Projecto Tecnológico",
+  "BIO": "Biologia",
+  "FIS": "Física",
+  "QUI": "Química",
+  "PSIG": "Psicologia Geral",
+  "AFH": "Anatomia e Fisiologia Humana",
+  "TENF": "Técnicas de Enfermagem",
+  "EPMC": "Enfermagem e Patologia Médico-Cirúrgica",
+  "ESM": "Enfermagem em Saúde Mental",
+  "ESC": "Enfermagem em Saúde Colectiva",
+  "EPID": "Epidemiologia e Estatística",
+  "FARM": "Farmacologia",
+  "INFEC": "Infecciologia",
+  "NUTD": "Nutrição e Dietética",
+  "SMUL": "Saúde da Mulher",
+  "SCRI": "Saúde da Criança",
+  "ETD": "Ética e Deontologia",
+  "FR": "Língua Francesa",
+  "EVP": "Educação Visual e Plástica",
+  "GEOL": "Geologia",
+  "SOC": "Sociologia",
+  "NGEST": "Noções de Gestão",
+  "DES": "Desenho",
+  "HARTE": "História da Arte",
+  "GDESC": "Geometria Descritiva",
+  "PSL": "Protecção e Segurança no Laboratório",
+  "HEMA": "Hematologia",
+  "MIA": "Métodos Instrumentais de Análise",
+  "MICL": "Microbiologia Clínica",
+  "IMUN": "Imunologia",
+  "IMHE": "Imunohematologia",
+  "MAA": "Microbiologia de Águas e Alimentos",
+  "BIOQ": "Bioquímica Clínica",
+  "QCLI": "Química Clínica",
+  "OGI": "Organização e Gestão Industrial",
+  "DTEC": "Desenho Técnico",
+  "ELEC": "Electricidade e Electrónica",
+  "TPRO": "Tecnologia e Processos",
+  "POFI": "Práticas Oficinais",
+  "EFEN": "Eficiência Energética",
+  "MCON": "Materiais de Construção",
+  "PCON": "Processos Construtivos",
+  "RMAT": "Resistência dos Materiais",
+  "MSOL": "Mecânica dos Solos",
+  "ESTB": "Estabilidade das Construções",
+  "TOPO": "Topografia",
+  "EBET": "Estruturas de Betão",
+  "DCON": "Desenho de Construção",
+  "TSEC": "Técnicas de Secretariado",
+  "DARQ": "Documentação e Arquivo",
+  "CCOM": "Correspondência e Técnicas de Comunicação",
+  "PTXT": "Processamento de Texto",
+  "RPUB": "Relações Públicas e Protocolo",
+  "TMEC": "Tecnologia Mecânica",
+  "MAPL": "Mecânica Aplicada",
+  "REFR": "Sistemas de Refrigeração e Climatização",
+  "MANT": "Manutenção",
+  "PVEG": "Produção Vegetal",
+  "PANI": "Produção Animal (Zootecnia)",
+  "SOLO": "Solos e Fertilidade",
+  "FITO": "Fitossanidade",
+  "MAGR": "Mecanização Agrícola",
+  "SANI": "Sanidade Animal",
+  "TREC": "Técnicas de Recepção e Andares",
+  "RMBA": "Restauração — Mesa e Bar",
+  "COZP": "Cozinha e Pastelaria",
+  "GHOT": "Gestão Hoteleira",
+  "TURA": "Turismo e Animação",
+  "MINF": "Manutenção e Montagem de Computadores"
+ }
+}

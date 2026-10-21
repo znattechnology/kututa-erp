@@ -1,0 +1,56 @@
+id,name,model_id,group_id/id,operation,domain
+access_edu_level_user,access_edu_level_user,edu.level,edu_core.group_edu_user,r,
+access_edu_level_manager,access_edu_level_manager,edu.level,edu_core.group_edu_manager,crud,
+access_edu_academic_year_user,access_edu_academic_year_user,edu.academic.year,edu_core.group_edu_user,r,
+access_edu_academic_year_manager,access_edu_academic_year_manager,edu.academic.year,edu_core.group_edu_manager,crud,
+access_edu_trimester_user,access_edu_trimester_user,edu.trimester,edu_core.group_edu_user,r,
+access_edu_trimester_manager,access_edu_trimester_manager,edu.trimester,edu_core.group_edu_manager,crud,
+access_edu_campus_user,access_edu_campus_user,edu.campus,edu_core.group_edu_user,r,
+access_edu_campus_manager,access_edu_campus_manager,edu.campus,edu_core.group_edu_manager,crud,
+access_edu_building_user,access_edu_building_user,edu.building,edu_core.group_edu_user,r,
+access_edu_building_manager,access_edu_building_manager,edu.building,edu_core.group_edu_manager,crud,
+access_edu_room_user,access_edu_room_user,edu.room,edu_core.group_edu_user,r,
+access_edu_room_manager,access_edu_room_manager,edu.room,edu_core.group_edu_manager,crud,
+access_edu_shift_user,access_edu_shift_user,edu.shift,edu_core.group_edu_user,r,
+access_edu_shift_manager,access_edu_shift_manager,edu.shift,edu_core.group_edu_manager,crud,
+access_edu_coordination_user,access_edu_coordination_user,edu.coordination,edu_core.group_edu_user,r,
+access_edu_coordination_manager,access_edu_coordination_manager,edu.coordination,edu_core.group_edu_manager,crud,
+access_edu_course_user,access_edu_course_user,edu.course,edu_core.group_edu_user,r,
+access_edu_course_manager,access_edu_course_manager,edu.course,edu_core.group_edu_manager,crud,
+access_edu_subject_user,access_edu_subject_user,edu.subject,edu_core.group_edu_user,r,
+access_edu_subject_manager,access_edu_subject_manager,edu.subject,edu_core.group_edu_manager,crud,
+access_edu_curriculum_user,access_edu_curriculum_user,edu.curriculum,edu_core.group_edu_user,r,
+access_edu_curriculum_manager,access_edu_curriculum_manager,edu.curriculum,edu_core.group_edu_manager,crud,
+access_edu_curriculum_year_user,access_edu_curriculum_year_user,edu.curriculum.year,edu_core.group_edu_user,r,
+access_edu_curriculum_year_manager,access_edu_curriculum_year_manager,edu.curriculum.year,edu_core.group_edu_manager,crud,
+access_edu_curriculum_line_user,access_edu_curriculum_line_user,edu.curriculum.line,edu_core.group_edu_user,r,
+access_edu_curriculum_line_manager,access_edu_curriculum_line_manager,edu.curriculum.line,edu_core.group_edu_manager,crud,
+access_edu_curriculum_template_user,access_edu_curriculum_template_user,edu.curriculum.template,edu_core.group_edu_user,r,
+access_edu_curriculum_template_manager,access_edu_curriculum_template_manager,edu.curriculum.template,edu_core.group_edu_manager,crud,
+access_edu_curriculum_template_year_user,access_edu_curriculum_template_year_user,edu.curriculum.template.year,edu_core.group_edu_user,r,
+access_edu_curriculum_template_year_manager,access_edu_curriculum_template_year_manager,edu.curriculum.template.year,edu_core.group_edu_manager,crud,
+access_edu_curriculum_template_line_user,access_edu_curriculum_template_line_user,edu.curriculum.template.line,edu_core.group_edu_user,r,
+access_edu_curriculum_template_line_manager,access_edu_curriculum_template_line_manager,edu.curriculum.template.line,edu_core.group_edu_manager,crud,
+access_edu_class_user,access_edu_class_user,edu.class,edu_core.group_edu_user,crud,
+access_edu_class_manager,access_edu_class_manager,edu.class,edu_core.group_edu_manager,crud,
+access_edu_level_employee,access_edu_level_employee,edu.level,base.group_user,r,
+access_edu_academic_year_employee,access_edu_academic_year_employee,edu.academic.year,base.group_user,r,
+access_edu_trimester_employee,access_edu_trimester_employee,edu.trimester,base.group_user,r,
+access_edu_course_employee,access_edu_course_employee,edu.course,base.group_user,r,
+access_edu_subject_employee,access_edu_subject_employee,edu.subject,base.group_user,r,
+access_edu_class_employee,access_edu_class_employee,edu.class,base.group_user,r,
+access_edu_room_employee,access_edu_room_employee,edu.room,base.group_user,r,
+access_edu_shift_employee,access_edu_shift_employee,edu.shift,base.group_user,r,
+edu_academic_year_comp_rule,edu.academic.year multi-empresa,edu.academic.year,,crud,"[('company_id', 'in', company_ids)]"
+edu_trimester_comp_rule,edu.trimester multi-empresa,edu.trimester,,crud,"[('company_id', 'in', company_ids)]"
+edu_campus_comp_rule,edu.campus multi-empresa,edu.campus,,crud,"[('company_id', 'in', company_ids)]"
+edu_building_comp_rule,edu.building multi-empresa,edu.building,,crud,"[('company_id', 'in', company_ids)]"
+edu_room_comp_rule,edu.room multi-empresa,edu.room,,crud,"[('company_id', 'in', company_ids)]"
+edu_shift_comp_rule,edu.shift multi-empresa,edu.shift,,crud,"[('company_id', 'in', company_ids)]"
+edu_coordination_comp_rule,edu.coordination multi-empresa,edu.coordination,,crud,"[('company_id', 'in', company_ids)]"
+edu_course_comp_rule,edu.course multi-empresa,edu.course,,crud,"[('company_id', 'in', company_ids)]"
+edu_subject_comp_rule,edu.subject multi-empresa,edu.subject,,crud,"[('company_id', 'in', company_ids)]"
+edu_curriculum_comp_rule,edu.curriculum multi-empresa,edu.curriculum,,crud,"[('company_id', 'in', company_ids)]"
+edu_curriculum_year_comp_rule,edu.curriculum.year multi-empresa,edu.curriculum.year,,crud,"[('company_id', 'in', company_ids)]"
+edu_curriculum_line_comp_rule,edu.curriculum.line multi-empresa,edu.curriculum.line,,crud,"[('company_id', 'in', company_ids)]"
+edu_class_comp_rule,edu.class multi-empresa,edu.class,,crud,"[('company_id', 'in', company_ids)]"

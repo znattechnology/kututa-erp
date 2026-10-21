@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_course_list" model="ir.ui.view">
+        <field name="name">edu.course.list</field>
+        <field name="model">edu.course</field>
+        <field name="arch" type="xml">
+            <list string="Cursos">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="level_id"/>
+                <field name="duration_years"/>
+                <field name="coordination_id" optional="show"/>
+                <field name="curriculum_id" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_course_form" model="ir.ui.view">
+        <field name="name">edu.course.form</field>
+        <field name="model">edu.course</field>
+        <field name="arch" type="xml">
+            <form string="Curso">
+                <header>
+                    <button name="action_materialize_curriculum" type="object" string="Gerar o plano nacional"
+                            invisible="not id or curriculum_ids"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Técnico de Enfermagem"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="level_id" options="{'no_create': True}"/>
+                            <field name="curriculum_template_id" options="{'no_create': True}"/>
+                            <field name="duration_years"/>
+                            <field name="coordination_id"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Percurso do aluno">
+                            <field name="requires_internship"/>
+                            <field name="requires_final_project"/>
+                            <field name="has_national_exam"/>
+                            <field name="has_special_exam"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Planos curriculares" name="curricula">
+                            <field name="curriculum_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="class_from"/>
+                                    <field name="class_to"/>
+                                    <field name="is_national"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Descrição" name="description"><field name="description" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edu_course" model="ir.actions.act_window">
+        <field name="name">Cursos</field>
+        <field name="res_model">edu.course</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crie um curso</p>
+            <p>Escolha o nível e o molde nacional: o plano curricular é criado com as disciplinas e a carga horária.</p>
+        </field>
+    </record>
+
+    <record id="edu_coordination_list" model="ir.ui.view">
+        <field name="name">edu.coordination.list</field>
+        <field name="model">edu.coordination</field>
+        <field name="arch" type="xml">
+            <list string="Coordenações" editable="bottom">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="coordination_type"/>
+                <field name="head_id"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_edu_coordination" model="ir.actions.act_window">
+        <field name="name">Coordenações</field>
+        <field name="res_model">edu.coordination</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="edu_subject_list" model="ir.ui.view">
+        <field name="name">edu.subject.list</field>
+        <field name="model">edu.subject</field>
+        <field name="arch" type="xml">
+            <list string="Disciplinas">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="component"/>
+                <field name="duration_years" optional="show"/>
+                <field name="start_year" optional="hide"/>
+                <field name="is_national_exam" optional="show"/>
+                <field name="coordination_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_subject_form" model="ir.ui.view">
+        <field name="name">edu.subject.form</field>
+        <field name="model">edu.subject</field>
+        <field name="arch" type="xml">
+            <form string="Disciplina">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="component"/>
+                            <field name="coordination_id"/>
+                        </group>
+                        <group>
+                            <field name="duration_years"/>
+                            <field name="start_year"/>
+                            <field name="is_national_exam"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <group string="Precedências">
+                        <field name="prerequisite_ids" widget="many2many_tags" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="edu_subject_search" model="ir.ui.view">
+        <field name="name">edu.subject.search</field>
+        <field name="model">edu.subject</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]"/>
+                <filter name="national_exam" string="Exame nacional" domain="[('is_national_exam', '=', True)]"/>
+                <group>
+                    <filter name="group_component" string="Componente" context="{'group_by': 'component'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_edu_subject" model="ir.actions.act_window">
+        <field name="name">Disciplinas</field>
+        <field name="res_model">edu.subject</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_edu_course" action="action_edu_course" parent="menu_edu_config" sequence="20"/>
+    <menuitem id="menu_edu_subject" action="action_edu_subject" parent="menu_edu_config" sequence="25"/>
+    <menuitem id="menu_edu_coordination" action="action_edu_coordination" parent="menu_edu_config" sequence="35"/>
+</odoo>

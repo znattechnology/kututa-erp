@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_curriculum_list" model="ir.ui.view">
+        <field name="name">edu.curriculum.list</field>
+        <field name="model">edu.curriculum</field>
+        <field name="arch" type="xml">
+            <list string="Planos curriculares">
+                <field name="name"/>
+                <field name="level_id"/>
+                <field name="course_id"/>
+                <field name="class_from"/>
+                <field name="class_to"/>
+                <field name="is_national"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_curriculum_form" model="ir.ui.view">
+        <field name="name">edu.curriculum.form</field>
+        <field name="model">edu.curriculum</field>
+        <field name="arch" type="xml">
+            <form string="Plano curricular">
+                <sheet>
+                    <widget name="web_ribbon" title="Arquivado" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="level_id" options="{'no_create': True}"/>
+                            <field name="course_id"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="template_id" invisible="not template_id"/>
+                            <field name="is_national"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Anos" name="years">
+                            <field name="year_ids">
+                                <list>
+                                    <field name="year"/>
+                                    <field name="class_number"/>
+                                    <field name="name"/>
+                                    <field name="weekly_hours"/>
+                                </list>
+                                <form string="Ano do plano">
+                                    <group>
+                                        <group>
+                                            <field name="year"/>
+                                            <field name="class_number"/>
+                                            <field name="name"/>
+                                        </group>
+                                        <group>
+                                            <field name="weekly_hours"/>
+                                        </group>
+                                    </group>
+                                    <field name="line_ids">
+                                        <list editable="bottom">
+                                            <field name="sequence" widget="handle"/>
+                                            <field name="subject_id" options="{'no_create': True}"/>
+                                            <field name="code"/>
+                                            <field name="weekly_hours" sum="Total"/>
+                                            <field name="component"/>
+                                            <field name="is_compulsory"/>
+                                            <field name="is_national_exam"/>
+                                        </list>
+                                    </field>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Todas as disciplinas" name="lines">
+                            <field name="line_ids" readonly="1">
+                                <list>
+                                    <field name="year_id"/>
+                                    <field name="subject_id"/>
+                                    <field name="weekly_hours"/>
+                                    <field name="component"/>
+                                    <field name="is_national_exam"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Descrição" name="description"><field name="description" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edu_curriculum" model="ir.actions.act_window">
+        <field name="name">Planos curriculares</field>
+        <field name="res_model">edu.curriculum</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Catálogo nacional -->
+    <record id="edu_curriculum_template_list" model="ir.ui.view">
+        <field name="name">edu.curriculum.template.list</field>
+        <field name="model">edu.curriculum.template</field>
+        <field name="arch" type="xml">
+            <list string="Moldes curriculares nacionais" create="0">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="level_id"/>
+                <field name="is_profile"/>
+                <field name="version"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_curriculum_template_form" model="ir.ui.view">
+        <field name="name">edu.curriculum.template.form</field>
+        <field name="model">edu.curriculum.template</field>
+        <field name="arch" type="xml">
+            <form string="Molde curricular nacional" create="0">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="level_id"/>
+                        </group>
+                        <group>
+                            <field name="is_profile"/>
+                            <field name="version"/>
+                        </group>
+                    </group>
+                    <field name="description" nolabel="1"/>
+                    <field name="year_ids">
+                        <list>
+                            <field name="year"/>
+                            <field name="class_number"/>
+                            <field name="name"/>
+                        </list>
+                        <form>
+                            <group>
+                                <field name="year"/>
+                                <field name="class_number"/>
+                                <field name="name"/>
+                            </group>
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="subject_code"/>
+                                    <field name="name"/>
+                                    <field name="weekly_hours" sum="Total"/>
+                                    <field name="component"/>
+                                    <field name="is_compulsory"/>
+                                    <field name="is_national_exam"/>
+                                </list>
+                            </field>
+                        </form>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edu_curriculum_template" model="ir.actions.act_window">
+        <field name="name">Moldes nacionais</field>
+        <field name="res_model">edu.curriculum.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p>Catálogo nacional dos planos curriculares. A distribuição da carga é um ponto de partida a confirmar com as grelhas oficiais.</p>
+        </field>
+    </record>
+
+    <record id="edu_level_list" model="ir.ui.view">
+        <field name="name">edu.level.list</field>
+        <field name="model">edu.level</field>
+        <field name="arch" type="xml">
+            <list string="Níveis de ensino" create="0">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="subsystem"/>
+                <field name="class_from"/>
+                <field name="class_to"/>
+                <button name="action_materialize_plan" type="object" string="Criar o plano do tronco comum" icon="fa-magic"
+                        groups="edu_core.group_edu_manager"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_edu_level" model="ir.actions.act_window">
+        <field name="name">Níveis de ensino</field>
+        <field name="res_model">edu.level</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_edu_curriculum_root" name="Planos curriculares" parent="menu_edu_config" sequence="30">
+        <menuitem id="menu_edu_curriculum" action="action_edu_curriculum" sequence="10"/>
+        <menuitem id="menu_edu_curriculum_template" action="action_edu_curriculum_template" sequence="20"/>
+        <menuitem id="menu_edu_level" action="action_edu_level" sequence="30"/>
+    </menuitem>
+</odoo>

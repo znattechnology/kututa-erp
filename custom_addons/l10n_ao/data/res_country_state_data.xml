@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- As 21 províncias da divisão político-administrativa de 2024 (Lei n.º 14/24). Os códigos seguem a ISO 3166-2:AO;
+         Cuando, Cubango, Icolo e Bengo e Moxico Leste ainda não têm código ISO e usam um código próprio. -->
+    <record id="state_ao_bgo" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">BGO</field>
+        <field name="name">Bengo</field>
+    </record>
+    <record id="state_ao_bgu" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">BGU</field>
+        <field name="name">Benguela</field>
+    </record>
+    <record id="state_ao_bie" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">BIE</field>
+        <field name="name">Bié</field>
+    </record>
+    <record id="state_ao_cab" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">CAB</field>
+        <field name="name">Cabinda</field>
+    </record>
+    <record id="state_ao_cua" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">CUA</field>
+        <field name="name">Cuando</field>
+    </record>
+    <record id="state_ao_cub" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">CUB</field>
+        <field name="name">Cubango</field>
+    </record>
+    <record id="state_ao_cno" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">CNO</field>
+        <field name="name">Cuanza Norte</field>
+    </record>
+    <record id="state_ao_cus" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">CUS</field>
+        <field name="name">Cuanza Sul</field>
+    </record>
+    <record id="state_ao_cnn" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">CNN</field>
+        <field name="name">Cunene</field>
+    </record>
+    <record id="state_ao_hua" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">HUA</field>
+        <field name="name">Huambo</field>
+    </record>
+    <record id="state_ao_hui" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">HUI</field>
+        <field name="name">Huíla</field>
+    </record>
+    <record id="state_ao_icb" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">ICB</field>
+        <field name="name">Icolo e Bengo</field>
+    </record>
+    <record id="state_ao_lua" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">LUA</field>
+        <field name="name">Luanda</field>
+    </record>
+    <record id="state_ao_lno" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">LNO</field>
+        <field name="name">Lunda Norte</field>
+    </record>
+    <record id="state_ao_lsu" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">LSU</field>
+        <field name="name">Lunda Sul</field>
+    </record>
+    <record id="state_ao_mal" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">MAL</field>
+        <field name="name">Malanje</field>
+    </record>
+    <record id="state_ao_mox" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">MOX</field>
+        <field name="name">Moxico</field>
+    </record>
+    <record id="state_ao_mxl" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">MXL</field>
+        <field name="name">Moxico Leste</field>
+    </record>
+    <record id="state_ao_nam" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">NAM</field>
+        <field name="name">Namibe</field>
+    </record>
+    <record id="state_ao_uig" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">UIG</field>
+        <field name="name">Uíge</field>
+    </record>
+    <record id="state_ao_zai" model="res.country.state">
+        <field name="country_id" ref="base.ao"/>
+        <field name="code">ZAI</field>
+        <field name="name">Zaire</field>
+    </record>
+</odoo>

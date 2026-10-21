@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_secretaria_express" model="ir.module.category">
+        <field name="name">Secretaria Express</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <record id="res_groups_privilege_edu" model="res.groups.privilege">
+        <field name="name">Secretaria Express</field>
+        <field name="sequence">10</field>
+        <field name="category_id" ref="module_category_secretaria_express"/>
+    </record>
+
+    <record id="group_edu_user" model="res.groups">
+        <field name="name">Secretaria</field>
+        <field name="sequence">10</field>
+        <field name="privilege_id" ref="res_groups_privilege_edu"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Gere alunos, encarregados, turmas e matrículas; consulta a configuração académica.</field>
+    </record>
+
+    <record id="group_edu_manager" model="res.groups">
+        <field name="name">Direcção</field>
+        <field name="sequence">20</field>
+        <field name="privilege_id" ref="res_groups_privilege_edu"/>
+        <field name="implied_ids" eval="[(4, ref('group_edu_user'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        <field name="comment">Configura anos lectivos, cursos, planos curriculares e instalações; reabre trimestres.</field>
+    </record>
+</odoo>

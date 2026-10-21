@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_edu" model="ir.ui.view">
+        <field name="name">hr.employee.form.edu</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page name="edu_teacher" string="Docência" groups="hr.group_hr_user,edu_core.group_edu_user">
+                    <group>
+                        <group>
+                            <field name="edu_is_teacher"/>
+                            <field name="edu_specialization" invisible="not edu_is_teacher"/>
+                            <field name="edu_coordination_id" invisible="not edu_is_teacher"/>
+                        </group>
+                    </group>
+                    <group string="Disciplinas que lecciona" invisible="not edu_is_teacher">
+                        <field name="edu_subject_ids" widget="many2many_tags" nolabel="1"/>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+    <record id="action_edu_teacher" model="ir.actions.act_window">
+        <field name="name">Professores</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('edu_is_teacher', '=', True)]</field>
+        <field name="context">{'default_edu_is_teacher': True}</field>
+    </record>
+
+    <menuitem id="menu_edu_teacher" action="action_edu_teacher" parent="edu_core.menu_edu_academic" sequence="20"
+              groups="hr.group_hr_user"/>
+</odoo>

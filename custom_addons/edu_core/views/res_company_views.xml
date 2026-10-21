@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_edu" model="ir.ui.view">
+        <field name="name">res.company.form.edu</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page name="edu" string="Escola" groups="edu_core.group_edu_manager">
+                    <group>
+                        <field name="edu_is_school"/>
+                    </group>
+                    <group invisible="not edu_is_school">
+                        <group string="Identidade">
+                            <field name="edu_school_type"/>
+                            <field name="edu_ownership"/>
+                            <field name="edu_billing_mode"/>
+                            <field name="edu_level_ids" widget="many2many_tags"/>
+                            <field name="edu_letterhead_subtitle"/>
+                            <field name="edu_motto"/>
+                        </group>
+                        <group string="Registo oficial">
+                            <field name="edu_institution_code"/>
+                            <field name="edu_mined_code"/>
+                            <field name="edu_license_number"/>
+                            <field name="edu_established_year" options="{'enable_formatting': false}"/>
+                            <field name="edu_student_capacity"/>
+                        </group>
+                        <group string="Signatários">
+                            <field name="edu_director_name"/>
+                            <field name="edu_pedagogical_director_name"/>
+                        </group>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

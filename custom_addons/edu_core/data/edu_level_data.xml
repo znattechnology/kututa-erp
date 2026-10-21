@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Níveis do sistema de educação (Lei de Bases n.º 17/16, com a Lei n.º 32/20). -->
+    <record id="level_iniciacao" model="edu.level">
+        <field name="name">Iniciação (pré-escolar)</field>
+        <field name="code">INICIACAO</field>
+        <field name="sequence">1</field>
+        <field name="subsystem">general</field>
+        <field name="class_from">0</field>
+        <field name="class_to">0</field>
+    </record>
+    <record id="level_primario" model="edu.level">
+        <field name="name">Ensino primário</field>
+        <field name="code">PRIMARIO</field>
+        <field name="sequence">2</field>
+        <field name="subsystem">general</field>
+        <field name="class_from">1</field>
+        <field name="class_to">6</field>
+    </record>
+    <record id="level_sec1" model="edu.level">
+        <field name="name">Ensino secundário, I ciclo</field>
+        <field name="code">SECUNDARIO_I_CICLO</field>
+        <field name="sequence">3</field>
+        <field name="subsystem">general</field>
+        <field name="class_from">7</field>
+        <field name="class_to">9</field>
+    </record>
+    <record id="level_sec2" model="edu.level">
+        <field name="name">Ensino secundário, II ciclo</field>
+        <field name="code">SECUNDARIO_II_CICLO</field>
+        <field name="sequence">4</field>
+        <field name="subsystem">general</field>
+        <field name="class_from">10</field>
+        <field name="class_to">12</field>
+    </record>
+    <record id="level_tecnico" model="edu.level">
+        <field name="name">Ensino técnico-profissional</field>
+        <field name="code">TECNICO</field>
+        <field name="sequence">5</field>
+        <field name="subsystem">technical</field>
+        <field name="class_from">10</field>
+        <field name="class_to">13</field>
+    </record>
+    <record id="level_magisterio" model="edu.level">
+        <field name="name">Formação de professores (magistério)</field>
+        <field name="code">MAGISTERIO</field>
+        <field name="sequence">6</field>
+        <field name="subsystem">teacher_training</field>
+        <field name="class_from">10</field>
+        <field name="class_to">13</field>
+    </record>
+</odoo>

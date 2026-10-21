@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_guardian_list" model="ir.ui.view">
+        <field name="name">edu.guardian.list</field>
+        <field name="model">edu.guardian</field>
+        <field name="arch" type="xml">
+            <list string="Encarregados de educação">
+                <field name="name"/>
+                <field name="phone"/>
+                <field name="email" optional="show"/>
+                <field name="vat" optional="show"/>
+                <field name="student_count"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_guardian_form" model="ir.ui.view">
+        <field name="name">edu.guardian.form</field>
+        <field name="model">edu.guardian</field>
+        <field name="arch" type="xml">
+            <form string="Encarregado de educação">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_students" type="object" class="oe_stat_button" icon="fa-child">
+                            <field name="student_count" widget="statinfo" string="Educandos"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Arquivado" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Nome do encarregado" required="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identificação">
+                            <field name="vat" string="NIF"/>
+                            <field name="id_number"/>
+                            <field name="occupation"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Contactos">
+                            <field name="phone" widget="phone" required="1"/>
+                            <field name="email" widget="email"/>
+                            <field name="street" placeholder="Rua, bairro"/>
+                            <field name="city" placeholder="Município"/>
+                            <field name="state_id" string="Província" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <field name="student_link_ids" readonly="1">
+                        <list>
+                            <field name="student_id"/>
+                            <field name="relationship"/>
+                            <field name="is_primary"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_guardian_search" model="ir.ui.view">
+        <field name="name">edu.guardian.search</field>
+        <field name="model">edu.guardian</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', '|', '|', ('name', 'ilike', self), ('phone', 'ilike', self), ('vat', 'ilike', self), ('id_number', 'ilike', self)]"/>
+                <filter name="archived" string="Arquivados" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_guardian" model="ir.actions.act_window">
+        <field name="name">Encarregados de educação</field>
+        <field name="res_model">edu.guardian</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_edu_guardian" action="action_edu_guardian" parent="edu_core.menu_edu_students" sequence="20"/>
+</odoo>

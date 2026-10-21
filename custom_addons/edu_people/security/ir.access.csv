@@ -1,0 +1,7 @@
+id,name,model_id,group_id/id,operation,domain
+access_edu_student_user,access_edu_student_user,edu.student,edu_core.group_edu_user,crud,
+access_edu_student_guardian_user,access_edu_student_guardian_user,edu.student.guardian,edu_core.group_edu_user,crud,
+access_edu_guardian_user,access_edu_guardian_user,edu.guardian,edu_core.group_edu_user,crud,
+edu_student_comp_rule,edu.student multi-empresa,edu.student,,crud,"[('company_id', 'in', company_ids)]"
+edu_student_guardian_comp_rule,edu.student.guardian multi-empresa,edu.student.guardian,,crud,"[('company_id', 'in', company_ids)]"
+edu_guardian_comp_rule,edu.guardian multi-empresa,edu.guardian,,crud,"[('company_id', 'in', company_ids)]"
