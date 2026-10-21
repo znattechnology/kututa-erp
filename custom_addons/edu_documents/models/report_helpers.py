@@ -61,6 +61,13 @@ class Helpers:
         return female if gender in {'female', 'f'} else male
 
     @staticmethod
+    def role_case(text):
+        """«O DIRECTOR DE TURMA» → «O Director de Turma» (as assinaturas da pauta, como no secPed)."""
+        small = {'de', 'da', 'do', 'das', 'dos', 'e'}
+        words = (text or '').lower().split()
+        return ' '.join(w if w in small and i else w[:1].upper() + w[1:] for i, w in enumerate(words))
+
+    @staticmethod
     def employee_role(employee, male, female, unknown):
         """Cargo de quem assina pelo sexo do funcionário. O sexo é um campo do RH: lê-se só ele, sem dar acesso à
         ficha (a secretaria e os professores imprimem pautas e horários)."""

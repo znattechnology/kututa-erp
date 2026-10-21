@@ -66,7 +66,9 @@ class TestEduRoles(TransactionCase):
             for report_name, ids in documents:
                 with self.subTest(user=user.login, report=report_name):
                     html = Report.with_user(user)._render_qweb_html(report_name, ids)[0].decode()
-                    if report_name != 'edu_documents.report_class_list':
+                    if report_name == 'edu_documents.report_pauta':
+                        self.assertIn('A Directora de Turma', html)
+                    elif report_name != 'edu_documents.report_class_list':
                         self.assertIn('A DIRECTORA DE TURMA', html)
 
     def _menus(self, user):

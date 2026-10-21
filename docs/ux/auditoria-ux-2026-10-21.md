@@ -204,3 +204,22 @@ Pedido: os botões da turma (pautas, relação nominal, horário) devem mostrar 
 - **Menu lateral:** já não desaparece nos ecrãs sem menu, como a pré-visualização ou um endereço aberto directamente.
   - Fica a última aplicação aberta. Sem ela, usa a que tem a acção, ou a primeira, que é a de entrada.
   - A barra de topo mostra o nome da aplicação.
+
+## 11. Pauta da turma com a estrutura do secPed (2026-10-21)
+Referência: a pauta da 12.ª A de Enfermagem (2025/26) da Vovó Eva no secPed («Visualizar pauta» e o PDF de `apps/web/lib/academic/features/pauta/pauta-export.ts`).
+
+- **Cabeçalho:** «REPÚBLICA DE ANGOLA / Ministério da Educação» ao centro e «Visto / O Director Geral» com o nome à direita. Por baixo, a escola, «MAPA DE APROVEITAMENTO DO IIIº TRIMESTRE» e a linha «ANO LECTIVO · CLASSE · TURMA · CURSO».
+- **Tabela:** disciplinas em colunas, por ordem alfabética, e alunos em linhas.
+  - Técnico: NPP·NPT·CT·FJ·FI, mais CF·PG·CA no último trimestre.
+  - Geral: MAC·NPT·MT·FJ·FI, mais MFD·CFD (e EN·MFED nas classes de exame).
+  - No último trimestre há ainda «Neg.» e «Resultado», com cores: Transita a azul, Exame e Pendente a preto, Não transita e EEF a vermelho, Transferido a verde.
+  - Matrículas anuladas e transferidas: c) e d) nas notas.
+  - A última linha é «Professor», com o professor de cada disciplina.
+- **Rodapé:** a legenda do regime, «Escala 0–20 · aprovação mínima 10 valores.» e as assinaturas do Director de Turma e do Director Pedagógico.
+- **Visualização (HTML):** uma só tabela, numa linha, com scroll horizontal.
+- **PDF (A3 paisagem):** como no secPed, as disciplinas dividem-se por folhas.
+  - O Nº e o Aluno só aparecem na 1.ª folha e o Resultado só na última. O cabeçalho e o rodapé ficam na 1.ª folha.
+  - As folhas cheias ocupam a largura toda.
+  - A largura das colunas está calibrada pelo PDF real. Na 12.ª A de Enfermagem: 8 disciplinas na 1.ª folha e 5 mais o Resultado na 2.ª.
+- **Classificação do trimestre:** a CT/MT mostra-se arredondada (12,0), como no secPed; a importada guarda as casas decimais.
+- **Código:** `edu.pauta.print._pauta_data` prepara os dados do modelo `report_pauta`; o HTML e o PDF usam o mesmo modelo.

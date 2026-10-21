@@ -153,17 +153,34 @@ class TestEduDocuments(TransactionCase):
         self.assertEqual(wizard.trimester_id, trimesters.filtered('is_current')[:1] or trimesters[-1:])
         wizard.trimester_id = trimesters[-1]
         html = self._render('edu_documents.action_report_pauta', wizard)
-        self.assertIn('MAPA DE APROVEITAMENTO FINAL', html)
-        self.assertIn('RESULTADO', html)
-        self.assertIn('edu-neg', html)
-        # Pauta de um trimestre: só as classificações até lá, sem a classificação do ano nem a situação.
+        # Estrutura do secPed: cabeçalho oficial, colunas do trimestre e bloco final, Neg. e Resultado, legenda.
+        self.assertIn('MAPA DE APROVEITAMENTO DO IIIº TRIMESTRE', html)
+        self.assertIn('REPÚBLICA DE ANGOLA', html)
+        self.assertIn('Visto', html)
+        for label in ('>NPP<', '>NPT<', '>CT<', '>FJ<', '>FI<', '>CF<', '>PG<', '>CA<', 'Neg.', 'Resultado'):
+            self.assertIn(label, html)
+        self.assertIn('ep-neg', html)
+        self.assertIn('NPP - Nota do Professor', html)
+        self.assertIn('aprovação mínima 10 valores', html)
+        self.assertIn('Professor', html)
+        # Visualização: uma só tabela com scroll horizontal; PDF: dividida por folhas A3, como no secPed.
+        self.assertIn('class="ep-scroll"', html)
+        self.assertNotIn('Folha 1/', html)
+        pdf_html = (
+            self.env['ir.actions.report']
+            ._render_qweb_html('edu_documents.report_pauta', wizard.ids, data={'report_type': 'pdf'})[0]
+            .decode()
+        )
+        self.assertIn('Folha 1/', pdf_html)
+        self.assertNotIn('class="ep-scroll"', pdf_html)
+        # Pauta de um trimestre: as colunas do trimestre, sem a classificação do ano nem a situação.
         wizard.trimester_id = trimesters[0]
         html = self._render('edu_documents.action_report_pauta', wizard)
-        self.assertNotIn('MAPA DE APROVEITAMENTO FINAL', html)
-        self.assertIn('CT1', html)
-        self.assertNotIn('CT2', html)
-        self.assertNotIn('RESULTADO', html)
-        self.assertNotIn('TRANSITA', html)
+        self.assertIn('MAPA DE APROVEITAMENTO DO Iº TRIMESTRE', html)
+        self.assertIn('>CT<', html)
+        self.assertNotIn('>CA<', html)
+        self.assertNotIn('Resultado', html)
+        self.assertNotIn('Transita', html)
         lp = self.subjects.filtered(lambda s: s.code == 'LP')
         mini = self.env['edu.pauta.print'].create(
             {'class_id': self.edu_class.id, 'kind': 'mini', 'subject_id': lp.id, 'trimester_id': trimesters[-1].id}

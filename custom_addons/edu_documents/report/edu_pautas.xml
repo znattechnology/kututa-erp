@@ -82,74 +82,133 @@
     </template>
 
     <!-- Pauta da turma (mapa de aproveitamento final) -->
+    <!-- Pauta da turma (mapa de aproveitamento), com a estrutura do secPed-Express: disciplinas em colunas, alunos
+         em linhas, divididas por folhas A3; o cabeçalho, a legenda e as assinaturas na 1.ª folha. Os dados vêm de
+         edu.pauta.print._pauta_data (o HTML da visualização e o PDF são o mesmo). -->
+    <template id="pauta_styles">
+        <style>
+            .ep { font-family: Arial, "Liberation Sans", Helvetica, sans-serif; color: #000; }
+            .ep-head { position: relative; text-align: center; min-height: 112px; margin-bottom: 8px; }
+            .ep-state { font-size: 15px; line-height: 1.25; }
+            .ep-state strong { font-size: 16px; }
+            .ep-visto { position: absolute; right: 70px; top: 0; width: 200px; text-align: center; font-size: 12px; }
+            .ep-visto .ep-line { border-top: 1px solid #000; margin-top: 26px; padding-top: 2px; }
+            .ep-school { font-size: 17px; font-weight: bold; margin-top: 10px; text-transform: uppercase; }
+            .ep-title { font-size: 15px; font-weight: bold; margin-top: 4px; }
+            .ep-context { font-size: 12px; margin-top: 3px; }
+            table.ep-grid { border-collapse: separate; border-spacing: 0; font-size: 9.5px; }
+            table.ep-grid th, table.ep-grid td {
+                border-right: 1px solid #c8c8c8; border-bottom: 1px solid #c8c8c8; padding: 1px 3px;
+                height: 16px; text-align: center; vertical-align: middle; white-space: nowrap;
+            }
+            table.ep-grid tr > :first-child { border-left: 1px solid #c8c8c8; }
+            table.ep-grid thead tr:first-child th { border-top: 1px solid #969696; }
+            table.ep-grid th { font-weight: bold; border-color: #969696; }
+            table.ep-grid .ep-name { text-align: left; min-width: 170px; max-width: 200px; overflow: hidden; }
+            table.ep-grid th.ep-subject { white-space: normal; line-height: 1.15; }
+            table.ep-grid .ep-teachers td { background: #e9ecf3; font-weight: bold; white-space: normal; }
+            table.ep-grid .ep-teachers .ep-right { text-align: right; }
+            .ep-pos { color: #1f4fb0; font-weight: bold; }
+            .ep-neg { color: #c42b2b; font-weight: bold; }
+            .ep-green { color: #1a7f37; font-weight: bold; }
+            .ep-legend { font-size: 10px; color: #282828; margin-top: 14px; max-width: 1400px; white-space: normal; }
+            .ep-scale { font-size: 9.5px; color: #6e6e6e; margin-top: 3px; }
+            .ep-signatures { position: relative; height: 70px; margin-top: 22px; font-size: 12px; }
+            .ep-signatures > div { position: absolute; top: 0; width: 240px; text-align: center; }
+            .ep-signatures .ep-line { border-top: 1px solid #000; margin-top: 26px; padding-top: 2px; }
+            .ep-generated { font-size: 9px; color: #969696; margin-top: 10px; }
+            .ep-scroll { overflow-x: auto; max-width: 100%; padding-bottom: 6px; }
+        </style>
+    </template>
+
     <template id="report_pauta">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.basic_layout">
                     <t t-set="company" t-value="o.company_id"/>
                     <t t-set="c" t-value="o.class_id"/>
-                    <t t-set="subjects" t-value="o._subjects()"/>
-                    <t t-set="results" t-value="o._results()"/>
-                    <t t-set="year_results" t-value="o._year_results()"/>
-                    <t t-set="policy" t-value="o._policy()"/>
-                    <t t-set="technical" t-value="o.regime == 'technical'"/>
-                    <!-- Até ao trimestre escolhido; a classificação do ano, o exame e a situação só na pauta final. -->
-                    <t t-set="n" t-value="o._trimester_number()"/>
-                    <t t-set="final" t-value="o._is_final()"/>
-                    <t t-set="prefix" t-value="technical and 'CT' or 'MT'"/>
-                    <t t-set="cols" t-value="[prefix + str(i) for i in range(1, n + 1)] + (final and (technical and ['PG', 'CA'] or ['MFD']) or [])"/>
-                    <t t-set="letters" t-value="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
-                    <t t-call="edu_documents.styles"/>
-                    <div class="page edu-doc">
-                        <t t-call="edu_documents.header" official="False"/>
-                        <div class="edu-subtitle"><t t-if="final">MAPA DE APROVEITAMENTO FINAL</t><t t-else="">MAPA DE APROVEITAMENTO · <t t-out="(o.trimester_id.name or '').upper()"/></t> · <t t-out="c.display_name.upper()"/></div>
-                        <table class="edu-grid o_ignore_layout_styling">
-                            <thead>
-                                <tr>
-                                    <th rowspan="2">Nº</th><th rowspan="2">NOME COMPLETO</th>
-                                    <th t-foreach="subjects" t-as="s" t-att-colspan="len(cols) + (1 if final else 0)"><t t-out="letters[s_index] if s_index &lt; 26 else s_index + 1"/>) <t t-out="s.name.upper()"/></th>
-                                    <th t-if="final" rowspan="2" style="color: #FF0000;">RESULTADO</th>
-                                    <th rowspan="2">Nº</th>
-                                </tr>
-                                <tr>
-                                    <t t-foreach="subjects" t-as="s">
-                                        <th t-foreach="cols" t-as="col" t-out="col"/>
-                                        <th t-if="final">REC.</th>
-                                    </t>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="o._enrollments()" t-as="e">
-                                    <td t-out="e.order_number"/>
-                                    <td class="edu-name" t-out="e.student_id.name"/>
-                                    <t t-foreach="subjects" t-as="s">
-                                        <t t-set="r" t-value="results.get((e.id, s.id))"/>
-                                        <t t-if="r">
-                                            <t t-set="mts" t-value="(r.trimesters_graded and [r.mt1, r.mt2, r.mt3] or [None, None, None])[:n]"/>
-                                            <t t-set="values" t-value="mts + (final and (technical and [r.pg if r.has_pg else None, r.final] or [r.final]) or [])"/>
-                                            <td t-foreach="values" t-as="v" t-att-class="v is not None and h.color(v, policy.pass_grade) or ''" t-out="h.num(v, v is not None and bool(v or r.complete))"/>
-                                            <td t-if="final" t-out="h.num(r.special_exam, r.has_special_exam)"/>
+                    <t t-set="d" t-value="o._pauta_data()"/>
+                    <t t-set="director_role" t-value="h.role_case(h.director_title())"/>
+                    <t t-set="class_director_role" t-value="h.role_case(h.employee_role(c.director_id, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA', 'O(A) DIRECTOR(A) DE TURMA'))"/>
+                    <t t-set="pedagogical_role" t-value="h.role_case(h.pedagogical_title())"/>
+                    <t t-call="edu_documents.pauta_styles"/>
+                    <!-- PDF: as disciplinas dividem-se por folhas A3 (como no secPed). Visualização: uma só tabela, numa
+                         linha, com scroll horizontal. -->
+                    <t t-set="pdf" t-value="report_type == 'pdf'"/>
+                    <t t-foreach="d['chunks'] if pdf else [d['subjects']]" t-as="chunk">
+                        <div class="page ep" t-att-style="'' if chunk_last else 'page-break-after: always;'">
+                            <div class="ep-head">
+                                <t t-if="chunk_first">
+                                    <div class="ep-visto">
+                                        <strong>Visto</strong>
+                                        <div t-out="director_role"/>
+                                        <div class="ep-line" t-out="company.edu_director_name or '&#160;'"/>
+                                    </div>
+                                    <div class="ep-state"><strong>REPÚBLICA DE ANGOLA</strong><br/>Ministério da Educação</div>
+                                    <div class="ep-school" t-out="company.name"/>
+                                    <div class="ep-title" t-out="d['title']"/>
+                                    <div class="ep-context" t-out="d['context']"/>
+                                </t>
+                            </div>
+                            <div t-att-class="None if pdf else 'ep-scroll'">
+                            <table class="ep-grid o_ignore_layout_styling" t-att-style="'width: 100%;' if pdf and not chunk_last else None">
+                                <thead>
+                                    <tr>
+                                        <t t-if="chunk_first">
+                                            <th rowspan="2">Nº</th>
+                                            <th rowspan="2" class="ep-name">Aluno</th>
                                         </t>
-                                        <t t-else=""><td t-foreach="cols" t-as="col"/><td t-if="final"/></t>
-                                    </t>
-                                    <t t-set="yr" t-value="year_results.get(e.id)"/>
-                                    <td t-if="final" t-att-class="yr and (yr.status in ('retained',) and 'edu-neg' or 'edu-pos') or ''"
-                                        t-out="e.state == 'transferred' and 'TRANSFERIDO(A)' or e.state == 'dropped' and 'DESISTENTE' or (yr and h.status(yr.status)) or 'PENDENTE'"/>
-                                    <td t-out="e.order_number"/>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <p style="font-size: 10px; margin-top: 4px;" t-if="technical">CT: Classificação do Trimestre = (NPP + NPT)/2<t t-if="final"> · PG: Prova Global · CA: Classificação Anual = 60% CF + 40% PG (com a bonificação do conselho de turma) · REC: Exame especial</t></p>
-                        <p style="font-size: 10px; margin-top: 4px;" t-else="">MT: Média do Trimestre = (MAC + NPT)/2<t t-if="final"> · MFD: Média Final da Disciplina (MFED nas disciplinas de exame nacional) · REC: Exame especial</t></p>
-                        <p class="edu-date" style="text-align: center;"><t t-out="h.city().upper()"/>, <t t-out="h.date(today, True)"/></p>
-                        <table class="edu-signatures o_ignore_layout_styling">
-                            <tr>
-                                <td><div class="edu-role" t-out="h.director_title()"/><div class="edu-line" t-out="company.edu_director_name or ''"/></td>
-                                <td><div class="edu-role" t-out="h.employee_role(c.director_id, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA', 'O(A) DIRECTOR(A) DE TURMA')"/><div class="edu-line" t-out="c.director_id.name or ''"/></td>
-                                <td><div class="edu-role" t-out="h.pedagogical_title()"/><div class="edu-line" t-out="company.edu_pedagogical_director_name or ''"/></td>
-                            </tr>
-                        </table>
-                    </div>
+                                        <th t-foreach="chunk" t-as="s" class="ep-subject" t-att-colspan="d['span']" t-out="s.name"/>
+                                        <t t-if="chunk_last and d['final']">
+                                            <th rowspan="2">Neg.</th>
+                                            <th rowspan="2">Resultado</th>
+                                        </t>
+                                    </tr>
+                                    <tr>
+                                        <t t-foreach="chunk" t-as="s">
+                                            <th t-foreach="d['labels']" t-as="label" t-out="label"/>
+                                        </t>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d['rows']" t-as="r">
+                                        <t t-if="chunk_first">
+                                            <td t-out="r['number']"/>
+                                            <td class="ep-name" t-out="r['name']"/>
+                                        </t>
+                                        <t t-foreach="chunk" t-as="s">
+                                            <td t-foreach="r['cells'][s.id]" t-as="cell" t-att-class="cell[1] and 'ep-' + cell[1] or None" t-out="cell[0]"/>
+                                        </t>
+                                        <t t-if="chunk_last and d['final']">
+                                            <td t-out="r['negatives']"/>
+                                            <td t-att-class="r['verdict'][1] and 'ep-' + r['verdict'][1] or None" t-out="r['verdict'][0]"/>
+                                        </t>
+                                    </tr>
+                                    <tr class="ep-teachers">
+                                        <td t-if="chunk_first" colspan="2" class="ep-right">Professor</td>
+                                        <td t-foreach="chunk" t-as="s" t-att-colspan="d['span']" t-out="d['teachers'][s.id]"/>
+                                        <t t-if="chunk_last and d['final']"><td/><td/></t>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            </div>
+                            <t t-if="chunk_first">
+                                <div class="ep-legend" t-out="d['legend']"/>
+                                <div class="ep-scale" t-out="d['scale']"/>
+                                <div class="ep-signatures">
+                                    <div style="left: 0;">
+                                        <div t-out="class_director_role"/>
+                                        <div class="ep-line" t-out="c.director_id.name or '&#160;'"/>
+                                    </div>
+                                    <div style="right: 70px; width: 200px;">
+                                        <div t-out="pedagogical_role"/>
+                                        <div class="ep-line" t-out="company.edu_pedagogical_director_name or '&#160;'"/>
+                                    </div>
+                                </div>
+                            </t>
+                            <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/><t t-if="pdf"> · Folha <t t-out="chunk_index + 1"/>/<t t-out="len(d['chunks'])"/></t></div>
+                        </div>
+                    </t>
                 </t>
             </t>
         </t>
