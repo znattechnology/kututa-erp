@@ -1,0 +1,5 @@
+id,name,model_id,group_id/id,operation,domain
+access_edu_document_user,access_edu_document_user,edu.document,edu_core.group_edu_user,crud,
+access_edu_pauta_print_user,access_edu_pauta_print_user,edu.pauta.print,edu_core.group_edu_user,crud,
+access_edu_pauta_print_teacher,access_edu_pauta_print_teacher,edu.pauta.print,edu_core.group_edu_teacher,crud,
+edu_document_comp_rule,edu.document multi-empresa,edu.document,,crud,"[('company_id', 'in', company_ids)]"

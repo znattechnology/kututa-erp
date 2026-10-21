@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_a4_portrait" model="report.paperformat">
+        <field name="name">Escola: A4 retrato</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">12</field>
+        <field name="margin_bottom">12</field>
+        <field name="margin_left">16</field>
+        <field name="margin_right">16</field>
+        <field name="header_spacing">0</field>
+        <field name="disable_shrinking" eval="True"/>
+        <field name="dpi">96</field>
+    </record>
+    <record id="paperformat_a4_landscape" model="report.paperformat">
+        <field name="name">Escola: A4 paisagem</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">8</field>
+        <field name="margin_bottom">8</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+    </record>
+    <record id="paperformat_a3_landscape" model="report.paperformat">
+        <field name="name">Escola: A3 paisagem</field>
+        <field name="format">A3</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">8</field>
+        <field name="margin_bottom">8</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+    </record>
+
+    <template id="styles">
+        <style>
+            .edu-doc { font-family: "Times New Roman", serif; font-size: 13px; color: #000; }
+            .edu-doc p { text-align: justify; line-height: 1.6; margin: 0 0 8px 0; }
+            .edu-header { text-align: center; margin-bottom: 18px; }
+            .edu-header img { max-height: 70px; margin-bottom: 4px; }
+            .edu-header .edu-state { font-weight: bold; text-transform: uppercase; line-height: 1.3; }
+            .edu-header .edu-school { font-weight: bold; font-size: 16px; text-transform: uppercase; }
+            .edu-header .edu-small { font-size: 11px; }
+            .edu-title { text-align: center; font-size: 24px; font-weight: bold; color: #1F4E79; letter-spacing: 2px; margin: 16px 0; }
+            .edu-subtitle { text-align: center; font-weight: bold; margin-bottom: 10px; }
+            .edu-table { width: 100%; border-collapse: collapse; margin: 8px 0 14px 0; }
+            .edu-table th, .edu-table td { border: 1px solid #000; padding: 3px 5px; }
+            .edu-table th { background: #f0f0f0; text-align: center; }
+            .edu-grid { width: 100%; border-collapse: collapse; font-size: 10px; }
+            .edu-grid th, .edu-grid td { border: 1px solid #000; padding: 1px 3px; text-align: center; }
+            .edu-grid td.edu-name { text-align: left; white-space: nowrap; }
+            .edu-pos { color: #0000FF; }
+            .edu-neg { color: #FF0000; }
+            .edu-signatures { width: 100%; margin-top: 36px; table-layout: fixed; }
+            .edu-signatures td { text-align: center; vertical-align: bottom; padding: 0 12px; }
+            .edu-signatures .edu-role { font-weight: bold; text-transform: uppercase; }
+            .edu-signatures .edu-line { margin-top: 32px; border-top: 1px solid #000; padding-top: 2px; }
+            .edu-ref { font-weight: bold; font-size: 11px; margin-top: 24px; }
+            .edu-date { margin-top: 18px; }
+            .edu-dots { border-bottom: 1px dotted #000; }
+        </style>
+    </template>
+
+    <!-- Cabeçalho: timbre da escola, ou cabeçalho de Estado (official) para os documentos com valor oficial -->
+    <template id="header">
+        <div class="edu-header">
+            <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" alt="Logótipo"/>
+            <t t-if="official">
+                <div class="edu-state">República de Angola<br/>Ministério da Educação</div>
+                <div class="edu-state" t-if="company.edu_official_line" t-out="company.edu_official_line"/>
+                <div class="edu-school mt-2" t-out="company.name"/>
+            </t>
+            <t t-else="">
+                <div class="edu-school" t-out="company.name"/>
+                <div t-if="company.edu_letterhead_subtitle" t-out="company.edu_letterhead_subtitle"/>
+                <div class="edu-small">
+                    <t t-out="', '.join(p for p in [company.street, h.city()] if p)"/>
+                    <t t-if="company.email"> · E-mail: <t t-out="company.email"/></t>
+                    <t t-if="company.phone"> · Telefone: <t t-out="company.phone"/></t>
+                </div>
+            </t>
+        </div>
+    </template>
+
+    <!-- Identificação do aluno, comum às declarações -->
+    <template id="identity">
+        <t t-set="g" t-value="student.gender"/>
+        <strong t-out="student.name"/>,
+        <t t-out="h.by_gender(g, 'filho', 'filha')"/> de <t t-out="student.father_name or '—'"/> e de <t t-out="student.mother_name or '—'"/>,
+        <t t-out="h.by_gender(g, 'nascido', 'nascida')"/> a <t t-out="h.date(student.birth_date)"/>,
+        natural de <t t-out="student.birthplace or '—'"/><t t-if="student.birth_municipality">, Município de <t t-out="student.birth_municipality"/></t><t t-if="student.birth_state_id">, Província de <t t-out="student.birth_state_id.name"/></t>,
+        <t t-out="h.by_gender(g, 'portador', 'portadora')"/> do B.I. nº <t t-out="student.id_number or '—'"/><t t-if="student.id_issuer">, emitido pelo <t t-out="student.id_issuer"/></t><t t-if="student.id_issue_date"> a <t t-out="h.date(student.id_issue_date)"/></t>
+    </template>
+
+    <template id="signatures">
+        <table class="edu-signatures">
+            <tr>
+                <td t-if="left_role">
+                    <div class="edu-role" t-out="left_role"/>
+                    <div class="edu-line" t-out="left_name and ('//%s//' % left_name.upper()) or ''"/>
+                </td>
+                <td>
+                    <div class="edu-role" t-out="right_role"/>
+                    <div class="edu-line" t-out="right_name and ('//%s//' % right_name.upper()) or ''"/>
+                </td>
+            </tr>
+        </table>
+    </template>
+</odoo>

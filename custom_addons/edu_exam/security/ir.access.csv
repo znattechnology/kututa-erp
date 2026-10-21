@@ -1,0 +1,13 @@
+id,name,model_id,group_id/id,operation,domain
+access_edu_exam_period_user,access_edu_exam_period_user,edu.exam.period,edu_core.group_edu_user,crud,
+access_edu_exam_session_user,access_edu_exam_session_user,edu.exam.session,edu_core.group_edu_user,crud,
+access_edu_exam_room_user,access_edu_exam_room_user,edu.exam.room,edu_core.group_edu_user,crud,
+access_edu_exam_seat_user,access_edu_exam_seat_user,edu.exam.seat,edu_core.group_edu_user,crud,
+access_edu_exam_period_teacher,access_edu_exam_period_teacher,edu.exam.period,edu_core.group_edu_teacher,r,
+access_edu_exam_session_teacher,access_edu_exam_session_teacher,edu.exam.session,edu_core.group_edu_teacher,r,
+access_edu_exam_room_teacher,access_edu_exam_room_teacher,edu.exam.room,edu_core.group_edu_teacher,r,
+access_edu_exam_seat_teacher,access_edu_exam_seat_teacher,edu.exam.seat,edu_core.group_edu_teacher,r,"[('session_id.room_ids.supervisor_ids.user_id', '=', user.id)]"
+edu_exam_period_comp_rule,edu.exam.period multi-empresa,edu.exam.period,,crud,"[('company_id', 'in', company_ids)]"
+edu_exam_session_comp_rule,edu.exam.session multi-empresa,edu.exam.session,,crud,"[('company_id', 'in', company_ids)]"
+edu_exam_room_comp_rule,edu.exam.room multi-empresa,edu.exam.room,,crud,"[('company_id', 'in', company_ids)]"
+edu_exam_seat_comp_rule,edu.exam.seat multi-empresa,edu.exam.seat,,crud,"[('company_id', 'in', company_ids)]"

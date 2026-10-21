@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Mini-pauta: uma disciplina da turma (geral: MAC NPT MT por trimestre e MFD; técnico: CT e faltas) -->
+    <template id="report_mini_pauta">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="c" t-value="o.class_id"/>
+                    <t t-set="terms" t-value="o._terms()"/>
+                    <t t-set="results" t-value="o._results()"/>
+                    <t t-set="absences" t-value="o._absences()"/>
+                    <t t-set="policy" t-value="o._policy()"/>
+                    <t t-set="exam_class" t-value="policy._is_exam_class(c.class_number)"/>
+                    <t t-set="technical" t-value="o.regime == 'technical'"/>
+                    <t t-set="numbers" t-value="[t.number for t in c.academic_year_id.trimester_ids.sorted('number')]"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="False"/>
+                        <div class="edu-subtitle">
+                            MINI-PAUTA<t t-if="o.trimester_id"> · <t t-out="o.trimester_id.name.upper()"/></t>
+                        </div>
+                        <p style="text-align: center;">
+                            DISCIPLINA: <strong t-out="o.subject_id.name.upper()"/> · CLASSE: <t t-out="c.class_number"/>ª ·
+                            TURMA: <t t-out="c.name"/><t t-if="c.course_id"> · CURSO: <t t-out="c.course_id.name.upper()"/></t> ·
+                            ANO LECTIVO: <t t-out="c.academic_year_id.name"/>
+                        </p>
+                        <table class="edu-grid">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">Nº</th><th rowspan="2">NOME COMPLETO</th>
+                                    <t t-foreach="numbers" t-as="n">
+                                        <th t-att-colspan="2 if (exam_class and n == numbers[-1] and not technical) else 3"><t t-out="n"/>.º TRIMESTRE</th>
+                                    </t>
+                                    <th rowspan="2" t-out="technical and 'CF' or 'MFD'"/>
+                                    <th t-if="exam_class and not technical" rowspan="2">N.E</th>
+                                    <th t-if="exam_class and not technical" rowspan="2">MF</th>
+                                    <th rowspan="2">FALTAS J/I</th>
+                                </tr>
+                                <tr>
+                                    <t t-foreach="numbers" t-as="n">
+                                        <th t-out="technical and 'NPP' or 'MAC'"/>
+                                        <th t-if="not (exam_class and n == numbers[-1] and not technical)">NPT</th>
+                                        <th t-out="(technical and 'CT' or 'MT') + str(n)"/>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o._enrollments()" t-as="e">
+                                    <td t-out="e.order_number"/>
+                                    <td class="edu-name" t-out="e.student_id.name"/>
+                                    <t t-foreach="numbers" t-as="n">
+                                        <t t-set="t" t-value="terms.get((e.id, n))"/>
+                                        <td t-out="h.num(t.mac, bool(t and t.has_mac)) if t else ''"/>
+                                        <td t-if="not (exam_class and n == numbers[-1] and not technical)" t-out="h.num(t.npt, bool(t and t.has_npt)) if t else ''"/>
+                                        <td t-att-class="t and t.has_mt and h.color(t.mt, policy.pass_grade) or ''" t-out="h.num(t.mt, bool(t and t.has_mt)) if t else ''"/>
+                                    </t>
+                                    <t t-set="r" t-value="results.get((e.id, o.subject_id.id))"/>
+                                    <td t-att-class="r and r.complete and h.color(r.cf, policy.pass_grade) or ''" t-out="h.num(r.cf, bool(r and r.complete)) if r else ''"/>
+                                    <td t-if="exam_class and not technical" t-out="h.num(r.national, bool(r and r.has_national)) if r else ''"/>
+                                    <td t-if="exam_class and not technical" t-att-class="r and r.complete and h.color(r.annual, policy.pass_grade) or ''" t-out="h.num(r.annual, bool(r and r.has_national)) if r else ''"/>
+                                    <t t-set="a" t-value="absences.get(e.id, (0, 0))"/>
+                                    <td t-out="'%s/%s' % a"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <table class="edu-signatures">
+                            <tr>
+                                <td><div class="edu-role">O(A) PROFESSOR(A)</div><div class="edu-line">&#160;</div></td>
+                                <td><div class="edu-role">O(A) DIRECTOR(A) DE TURMA</div><div class="edu-line" t-out="c.director_id.name or ''"/></td>
+                                <td><div class="edu-role" t-out="h.pedagogical_title()"/><div class="edu-line" t-out="company.edu_pedagogical_director_name or ''"/></td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Pauta da turma (mapa de aproveitamento final) -->
+    <template id="report_pauta">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="c" t-value="o.class_id"/>
+                    <t t-set="subjects" t-value="o._subjects()"/>
+                    <t t-set="results" t-value="o._results()"/>
+                    <t t-set="year_results" t-value="o._year_results()"/>
+                    <t t-set="policy" t-value="o._policy()"/>
+                    <t t-set="technical" t-value="o.regime == 'technical'"/>
+                    <t t-set="cols" t-value="technical and ['CT1', 'CT2', 'CT3', 'PG', 'CA'] or ['MT1', 'MT2', 'MT3', 'MFD']"/>
+                    <t t-set="letters" t-value="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="False"/>
+                        <div class="edu-subtitle">MAPA DE APROVEITAMENTO FINAL · <t t-out="c.display_name.upper()"/></div>
+                        <table class="edu-grid">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">Nº</th><th rowspan="2">NOME COMPLETO</th>
+                                    <th t-foreach="subjects" t-as="s" t-att-colspan="len(cols) + 1"><t t-out="letters[s_index] if s_index &lt; 26 else s_index + 1"/>) <t t-out="s.name.upper()"/></th>
+                                    <th rowspan="2" style="color: #FF0000;">RESULTADO</th>
+                                    <th rowspan="2">Nº</th>
+                                </tr>
+                                <tr>
+                                    <t t-foreach="subjects" t-as="s">
+                                        <th t-foreach="cols" t-as="col" t-out="col"/>
+                                        <th>REC.</th>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o._enrollments()" t-as="e">
+                                    <td t-out="e.order_number"/>
+                                    <td class="edu-name" t-out="e.student_id.name"/>
+                                    <t t-foreach="subjects" t-as="s">
+                                        <t t-set="r" t-value="results.get((e.id, s.id))"/>
+                                        <t t-if="r">
+                                            <t t-set="values" t-value="technical and [r.mt1, r.mt2, r.mt3, r.pg if r.has_pg else None, r.final] or [r.mt1, r.mt2, r.mt3, r.final]"/>
+                                            <td t-foreach="values" t-as="v" t-att-class="v is not None and h.color(v, policy.pass_grade) or ''" t-out="h.num(v, v is not None and bool(v or r.complete))"/>
+                                            <td t-out="h.num(r.special_exam, r.has_special_exam)"/>
+                                        </t>
+                                        <t t-else=""><td t-foreach="cols" t-as="col"/><td/></t>
+                                    </t>
+                                    <t t-set="yr" t-value="year_results.get(e.id)"/>
+                                    <td t-att-class="yr and (yr.status in ('retained',) and 'edu-neg' or 'edu-pos') or ''"
+                                        t-out="e.state == 'transferred' and 'TRANSFERIDO(A)' or e.state == 'dropped' and 'DESISTENTE' or (yr and h.status(yr.status)) or 'PENDENTE'"/>
+                                    <td t-out="e.order_number"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="font-size: 10px; margin-top: 4px;" t-if="technical">CT: Classificação do Trimestre = (NPP + NPT)/2 · PG: Prova Global · CA: Classificação Anual = 60% CF + 40% PG (com a bonificação do conselho de turma) · REC: Exame especial</p>
+                        <p style="font-size: 10px; margin-top: 4px;" t-else="">MT: Média do Trimestre = (MAC + NPT)/2 · MFD: Média Final da Disciplina (MFED nas disciplinas de exame nacional) · REC: Exame especial</p>
+                        <p class="edu-date" style="text-align: center;"><t t-out="h.city().upper()"/>, <t t-out="h.date(today, True)"/></p>
+                        <table class="edu-signatures">
+                            <tr>
+                                <td><div class="edu-role" t-out="h.director_title()"/><div class="edu-line" t-out="company.edu_director_name or ''"/></td>
+                                <td><div class="edu-role">O(A) DIRECTOR(A) DE TURMA</div><div class="edu-line" t-out="c.director_id.name or ''"/></td>
+                                <td><div class="edu-role" t-out="h.pedagogical_title()"/><div class="edu-line" t-out="company.edu_pedagogical_director_name or ''"/></td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Relação nominal da turma -->
+    <template id="report_class_list">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="c">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="c.company_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="False"/>
+                        <div class="edu-subtitle">RELAÇÃO NOMINAL DOS ALUNOS DA <t t-out="c.class_number"/>ª CLASSE · ANO LECTIVO <t t-out="c.academic_year_id.name"/></div>
+                        <p style="text-align: center;">TURMA: <t t-out="c.name"/><t t-if="c.room_id"> · SALA: <t t-out="c.room_id.display_name"/></t><t t-if="c.course_id"> · CURSO: <t t-out="c.course_id.name.upper()"/></t><t t-if="c.shift_id"> · PERÍODO: <t t-out="c.shift_id.name.upper()"/></t></p>
+                        <table class="edu-table">
+                            <thead><tr><th>Nº</th><th>NOME COMPLETO</th><th>IDADE</th><th>SEXO</th><th>N.º DE MATRÍCULA</th><th>OBS.</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="c.enrollment_ids.filtered(lambda e: e.state != 'draft').sorted('order_number')" t-as="e">
+                                    <td class="text-center" t-out="e.order_number"/>
+                                    <td t-out="e.student_id.name"/>
+                                    <td class="text-center" t-out="e.student_id.age and ('%s Anos' % e.student_id.age) or ''"/>
+                                    <td class="text-center" t-out="dict(e.student_id._fields['gender'].selection).get(e.student_id.gender, '').upper()"/>
+                                    <td class="text-center" t-out="e.student_id.matricula_number or ''"/>
+                                    <td t-out="e.state == 'transferred' and 'Transferido(a)' or e.state == 'dropped' and 'Desistente' or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="edu-date"><t t-out="h.city().upper()"/>, AOS <t t-out="h.date(today, True)"/></p>
+                        <t t-call="edu_documents.signatures" left_role="h.director_title()" left_name="company.edu_director_name" right_role="h.pedagogical_title()" right_name="company.edu_pedagogical_director_name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Horário da turma -->
+    <template id="report_class_schedule">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="c">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="c.company_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="False"/>
+                        <div class="edu-subtitle">HORÁRIO ESCOLAR · <t t-out="c.display_name.upper()"/><t t-if="c.shift_id"> · PERÍODO: <t t-out="c.shift_id.name.upper()"/></t></div>
+                        <div class="edu-grid" t-out="c.schedule_grid"/>
+                        <t t-call="edu_documents.signatures" left_role="'O(A) DIRECTOR(A) DE TURMA'" left_name="c.director_id.name" right_role="h.pedagogical_title()" right_name="company.edu_pedagogical_director_name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Cartão de estudante (CR80, 85,6 × 54 mm) -->
+    <template id="report_student_card">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-call="edu_documents.styles"/>
+                <div class="page">
+                    <t t-foreach="docs" t-as="s">
+                        <t t-set="company" t-value="s.company_id"/>
+                        <t t-set="e" t-value="s.current_enrollment_id"/>
+                        <div style="display: inline-block; width: 85.6mm; height: 54mm; border: 1px solid #1F4E79; border-radius: 3mm; margin: 2mm; overflow: hidden; font-family: Arial, sans-serif; font-size: 8px; vertical-align: top;">
+                            <div style="background: #1F4E79; color: #fff; padding: 2mm; font-weight: bold; font-size: 9px;">
+                                <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="height: 7mm; vertical-align: middle; margin-right: 2mm;"/>
+                                <t t-out="company.name"/>
+                            </div>
+                            <div style="padding: 2mm; display: flex;">
+                                <img t-if="s.image_128" t-att-src="image_data_uri(s.image_128)" style="width: 18mm; height: 22mm; object-fit: cover; margin-right: 2mm;"/>
+                                <div>
+                                    <div style="font-weight: bold; font-size: 10px;" t-out="s.name"/>
+                                    <div>Matrícula n.º <strong t-out="s.matricula_number or '—'"/></div>
+                                    <div t-if="e.course_id">Curso: <t t-out="e.course_id.name"/></div>
+                                    <div t-if="e">Turma: <t t-out="e.class_id.display_name"/></div>
+                                    <div t-if="s.birth_date">Nascimento: <t t-out="s.birth_date.strftime('%d/%m/%Y')"/></div>
+                                    <div t-if="e">Válido até: <t t-out="e.academic_year_id.date_end.strftime('%d/%m/%Y')"/></div>
+                                </div>
+                            </div>
+                            <div style="padding: 0 2mm; font-size: 6px; color: #555;">Pessoal e intransmissível. Em caso de perda, comunique à escola.</div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

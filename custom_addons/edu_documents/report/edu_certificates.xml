@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Certificado de habilitações: técnico (Despacho 60/08, Anexo IV) ou ensino geral (classificações por classe) -->
+    <template id="report_certificate">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="student" t-value="o.student_id"/>
+                    <t t-set="g" t-value="o.graduation_id"/>
+                    <t t-set="results" t-value="g.final_result_ids"/>
+                    <t t-set="technical" t-value="g.level_id.subsystem == 'technical'"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title">CERTIFICADO</div>
+                        <t t-if="technical">
+                            <p>
+                                <t t-out="h.by_gender(company.edu_director_gender, 'O Director', 'A Directora')"/> do <t t-out="company.name"/>,
+                                <t t-out="company.edu_director_name"/>, e <t t-out="h.by_gender(company.edu_pedagogical_director_gender, 'o Subdirector Pedagógico', 'a Subdirectora Pedagógica')"/>,
+                                <t t-out="company.edu_pedagogical_director_name"/>, certificam de acordo com os artigos 25.º e 27.º do estatuto do
+                                Subsistema do Ensino Técnico Profissional, aprovado pelo Decreto n.º 90/04, de 3 de Dezembro, que
+                                <t t-call="edu_documents.identity"/>, concluiu no ano lectivo <t t-out="g.academic_year_id.name"/> o curso de
+                                <t t-out="g.course_id.name"/>, tendo obtido as seguintes classificações, conforme consta do processo individual
+                                n.º <t t-out="student.process_number or '—'"/> e da folha n.º <t t-out="g.page_number or '—'"/> do Livro de
+                                Termos n.º <t t-out="g.book_number or '—'"/>.
+                            </p>
+                            <t t-foreach="h.components(results)" t-as="group">
+                                <p style="margin: 8px 0 2px 0;"><strong t-out="group[0] + ':'"/></p>
+                                <table style="width: 100%;">
+                                    <tr t-foreach="group[1]" t-as="r">
+                                        <td style="width: 60%;" class="edu-dots" t-out="r.subject_id.name"/>
+                                        <td style="text-align: right;" t-out="h.grade(r.cfd or r.final, 'title')"/>
+                                    </tr>
+                                </table>
+                            </t>
+                            <table style="width: 100%; margin-top: 10px;">
+                                <tr><td class="edu-dots">Classificação final do Plano Curricular (PC)</td><td style="text-align: right;" t-out="h.grade(g.plan_average, 'title')"/></tr>
+                                <tr t-if="g.internship_id"><td class="edu-dots">Classificação do Estágio Curricular (EC)</td><td style="text-align: right;" t-out="h.grade(g.internship_id.grade, 'title')"/></tr>
+                                <tr t-if="g.final_project_id"><td class="edu-dots">Classificação da Prova de Aptidão Profissional (PAP)</td><td style="text-align: right;" t-out="h.grade(g.final_project_id.grade, 'title')"/></tr>
+                                <tr><td class="edu-dots"><strong>Classificação final do curso</strong></td><td style="text-align: right;"><strong t-out="h.grade(g.final_grade, 'title')"/></td></tr>
+                            </table>
+                            <p style="margin-top: 12px;">
+                                Pelo que, para efeitos legais e de harmonia com a legislação em vigor, lhe mandámos passar o presente
+                                Certificado, que vai por nós assinado e autenticado pelo selo branco em uso nesta Escola.
+                            </p>
+                        </t>
+                        <t t-else="">
+                            <t t-set="enrollments" t-value="student.enrollment_ids.filtered(lambda e: e.course_id == g.course_id and e.state != 'draft').sorted('class_number')"/>
+                            <t t-set="classes" t-value="sorted(set(enrollments.mapped('class_number')))"/>
+                            <p>
+                                <t t-out="company.edu_director_name"/>, <t t-out="h.by_gender(company.edu_director_gender, 'Director', 'Directora')"/> do
+                                <t t-out="company.name"/>, certifica que <t t-call="edu_documents.identity"/>, concluiu no ano lectivo
+                                <t t-out="g.academic_year_id.name"/> o <t t-out="g.level_id.name"/>, sob o processo nº
+                                <t t-out="student.process_number or '—'"/>, com a Média Final de <t t-out="h.num(g.plan_average)"/> valores
+                                obtida nas seguintes classificações por disciplinas:
+                            </p>
+                            <table class="edu-table">
+                                <thead>
+                                    <tr>
+                                        <th>Disciplinas</th>
+                                        <th t-foreach="classes" t-as="number"><t t-out="number"/>.ª Classe</th>
+                                        <th>Média Final</th>
+                                        <th>Média por Extenso</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="h.ordered(results)" t-as="r">
+                                        <td t-out="r.subject_id.name"/>
+                                        <t t-foreach="classes" t-as="number">
+                                            <t t-set="cell" t-value="enrollments.subject_result_ids.filtered(lambda x: x.subject_id == r.subject_id and x.class_id.class_number == number)[:1]"/>
+                                            <td class="text-center" t-out="h.num(cell.final, bool(cell))"/>
+                                        </t>
+                                        <t t-set="value" t-value="r.cfd or r.final"/>
+                                        <td class="text-center" t-out="h.num(value)"/>
+                                        <td t-out="h.words(value).capitalize()"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p><strong>OBS: O presente Certificado destina-se para <t t-out="o.purpose"/>.</strong></p>
+                            <p>
+                                Por ser verdade e me ter sido solicitado e assim constar nos documentos que ficam arquivados na secretaria,
+                                mandei passar o presente Certificado que é assinado por mim e autenticado com o carimbo a óleo em uso neste
+                                estabelecimento de ensino.
+                            </p>
+                        </t>
+                        <p class="edu-date"><t t-out="h.city()"/>, <t t-out="h.date(o.date)"/></p>
+                        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
+                        <div class="edu-ref" t-out="o.name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Diploma (Despacho 60/08, Anexo III) -->
+    <template id="report_diploma">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="student" t-value="o.student_id"/>
+                    <t t-set="g" t-value="o.graduation_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc" style="border: 6px double #1F4E79; padding: 28px;">
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title" style="font-size: 34px;">Diploma</div>
+                        <div class="edu-subtitle" t-out="'Formação Média Técnica' if g.level_id.subsystem == 'technical' else g.level_id.name"/>
+                        <p>
+                            <t t-out="company.edu_director_name"/> (<t t-out="h.by_gender(company.edu_director_gender, 'Director', 'Directora')"/>) e
+                            <t t-out="company.edu_pedagogical_director_name"/> (<t t-out="h.by_gender(company.edu_pedagogical_director_gender, 'Subdirector Pedagógico', 'Subdirectora Pedagógica')"/>)
+                            do <t t-out="company.name"/>, fazem saber que <t t-call="edu_documents.identity"/>, concluiu no ano lectivo
+                            <t t-out="g.academic_year_id.name"/> o curso de <t t-out="g.course_id.name"/>, com a classificação final de
+                            <strong t-out="h.grade(g.final_grade, 'title').replace('Valores', 'valores')"/>, conforme consta do processo individual
+                            n.º <t t-out="student.process_number or '—'"/> e da folha n.º <t t-out="g.page_number or '—'"/> do Livro de Termos
+                            n.º <t t-out="g.book_number or '—'"/>.
+                        </p>
+                        <p t-if="g.level_id.subsystem == 'technical'">
+                            Este curso da formação média técnica corresponde ao 2.º ciclo do Ensino Secundário, nos termos da Lei de Bases do
+                            Sistema de Educação e Ensino.
+                        </p>
+                        <p>
+                            Pelo que, para efeitos legais e de harmonia com a legislação em vigor, lhe mandámos passar o presente Diploma, que
+                            vai por nós assinado e autenticado pelo selo branco em uso nesta Escola.
+                        </p>
+                        <p class="edu-date"><t t-out="h.city()"/>, <t t-out="h.date(o.date)"/></p>
+                        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
+                        <div class="edu-ref">Diploma n.º <t t-out="g.diploma_number"/></div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Termo de frequência e aproveitamento (todas as classes do curso) -->
+    <template id="report_term">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="student" t-value="o.student_id"/>
+                    <t t-set="data" t-value="terms[o.id]"/>
+                    <t t-set="technical" t-value="o.enrollment_id.class_id.level_id.subsystem == 'technical'"/>
+                    <t t-set="cols" t-value="technical and ['CT1', 'CT2', 'CT3', 'PG', 'CA', 'REC', 'CFD'] or ['MT1', 'MT2', 'MT3', 'MFD', 'N.E', 'REC', 'MF']"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <div style="float: right; font-size: 11px;">PROCESSO N.º <t t-out="student.process_number or '____'"/></div>
+                        <t t-call="edu_documents.header" official="False"/>
+                        <div class="edu-subtitle">TERMO DE FREQUÊNCIA E APROVEITAMENTO<t t-if="o.enrollment_id.course_id"> · <t t-out="o.enrollment_id.course_id.name.upper()"/></t></div>
+                        <p style="font-size: 11px; line-height: 1.4;">
+                            NOME: <strong t-out="student.name.upper()"/> · FILHO(A) DE <t t-out="(student.father_name or '—').upper()"/> E DE
+                            <t t-out="(student.mother_name or '—').upper()"/> · NASCIDO(A) A <t t-out="h.date(student.birth_date, True)"/> ·
+                            NATURAL DE <t t-out="(student.birthplace or '—').upper()"/> · B.I. N.º <t t-out="student.id_number or '—'"/> ·
+                            ENCARREGADO DE EDUCAÇÃO: <t t-out="(student.primary_guardian_id.name or '—').upper()"/>
+                        </p>
+                        <table class="edu-grid">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">DISCIPLINAS</th>
+                                    <th t-foreach="data['enrollments']" t-as="e" t-att-colspan="len(cols)">
+                                        <t t-out="e.class_number"/>.ª CLASSE · <t t-out="e.academic_year_id.name"/> · TURMA <t t-out="e.class_id.name"/> · N.º <t t-out="e.order_number"/>
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <t t-foreach="data['enrollments']" t-as="e">
+                                        <th t-foreach="cols" t-as="col" t-out="col"/>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="data['subjects']" t-as="subject">
+                                    <td class="edu-name" t-out="subject.name"/>
+                                    <t t-foreach="data['enrollments']" t-as="e">
+                                        <t t-set="r" t-value="data['cells'].get((e.id, subject.id))"/>
+                                        <t t-if="r">
+                                            <t t-set="values" t-value="technical and [r.mt1, r.mt2, r.mt3, r.pg if r.has_pg else None, r.annual, r.special_exam if r.has_special_exam else None, r.cfd if r.terminal_subject else None] or [r.mt1, r.mt2, r.mt3, r.cf, r.national if r.has_national else None, r.special_exam if r.has_special_exam else None, r.final]"/>
+                                            <td t-foreach="values" t-as="v" t-att-class="v is not None and h.color(v, r.pass_grade) or ''" t-out="h.num(v, v is not None and bool(v or r.complete))"/>
+                                        </t>
+                                        <t t-else=""><td t-foreach="cols" t-as="col"/></t>
+                                    </t>
+                                </tr>
+                                <tr>
+                                    <td class="edu-name"><strong>RESULTADO</strong></td>
+                                    <td t-foreach="data['enrollments']" t-as="e" t-att-colspan="len(cols)" t-out="h.status(e.year_result_id.status) or e.state == 'transferred' and 'TRANSFERIDO(A)' or e.state == 'dropped' and 'ANULOU A MATRÍCULA' or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="font-size: 10px; margin-top: 4px;" t-if="technical">CT: Classificação do Trimestre · PG: Prova Global · CA: Classificação Anual = 60% CF + 40% PG · REC: Recurso · CFD: Classificação Final da Disciplina</p>
+                        <p style="font-size: 10px; margin-top: 4px;" t-else="">MT: Média do Trimestre = (MAC + NPT)/2 · MFD: Média Final da Disciplina · N.E: Exame Nacional · REC: Recurso · MF: Média Final</p>
+                        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

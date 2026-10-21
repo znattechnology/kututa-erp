@@ -1,0 +1,9 @@
+id,name,model_id,group_id/id,operation,domain
+access_edu_internship_user,access_edu_internship_user,edu.internship,edu_core.group_edu_user,crud,
+access_edu_final_project_user,access_edu_final_project_user,edu.final.project,edu_core.group_edu_user,crud,
+access_edu_graduation_user,access_edu_graduation_user,edu.graduation,edu_core.group_edu_user,crud,
+access_edu_internship_teacher,access_edu_internship_teacher,edu.internship,edu_core.group_edu_teacher,ru,"[('tutor_id.user_id', '=', user.id)]"
+access_edu_final_project_teacher,access_edu_final_project_teacher,edu.final.project,edu_core.group_edu_teacher,ru,"['|', ('advisor_id.user_id', '=', user.id), ('jury_ids.user_id', '=', user.id)]"
+edu_internship_comp_rule,edu.internship multi-empresa,edu.internship,,crud,"[('company_id', 'in', company_ids)]"
+edu_final_project_comp_rule,edu.final.project multi-empresa,edu.final.project,,crud,"[('company_id', 'in', company_ids)]"
+edu_graduation_comp_rule,edu.graduation multi-empresa,edu.graduation,,crud,"[('company_id', 'in', company_ids)]"

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_exam_period_list" model="ir.ui.view">
+        <field name="name">edu.exam.period.list</field>
+        <field name="model">edu.exam.period</field>
+        <field name="arch" type="xml">
+            <list string="Épocas de exames">
+                <field name="name"/>
+                <field name="academic_year_id"/>
+                <field name="kind"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="session_count"/>
+                <field name="state" widget="badge" decoration-info="state == 'open'" decoration-success="state == 'closed'"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_exam_period_form" model="ir.ui.view">
+        <field name="name">edu.exam.period.form</field>
+        <field name="model">edu.exam.period</field>
+        <field name="arch" type="xml">
+            <form string="Época de exames">
+                <header>
+                    <button name="action_open" type="object" string="Abrir a época" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_close" type="object" string="Encerrar" invisible="state != 'open'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="Exames de recurso 2026/2027"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="kind"/>
+                            <field name="academic_year_id" options="{'no_create': True}"/>
+                            <field name="trimester_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <field name="session_ids" context="{'default_period_id': id}">
+                        <list>
+                            <field name="date"/>
+                            <field name="hour_from" widget="float_time"/>
+                            <field name="hour_to" widget="float_time"/>
+                            <field name="subject_id"/>
+                            <field name="class_ids" widget="many2many_tags"/>
+                            <field name="seat_count"/>
+                            <field name="capacity"/>
+                            <field name="state" widget="badge"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_exam_period" model="ir.actions.act_window">
+        <field name="name">Épocas de exames</field>
+        <field name="res_model">edu.exam.period</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="edu_exam_session_form" model="ir.ui.view">
+        <field name="name">edu.exam.session.form</field>
+        <field name="model">edu.exam.session</field>
+        <field name="arch" type="xml">
+            <form string="Sessão de exame">
+                <header>
+                    <button name="action_summon" type="object" string="Convocar os alunos" class="btn-primary" invisible="state != 'scheduled'"/>
+                    <button name="action_distribute" type="object" string="Distribuir pelas salas" invisible="state != 'scheduled' or not seat_ids"/>
+                    <button name="action_done" type="object" string="Lançar as notas e fechar" invisible="state != 'scheduled'"
+                            confirm="As notas passam para a pauta e as decisões são actualizadas. Continuar?"/>
+                    <button name="action_cancel" type="object" string="Anular" invisible="state != 'scheduled'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="display_name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="period_id" options="{'no_create': True}"/>
+                            <field name="kind"/>
+                            <field name="subject_id" options="{'no_create': True}"/>
+                            <field name="academic_year_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                            <field name="class_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="assessment_ids" widget="many2many_tags" options="{'no_create': True}"
+                                   invisible="kind in ('resit', 'extraordinary', 'improvement', 'completion')"
+                                   domain="[('subject_id', '=', subject_id), ('class_id', 'in', class_ids)]"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <label for="hour_from" string="Hora"/>
+                            <div class="o_row"><field name="hour_from" widget="float_time"/> - <field name="hour_to" widget="float_time"/></div>
+                            <field name="seat_count"/>
+                            <field name="capacity"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Alunos" name="seats">
+                            <field name="seat_ids" readonly="state != 'scheduled'">
+                                <list editable="bottom" create="0" decoration-muted="not attended">
+                                    <field name="room_id" options="{'no_create': True}"/>
+                                    <field name="seat_number"/>
+                                    <field name="student_id"/>
+                                    <field name="enrollment_id" column_invisible="1"/>
+                                    <field name="class_id"/>
+                                    <field name="requirement_id" optional="hide"/>
+                                    <field name="attended"/>
+                                    <field name="score"/>
+                                    <field name="graded" column_invisible="1"/>
+                                    <field name="note" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Salas e vigilantes" name="rooms">
+                            <field name="room_ids" readonly="state != 'scheduled'">
+                                <list editable="bottom">
+                                    <field name="room_id" options="{'no_create': True}"/>
+                                    <field name="capacity"/>
+                                    <field name="supervisor_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observações" name="note"><field name="note" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="edu_exam_session_list" model="ir.ui.view">
+        <field name="name">edu.exam.session.list</field>
+        <field name="model">edu.exam.session</field>
+        <field name="arch" type="xml">
+            <list string="Sessões de exame">
+                <field name="date"/>
+                <field name="hour_from" widget="float_time"/>
+                <field name="subject_id"/>
+                <field name="period_id"/>
+                <field name="class_ids" widget="many2many_tags" optional="show"/>
+                <field name="seat_count"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_edu_exam_session" model="ir.actions.act_window">
+        <field name="name">Sessões de exame</field>
+        <field name="res_model">edu.exam.session</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_edu_exam" name="Exames" parent="edu_core.menu_edu_root" sequence="35">
+        <menuitem id="menu_edu_exam_period" action="action_edu_exam_period" sequence="10"/>
+        <menuitem id="menu_edu_exam_session" action="action_edu_exam_session" sequence="20"/>
+    </menuitem>
+</odoo>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_pauta_print_form" model="ir.ui.view">
+        <field name="name">edu.pauta.print.form</field>
+        <field name="model">edu.pauta.print</field>
+        <field name="arch" type="xml">
+            <form string="Imprimir pautas">
+                <group>
+                    <field name="class_id" options="{'no_create': True}"/>
+                    <field name="academic_year_id" invisible="1"/>
+                    <field name="kind" widget="radio"/>
+                    <field name="subject_id" options="{'no_create': True}" invisible="kind != 'mini'" required="kind == 'mini'"/>
+                    <field name="trimester_id" options="{'no_create': True}" invisible="kind != 'mini'"/>
+                </group>
+                <footer>
+                    <button name="action_print" type="object" string="Imprimir" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_pauta_print" model="ir.actions.act_window">
+        <field name="name">Imprimir pautas</field>
+        <field name="res_model">edu.pauta.print</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

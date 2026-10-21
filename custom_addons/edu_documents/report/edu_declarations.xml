@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Declaração de frequência / sem notas -->
+    <template id="report_declaration_frequency">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="student" t-value="o.student_id"/>
+                    <t t-set="e" t-value="o.enrollment_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="False"/>
+                        <div class="edu-title">DECLARAÇÃO</div>
+                        <p><strong><t t-out="(company.edu_director_name or '').upper()"/>, <t t-out="h.director_title()[2:]"/> DO <t t-out="company.name.upper()"/></strong></p>
+                        <p>Declara que: <t t-call="edu_documents.identity"/>.</p>
+                        <p>
+                            Está a frequentar, neste estabelecimento de ensino, a <t t-out="h.klass(e.class_number)"/>,
+                            Ano Lectivo <t t-out="e.academic_year_id.name"/><t t-if="e.course_id">, Curso de <t t-out="e.course_id.name"/></t>,
+                            Turma: <t t-out="e.class_id.name"/>, Número <t t-out="e.order_number"/>.
+                        </p>
+                        <p><strong>OBS: A presente declaração destina-se para <t t-out="o.purpose"/>.</strong></p>
+                        <p>
+                            Por ser verdade e me ter sido solicitado e assim constar, nos documentos que ficam arquivados na
+                            Secretaria-geral desta Instituição, mandei passar a presente declaração que vai por mim assinada e
+                            autenticada com o carimbo a óleo em uso nesta Instituição.
+                        </p>
+                        <p class="edu-date"><t t-out="company.name.upper()"/> EM <t t-out="h.city().upper()"/>, A <t t-out="h.date(o.date, True)"/>.</p>
+                        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
+                        <div class="edu-ref" t-out="o.name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Declaração com notas discriminadas -->
+    <template id="report_declaration_grades">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="student" t-value="o.student_id"/>
+                    <t t-set="e" t-value="o.enrollment_id"/>
+                    <t t-set="results" t-value="h.ordered(e.subject_result_ids.filtered('complete'))"/>
+                    <t t-set="year_result" t-value="e.year_result_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="False"/>
+                        <div class="edu-title">DECLARAÇÃO</div>
+                        <p><strong><t t-out="(company.edu_director_name or '').upper()"/>, <t t-out="h.director_title()[2:]"/> DO <t t-out="company.name.upper()"/></strong></p>
+                        <p>Declara que: <t t-call="edu_documents.identity"/>.</p>
+                        <p>
+                            Concluiu neste estabelecimento de ensino a <t t-out="h.klass(e.class_number)"/> no ano lectivo de
+                            <t t-out="e.academic_year_id.name"/><t t-if="e.course_id">, Curso de <t t-out="e.course_id.name"/></t>,
+                            Turma <t t-out="e.class_id.name"/>, número <t t-out="e.order_number"/><t t-if="year_result">, com o resultado
+                            final <strong t-out="h.by_gender(student.gender, 'Apto', 'Apta') if year_result.status in ('promoted', 'graduated', 'conditional') else h.by_gender(student.gender, 'Não apto', 'Não apta')"/></t>,
+                            com as seguintes classificações:
+                        </p>
+                        <table class="edu-table">
+                            <thead><tr><th>DISCIPLINAS</th><th>NOTAS</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="results" t-as="r">
+                                    <td t-out="r.subject_id.name"/>
+                                    <td t-att-class="h.color(r.final, r.pass_grade)" t-out="h.grade(r.final)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p><strong>OBS: A presente declaração destina-se para <t t-out="o.purpose"/>.</strong></p>
+                        <p>
+                            Por ser verdade e me ter sido solicitado e assim constar nos documentos que ficam arquivados na
+                            Secretaria-geral desta Instituição, mandei passar a presente declaração que vai por mim assinada e
+                            autenticada com o carimbo a óleo em uso nesta Instituição.
+                        </p>
+                        <p class="edu-date"><t t-out="company.name.upper()"/> EM <t t-out="h.city().upper()"/>, A <t t-out="h.date(o.date, True)"/>.</p>
+                        <t t-call="edu_documents.signatures" left_role="False" right_role="h.director_title()" right_name="company.edu_director_name"/>
+                        <div class="edu-ref" t-out="o.name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Declaração para transferência: cabeçalho de Estado, visto e assinatura da escola de tutela (se houver) -->
+    <template id="report_declaration_transfer">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="student" t-value="o.student_id"/>
+                    <t t-set="e" t-value="o.enrollment_id"/>
+                    <t t-set="results" t-value="h.ordered(e.subject_result_ids.filtered('complete'))"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <div style="float: right; width: 220px; border: 1px solid #000; padding: 6px; font-size: 11px; text-align: center;">
+                            Visto<br/>O Director Provincial<br/><br/>______________________
+                        </div>
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title" style="clear: both;">DECLARAÇÃO</div>
+                        <t t-set="signer" t-value="company.edu_supervisor_director or company.edu_director_name"/>
+                        <t t-set="school" t-value="company.edu_supervisor_school or company.name"/>
+                        <p><strong>
+                            <t t-out="signer"/>, Director(a) do <t t-out="school"/>, declara que <t t-call="edu_documents.identity"/>,
+                            concluiu a <t t-out="h.klass(e.class_number)"/> no ano lectivo <t t-out="e.academic_year_id.name"/>,
+                            no <t t-out="company.name"/><t t-if="company.edu_licence_text">, <t t-out="company.edu_licence_text"/></t><t t-if="e.course_id">,
+                            Curso de <t t-out="e.course_id.name"/></t>, Turma <t t-out="e.class_id.name"/>, número <t t-out="e.order_number"/>,
+                            com as seguintes classificações:
+                        </strong></p>
+                        <table class="edu-table">
+                            <thead><tr><th>DISCIPLINAS</th><th>NOTAS</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="results" t-as="r">
+                                    <td t-out="r.subject_id.name"/>
+                                    <td t-att-class="h.color(r.final, r.pass_grade)" t-out="h.grade(r.final, 'title')"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p>Para efeitos legais lhe é passada a presente DECLARAÇÃO, assinada por mim e autenticada com carimbo a óleo em uso neste estabelecimento de ensino.</p>
+                        <p class="edu-date" style="text-align: center;"><t t-out="h.city()"/>, <t t-out="h.date(o.date)"/></p>
+                        <t t-call="edu_documents.signatures" left_role="False" right_role="'O Director'" right_name="signer"/>
+                        <div class="edu-ref" t-out="o.name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Guia de transferência -->
+    <template id="report_transfer_guide">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="student" t-value="o.student_id"/>
+                    <t t-set="transfer" t-value="o.transfer_id"/>
+                    <t t-set="e" t-value="transfer.enrollment_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="False"/>
+                        <p style="margin-top: 18px;"><strong>À<br/>DIRECÇÃO DO <t t-out="(transfer.external_school or '').upper()"/></strong></p>
+                        <p style="font-size: 15px;"><strong>Assunto: Guia de Transferência nº <t t-out="o.name"/></strong></p>
+                        <p><strong>
+                            Conforme o solicitado pelo(a) aluno(a) em requerimento que fica arquivado na Secretaria deste
+                            estabelecimento de ensino, o(a) aluno(a) <t t-out="h.by_gender(student.gender, 'matriculado', 'matriculada')"/> na
+                            <t t-out="h.klass(e.class_number)"/><t t-if="e.course_id">, Curso <t t-out="e.course_id.name"/></t>
+                            no ano lectivo <t t-out="e.academic_year_id.name"/>, de nome <t t-call="edu_documents.identity"/>,
+                            vai <t t-out="h.by_gender(student.gender, 'transferido', 'transferida')"/> para o
+                            <t t-out="transfer.external_school"/> e faz-se acompanhar do seu processo individual composto pelos
+                            seguintes documentos:
+                        </strong></p>
+                        <ul>
+                            <li>Uma Guia de Transferência;</li>
+                            <li>Um parecer de vaga;</li>
+                            <li>3 Fotografias tipo passe;</li>
+                            <li>Uma cópia do Bilhete de Identidade do(a) encarregado(a);</li>
+                            <li>Uma cópia do Bilhete de Identidade do(a) aluno(a);</li>
+                            <li>Os Boletins de Matrícula e os Termos de Frequência das classes frequentadas;</li>
+                            <li>O Certificado de Habilitações da classe anterior.</li>
+                        </ul>
+                        <p class="edu-date"><t t-out="company.name.upper()"/> EM <t t-out="h.city().upper()"/>, A <t t-out="h.date(o.date, True)"/>.</p>
+                        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
