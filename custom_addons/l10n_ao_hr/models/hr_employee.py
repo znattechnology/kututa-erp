@@ -1,10 +1,16 @@
+from datetime import timedelta
+
 from odoo import api, fields, models
 
 
 def seniority_years(start, end):
-    """Anos de antiguidade (LGT, art. 311.º): uma fracção igual ou superior a 3 meses conta como um ano."""
+    """Anos de antiguidade (LGT, art. 311.º): uma fracção igual ou superior a 3 meses conta como um ano.
+
+    O último dia conta: de 01/01 a 31/03 são 3 meses completos.
+    """
     if not start or not end or end < start:
         return 0
+    end = end + timedelta(days=1)
     years = end.year - start.year
     months = end.month - start.month
     if end.day < start.day:
@@ -39,10 +45,10 @@ class HrEmployee(models.Model):
 
     @api.depends('version_ids.contract_date_start')
     def _compute_l10n_ao_admission_date(self):
+        # Recalculada quando os contratos mudam; pode ser corrigida à mão (por exemplo, antiguidade anterior
+        # ao Kututa), e essa correcção mantém-se até um contrato mudar de data.
         for employee in self:
-            if employee.l10n_ao_admission_date:
-                continue
-            starts = employee.version_ids.filtered('contract_date_start').mapped('contract_date_start')
+            starts = employee.sudo().version_ids.filtered('contract_date_start').mapped('contract_date_start')
             employee.l10n_ao_admission_date = min(starts) if starts else False
 
     @api.depends('l10n_ao_admission_date')
@@ -55,3 +61,17 @@ class HrEmployee(models.Model):
     def _l10n_ao_seniority_at(self, day):
         self.ensure_one()
         return seniority_years(self.l10n_ao_admission_date, day)
+
+    def _l10n_ao_hr_notify(self, summary, note, user=None):
+        """Uma actividade por assunto: actualiza a que estiver aberta em vez de criar outra."""
+        for employee in self:
+            existing = employee.activity_ids.filtered(lambda a, s=summary: a.summary == s)
+            if existing:
+                existing[0].note = note
+                continue
+            employee.activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=summary,
+                note=note,
+                user_id=(user or employee.leave_manager_id or employee.parent_id.user_id or self.env.user).id,
+            )

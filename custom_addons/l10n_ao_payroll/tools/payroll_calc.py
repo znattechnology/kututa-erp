@@ -54,7 +54,7 @@ class Settings:
     overtime_threshold_hours: float = 30.0
     night_pct: float = 20.0
     rest_day_pct: float = 75.0
-    holiday_pct: float = 100.0
+    holiday_pct: float = 100.0  # acréscimo: um dia de salário por dia de feriado trabalhado (art. 200.º, n.º 2)
     advance_cap_pct: float = 25.0  # art. 248.º, n.º 7
     irt_brackets: list = field(default_factory=list)
 
@@ -62,6 +62,12 @@ class Settings:
 @dataclass
 class Inputs:
     base_salary: float = 0.0
+    # Salário base do mês já rateado pelos dias de cada contrato (mudanças de salário a meio do mês);
+    # None = base_salary × fracção.
+    base_amount: float | None = None
+    # Salário de referência para o salário-hora e os subsídios; nos pagos ao tempo lectivo, a média das
+    # remunerações dos últimos 12 meses (art. 237.º, n.º 8). None = base_salary.
+    reference_salary: float | None = None
     weekly_hours: float = 44.0
     fraction: float = 1.0  # dias úteis com contrato / dias úteis do mês
     worked_days: int = 0
@@ -76,6 +82,7 @@ class Inputs:
     absence_hours: float = 0.0  # faltas não pagas, em horas
     sanction_pct: float = 0.0
     vacation_subsidy: bool = False
+    vacation_months: int = 12  # no ano de admissão, proporcional aos meses de direito a férias
     christmas_months: int = 0  # 0 = sem subsídio de Natal
     advance_requested: float = 0.0
     extra_lines: list = field(default_factory=list)  # [(code, name, amount, subject_irt, subject_inss)]
@@ -98,6 +105,7 @@ class Line:
 class Result:
     def __init__(self):
         self.lines = []
+        self._exempt_used = {}  # parte isenta de IRT já usada por tipo de componente
         self.gross = 0.0
         self.irt_base = 0.0
         self.irt = 0.0
@@ -117,7 +125,14 @@ class Result:
         amount = round2(amount)
         if not amount:
             return None
-        irt_part = amount if subject_irt else round2(max(0.0, amount - irt_exempt_cap))
+        if subject_irt:
+            irt_part = amount
+        else:
+            # O limite de isenção é mensal e por tipo (duas linhas de alimentação partilham os 30 000 Kz).
+            used = self._exempt_used.get(code, 0.0)
+            exempt = max(0.0, min(amount, irt_exempt_cap - used))
+            self._exempt_used[code] = used + exempt
+            irt_part = round2(amount - exempt)
         inss_part = amount if subject_inss else 0.0
         line = Line('earning', code, name, amount, quantity, rate, subject_irt, subject_inss, irt_part, inss_part)
         self.lines.append(line)
@@ -136,8 +151,9 @@ def compute(inputs: Inputs, settings: Settings) -> Result:
     """Folha de um trabalhador num mês. Ordem: bruto → faltas → sanção → INSS → IRT → adiantamento."""
     result = Result()
     fraction = max(0.0, min(inputs.fraction, 1.0))
-    base = round2(inputs.base_salary * fraction)
-    rate = hourly_rate(inputs.base_salary, inputs.weekly_hours)
+    base = round2(inputs.base_salary * fraction if inputs.base_amount is None else inputs.base_amount)
+    reference = inputs.base_salary if inputs.reference_salary is None else inputs.reference_salary
+    rate = hourly_rate(reference, inputs.weekly_hours)
     result.hourly_rate = rate
     if base:
         name = 'Salário base'
@@ -203,7 +219,8 @@ def compute(inputs: Inputs, settings: Settings) -> Result:
             rate=rest_rate,
         )
     if inputs.holiday_hours:
-        holiday_rate = rate * (1 + settings.holiday_pct / 100)
+        # O salário mensal já paga o feriado; o trabalho nesse dia dá direito a mais um dia de salário.
+        holiday_rate = rate * settings.holiday_pct / 100
         result.earning(
             'HOLIDAY',
             f'Feriado (+{settings.holiday_pct:g}%)',
@@ -211,12 +228,13 @@ def compute(inputs: Inputs, settings: Settings) -> Result:
             quantity=inputs.holiday_hours,
             rate=holiday_rate,
         )
-    # Subsídios (art. 238.º): férias sem INSS (DP 227/18, art. 6.º); Natal proporcional aos meses do ano.
+    # Subsídios (art. 238.º): férias sem INSS (DP 227/18, art. 13.º, n.º 3, al. b)); Natal proporcional.
     if inputs.vacation_subsidy:
+        months = max(0, min(inputs.vacation_months, 12))
         result.earning(
             'VACATION',
-            'Subsídio de férias',
-            inputs.base_salary * settings.vacation_subsidy_pct / 100,
+            f'Subsídio de férias ({months}/12)' if months < 12 else 'Subsídio de férias',
+            reference * settings.vacation_subsidy_pct / 100 * months / 12,
             subject_inss=False,
         )
     if inputs.christmas_months:
@@ -224,10 +242,14 @@ def compute(inputs: Inputs, settings: Settings) -> Result:
         result.earning(
             'CHRISTMAS',
             f'Subsídio de Natal ({months}/12)' if months < 12 else 'Subsídio de Natal',
-            inputs.base_salary * settings.christmas_subsidy_pct / 100 * months / 12,
+            reference * settings.christmas_subsidy_pct / 100 * months / 12,
         )
+    owed = []
     for code, name, amount, subject_irt, subject_inss in inputs.extra_lines:
-        result.earning(code, name, amount, subject_irt=subject_irt, subject_inss=subject_inss)
+        if amount < 0:
+            owed.append((code, name, -amount))  # valor devido pelo trabalhador (por exemplo, aviso prévio)
+        else:
+            result.earning(code, name, amount, subject_irt=subject_irt, subject_inss=subject_inss)
 
     earnings = [line for line in result.lines if line.kind == 'earning']
     result.gross = round2(sum(line.amount for line in earnings))
@@ -268,6 +290,8 @@ def compute(inputs: Inputs, settings: Settings) -> Result:
         result.advance = round2(min(inputs.advance_requested, cap))
         if result.advance:
             result.deduction('ADVANCE', 'Adiantamento', result.advance)
+    for code, name, amount in owed:
+        result.deduction(code, name, amount)
     result.deductions = round2(sum(line.amount for line in result.lines if line.kind == 'deduction'))
     result.net = round2(result.gross - result.deductions)
     return result

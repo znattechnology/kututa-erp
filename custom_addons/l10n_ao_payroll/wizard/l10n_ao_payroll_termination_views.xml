@@ -29,12 +29,14 @@
                     <field name="compensation_amount"/>
                     <field name="notice_amount"/>
                     <field name="vacation_amount"/>
-                    <field name="subsidies_amount"/>
+                    <field name="vacation_subsidy_amount"/>
+                    <field name="christmas_amount"/>
                     <field name="total_amount" class="fw-bold"/>
                 </group>
                 <div class="text-muted">
                     Regista a saída do trabalhador e cria o recibo de contas finais na folha do mês. A compensação não entra
-                    na base do INSS; as férias não gozadas e os subsídios entram. Tudo é sujeito a IRT (CIRT, art. 2.º).
+                    na base do INSS, nem o subsídio de férias; as férias não gozadas e o subsídio de Natal entram. Na denúncia
+                    e no abandono, o aviso prévio em falta é descontado ao trabalhador.
                 </div>
                 <footer>
                     <button name="action_confirm" type="object" string="Registar a cessação e calcular" class="btn-primary"/>
@@ -54,5 +56,13 @@
         <field name="context">{'default_employee_id': active_id}</field>
     </record>
 
-    <menuitem id="menu_l10n_ao_payroll_termination" action="action_l10n_ao_payroll_termination" parent="menu_l10n_ao_payroll_root" sequence="40"/>
+    <!-- O menu abre o assistente sem trabalhador escolhido (a acção acima usa o active_id da ficha). -->
+    <record id="action_l10n_ao_payroll_termination_menu" model="ir.actions.act_window">
+        <field name="name">Contas finais (cessação)</field>
+        <field name="res_model">l10n_ao_payroll.termination</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_payroll_termination" action="action_l10n_ao_payroll_termination_menu" parent="menu_l10n_ao_payroll_root" sequence="40"/>
 </odoo>

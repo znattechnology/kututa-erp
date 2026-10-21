@@ -14,7 +14,21 @@ COMPENSATION_BY_REASON = {
     'l10n_ao_hr.departure_ao_unlawful': 'art309',
     'l10n_ao_hr.departure_ao_constructive': 'art310',
 }
+# Saída por iniciativa do trabalhador: o aviso prévio em falta é ele que o deve (arts. 305.º e 306.º).
+EMPLOYEE_NOTICE_REASONS = ('l10n_ao_hr.departure_ao_resignation', 'l10n_ao_hr.departure_ao_abandonment')
 ANNUAL_VACATION_DAYS = 22
+
+
+def full_months_in_year(admission, end):
+    """Meses completos de trabalho no ano de ``end``: desde Janeiro (ou do primeiro mês completo após a
+    admissão) até ao último mês terminado na data de cessação."""
+    first = 1
+    if admission and admission.year == end.year:
+        first = admission.month if admission.day == 1 else admission.month + 1
+    elif admission and admission.year > end.year:
+        return 0
+    last = end.month if end == fields.Date.end_of(end, 'month') else end.month - 1
+    return max(0, min(last - first + 1, 12))
 
 
 class L10nAoPayrollTermination(models.TransientModel):
@@ -41,15 +55,17 @@ class L10nAoPayrollTermination(models.TransientModel):
             ('art309', 'Art. 309.º: 50% do salário base por ano'),
             ('art310', 'Art. 310.º: 1 salário por ano, mínimo 3'),
         ],
-        string='Compensação',
+        string='Regime da compensação',
         compute='_compute_defaults',
         store=True,
         readonly=False,
     )
     missing_notice = fields.Boolean(
         string='Sem aviso prévio de 30 dias',
-        help='Não renovação ou despedimento sem o aviso prévio: acresce um mês de salário (arts. 17.º e 285.º).',
+        help='Não renovação ou despedimento sem o aviso prévio: acresce um mês de salário (arts. 17.º e 285.º). '
+        'Na denúncia e no abandono, o trabalhador deve esse valor e ele é descontado (arts. 305.º e 306.º).',
     )
+    notice_by_employee = fields.Boolean(compute='_compute_defaults', store=True)
     vacation_days_due = fields.Float(
         string='Férias vencidas não gozadas (dias)',
         compute='_compute_defaults',
@@ -73,7 +89,8 @@ class L10nAoPayrollTermination(models.TransientModel):
     compensation_amount = fields.Monetary(string='Compensação', compute='_compute_amounts')
     notice_amount = fields.Monetary(string='Aviso prévio em falta', compute='_compute_amounts')
     vacation_amount = fields.Monetary(string='Férias não gozadas', compute='_compute_amounts')
-    subsidies_amount = fields.Monetary(string='Subsídios proporcionais', compute='_compute_amounts')
+    vacation_subsidy_amount = fields.Monetary(string='Subsídio de férias', compute='_compute_amounts')
+    christmas_amount = fields.Monetary(string='Subsídio de Natal proporcional', compute='_compute_amounts')
     total_amount = fields.Monetary(string='Total das contas finais (bruto)', compute='_compute_amounts')
 
     @api.depends('employee_id', 'date', 'departure_reason_id')
@@ -90,17 +107,9 @@ class L10nAoPayrollTermination(models.TransientModel):
                 else ''
             )
             wizard.compensation_article = COMPENSATION_BY_REASON.get(xmlid, 'none')
+            wizard.notice_by_employee = xmlid in EMPLOYEE_NOTICE_REASONS
             admission = employee.l10n_ao_admission_date if employee else None
-            if admission and wizard.date:
-                start_month = admission.month if admission.year == wizard.date.year else 1
-                full_months = (
-                    wizard.date.month
-                    - start_month
-                    + (1 if wizard.date.day >= 28 or wizard.date == fields.Date.end_of(wizard.date, 'month') else 0)
-                )
-                wizard.months_worked = max(0, min(full_months, 12))
-            else:
-                wizard.months_worked = 0
+            wizard.months_worked = full_months_in_year(admission, wizard.date) if admission and wizard.date else 0
             wizard.vacation_days_proportional = min(ANNUAL_VACATION_DAYS, 2 * wizard.months_worked)
             wizard.vacation_days_due = wizard._vacation_days_due()
             wizard.vacation_subsidy_paid = bool(employee) and employee.l10n_ao_payroll_vacation_subsidy_year >= (
@@ -139,7 +148,8 @@ class L10nAoPayrollTermination(models.TransientModel):
 
     @api.depends(
         'base_salary', 'weekly_hours', 'seniority_years', 'compensation_article', 'missing_notice',
-        'vacation_days_due', 'vacation_days_proportional', 'vacation_subsidy_paid', 'months_worked',
+        'notice_by_employee', 'vacation_days_due', 'vacation_days_proportional', 'vacation_subsidy_paid',
+        'months_worked',
     )  # fmt: skip
     def _compute_amounts(self):
         for wizard in self:
@@ -147,18 +157,24 @@ class L10nAoPayrollTermination(models.TransientModel):
             wizard.compensation_amount = seniority_compensation(
                 wizard.compensation_article, wizard.base_salary, wizard.seniority_years
             )
-            wizard.notice_amount = (
-                seniority_compensation('notice', wizard.base_salary, 0) if wizard.missing_notice else 0.0
-            )
+            notice = seniority_compensation('notice', wizard.base_salary, 0) if wizard.missing_notice else 0.0
+            wizard.notice_amount = -notice if wizard.notice_by_employee else notice
             daily = hourly_rate(wizard.base_salary, wizard.weekly_hours) * wizard.weekly_hours / 5
             wizard.vacation_amount = round2((wizard.vacation_days_due + wizard.vacation_days_proportional) * daily)
-            vacation_pct = 0.0 if wizard.vacation_subsidy_paid else (company.l10n_ao_payroll_vacation_pct or 50.0)
-            christmas_pct = company.l10n_ao_payroll_christmas_pct or 50.0
-            wizard.subsidies_amount = round2(
-                wizard.base_salary * (vacation_pct + christmas_pct) / 100 * wizard.months_worked / 12
+            # Subsídio de férias: o das férias vencidas, se ainda não foi pago, mais o proporcional do ano (art. 238.º).
+            vacation_pct = company.l10n_ao_payroll_vacation_pct or 50.0
+            vested = 1.0 if wizard.vacation_days_due and not wizard.vacation_subsidy_paid else 0.0
+            wizard.vacation_subsidy_amount = round2(
+                wizard.base_salary * vacation_pct / 100 * (vested + wizard.months_worked / 12)
             )
+            christmas_pct = company.l10n_ao_payroll_christmas_pct or 50.0
+            wizard.christmas_amount = round2(wizard.base_salary * christmas_pct / 100 * wizard.months_worked / 12)
             wizard.total_amount = (
-                wizard.compensation_amount + wizard.notice_amount + wizard.vacation_amount + wizard.subsidies_amount
+                wizard.compensation_amount
+                + wizard.notice_amount
+                + wizard.vacation_amount
+                + wizard.vacation_subsidy_amount
+                + wizard.christmas_amount
             )
 
     def action_confirm(self):
@@ -188,6 +204,8 @@ class L10nAoPayrollTermination(models.TransientModel):
             run = self.env['l10n_ao_payroll.run'].create(
                 {'company_id': self.company_id.id, 'year': self.date.year, 'month': str(self.date.month)}
             )
+        if run.state == 'cancelled':
+            raise UserError(self.env._('A folha de %s está anulada: reponha-a em rascunho primeiro.', run.name))
         if run.state == 'closed':
             raise UserError(
                 self.env._('A folha de %s já está fechada: as contas finais vão para a folha seguinte.', run.name)
@@ -207,20 +225,20 @@ class L10nAoPayrollTermination(models.TransientModel):
                     False,
                 )
             )
-        if self.notice_amount:
+        if self.notice_amount > 0:
             extras.append(('NOTICE', 'Falta de aviso prévio (30 dias)', self.notice_amount, True, False))
+        elif self.notice_amount < 0:
+            # Valor devido pelo trabalhador: o motor trata-o como desconto, fora do IRT e do INSS.
+            extras.append(('NOTICE', 'Aviso prévio em falta (30 dias)', self.notice_amount, False, False))
         if self.vacation_amount:
             days = self.vacation_days_due + self.vacation_days_proportional
             extras.append(('VACATION_PAY', f'Férias não gozadas ({days:g} dias)', self.vacation_amount, True, True))
-        if self.subsidies_amount:
+        if self.vacation_subsidy_amount:
+            # Fora do INSS, como o subsídio de férias mensal (DP 227/18, art. 13.º, n.º 3, al. b)).
+            extras.append(('VACATION', 'Subsídio de férias (contas finais)', self.vacation_subsidy_amount, True, False))
+        if self.christmas_amount:
             extras.append(
-                (
-                    'SUBSIDIES',
-                    f'Subsídios de férias e Natal proporcionais ({self.months_worked}/12)',
-                    self.subsidies_amount,
-                    True,
-                    True,
-                )
+                ('CHRISTMAS', f'Subsídio de Natal ({self.months_worked}/12)', self.christmas_amount, True, True)
             )
         slip.write(
             {

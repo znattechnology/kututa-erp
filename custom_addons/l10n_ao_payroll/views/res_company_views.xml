@@ -25,6 +25,7 @@
                         <field name="l10n_ao_payroll_irt_account_id"/>
                         <field name="l10n_ao_payroll_inss_account_id"/>
                         <field name="l10n_ao_payroll_advance_account_id"/>
+                        <field name="l10n_ao_payroll_compensation_account_id"/>
                     </group>
                 </group>
             </page>

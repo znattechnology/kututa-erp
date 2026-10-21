@@ -14,6 +14,8 @@ from odoo.tools import date_utils
 from ..tools.payroll_calc import Component, Inputs, compute, round2
 
 UNPAID_CODES = ('UNPAID', 'UNJUSTIFIED', 'MATERNITY')
+# Descontos que não são encargos nem retenções: valores devidos pelo trabalhador (aviso prévio em falta).
+STANDARD_DEDUCTIONS = ('ABSENCE', 'SANCTION', 'INSS', 'IRT', 'ADVANCE')
 MONTHS = [
     (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'), (5, 'Maio'), (6, 'Junho'),
     (7, 'Julho'), (8, 'Agosto'), (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro'),
@@ -38,7 +40,7 @@ class L10nAoPayrollRun(models.Model):
     _order = 'year desc, month desc, id desc'
     _check_company_auto = True
 
-    name = fields.Char(string='Mês', compute='_compute_name', store=True)
+    name = fields.Char(string='Folha', compute='_compute_name', store=True)
     company_id = fields.Many2one('res.company', required=True, default=lambda self: self.env.company, index=True)
     currency_id = fields.Many2one(related='company_id.currency_id')
     year = fields.Integer(string='Ano', required=True, default=lambda self: fields.Date.context_today(self).year)
@@ -58,7 +60,7 @@ class L10nAoPayrollRun(models.Model):
         tracking=True,
     )
     payslip_ids = fields.One2many('l10n_ao_payroll.payslip', 'run_id', string='Recibos')
-    payslip_count = fields.Integer(string='Recibos', compute='_compute_totals')
+    payslip_count = fields.Integer(string='N.º de recibos', compute='_compute_totals')
     total_gross = fields.Monetary(string='Bruto', compute='_compute_totals')
     total_net = fields.Monetary(string='Líquido', compute='_compute_totals')
     total_irt = fields.Monetary(string='IRT', compute='_compute_totals')
@@ -115,26 +117,29 @@ class L10nAoPayrollRun(models.Model):
     def _employees(self):
         """Trabalhadores com contrato em vigor em algum dia do mês."""
         self.ensure_one()
+        # Inclui os arquivados: quem saiu a meio do mês recebe os dias trabalhados.
         return (
             self.env['hr.employee']
             .with_company(self.company_id)
+            .with_context(active_test=False)
             .search([('company_id', '=', self.company_id.id)])
-            .filtered(lambda e: e._l10n_ao_payroll_version_for(self.date_from, self.date_to))
+            .filtered(lambda e: e._l10n_ao_payroll_segments(self.date_from, self.date_to))
         )
 
     def action_compute(self):
         for run in self:
             if run.state not in ('draft', 'computed'):
                 raise UserError(self.env._('A folha já está fechada.'))
-            run.payslip_ids.filtered(lambda s: s.state == 'draft').unlink()
+            # Recalcula no sítio: os tempos lectivos, as outras linhas e as contas finais mantêm-se.
+            employees = run._employees()
+            run.payslip_ids.filtered(lambda s: s.state == 'draft' and s.kind == 'regular').filtered_domain(
+                [('employee_id', 'not in', employees.ids)]
+            ).unlink()
             existing = run.payslip_ids.mapped('employee_id')
-            vals = [
-                {'run_id': run.id, 'employee_id': employee.id}
-                for employee in run._employees()
-                if employee not in existing
-            ]
-            slips = self.env['l10n_ao_payroll.payslip'].create(vals)
-            (slips | run.payslip_ids).filtered(lambda s: s.state == 'draft').action_compute()
+            self.env['l10n_ao_payroll.payslip'].create(
+                [{'run_id': run.id, 'employee_id': employee.id} for employee in employees if employee not in existing]
+            )
+            run.payslip_ids.filtered(lambda s: s.state == 'draft').action_compute()
             run.state = 'computed'
 
     def action_close(self):
@@ -145,22 +150,40 @@ class L10nAoPayrollRun(models.Model):
             if not slips:
                 raise UserError(self.env._('A folha não tem recibos.'))
             slips.action_compute()
-            run.company_id._l10n_ao_payroll_ensure_accounting()
+            negative = slips.filtered(lambda s: s.net < 0)
+            if negative:
+                raise UserError(
+                    self.env._(
+                        'Líquido negativo em %s: reveja os descontos antes de fechar.',
+                        ', '.join(negative.mapped('employee_id.name')),
+                    )
+                )
+            # O fecho mexe na contabilidade e na sequência: o utilizador de RH não precisa de direitos nelas.
+            run.company_id.sudo()._l10n_ao_payroll_ensure_accounting()
             sequence = run._payslip_sequence()
             for slip in slips.sorted(lambda s: (s.employee_id.name or '', s.id)):
                 slip.number = sequence.next_by_id()
                 slip._apply_advances()
                 if slip.vacation_subsidy:
-                    slip.employee_id.sudo().l10n_ao_payroll_vacation_subsidy_year = run.year
+                    employee = slip.employee_id.sudo()
+                    slip.vacation_subsidy_prev_year = employee.l10n_ao_payroll_vacation_subsidy_year
+                    employee.l10n_ao_payroll_vacation_subsidy_year = run.year
             slips.write({'state': 'done'})
-            run.move_id = run._create_move(slips)
+            run.move_id = run.sudo()._create_move(slips.sudo())
             run.state = 'closed'
 
     def action_cancel(self):
         for run in self:
-            if run.move_id and run.move_id.state == 'posted':
-                run.move_id.button_draft()
-                run.move_id.button_cancel()
+            move = run.move_id.sudo()
+            if move.state == 'posted':
+                # Estorno, para o lançamento original ficar no diário (não se apaga contabilidade publicada).
+                move._reverse_moves([{'date': move.date, 'ref': self.env._('Anulação: %s', move.ref)}], cancel=True)
+            elif move.state == 'draft':
+                move.button_cancel()
+            for slip in run.payslip_ids.filtered(lambda s: s.state == 'done' and s.vacation_subsidy):
+                employee = slip.employee_id.sudo()
+                if employee.l10n_ao_payroll_vacation_subsidy_year == run.year:
+                    employee.l10n_ao_payroll_vacation_subsidy_year = slip.vacation_subsidy_prev_year
             run.payslip_ids.write({'state': 'cancelled'})
             run.payslip_ids.mapped('advance_deduction_ids.advance_id')._settle_if_done()
             run.state = 'cancelled'
@@ -174,7 +197,7 @@ class L10nAoPayrollRun(models.Model):
 
     def _payslip_sequence(self):
         self.ensure_one()
-        Sequence = self.env['ir.sequence']
+        Sequence = self.env['ir.sequence'].sudo()
         code = 'l10n_ao_payroll.payslip'
         sequence = Sequence.search([('code', '=', code), ('company_id', '=', self.company_id.id)], limit=1)
         if not sequence:
@@ -191,16 +214,24 @@ class L10nAoPayrollRun(models.Model):
         return sequence.with_context(ir_sequence_date=self.date_to)
 
     def _create_move(self, slips):
-        """Lançamento do fecho (PGC): D 72.2 remunerações, D 72.5.2 encargos; C 36.1.2 por trabalhador,
-        C 34.3.1 IRT, C 34.9.1 INSS, C 36.3 adiantamentos."""
+        """Lançamento do fecho (PGC): D 72.2 remunerações, D 72.8.2 compensações, D 72.5.2 encargos;
+        C 36.1.2 por trabalhador, C 34.3.1 IRT, C 34.9.1 INSS, C 36.3 adiantamentos."""
         self.ensure_one()
         company = self.company_id
         label = self.env._('Salários de %s', self.name)
         lines = []
-        expense = sum(s.gross - s.absences - s.sanction for s in slips)
+        compensation = sum(slips.line_ids.filtered(lambda line: line.code == 'COMPENSATION').mapped('amount'))
+        owed = sum(
+            slips.line_ids.filtered(
+                lambda line: line.kind == 'deduction' and line.code not in STANDARD_DEDUCTIONS
+            ).mapped('amount')
+        )
+        expense = sum(s.gross - s.absences - s.sanction for s in slips) - compensation - owed
         employer = sum(slips.mapped('inss_employer'))
         if expense:
             lines.append((company.l10n_ao_payroll_expense_account_id, None, expense))
+        if compensation:
+            lines.append((company.l10n_ao_payroll_compensation_account_id, None, compensation))
         if employer:
             lines.append((company.l10n_ao_payroll_employer_account_id, None, employer))
         for slip in slips:
@@ -215,25 +246,29 @@ class L10nAoPayrollRun(models.Model):
             lines.append((company.l10n_ao_payroll_inss_account_id, None, -inss))
         if advances:
             lines.append((company.l10n_ao_payroll_advance_account_id, None, -advances))
-        move = self.env['account.move'].create(
-            {
-                'move_type': 'entry',
-                'journal_id': company.l10n_ao_payroll_journal_id.id,
-                'date': self.date_to,
-                'ref': label,
-                'line_ids': [
-                    fields.Command.create(
-                        {
-                            'account_id': account.id,
-                            'partner_id': partner.id if partner else False,
-                            'name': label,
-                            'debit': round2(amount) if amount > 0 else 0.0,
-                            'credit': round2(-amount) if amount < 0 else 0.0,
-                        }
-                    )
-                    for account, partner, amount in lines
-                ],
-            }
+        move = (
+            self.env['account.move']
+            .with_company(company)
+            .create(
+                {
+                    'move_type': 'entry',
+                    'journal_id': company.l10n_ao_payroll_journal_id.id,
+                    'date': self.date_to,
+                    'ref': label,
+                    'line_ids': [
+                        fields.Command.create(
+                            {
+                                'account_id': account.id,
+                                'partner_id': partner.id if partner else False,
+                                'name': label,
+                                'debit': round2(amount) if amount > 0 else 0.0,
+                                'credit': round2(-amount) if amount < 0 else 0.0,
+                            }
+                        )
+                        for account, partner, amount in lines
+                    ],
+                }
+            )
         )
         move.action_post()
         return move
@@ -257,13 +292,21 @@ class L10nAoPayrollRun(models.Model):
     def action_export_bank_file(self):
         """Ficheiro de transferências (CSV): IBAN, nome, valor líquido. O formato de cada banco configura-se à parte."""
         self.ensure_one()
+        slips = self._done_slips().filtered(lambda s: s.net > 0)
+        missing = slips.filtered(lambda s: not s.bank_account_id)
+        if missing:
+            raise UserError(
+                self.env._(
+                    'Sem conta bancária (IBAN): %s. Registe-a no trabalhador ou no contrato.',
+                    ', '.join(missing.mapped('employee_id.name')),
+                )
+            )
         output = io.StringIO()
         writer = csv.writer(output, delimiter=';')
         writer.writerow(['IBAN', 'Nome', 'Valor', 'Descritivo'])
-        for slip in self._done_slips():
-            bank = slip.bank_account_id
+        for slip in slips:
             writer.writerow(
-                [bank.account_number if bank else '', slip.employee_id.name, f'{slip.net:.2f}', f'Salario {self.name}']
+                [slip.bank_account_id.account_number, slip.employee_id.name, f'{slip.net:.2f}', f'Salario {self.name}']
             )
         name = f'transferencias_{self.year}_{int(self.month):02d}.csv'
         return self._attachment(name, output.getvalue().encode('utf-8-sig'), 'text/csv')
@@ -303,30 +346,35 @@ class L10nAoPayrollRun(models.Model):
     def action_export_irt_map(self):
         """Mapa mensal de remunerações para a AGT (CIRT, art. 17.º): colunas do modelo do Portal do Contribuinte."""
         self.ensure_one()
-        rows = [
-            (
-                slip.employee_id.identification_id or '',
-                slip.employee_id.name,
-                slip.employee_id.l10n_ao_inss_number or '',
-                float(slip.gross),
-                float(slip.gross - slip.irt_base - slip.inss_employee),
-                float(slip.inss_employee),
-                float(slip.irt_base),
-                float(slip.irt),
+        # sudo: o BI e o n.º do INSS só são legíveis pelo RH, e o contabilista também exporta o mapa.
+        rows = []
+        for slip in self._done_slips().sudo():
+            discounts = slip.absences + slip.sanction
+            rows.append(
+                (
+                    slip.employee_id.identification_id or '',
+                    slip.employee_id.name,
+                    slip.employee_id.l10n_ao_inss_number or '',
+                    float(slip.gross),
+                    float(discounts),
+                    float(round2(slip.gross - discounts - slip.irt_base - slip.inss_employee)),
+                    float(slip.inss_employee),
+                    float(slip.irt_base),
+                    float(slip.irt),
+                )
             )
-            for slip in self._done_slips()
-        ]
         headers = [
             'NIF / BI',
             'Nome',
             'N.º INSS',
             'Remuneração bruta',
+            'Faltas e sanções',
             'Rendimentos não sujeitos',
             'INSS (3%)',
             'Matéria colectável',
             'IRT retido',
         ]
-        content = self._xlsx('Mapa de remunerações (IRT)', headers, rows, [16, 36, 14, 18, 18, 14, 18, 14])
+        content = self._xlsx('Mapa de remunerações (IRT)', headers, rows, [16, 36, 14, 18, 16, 18, 14, 18, 14])
         return self._attachment(
             f'mapa_irt_{self.year}_{int(self.month):02d}.xlsx',
             content,
@@ -346,7 +394,7 @@ class L10nAoPayrollRun(models.Model):
                 float(slip.inss_employer),
                 float(slip.inss_employee + slip.inss_employer),
             )
-            for slip in self._done_slips()
+            for slip in self._done_slips().sudo()
         ]
         headers = ['N.º de segurado', 'Nome', 'BI', 'Remuneração sujeita', 'Trabalhador (3%)', 'Empresa (8%)', 'Total']
         content = self._xlsx('Folha de remunerações (INSS)', headers, rows, [16, 36, 16, 18, 16, 16, 16])
@@ -399,6 +447,16 @@ class L10nAoPayrollPayslip(models.Model):
     sanction_pct = fields.Float(string='Sanção (%)', readonly=True)
     vacation_subsidy = fields.Boolean(string='Subsídio de férias')
     christmas_months = fields.Integer(string='Meses do subsídio de Natal')
+    subsidies_manual = fields.Boolean(
+        string='Subsídios definidos à mão', help='O recálculo não altera o subsídio de férias nem o de Natal.'
+    )
+    vacation_subsidy_prev_year = fields.Integer(readonly=True, copy=False)  # para repor ao anular a folha
+    reference_salary = fields.Monetary(
+        string='Salário de referência',
+        readonly=True,
+        help='Base do salário-hora e dos subsídios; nos pagos ao tempo lectivo, a média dos últimos 12 meses '
+        '(LGT, art. 237.º, n.º 8).',
+    )
     advance_requested = fields.Monetary(string='Adiantamento a descontar', readonly=True)
     extra_line_ids = fields.One2many('l10n_ao_payroll.payslip.extra', 'payslip_id', string='Outras linhas')
     # Resultados
@@ -416,7 +474,9 @@ class L10nAoPayrollPayslip(models.Model):
     net = fields.Monetary(string='Líquido', readonly=True)
     warning = fields.Text(string='Avisos', readonly=True)
     advance_deduction_ids = fields.One2many('l10n_ao_payroll.advance.deduction', 'payslip_id', string='Amortizações')
-    bank_account_id = fields.Many2one('res.partner.bank', string='Conta bancária', compute='_compute_bank_account')
+    bank_account_id = fields.Many2one(
+        'res.partner.bank', string='Conta bancária', compute='_compute_bank_account', compute_sudo=True
+    )
 
     _run_employee_uniq = models.Constraint('UNIQUE(run_id, employee_id)', 'O trabalhador já tem recibo nesta folha.')
 
@@ -433,24 +493,35 @@ class L10nAoPayrollPayslip(models.Model):
             slip.display_name = f'{slip.number or "Rascunho"} · {slip.employee_id.name} · {slip.run_id.name}'
 
     # ------------------------------------------------------------------
+    def write(self, vals):
+        if not self.env.context.get('l10n_ao_payroll_auto') and {'vacation_subsidy', 'christmas_months'} & set(vals):
+            vals = dict(vals, subsidies_manual=True)
+        return super().write(vals)
+
     def _inputs(self):
         """Dados de entrada do mês a partir dos contratos, ausências, horas extra, sanções e adiantamentos."""
         self.ensure_one()
         run = self.run_id
         employee = self.employee_id
         company = run.company_id
-        version = employee._l10n_ao_payroll_version_for(run.date_from, run.date_to)
-        if not version:
+        segments = employee._l10n_ao_payroll_segments(run.date_from, run.date_to)
+        if not segments:
             raise UserError(
                 self.env._('%(employee)s não tem contrato em vigor em %(run)s.', employee=employee.name, run=run.name)
             )
-        self.version_id = version
-        start = max(version.contract_date_start or run.date_from, run.date_from)
-        end = min(version.contract_date_end or run.date_to, run.date_to)
-        if employee.departure_date and employee.departure_date < end:
-            end = max(employee.departure_date, start)
+        version = segments[-1][0]
+        auto = self.with_context(l10n_ao_payroll_auto=True)
+        auto.version_id = version
+        start, end = segments[0][1], segments[-1][2]
         month_days = business_days(run.date_from, run.date_to)
-        worked_days = business_days(start, end) if start <= end else 0
+        # Mudanças de salário e renovações a meio do mês: cada versão paga os seus dias úteis.
+        worked_days = 0
+        base_amount = 0.0
+        for segment_version, segment_start, segment_end in segments:
+            days = business_days(segment_start, segment_end)
+            worked_days += days
+            if segment_version.l10n_ao_pay_basis != 'lesson' and month_days:
+                base_amount += segment_version.wage * days / month_days
         fraction = worked_days / month_days if month_days else 0.0
         components = [
             Component(
@@ -468,18 +539,21 @@ class L10nAoPayrollPayslip(models.Model):
         sanction_pct = max(
             [s._reduction_in_month(run.year, int(run.month)) for s in employee.l10n_ao_sanction_ids] or [0.0]
         )
-        if self.kind == 'regular':
-            self.vacation_subsidy = self._vacation_subsidy_due()
-            self.christmas_months = self._christmas_months()
-        self.advance_requested = sum(
-            min(advance.monthly_deduction, advance.balance)
-            for advance in employee.l10n_ao_payroll_advance_ids.filtered(lambda a: a.state == 'approved')
-        )
+        if self.kind == 'regular' and not self.subsidies_manual:
+            auto.write({'vacation_subsidy': self._vacation_subsidy_due(), 'christmas_months': self._christmas_months()})
+        advance_requested = sum(min(advance.monthly_deduction, advance.balance) for advance in self._advances_due())
         base = version.wage if version.l10n_ao_pay_basis != 'lesson' else 0.0
-        self.write(
+        lesson_count = self.lesson_count if version.l10n_ao_pay_basis != 'month' else 0.0
+        reference = employee._l10n_ao_payroll_reference_salary(version, before=run.date_from)
+        if version.l10n_ao_pay_basis != 'month' and reference <= base:
+            # Ainda sem histórico: os tempos lectivos do próprio mês.
+            reference = base + lesson_count * version.l10n_ao_lesson_rate
+        weekly_hours = version.l10n_ao_weekly_hours or 44.0
+        auto.write(
             {
                 'base_salary': base,
-                'weekly_hours': version.l10n_ao_weekly_hours or 44.0,
+                'reference_salary': reference,
+                'weekly_hours': weekly_hours,
                 'worked_days': worked_days,
                 'month_days': month_days,
                 'lesson_rate': version.l10n_ao_lesson_rate,
@@ -487,18 +561,21 @@ class L10nAoPayrollPayslip(models.Model):
                 'night_hours': overtime['night'],
                 'rest_day_hours': overtime['rest_day'],
                 'holiday_hours': overtime['holiday'],
-                'absence_hours': self._absence_hours(start, end),
+                'absence_hours': self._absence_hours(start, end, weekly_hours),
                 'sanction_pct': sanction_pct,
+                'advance_requested': advance_requested,
             }
         )
         return Inputs(
             base_salary=base,
-            weekly_hours=self.weekly_hours,
+            base_amount=round2(base_amount),
+            reference_salary=reference,
+            weekly_hours=weekly_hours,
             fraction=fraction,
             worked_days=worked_days,
             month_days=month_days,
             components=components,
-            lesson_count=self.lesson_count if version.l10n_ao_pay_basis != 'month' else 0.0,
+            lesson_count=lesson_count,
             lesson_rate=version.l10n_ao_lesson_rate,
             overtime_hours=overtime['extra'],
             night_hours=overtime['night'],
@@ -508,9 +585,15 @@ class L10nAoPayrollPayslip(models.Model):
             sanction_pct=sanction_pct,
             vacation_subsidy=self.vacation_subsidy,
             christmas_months=self.christmas_months,
-            advance_requested=self.advance_requested,
+            advance_requested=advance_requested,
             extra_lines=[(e.code, e.name, e.amount, e.subject_irt, e.subject_inss) for e in self.extra_line_ids],
         ), company._l10n_ao_payroll_settings(run.date_to)
+
+    def _advances_due(self):
+        """Adiantamentos concedidos até ao fim do mês e ainda por saldar, do mais antigo para o mais recente."""
+        return self.employee_id.l10n_ao_payroll_advance_ids.filtered(
+            lambda a: a.state == 'approved' and a.date <= self.run_id.date_to
+        ).sorted('date')
 
     def _irt_exempt_cap(self, component):
         company = self.run_id.company_id
@@ -532,8 +615,9 @@ class L10nAoPayrollPayslip(models.Model):
             totals[record.kind] += record.hours
         return {kind: round_overtime_hours(totals[kind]) for kind in ('extra', 'night', 'rest_day', 'holiday')}
 
-    def _absence_hours(self, start, end):
-        """Horas das ausências não pagas validadas que caem no mês (dias úteis do calendário, sem feriados)."""
+    def _absence_hours(self, start, end, weekly_hours=44.0):
+        """Horas das ausências não pagas validadas que caem no mês (dias úteis do calendário, sem feriados),
+        mais a parte das ausências pagas que excede os limites da LGT (falta justificada não remunerada)."""
         employee = self.employee_id
         calendar = employee.resource_calendar_id or self.run_id.company_id.resource_calendar_id
         tz = pytz.timezone(employee.tz or 'Africa/Luanda')
@@ -563,6 +647,8 @@ class L10nAoPayrollPayslip(models.Model):
             hours += calendar.get_work_hours_count(
                 pytz.utc.localize(clip_from), pytz.utc.localize(clip_to), compute_leaves=True
             )
+        hours_per_day = (calendar.hours_per_day if calendar else 0.0) or weekly_hours / 5
+        hours += self.env['hr.leave']._l10n_ao_unpaid_hours(employee, start, end, hours_per_day)
         return round(hours, 2)
 
     def _vacation_subsidy_due(self):
@@ -593,7 +679,9 @@ class L10nAoPayrollPayslip(models.Model):
             return 0
         admission = self.employee_id.l10n_ao_admission_date
         if admission and admission.year == run.year:
-            return 12 - admission.month + 1
+            # Só meses completos: admitido a meio do mês, conta a partir do mês seguinte.
+            first = admission.month if admission.day == 1 else admission.month + 1
+            return max(0, 12 - first + 1)
         return 12
 
     def action_compute(self):
@@ -623,9 +711,11 @@ class L10nAoPayrollPayslip(models.Model):
                 warnings.append(self.env._('Salário base abaixo do salário mínimo nacional (%s).', min_wage))
             if not settings.irt_brackets:
                 warnings.append(self.env._('Não há tabela do IRT em vigor: o IRT ficou a zero.'))
-            if not slip.employee_id.l10n_ao_inss_number:
+            if not slip.employee_id.sudo().l10n_ao_inss_number:
                 warnings.append(self.env._('Falta o número de segurado do INSS (obrigatório no recibo, art. 247.º).'))
-            slip.write(
+            if result.net < 0:
+                warnings.append(self.env._('Líquido negativo: a folha não fecha com este recibo.'))
+            slip.with_context(l10n_ao_payroll_auto=True).write(
                 {
                     'hourly_rate': result.hourly_rate,
                     'gross': result.gross,
@@ -647,9 +737,7 @@ class L10nAoPayrollPayslip(models.Model):
         """Amortiza os adiantamentos, do mais antigo para o mais recente, até ao valor descontado no recibo."""
         self.ensure_one()
         remaining = self.advance
-        for advance in self.employee_id.l10n_ao_payroll_advance_ids.filtered(lambda a: a.state == 'approved').sorted(
-            'date'
-        ):
+        for advance in self._advances_due():
             if remaining <= 0:
                 break
             amount = min(advance.monthly_deduction, advance.balance, remaining)

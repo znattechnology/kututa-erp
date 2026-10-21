@@ -10,6 +10,7 @@ DEFAULT_ACCOUNTS = {
     'l10n_ao_payroll_irt_account_id': '34.3.1',
     'l10n_ao_payroll_inss_account_id': '34.9.1',
     'l10n_ao_payroll_advance_account_id': '36.3',
+    'l10n_ao_payroll_compensation_account_id': '72.8.2',
 }
 JOURNAL_CODE = 'SAL'
 
@@ -61,6 +62,12 @@ class ResCompany(models.Model):
     )
     l10n_ao_payroll_advance_account_id = fields.Many2one(
         'account.account', string='Adiantamentos ao pessoal (36.3)', check_company=True
+    )
+    l10n_ao_payroll_compensation_account_id = fields.Many2one(
+        'account.account',
+        string='Compensações por cessação (72.8.2)',
+        check_company=True,
+        help='Compensações de antiguidade das contas finais (LGT, arts. 307.º a 310.º).',
     )
 
     def _l10n_ao_payroll_settings(self, day):

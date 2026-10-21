@@ -20,6 +20,7 @@
                     <field name="l10n_ao_renewal_count" class="o_hr_narrow_field"/>
                     <span>renovações</span>
                 </div>
+                <field name="l10n_ao_igt_extension_months" invisible="l10n_ao_fixed_term_reason not in ('a', 'h', 'j')"/>
                 <field name="trial_date_end" invisible="not contract_date_start"/>
                 <field name="l10n_ao_is_director" invisible="not contract_date_start"/>
                 <field name="l10n_ao_trial_written" invisible="not contract_date_start or l10n_ao_contract_type != 'indefinite'"/>
@@ -39,14 +40,12 @@
                     </group>
                     <group string="Trabalho extraordinário">
                         <field name="l10n_ao_overtime_ids" nolabel="1" context="{'default_employee_id': id}">
-                            <list editable="bottom">
+                            <list>
                                 <field name="date"/>
                                 <field name="kind"/>
                                 <field name="hours" widget="float_time"/>
                                 <field name="note"/>
                                 <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-danger="state == 'refused'"/>
-                                <button name="action_approve" type="object" string="Aprovar" icon="fa-check" invisible="state != 'draft'"/>
-                                <button name="action_refuse" type="object" string="Recusar" icon="fa-times" invisible="state != 'draft'"/>
                             </list>
                         </field>
                     </group>

@@ -109,12 +109,49 @@ class TestPayrollCalc(BaseCase):
         lines = {line.code: line for line in vacation.lines}
         self.assertEqual(lines['VACATION'].amount, 100_000)
         self.assertEqual(vacation.gross, 300_000)
-        # O subsídio de férias não entra no INSS (DP 227/18, art. 6.º) mas entra no IRT.
+        # O subsídio de férias não entra no INSS (DP 227/18, art. 13.º, n.º 3, al. b)) mas entra no IRT.
         self.assertEqual(vacation.inss_base, 200_000)
         self.assertEqual(vacation.irt_base, 300_000 - 6_000)
         christmas = compute(Inputs(base_salary=200_000, christmas_months=6), self.settings())
         self.assertEqual({line.code: line for line in christmas.lines}['CHRISTMAS'].amount, 50_000)
         self.assertEqual(christmas.inss_base, 250_000)
+
+    def test_holiday_and_owed_lines(self):
+        # Feriado trabalhado: o salário já paga o dia, acresce um dia de salário (art. 200.º, n.º 2).
+        holiday = compute(Inputs(base_salary=200_000, holiday_hours=8), self.settings())
+        self.assertAlmostEqual({line.code: line for line in holiday.lines}['HOLIDAY'].amount, 8_391.61, places=2)
+        # Linha negativa (aviso prévio devido pelo trabalhador): desconto fora do IRT e do INSS.
+        owed = compute(
+            Inputs(base_salary=200_000, extra_lines=[('NOTICE', 'Aviso prévio', -50_000, False, False)]),
+            self.settings(),
+        )
+        self.assertEqual(owed.gross, 200_000)
+        self.assertEqual(owed.inss_base, 200_000)
+        self.assertEqual({line.code: line.kind for line in owed.lines}['NOTICE'], 'deduction')
+        self.assertEqual(owed.net, 200_000 - 6_000 - owed.irt - 50_000)
+
+    def test_exempt_cap_by_code(self):
+        # Duas linhas de alimentação partilham o limite de 30 000 Kz isentos de IRT.
+        meals = [
+            Component('MEAL', 'Alimentação', 20_000, subject_irt=False, irt_exempt_cap=30_000),
+            Component('MEAL', 'Alimentação (turno)', 20_000, subject_irt=False, irt_exempt_cap=30_000),
+        ]
+        result = compute(Inputs(base_salary=200_000, components=meals), self.settings())
+        self.assertEqual(result.irt_base, 200_000 + 10_000 - result.inss_employee)
+
+    def test_prorated_base_and_reference(self):
+        # Aumento a meio do mês: o salário base vem já rateado; o salário-hora usa o salário de referência.
+        result = compute(
+            Inputs(base_salary=300_000, base_amount=250_000, reference_salary=300_000, absence_hours=8),
+            self.settings(),
+        )
+        self.assertEqual({line.code: line.amount for line in result.lines}['BASE'], 250_000)
+        self.assertAlmostEqual(result.hourly_rate, hourly_rate(300_000, 44), places=6)
+        teacher = compute(
+            Inputs(lesson_count=10, lesson_rate=3_000, reference_salary=120_000, vacation_subsidy=True),
+            self.settings(),
+        )
+        self.assertEqual({line.code: line.amount for line in teacher.lines}['VACATION'], 60_000)
 
     def test_fraction_of_month(self):
         result = compute(Inputs(base_salary=100_000, fraction=11 / 22, worked_days=11, month_days=22), self.settings())

@@ -100,17 +100,19 @@
                             <thead>
                                 <tr>
                                     <th>N.º</th><th>Trabalhador</th><th>INSS</th>
-                                    <th class="text-end">Bruto</th><th class="text-end">Faltas</th><th class="text-end">INSS 3%</th>
+                                    <th class="text-end">Bruto</th><th class="text-end">Faltas</th><th class="text-end">Sanções</th><th class="text-end">INSS 3%</th>
                                     <th class="text-end">IRT</th><th class="text-end">Adiant.</th><th class="text-end">Líquido</th><th class="text-end">INSS 8%</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr t-foreach="run.payslip_ids.filtered(lambda s: s.state != 'cancelled').sorted(lambda s: s.employee_id.name or '')" t-as="s">
+                                <t t-set="slips" t-value="run.payslip_ids.filtered(lambda s: s.state != 'cancelled')"/>
+                                <tr t-foreach="slips.sorted(lambda s: s.employee_id.name or '')" t-as="s">
                                     <td t-out="s.number or ''"/>
                                     <td t-out="s.employee_id.name"/>
                                     <td t-out="s.employee_id.sudo().l10n_ao_inss_number or ''"/>
                                     <td class="text-end"><span t-field="s.gross"/></td>
                                     <td class="text-end"><span t-field="s.absences"/></td>
+                                    <td class="text-end"><span t-field="s.sanction"/></td>
                                     <td class="text-end"><span t-field="s.inss_employee"/></td>
                                     <td class="text-end"><span t-field="s.irt"/></td>
                                     <td class="text-end"><span t-field="s.advance"/></td>
@@ -120,12 +122,13 @@
                                 <tr class="fw-bold">
                                     <td colspan="3">TOTAIS</td>
                                     <td class="text-end"><span t-field="run.total_gross"/></td>
-                                    <td class="text-end" t-out="'%.2f' % sum(run.payslip_ids.mapped('absences'))"/>
-                                    <td class="text-end" t-out="'%.2f' % sum(run.payslip_ids.mapped('inss_employee'))"/>
+                                    <td class="text-end" t-out="'%.2f' % sum(slips.mapped('absences'))"/>
+                                    <td class="text-end" t-out="'%.2f' % sum(slips.mapped('sanction'))"/>
+                                    <td class="text-end" t-out="'%.2f' % sum(slips.mapped('inss_employee'))"/>
                                     <td class="text-end"><span t-field="run.total_irt"/></td>
-                                    <td class="text-end" t-out="'%.2f' % sum(run.payslip_ids.mapped('advance'))"/>
+                                    <td class="text-end" t-out="'%.2f' % sum(slips.mapped('advance'))"/>
                                     <td class="text-end"><span t-field="run.total_net"/></td>
-                                    <td class="text-end" t-out="'%.2f' % sum(run.payslip_ids.mapped('inss_employer'))"/>
+                                    <td class="text-end" t-out="'%.2f' % sum(slips.mapped('inss_employer'))"/>
                                 </tr>
                             </tbody>
                         </table>

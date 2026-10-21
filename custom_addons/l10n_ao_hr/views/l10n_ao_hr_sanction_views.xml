@@ -21,7 +21,7 @@
         <field name="arch" type="xml">
             <form string="Sanção disciplinar">
                 <header>
-                    <button name="action_apply" type="object" string="Aplicar" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_apply" type="object" string="Aplicar" class="btn-primary" invisible="state != 'draft'" confirm="A sanção aplicada não se altera. Uma suspensão cria a ausência não paga para a folha. Continuar?"/>
                     <button name="action_cancel" type="object" string="Anular" invisible="state != 'applied'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
@@ -37,6 +37,7 @@
                             <field name="months" invisible="kind != 'reduction'" readonly="state != 'draft'"/>
                             <field name="suspension_date_from" invisible="kind != 'suspension'" readonly="state != 'draft'"/>
                             <field name="suspension_date_to" invisible="kind != 'suspension'" readonly="state != 'draft'"/>
+                            <field name="leave_id" invisible="not leave_id"/>
                         </group>
                     </group>
                     <group string="Factos e fundamentos (processo disciplinar, LGT arts. 88.º a 95.º)">

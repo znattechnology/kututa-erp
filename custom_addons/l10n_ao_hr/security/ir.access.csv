@@ -1,7 +1,6 @@
 id,name,model_id,group_id/id,operation,domain
 access_l10n_ao_hr_overtime_user,access_l10n_ao_hr_overtime_user,l10n_ao_hr.overtime,hr.group_hr_user,crud,
 access_l10n_ao_hr_overtime_employee,access_l10n_ao_hr_overtime_employee,l10n_ao_hr.overtime,base.group_user,cr,"[('employee_id.user_id', '=', user.id)]"
-access_l10n_ao_hr_overtime_employee_read,access_l10n_ao_hr_overtime_employee_read,l10n_ao_hr.overtime,base.group_user,r,"[('employee_id.user_id', '=', user.id)]"
 access_l10n_ao_hr_sanction_user,access_l10n_ao_hr_sanction_user,l10n_ao_hr.sanction,hr.group_hr_user,crud,
 l10n_ao_hr_overtime_comp_rule,Trabalho extraordinário multi-empresa,l10n_ao_hr.overtime,,crud,"[('company_id', 'in', company_ids)]"
 l10n_ao_hr_sanction_comp_rule,Sanções multi-empresa,l10n_ao_hr.sanction,,crud,"[('company_id', 'in', company_ids)]"

@@ -1,10 +1,13 @@
+import logging
 from datetime import datetime, time
 
 import pytz
 
 from odoo import api, fields, models
 
-from ..tools.holidays import HALF_DAY_START, HALF_DAYS, public_holidays
+from ..tools.holidays import HALF_DAY_START, half_days, public_holidays
+
+_logger = logging.getLogger(__name__)
 
 
 class ResCompany(models.Model):
@@ -19,47 +22,43 @@ class ResCompany(models.Model):
         return self.country_id.code == 'AO'
 
     def _l10n_ao_hr_generate_public_holidays(self, year=None):
-        """Cria os feriados nacionais (e as pontes) do ano como dias de encerramento da empresa."""
+        """Cria os feriados nacionais, as pontes e as tardes de 24 e 31 de Dezembro do ano como dias de
+        encerramento da empresa. Não duplica nem sobrepõe dias já existentes (criados à mão ou antes)."""
         Leaves = self.env['resource.calendar.leaves'].sudo()
-        tz = pytz.timezone('Africa/Luanda')
         for company in self.filtered(lambda c: c._l10n_ao_hr_is_angolan()):
             target = year or fields.Date.context_today(self).year
-            years = range(max(company.l10n_ao_hr_holidays_generated_until + 1, target), target + 1)
-            if year:
-                years = [year]
+            years = [year] if year else range(max(company.l10n_ao_hr_holidays_generated_until + 1, target), target + 1)
             for current in years:
-                start = tz.localize(datetime(current, 1, 1)).astimezone(pytz.utc).replace(tzinfo=None)
-                end = tz.localize(datetime(current, 12, 31, 23, 59, 59)).astimezone(pytz.utc).replace(tzinfo=None)
                 existing = Leaves.search(
                     [
                         ('company_id', '=', company.id),
                         ('resource_id', '=', False),
-                        ('date_from', '<=', end),
-                        ('date_to', '>=', start),
+                        ('date_from', '<=', company._l10n_ao_hr_utc(datetime(current + 1, 1, 1, 23, 59, 59))),
+                        ('date_to', '>=', company._l10n_ao_hr_utc(datetime(current - 1, 12, 31))),
                     ]
                 )
-                existing_days = {
-                    fields.Datetime.context_timestamp(self.with_context(tz='Africa/Luanda'), leave.date_from).date()
-                    for leave in existing
-                }
-                vals = []
-                for day, name, _bridge in public_holidays(current):
-                    if day in existing_days:
-                        continue
-                    vals.append(company._l10n_ao_hr_holiday_vals(name, day, time.min, time.max))
-                for month, day_of_month, name in HALF_DAYS:
-                    day = fields.Date.to_date(f'{current}-{month:02d}-{day_of_month:02d}')
-                    if day in existing_days:
-                        continue
-                    hour, minute = divmod(int(HALF_DAY_START * 60), 60)
-                    vals.append(
-                        company._l10n_ao_hr_holiday_vals(
-                            f'{name} (a partir das 12h30)', day, time(hour, minute), time.max
-                        )
+
+                def overlaps(vals, existing=existing):
+                    return any(
+                        leave.date_from <= vals['date_to'] and leave.date_to >= vals['date_from'] for leave in existing
                     )
+
+                candidates = [
+                    company._l10n_ao_hr_holiday_vals(name, day, time.min, time.max)
+                    for day, name, _bridge in public_holidays(current)
+                ]
+                hour, minute = divmod(int(HALF_DAY_START * 60), 60)
+                candidates += [
+                    company._l10n_ao_hr_holiday_vals(f'{name} (a partir das 12h30)', day, time(hour, minute), time.max)
+                    for day, name in half_days(current)
+                ]
+                vals = [candidate for candidate in candidates if not overlaps(candidate)]
                 if vals:
                     Leaves.create(vals)
             company.l10n_ao_hr_holidays_generated_until = max(company.l10n_ao_hr_holidays_generated_until, target)
+
+    def _l10n_ao_hr_utc(self, local):
+        return pytz.timezone('Africa/Luanda').localize(local).astimezone(pytz.utc).replace(tzinfo=None)
 
     def _l10n_ao_hr_holiday_vals(self, name, day, start, end):
         tz = pytz.timezone('Africa/Luanda')
@@ -80,6 +79,12 @@ class ResCompany(models.Model):
         """Em Novembro, gera os feriados do ano seguinte."""
         today = fields.Date.context_today(self)
         companies = self.search([('partner_id.country_id', '=', self.env.ref('base.ao').id)])
-        companies._l10n_ao_hr_generate_public_holidays(today.year)
-        if today.month >= 11:
-            companies._l10n_ao_hr_generate_public_holidays(today.year + 1)
+        for company in companies:
+            # Uma empresa com dados que não deixam gerar os feriados não trava as outras.
+            try:
+                with self.env.cr.savepoint():
+                    company._l10n_ao_hr_generate_public_holidays(today.year)
+                    if today.month >= 11:
+                        company._l10n_ao_hr_generate_public_holidays(today.year + 1)
+            except Exception:  # noqa: BLE001
+                _logger.exception('Feriados de Angola: falha na empresa %s', company.name)

@@ -87,6 +87,11 @@ class TestL10nAoPayroll(AccountTestInvoicingCommon):
         bento.action_compute()
         self.assertEqual(bento.gross, 100_000)
         self.assertEqual(bento.irt, 0)
+        # Recalcular a folha não apaga os rascunhos: os tempos lectivos ficam.
+        run.action_compute()
+        self.assertEqual(run.payslip_ids, ana | bento)
+        self.assertEqual(bento.lesson_count, 40)
+        self.assertEqual(bento.gross, 100_000)
         run.action_close()
         self.assertEqual(run.state, 'closed')
         self.assertTrue(ana.number.startswith('2026/'))
@@ -101,7 +106,10 @@ class TestL10nAoPayroll(AccountTestInvoicingCommon):
         self.assertAlmostEqual(balances['34.9.1'], -(370_000 * 0.11), places=2)
         with self.assertRaisesRegex(UserError, 'fechada'):
             run.action_compute()
-        # Exportações
+        # Exportações: o ficheiro bancário recusa quem não tem IBAN.
+        with self.assertRaisesRegex(UserError, 'Bento Professor'):
+            run.action_export_bank_file()
+        self.teacher.version_id.l10n_ao_payroll_bank_account_id = self.bank
         for action in (run.action_export_bank_file(), run.action_export_irt_map(), run.action_export_inss_map()):
             attachment = self.env['ir.attachment'].browse(int(action['url'].split('/')[3].split('?')[0]))
             self.assertTrue(attachment.raw.content)
@@ -214,13 +222,140 @@ class TestL10nAoPayroll(AccountTestInvoicingCommon):
         self.assertEqual(wizard.months_worked, 3)
         self.assertEqual(wizard.vacation_days_proportional, 6)
         self.assertEqual(wizard.vacation_days_due, 22)
-        self.assertEqual(wizard.subsidies_amount, 50_000)
+        # Subsídio de férias: o das férias vencidas (ainda não pago) mais 3/12; Natal 3/12.
+        self.assertEqual(wizard.vacation_subsidy_amount, 125_000)
+        self.assertEqual(wizard.christmas_amount, 25_000)
         action = wizard.action_confirm()
         slip = self.env['l10n_ao_payroll.payslip'].browse(action['res_id'])
         self.assertEqual(slip.kind, 'final')
         codes = {line.code: line.amount for line in slip.line_ids}
         self.assertEqual(codes['COMPENSATION'], 200_000)
-        self.assertEqual(codes['SUBSIDIES'], 50_000)
+        self.assertEqual(codes['VACATION'], 125_000)
+        self.assertEqual(codes['CHRISTMAS'], 25_000)
         self.assertEqual(self.employee.departure_date, date(2026, 3, 31))
-        # A compensação não entra no INSS; férias e subsídios entram.
-        self.assertEqual(slip.inss_base, slip.gross - 200_000)
+        # A compensação e o subsídio de férias não entram no INSS; as férias não gozadas e o Natal entram.
+        self.assertEqual(slip.inss_base, slip.gross - 200_000 - 125_000)
+        # Recalcular a folha mantém o recibo de contas finais.
+        slip.run_id.action_compute()
+        self.assertEqual(slip.kind, 'final')
+        self.assertIn('COMPENSATION', slip.line_ids.mapped('code'))
+        slip.run_id.action_close()
+        compensation = slip.run_id.move_id.line_ids.filtered(lambda line: line.account_id.code == '72.8.2')
+        self.assertEqual(compensation.balance, 200_000)
+
+    def test_resignation_without_notice(self):
+        wizard = self.env['l10n_ao_payroll.termination'].create(
+            {
+                'employee_id': self.employee.id,
+                'date': '2026-03-15',
+                'departure_reason_id': self.env.ref('l10n_ao_hr.departure_ao_resignation').id,
+                'missing_notice': True,
+            }
+        )
+        self.assertEqual(wizard.compensation_amount, 0)
+        self.assertEqual(wizard.months_worked, 2)
+        self.assertEqual(wizard.notice_amount, -200_000)
+        slip = self.env['l10n_ao_payroll.payslip'].browse(wizard.action_confirm()['res_id'])
+        notice = slip.line_ids.filtered(lambda line: line.code == 'NOTICE')
+        self.assertEqual((notice.kind, notice.amount), ('deduction', 200_000))
+
+    def test_salary_change_mid_month(self):
+        self.employee.create_version({'date_version': date(2026, 3, 16), 'wage': 300_000})
+        run = self._run()
+        ana = run.payslip_ids.filtered(lambda s: s.employee_id == self.employee)
+        # Março de 2026: 22 dias úteis, 10 até dia 13 (a 200 000) e 12 desde dia 16 (a 300 000).
+        self.assertEqual(ana.base_salary, 300_000)
+        self.assertEqual(ana.worked_days, 22)
+        self.assertEqual({line.code: line.amount for line in ana.line_ids}['BASE'], 254_545.45)
+
+    def test_departed_employee_paid(self):
+        self.env['hr.employee.departure'].create(
+            {
+                'employee_id': self.employee.id,
+                'departure_reason_id': self.env.ref('l10n_ao_hr.departure_ao_resignation').id,
+                'departure_date': date(2026, 3, 13),
+            }
+        )
+        self.employee.action_archive()
+        self.assertEqual(self.employee.departure_date, date(2026, 3, 13))
+        run = self._run()
+        ana = run.payslip_ids.filtered(lambda s: s.employee_id == self.employee)
+        self.assertEqual(ana.worked_days, 10)
+
+    def test_cancel_restores_advances_and_subsidy(self):
+        vacation = self.env.ref('l10n_ao_hr.work_entry_type_ao_ferias')
+        self.env['hr.leave.allocation'].create(
+            {
+                'name': 'Férias 2026',
+                'employee_id': self.employee.id,
+                'work_entry_type_id': vacation.id,
+                'number_of_days': 22,
+                'date_from': '2026-01-01',
+                'state': 'confirm',
+            }
+        ).action_approve()
+        self._approve(
+            self.env['hr.leave']
+            .with_context(leave_skip_date_check=True)
+            .create(
+                {
+                    'employee_id': self.employee.id,
+                    'work_entry_type_id': vacation.id,
+                    'request_date_from': date(2026, 3, 9),
+                    'request_date_to': date(2026, 3, 10),
+                }
+            )
+        )
+        advance = self.env['l10n_ao_payroll.advance'].create(
+            {'employee_id': self.employee.id, 'date': '2026-02-20', 'amount': 30_000, 'monthly_deduction': 30_000}
+        )
+        advance.action_approve()
+        later = self.env['l10n_ao_payroll.advance'].create(
+            {'employee_id': self.employee.id, 'date': '2026-04-02', 'amount': 10_000, 'monthly_deduction': 10_000}
+        )
+        later.action_approve()
+        run = self._run()
+        ana = run.payslip_ids.filtered(lambda s: s.employee_id == self.employee)
+        # O adiantamento de Abril não é descontado em Março.
+        self.assertEqual(ana.advance, 30_000)
+        run.action_close()
+        self.assertEqual(advance.state, 'settled')
+        self.assertEqual(self.employee.l10n_ao_payroll_vacation_subsidy_year, 2026)
+        move = run.move_id
+        run.action_cancel()
+        self.assertEqual(advance.state, 'approved')
+        self.assertEqual(advance.balance, 30_000)
+        self.assertEqual(self.employee.l10n_ao_payroll_vacation_subsidy_year, 0)
+        self.assertEqual(move.state, 'posted')
+        self.assertTrue(move.reversal_move_ids)
+
+    def test_manual_subsidy_kept(self):
+        run = self._run(month=1)
+        ana = run.payslip_ids.filtered(lambda s: s.employee_id == self.employee)
+        ana.vacation_subsidy = True
+        run.action_compute()
+        self.assertTrue(ana.subsidies_manual)
+        self.assertIn('VACATION', ana.line_ids.mapped('code'))
+
+    def test_hr_officer_closes(self):
+        officer = self.env['res.users'].create(
+            {
+                'name': 'Oficial RH',
+                'login': 'oficial_rh',
+                'company_id': self.company.id,
+                'company_ids': [Command.set(self.company.ids)],
+                'group_ids': [Command.set([self.env.ref('hr.group_hr_user').id])],
+            }
+        )
+        run = (
+            self.env['l10n_ao_payroll.run']
+            .with_user(officer)
+            .create({'company_id': self.company.id, 'year': 2026, 'month': '3'})
+        )
+        run.action_compute()
+        run.payslip_ids.filtered(lambda s: s.employee_id == self.teacher).lesson_count = 10
+        run.action_close()
+        self.assertEqual(run.state, 'closed')
+        self.assertTrue(run.move_id)
+        run.action_cancel()
+        self.assertEqual(run.state, 'cancelled')

@@ -19,12 +19,13 @@
         <field name="requires_allocation" eval="False"/>
         <field name="support_document" eval="True"/>
         <field name="l10n_ao_payroll_code">SICK</field>
-        <field name="description">Paga até 6 meses, com direito de regresso sobre o INSS (LGT, art. 226.º).</field>
+        <field name="description">Paga até 6 meses, com direito de regresso sobre o INSS (LGT, art. 226.º). Acima de 30 dias de calendário, a relação de trabalho suspende-se (art. 222.º, n.º 5).</field>
     </record>
     <record id="work_entry_type_ao_casamento" model="hr.work.entry.type">
         <field name="name">Casamento</field>
         <field name="code">AO_CASAMENTO</field>
         <field name="count_as">absence</field>
+        <field name="count_days_as">calendar</field>
         <field name="country_id" ref="base.ao"/>
         <field name="requires_allocation" eval="False"/>
         <field name="l10n_ao_max_days_event">8</field>
@@ -114,6 +115,7 @@
         <field name="name">Licença de maternidade</field>
         <field name="code">AO_MATERNIDADE</field>
         <field name="count_as">absence</field>
+        <field name="count_days_as">calendar</field>
         <field name="country_id" ref="base.ao"/>
         <field name="requires_allocation" eval="False"/>
         <field name="l10n_ao_payroll_code">MATERNITY</field>
@@ -127,6 +129,38 @@
         <field name="requires_allocation" eval="False"/>
         <field name="l10n_ao_max_days_event">1</field>
         <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_paternidade_complementar" model="hr.work.entry.type">
+        <field name="name">Licença de paternidade complementar</field>
+        <field name="code">AO_PATERNIDADE_COMPL</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="unpaid" eval="True"/>
+        <field name="l10n_ao_max_days_event">7</field>
+        <field name="l10n_ao_payroll_code">UNPAID</field>
+        <field name="description">7 dias úteis sem remuneração, a seguir à licença de paternidade (LGT, art. 218.º, n.º 2).</field>
+    </record>
+    <record id="work_entry_type_ao_eleicoes" model="hr.work.entry.type">
+        <field name="name">Candidatura a eleições</field>
+        <field name="code">AO_ELEICOES</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="unpaid" eval="True"/>
+        <field name="l10n_ao_payroll_code">UNPAID</field>
+        <field name="description">Justificada, não remunerada (LGT, art. 222.º, n.º 1, al. j), e n.º 2).</field>
+    </record>
+    <record id="work_entry_type_ao_casamento_familiar" model="hr.work.entry.type">
+        <field name="name">Casamento de pais, filhos ou irmãos</field>
+        <field name="code">AO_CASAMENTO_FAMILIAR</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="unpaid" eval="True"/>
+        <field name="l10n_ao_max_days_event">1</field>
+        <field name="l10n_ao_payroll_code">UNPAID</field>
+        <field name="description">Um dia, justificado e não remunerado (LGT, art. 222.º, n.º 1, al. k), e n.º 2).</field>
     </record>
     <record id="work_entry_type_ao_sem_vencimento" model="hr.work.entry.type">
         <field name="name">Licença sem remuneração</field>

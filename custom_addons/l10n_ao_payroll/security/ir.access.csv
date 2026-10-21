@@ -9,7 +9,7 @@ access_l10n_ao_payroll_payslip_account,access_l10n_ao_payroll_payslip_account,l1
 access_l10n_ao_payroll_payslip_employee,access_l10n_ao_payroll_payslip_employee,l10n_ao_payroll.payslip,base.group_user,r,"[('employee_id.user_id', '=', user.id), ('state', '=', 'done')]"
 access_l10n_ao_payroll_payslip_line_user,access_l10n_ao_payroll_payslip_line_user,l10n_ao_payroll.payslip.line,hr.group_hr_user,crud,
 access_l10n_ao_payroll_payslip_line_account,access_l10n_ao_payroll_payslip_line_account,l10n_ao_payroll.payslip.line,account.group_account_readonly,r,
-access_l10n_ao_payroll_payslip_line_employee,access_l10n_ao_payroll_payslip_line_employee,l10n_ao_payroll.payslip.line,base.group_user,r,"[('payslip_id.employee_id.user_id', '=', user.id)]"
+access_l10n_ao_payroll_payslip_line_employee,access_l10n_ao_payroll_payslip_line_employee,l10n_ao_payroll.payslip.line,base.group_user,r,"[('payslip_id.employee_id.user_id', '=', user.id), ('payslip_id.state', '=', 'done')]"
 access_l10n_ao_payroll_payslip_extra_user,access_l10n_ao_payroll_payslip_extra_user,l10n_ao_payroll.payslip.extra,hr.group_hr_user,crud,
 access_l10n_ao_payroll_advance_user,access_l10n_ao_payroll_advance_user,l10n_ao_payroll.advance,hr.group_hr_user,crud,
 access_l10n_ao_payroll_advance_deduction_user,access_l10n_ao_payroll_advance_deduction_user,l10n_ao_payroll.advance.deduction,hr.group_hr_user,crud,
@@ -17,3 +17,7 @@ access_l10n_ao_payroll_termination,access_l10n_ao_payroll_termination,l10n_ao_pa
 l10n_ao_payroll_run_comp_rule,Folhas multi-empresa,l10n_ao_payroll.run,,crud,"[('company_id', 'in', company_ids)]"
 l10n_ao_payroll_payslip_comp_rule,Recibos multi-empresa,l10n_ao_payroll.payslip,,crud,"[('company_id', 'in', company_ids)]"
 l10n_ao_payroll_advance_comp_rule,Adiantamentos multi-empresa,l10n_ao_payroll.advance,,crud,"[('company_id', 'in', company_ids)]"
+l10n_ao_payroll_payslip_line_comp_rule,Linhas de recibo multi-empresa,l10n_ao_payroll.payslip.line,,crud,"[('payslip_id.company_id', 'in', company_ids)]"
+l10n_ao_payroll_payslip_extra_comp_rule,Linhas adicionais multi-empresa,l10n_ao_payroll.payslip.extra,,crud,"[('payslip_id.company_id', 'in', company_ids)]"
+l10n_ao_payroll_advance_deduction_comp_rule,Amortizações multi-empresa,l10n_ao_payroll.advance.deduction,,crud,"[('advance_id.company_id', 'in', company_ids)]"
+l10n_ao_payroll_component_comp_rule,Componentes multi-empresa,l10n_ao_payroll.component,,crud,"[('company_id', 'in', company_ids)]"

@@ -50,6 +50,14 @@ class L10nAoPayrollAdvance(models.Model):
             )
             advance.balance = advance.amount - advance.deducted
 
+    @api.depends('employee_id', 'date', 'amount')
+    def _compute_display_name(self):
+        for advance in self:
+            advance.display_name = (
+                f'{advance.employee_id.name or ""} · {advance.date.strftime("%d/%m/%Y") if advance.date else ""} · '
+                f'{advance.currency_id.format(advance.amount) if advance.currency_id else advance.amount}'
+            )
+
     @api.constrains('amount', 'monthly_deduction')
     def _check_amounts(self):
         for advance in self:
@@ -60,13 +68,22 @@ class L10nAoPayrollAdvance(models.Model):
         for advance in self:
             if advance.state != 'draft':
                 continue
-            base = advance.employee_id.version_id.wage
+            employee = advance.employee_id
+            base = employee._l10n_ao_payroll_reference_salary(employee.sudo().version_id, before=advance.date)
+            if not base:
+                raise UserError(
+                    self.env._(
+                        '%s ainda não tem salário de referência (sem salário base nem recibos fechados): o limite '
+                        'de 3 salários do art. 248.º, n.º 6 não se pode verificar.',
+                        employee.name,
+                    )
+                )
             outstanding = sum(
                 self.search(
                     [('employee_id', '=', advance.employee_id.id), ('state', '=', 'approved'), ('id', '!=', advance.id)]
                 ).mapped('balance')
             )
-            if base and outstanding + advance.amount > MAX_SALARIES * base:
+            if outstanding + advance.amount > MAX_SALARIES * base:
                 raise UserError(
                     self.env._(
                         'Os adiantamentos em dívida (%(outstanding)s) mais este (%(amount)s) excedem 3 salários-base '
@@ -78,34 +95,39 @@ class L10nAoPayrollAdvance(models.Model):
                 )
             if advance.journal_id:
                 company = advance.company_id
-                company._l10n_ao_payroll_ensure_accounting()
+                company.sudo()._l10n_ao_payroll_ensure_accounting()
                 label = self.env._('Adiantamento a %s', advance.employee_id.name)
                 partner = advance.employee_id.work_contact_id
-                move = self.env['account.move'].create(
-                    {
-                        'move_type': 'entry',
-                        'journal_id': advance.journal_id.id,
-                        'date': advance.date,
-                        'ref': label,
-                        'line_ids': [
-                            fields.Command.create(
-                                {
-                                    'account_id': company.l10n_ao_payroll_advance_account_id.id,
-                                    'partner_id': partner.id,
-                                    'name': label,
-                                    'debit': advance.amount,
-                                }
-                            ),
-                            fields.Command.create(
-                                {
-                                    'account_id': advance.journal_id.default_account_id.id,
-                                    'partner_id': partner.id,
-                                    'name': label,
-                                    'credit': advance.amount,
-                                }
-                            ),
-                        ],
-                    }
+                move = (
+                    self.env['account.move']
+                    .sudo()
+                    .with_company(company)
+                    .create(
+                        {
+                            'move_type': 'entry',
+                            'journal_id': advance.journal_id.id,
+                            'date': advance.date,
+                            'ref': label,
+                            'line_ids': [
+                                fields.Command.create(
+                                    {
+                                        'account_id': company.l10n_ao_payroll_advance_account_id.id,
+                                        'partner_id': partner.id,
+                                        'name': label,
+                                        'debit': advance.amount,
+                                    }
+                                ),
+                                fields.Command.create(
+                                    {
+                                        'account_id': advance.journal_id.default_account_id.id,
+                                        'partner_id': partner.id,
+                                        'name': label,
+                                        'credit': advance.amount,
+                                    }
+                                ),
+                            ],
+                        }
+                    )
                 )
                 move.action_post()
                 advance.move_id = move
@@ -115,15 +137,18 @@ class L10nAoPayrollAdvance(models.Model):
         for advance in self:
             if advance.deduction_ids.filtered(lambda d: d.payslip_id.state != 'cancelled'):
                 raise UserError(self.env._('O adiantamento já foi amortizado numa folha.'))
-            if advance.move_id and advance.move_id.state == 'posted':
-                advance.move_id.button_draft()
-                advance.move_id.button_cancel()
+            move = advance.move_id.sudo()
+            if move.state == 'posted':
+                move._reverse_moves([{'date': move.date, 'ref': self.env._('Anulação: %s', move.ref)}], cancel=True)
             advance.state = 'cancelled'
 
     def _settle_if_done(self):
+        """Liquida os adiantamentos saldados e reabre os que voltaram a ter saldo (folha anulada)."""
         for advance in self:
             if advance.state == 'approved' and advance.currency_id.is_zero(advance.balance):
                 advance.state = 'settled'
+            elif advance.state == 'settled' and not advance.currency_id.is_zero(advance.balance):
+                advance.state = 'approved'
 
 
 class L10nAoPayrollAdvanceDeduction(models.Model):

@@ -23,10 +23,11 @@ FIXED_TERM_REASONS = [
     ('e', 'e) Actividade de duração limitada'),
     ('f', 'f) Trabalho urgente para prevenir acidentes ou reparar avarias'),
     ('g', 'g) Lançamento de nova actividade ou estabelecimento'),
-    ('h', 'h) Inserção de trabalhadores à procura do primeiro emprego'),
-    ('i', 'i) Trabalhador reformado ou pensionista'),
-    ('j', 'j) Actividade de carácter periódico'),
-    ('k', 'k) Aprendizagem ou formação profissional'),
+    ('h', 'h) Desempregado há mais de um ano ou abrangido por medidas de inserção'),
+    ('i', 'i) Tarefas periódicas de carácter descontínuo'),
+    ('j', 'j) Construção civil, obras públicas, montagens e reparações industriais'),
+    ('k', 'k) Aprendizagem e formação profissional prática'),
+    ('retired', 'Trabalhador reformado (art. 15.º, n.º 2)'),
 ]
 FIXED_TERM_MAX_MONTHS = {
     'a': 36,
@@ -36,13 +37,20 @@ FIXED_TERM_MAX_MONTHS = {
     'e': 12,
     'f': 6,
     'g': 60,
-    'h': None,
+    'h': 36,  # art. 16.º, n.º 2, al. c): prolongamento para além dos 36 meses
     'i': None,
     'j': 36,
     'k': 36,
+    'retired': None,  # renova-se sucessivamente e não se converte (art. 17.º, n.º 6)
 }
+# Causas em que a IGT pode autorizar o prolongamento para além dos 36 meses, até 24 meses (art. 16.º, n.os 2 a 4).
+IGT_EXTENSION_REASONS = ('a', 'h', 'j')
+IGT_EXTENSION_MAX_MONTHS = 24
+# Um contrato a termo celebrado até 30 dias depois do anterior, com a mesma causa, conta como renovação.
+SUCCESSION_GAP_DAYS = 30
 TRIAL_MAX_DAYS = {'fixed': 30, 'indefinite': 60, 'indefinite_written': 120, 'director': 180}
 NON_RENEWAL_NOTICE_DAYS = 30
+ALERT_DAYS_BEFORE = 45
 
 
 class HrVersion(models.Model):
@@ -64,6 +72,16 @@ class HrVersion(models.Model):
     )
     l10n_ao_fixed_term_max_months = fields.Integer(
         string='Duração máxima (meses)', compute='_compute_l10n_ao_fixed_term_max_months', groups='hr.group_hr_user'
+    )
+    l10n_ao_igt_extension_months = fields.Integer(
+        string='Prolongamento autorizado pela IGT (meses)',
+        tracking=1,
+        groups='hr.group_hr_user',
+        help='Causas a), h) e j): a IGT pode autorizar até mais 24 meses, a pedido feito até 30 dias antes do '
+        'termo (LGT, art. 16.º, n.os 2 a 4).',
+    )
+    l10n_ao_renewal_alert_date = fields.Date(
+        string='Aviso de fim de contrato enviado em', readonly=True, copy=False, groups='hr.group_hr_user'
     )
     l10n_ao_is_director = fields.Boolean(
         string='Cargo de direcção ou quadro técnico',
@@ -104,10 +122,17 @@ class HrVersion(models.Model):
         help='Duração do contrato a termo com as renovações sucessivas com a mesma causa (art. 16.º).',
     )
 
-    @api.depends('l10n_ao_fixed_term_reason')
+    @api.depends('l10n_ao_fixed_term_reason', 'l10n_ao_igt_extension_months')
     def _compute_l10n_ao_fixed_term_max_months(self):
         for version in self:
-            version.l10n_ao_fixed_term_max_months = FIXED_TERM_MAX_MONTHS.get(version.l10n_ao_fixed_term_reason) or 0
+            version.l10n_ao_fixed_term_max_months = version._l10n_ao_term_limit() or 0
+
+    def _l10n_ao_term_limit(self):
+        self.ensure_one()
+        limit = FIXED_TERM_MAX_MONTHS.get(self.l10n_ao_fixed_term_reason)
+        if limit and self.l10n_ao_fixed_term_reason in IGT_EXTENSION_REASONS:
+            limit += min(self.l10n_ao_igt_extension_months or 0, IGT_EXTENSION_MAX_MONTHS)
+        return limit
 
     @api.depends('resource_calendar_id.hours_per_week')
     def _compute_l10n_ao_weekly_hours(self):
@@ -128,7 +153,8 @@ class HrVersion(models.Model):
                 version.l10n_ao_term_months = 0
 
     def _l10n_ao_term_chain(self):
-        """Contratos a termo anteriores do trabalhador com a mesma causa e sem interrupção (renovações)."""
+        """Contratos a termo anteriores do trabalhador com a mesma causa, sem interrupção ou com um intervalo
+        até 30 dias (renovações sucessivas; um intervalo curto não reinicia a contagem do art. 16.º)."""
         self.ensure_one()
         if self.l10n_ao_contract_type not in FIXED_TERM_TYPES or not self.contract_date_start:
             return self.env['hr.version']
@@ -141,7 +167,7 @@ class HrVersion(models.Model):
                     ('id', '!=', current.id),
                     ('l10n_ao_contract_type', 'in', FIXED_TERM_TYPES),
                     ('l10n_ao_fixed_term_reason', '=', self.l10n_ao_fixed_term_reason),
-                    ('contract_date_end', '>=', current.contract_date_start - timedelta(days=1)),
+                    ('contract_date_end', '>=', current.contract_date_start - timedelta(days=SUCCESSION_GAP_DAYS + 1)),
                     ('contract_date_end', '<', current.contract_date_start),
                 ],
                 order='contract_date_end desc',
@@ -170,6 +196,7 @@ class HrVersion(models.Model):
         'trial_date_end',
         'l10n_ao_is_director',
         'l10n_ao_trial_written',
+        'l10n_ao_igt_extension_months',
     )
     def _check_l10n_ao_contract(self):
         for version in self:
@@ -187,8 +214,16 @@ class HrVersion(models.Model):
                     raise ValidationError(
                         self.env._('O contrato a termo certo tem de ter data de fim (LGT, art. 13.º).')
                     )
-                limit = FIXED_TERM_MAX_MONTHS.get(version.l10n_ao_fixed_term_reason)
-                if limit and version.l10n_ao_term_months > limit:
+                if (
+                    version.l10n_ao_igt_extension_months
+                    and version.l10n_ao_fixed_term_reason not in IGT_EXTENSION_REASONS
+                ) or version.l10n_ao_igt_extension_months > IGT_EXTENSION_MAX_MONTHS:
+                    raise ValidationError(
+                        self.env._('A IGT só prolonga os contratos das causas a), h) e j), até 24 meses (art. 16.º).')
+                    )
+                limit = version._l10n_ao_term_limit()
+                # No termo incerto sem data de fim, a duração acumulada só se conhece no fim: avisa o cron.
+                if limit and version.contract_date_end and version.l10n_ao_term_months > limit:
                     raise ValidationError(
                         self.env._(
                             'A duração do contrato a termo com a causa «%(reason)s», com as renovações, é de '
@@ -211,20 +246,25 @@ class HrVersion(models.Model):
                         )
                     )
 
+    def _l10n_ao_default_trial_end(self, start=None):
+        self.ensure_one()
+        start = start or self.contract_date_start
+        return start + timedelta(days=TRIAL_MAX_DAYS['indefinite'] - 1) if start else False
+
     def _l10n_ao_set_default_trial(self):
-        """Primeiro contrato: período experimental por omissão (60 dias no indeterminado, 30 no termo), art. 18.º."""
+        """Primeiro contrato por tempo indeterminado: 60 dias de período experimental por omissão (art. 18.º, n.º 1).
+        No contrato a termo o período experimental só existe por escrito (art. 18.º, n.º 3): não se preenche."""
         if self.env.context.get('l10n_ao_skip_trial'):
             return
         for version in self:
             if (
                 version.contract_date_start
                 and not version.trial_date_end
+                and version.l10n_ao_contract_type == 'indefinite'
                 and version.company_id.country_id.code == 'AO'
-                and version.employee_id.version_ids.filtered('contract_date_start') == version
+                and not (version.employee_id.version_ids - version).filtered('contract_date_start')
             ):
-                version.trial_date_end = version.contract_date_start + timedelta(
-                    days=version._l10n_ao_trial_max_days() - 1
-                )
+                version.trial_date_end = version._l10n_ao_default_trial_end()
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -233,32 +273,54 @@ class HrVersion(models.Model):
         return versions
 
     def write(self, vals):
+        # Se a data de início muda e o período experimental era o de omissão, acompanha a nova data.
+        shifted = {}
+        if vals.get('contract_date_start') and 'trial_date_end' not in vals:
+            new_start = fields.Date.to_date(vals['contract_date_start'])
+            for version in self:
+                if version.trial_date_end and version.trial_date_end == version._l10n_ao_default_trial_end():
+                    shifted[version.id] = version._l10n_ao_default_trial_end(new_start)
+        newly_started = (
+            self.filtered(lambda v: not v.contract_date_start) if vals.get('contract_date_start') else self.browse()
+        )
+        if shifted:
+            result = True
+            for version in self:
+                version_vals = dict(vals)
+                if version.id in shifted:
+                    version_vals['trial_date_end'] = shifted[version.id]
+                result = super(HrVersion, version).write(version_vals) and result
+            return result
         result = super().write(vals)
-        if vals.get('contract_date_start') and not vals.get('trial_date_end'):
-            self._l10n_ao_set_default_trial()
+        if newly_started and 'trial_date_end' not in vals:
+            # O contrato passa a ter data de início (por exemplo ao criar o trabalhador): período por omissão.
+            newly_started._l10n_ao_set_default_trial()
         return result
 
     @api.model
     def _cron_l10n_ao_hr_contract_alerts(self):
-        """Aviso de não renovação (art. 17.º): 30 dias antes do fim do contrato a termo, uma actividade ao RH."""
+        """Aviso de não renovação (art. 17.º): 45 dias antes do fim do contrato a termo, uma actividade ao RH
+        com prazo nos 30 dias do aviso prévio. Uma só vez por contrato."""
         today = fields.Date.context_today(self)
-        limit = today + timedelta(days=NON_RENEWAL_NOTICE_DAYS)
+        limit = today + timedelta(days=ALERT_DAYS_BEFORE)
         versions = self.search(
             [
                 ('l10n_ao_contract_type', 'in', FIXED_TERM_TYPES),
                 ('contract_date_end', '>=', today),
                 ('contract_date_end', '<=', limit),
                 ('employee_id.active', '=', True),
+                ('l10n_ao_renewal_alert_date', '=', False),
             ]
         )
         for version in versions:
             employee = version.employee_id
             summary = self.env._('Fim do contrato a termo em %s', version.contract_date_end.strftime('%d/%m/%Y'))
+            version.l10n_ao_renewal_alert_date = today
             if employee.activity_ids.filtered(lambda a, s=summary: a.summary == s):
                 continue
             employee.activity_schedule(
                 'mail.mail_activity_data_todo',
-                date_deadline=version.contract_date_end - timedelta(days=NON_RENEWAL_NOTICE_DAYS),
+                date_deadline=max(today, version.contract_date_end - timedelta(days=NON_RENEWAL_NOTICE_DAYS)),
                 summary=summary,
                 note=self.env._(
                     'O aviso de não renovação tem de ser dado com 30 dias de antecedência (LGT, art. 17.º); '

@@ -20,9 +20,8 @@ class L10nAoPayrollIrtBracket(models.Model):
     @api.model
     def _brackets_for(self, day):
         """[(inferior, superior|None, fixa, taxa)] da tabela em vigor na data (a mais recente com início ≤ data)."""
+        # Sem tabela em vigor na data não se aplica outra: o recibo avisa e o IRT fica por calcular.
         latest = self.search([('date_from', '<=', day)], order='date_from desc', limit=1)
-        if not latest:
-            latest = self.search([], order='date_from asc', limit=1)
         if not latest:
             return []
         rows = self.search([('date_from', '=', latest.date_from)], order='lower')

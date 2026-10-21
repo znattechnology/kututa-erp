@@ -1,5 +1,7 @@
 # Fase 4: Kututa Kazi, recursos humanos e salários (`l10n_ao_hr`, `l10n_ao_payroll`)
 
+> **Revisto na auditoria de 2026-10-21** (`auditoria-fase-4.md`): as faltas acima dos limites ficam justificadas e não pagas; a suspensão gera a ausência não paga; só o RH aprova as horas extra; o recálculo da folha preserva os rascunhos; rateio das mudanças de salário a meio do mês; anulação com estorno e reposição dos adiantamentos; contas finais com o subsídio de férias fora do INSS e o aviso prévio descontado na denúncia; salário de referência dos professores; feriado pago só com o acréscimo de um dia.
+
 **Estado:** concluída a 2026-10-21. Testes: 8 no `l10n_ao_hr` e 17 no `l10n_ao_payroll` (12 deles são os casos dourados do motor de cálculo, iguais aos do secPed-Express). Instalado na base `kututa_demo`.
 
 **Fontes** (`docs/referencias/salarios/`): `IRT-INSS.md` (Lei 14/25, CIRT com a Lei 28/20, DP 227/18), `SALARIO-MINIMO.md` (DP 152/24), `FERIADOS.md` (Lei 10/11 com a Lei 11/18), `secped-folha.md` (regras e casos de teste do secPed) e `docs/analise-legal/03-rh-LGT-12-23.md`.
@@ -8,7 +10,7 @@
 | Tema | secPed | Kututa | Porquê |
 |---|---|---|---|
 | INSS sobre alimentação e transporte | Isentos até 30 000 Kz | **Sujeitos na totalidade** | DP 227/18: só o subsídio de férias e as prestações sociais ficam fora da base |
-| INSS sobre o subsídio de férias | Sujeito | **Isento** | DP 227/18, art. 6.º |
+| INSS sobre o subsídio de férias | Sujeito | **Isento** | DP 227/18, art. 13.º, n.º 3, al. b) |
 | Abono de família | Sem regra | Isento de IRT até 5% do salário base e fora do INSS | CIRT, art. 2.º |
 | Contas finais | Sem IRT/INSS | Entram na folha do mês, com IRT; a compensação fica fora do INSS | CIRT, art. 2.º (compensações tributadas) |
 | Feriados | Tabela manual | Gerados por regra (datas móveis e pontes) | Lei 10/11, arts. 2.º e 6.º |
