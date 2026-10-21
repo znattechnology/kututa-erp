@@ -122,3 +122,51 @@ Nota: a combinação areia com laranja aproxima-se de um padrão muito comum em 
 | A5 | A Tesouraria consulta os alunos no mesmo menu «Alunos» da Secretaria. Já não há duplicado para a Direcção |
 | Novo | **Erro de acesso na ficha da turma** para quem não é do RH (Secretaria, professores). A grelha do horário lia campos de professor que não existiam no perfil público dos funcionários. Os campos passaram a existir em `hr.employee.public`. Há também um teste de fumo por perfil: abre a lista e a ficha de todos os menus visíveis |
 
+
+## 7. Painéis por perfil: menu lateral da Secretaria (2026-10-21)
+Primeiro painel revisto: o da Secretaria. O menu segue o do secPed para o perfil ADMIN_SERVICOS. A referência foi recolhida com a conta de demonstração do `isptec`.
+
+**Menu lateral (`kututa_web`):**
+- **Sem acordeão.** Todas as secções ficam abertas.
+- **Títulos de secção:** em maiúsculas, na cor da marca, com fundo leve e um filete à esquerda.
+- **Item activo:** com o mesmo filete.
+- **Entradas soltas** (Disciplinas, Alunos): separam-se das secções.
+- **Largura:** 240 px, para os títulos caberem inteiros.
+- **Barra de topo:** com o menu lateral visível, deixa de repetir as secções. No telemóvel, onde não há menu lateral, continuam lá.
+
+**Secções (`edu_roles/views/edu_secretaria_menu.xml`):**
+
+| Secção | Itens |
+|---|---|
+| Configuração académica | Anos lectivos, Trimestres, Turnos lectivos, Tempos lectivos, Coordenações |
+| Cursos e turmas | Cursos, Turmas, Salas, Currículo |
+| Disciplinas | entrada solta |
+| Docentes | Lista de docentes, Professores por disciplina, Directores de turma |
+| Alunos | entrada solta; também a vê a Tesouraria |
+| Matrículas | Candidaturas, Lista de matrículas, Nova matrícula, Cancelamentos, Transferências, Rematrícula |
+| Cartão de estudante | Emissão de cartões |
+| Horários | Por turma, Substituições, Aulas e sumários, Gerar aulas do horário, Justificação de faltas, Mapa de faltas |
+| Exames | Calendário de provas, Sessões de exame, Exames extraordinários |
+| Histórico académico | Mini-pauta, Autorizações de notas, Histórico do aluno, Diplomas e certificados, Declarações; depois Avaliações e notas, Pautas, Imprimir pautas, Conselhos de turma, Resultados do ano, Reapreciações, RDEC |
+| Estágios | Lista de estágios, Novo estágio, Trabalho de fim de curso |
+| Encarregados | Lista de encarregados, Criar encarregado, Vincular a aluno |
+
+**Itens do Odoo sem equivalente no menu do secPed.** Ficam no fim da secção onde a Secretaria os procura:
+- Tempos lectivos;
+- Alunos e Rematrícula;
+- a assiduidade, em Horários;
+- o resto da avaliação, em Histórico académico.
+
+**Permissões:** a Secretaria passa a criar e alterar a configuração académica, como no secPed (`academic:calendar:manage`, `classes:manage`, `subjects:manage`, `curriculum:update`): anos lectivos, trimestres, turnos, tempos, coordenações, cursos, disciplinas, salas e planos. Apagar continua só com a Direcção.
+
+**Lista de docentes:** usa o perfil público dos funcionários. As fichas editam-se no RH.
+
+**Sem equivalente no Odoo, por fazer:**
+- Painel (passo 4 do plano);
+- Calendário académico;
+- Portaria — verificação do cartão;
+- Editor visual de horários;
+- Solicitações (todas, nova, tipos de documento), que é o `edu_secretaria` da Fase 6;
+- Relatórios.
+
+**Por fazer:** enquanto não houver painel, a Secretaria entra em «Anos lectivos», o primeiro item do menu.

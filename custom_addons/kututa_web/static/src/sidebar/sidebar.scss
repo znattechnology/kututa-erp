@@ -1,6 +1,11 @@
 // Menu lateral: a página passa a grelha (barra de topo em cima, menu à esquerda, acção à direita).
-$o-kututa-sidebar-width: 220px;
+$o-kututa-sidebar-width: 240px;
 $o-kututa-sidebar-collapsed-width: 40px;
+
+// Com o menu lateral, as secções deixam de se repetir na barra de topo (no telemóvel não há menu lateral).
+body.o_kututa_with_sidebar .o_main_navbar .o_menu_sections {
+    display: none !important;
+}
 
 body.o_web_client.o_kututa_with_sidebar {
     display: grid !important;
@@ -77,35 +82,26 @@ body.o_web_client.o_kututa_with_sidebar {
         padding: map-get($spacers, 2) 0 map-get($spacers, 4);
     }
 
-    .o_kututa_sidebar_section + .o_kututa_sidebar_section {
-        margin-top: 2px;
+    // Sem acordeão: todas as secções abertas; o título destaca-se pela cor da marca.
+    // Cada secção, com título ou entrada solta (Disciplinas, Alunos), separa-se da anterior.
+    .o_kututa_sidebar_section {
+        margin-top: map-get($spacers, 3);
+    }
+    .o_kututa_sidebar_section:first-child {
+        margin-top: 0;
     }
 
     .o_kututa_sidebar_section_title {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: calc(100% - #{map-get($spacers, 2)} * 2);
-        margin: 0 map-get($spacers, 2);
-        padding: map-get($spacers, 1) map-get($spacers, 2);
-        border: 0;
-        border-radius: $border-radius;
-        background: transparent;
-        font-weight: $font-weight-bold;
-        color: $headings-color;
-        text-align: left;
-        cursor: pointer;
-
-        &:hover {
-            background-color: $o-gray-100;
-        }
-    }
-    .o_kututa_sidebar_section.o_has_active:not(.o_open) > .o_kututa_sidebar_section_title {
+        margin: 0 map-get($spacers, 2) 2px;
+        padding: 5px map-get($spacers, 2);
+        border-left: 3px solid $o-action;
+        border-radius: 0 $border-radius $border-radius 0;
+        background-color: rgba($o-action, .08);
         color: $o-action;
-    }
-    .o_kututa_sidebar_chevron {
-        color: $text-muted;
-        flex: 0 0 auto;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-bold;
+        text-transform: uppercase;
+        letter-spacing: .04em;
     }
     .o_kututa_sidebar_entries {
         padding-bottom: map-get($spacers, 1);
@@ -143,6 +139,7 @@ body.o_web_client.o_kututa_with_sidebar {
 
     .o_kututa_sidebar_item.active {
         background-color: rgba($o-action, .12);
+        box-shadow: inset 3px 0 0 $o-action;
         color: $o-action;
         font-weight: $font-weight-bold;
     }

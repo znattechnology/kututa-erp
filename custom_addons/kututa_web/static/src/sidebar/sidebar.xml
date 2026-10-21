@@ -9,21 +9,16 @@
             </div>
             <div class="o_kututa_sidebar_body" t-if="!this.collapsed">
                 <t t-foreach="this.blocks" t-as="block" t-key="block.section.id">
-                    <t t-set="open" t-value="!block.hasTitle or this.isOpen(block)"/>
-                    <div class="o_kututa_sidebar_section" t-att-class="{ o_open: open, o_has_active: block.hasActive }">
-                        <button t-if="block.hasTitle" type="button" class="o_kututa_sidebar_section_title"
-                                t-att-aria-expanded="open ? 'true' : 'false'"
-                                t-on-click="() => this.toggleSection(block)">
-                            <span class="text-truncate" t-out="block.section.name"/>
-                            <i class="oi o_kututa_sidebar_chevron" t-att-data-icon="open ? 'keyboard_arrow_down' : 'keyboard_arrow_right'" aria-hidden="true"/>
-                        </button>
-                        <div t-if="open" class="o_kututa_sidebar_entries">
+                    <div class="o_kututa_sidebar_section" t-att-class="{ o_titled: block.hasTitle }">
+                        <div t-if="block.hasTitle" class="o_kututa_sidebar_section_title text-truncate"
+                             role="heading" aria-level="2" t-out="block.section.name"/>
+                        <div class="o_kututa_sidebar_entries">
                             <t t-foreach="block.entries" t-as="entry" t-key="entry.menu.id">
                                 <div t-if="entry.isGroup" class="o_kututa_sidebar_group"
                                      t-att-style="'padding-left: ' + (16 + entry.depth * 12) + 'px'" t-out="entry.menu.name"/>
                                 <a t-else="" href="#" class="o_kututa_sidebar_item text-truncate"
                                    t-att-class="{ active: this.isActive(entry.menu) }"
-                                   t-att-style="'padding-left: ' + ((block.hasTitle ? 20 : 8) + entry.depth * 12) + 'px'" t-att-title="entry.menu.name"
+                                   t-att-style="'padding-left: ' + (12 + entry.depth * 12) + 'px'" t-att-title="entry.menu.name"
                                    t-on-click.prevent="() => this.onClickMenu(entry.menu)" t-out="entry.menu.name"/>
                             </t>
                         </div>

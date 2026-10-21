@@ -73,6 +73,22 @@ class TestEduRoles(TransactionCase):
         self.assertNotIn('edu_fees.menu_edu_debtors', clerk)
         self.assertNotIn('edu_core.menu_edu_config', clerk)
         self.assertNotIn('edu_roles.menu_my_lessons', clerk)
+        # Menu do secPed (ADMIN_SERVICOS): configuração académica, docentes, cartões, encarregados…
+        for xmlid in ('edu_roles.menu_section_config', 'edu_core.menu_edu_academic_year',
+                      'edu_roles.menu_edu_trimester', 'edu_core.menu_edu_course', 'edu_core.menu_edu_subject',
+                      'edu_people.menu_edu_teacher',
+                      'edu_roles.menu_edu_class_directors', 'edu_roles.menu_edu_enrollment_new',
+                      'edu_roles.menu_edu_enrollment_dropped', 'edu_roles.menu_edu_student_cards',
+                      'edu_roles.menu_edu_student_history', 'edu_roles.menu_edu_internship_new',
+                      'edu_roles.menu_edu_student_guardian'):  # fmt: skip
+            self.assertIn(xmlid, clerk)
+        self.assertEqual(
+            self.env.ref('edu_core.menu_edu_academic_year').parent_id, self.env.ref('edu_roles.menu_section_config')
+        )
+        # A secretaria altera a configuração académica, mas não a apaga.
+        year = self.env['edu.academic.year'].with_user(self.clerk)
+        self.assertTrue(year.has_access('write'))
+        self.assertFalse(year.has_access('unlink'))
         cashier = self._menus(self.cashier)
         self.assertIn('edu_fees.menu_edu_debtors', cashier)
         # A tesouraria consulta os alunos no mesmo menu da secretaria (um só «Alunos» para a direcção).

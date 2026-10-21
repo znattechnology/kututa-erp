@@ -1,6 +1,6 @@
 {
     'name': 'Secretaria Express - Perfis e acessos',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Cada perfil vê só o seu: secretaria, tesouraria, professor e direcção; aplicações escondidas',
     'description': """
 Secretaria Express: perfis de acesso iguais aos do secPed-Express.
@@ -18,8 +18,10 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
     'category': 'Education',
     'depends': ['edu_fees', 'spreadsheet_dashboard'],
     'data': [
+        'security/ir.access.csv',
         'views/edu_teaching_views.xml',
         'data/menu_groups.xml',
+        'views/edu_secretaria_menu.xml',
     ],
     'auto_install': True,
     'license': 'OPL-1',

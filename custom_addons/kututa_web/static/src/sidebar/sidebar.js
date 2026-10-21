@@ -6,7 +6,8 @@ import { WebClient } from "@web/webclient/webclient";
 import { getPreference, setPreference } from "../ui_preferences";
 
 /**
- * Menu lateral com as secções da aplicação aberta (as mesmas do menu de topo), recolhível.
+ * Menu lateral com as secções da aplicação aberta (as mesmas do menu de topo), todas abertas, com os títulos
+ * destacados; o menu inteiro recolhe-se.
  */
 export class KututaSidebar extends Component {
     static template = "kututa_web.Sidebar";
@@ -16,14 +17,9 @@ export class KututaSidebar extends Component {
         this.actionService = useService("action");
         this.ui = useService("ui");
         this.collapsed = getPreference("sidebar_collapsed", false);
-        // Secções abertas ou fechadas pelo utilizador, por id do menu: { "123": true, "124": false }.
-        this.sectionState = getPreference("sidebar_sections", {});
         const refresh = () => render(this);
         useListener(this.env.bus, "MENUS:APP-CHANGED", refresh);
-        useListener(this.env.bus, "ACTION_MANAGER:UI-UPDATED", () => {
-            this.openActiveSection();
-            render(this);
-        });
+        useListener(this.env.bus, "ACTION_MANAGER:UI-UPDATED", refresh);
         useListener(window, "resize", refresh);
         useLayoutEffect(
             (visible, collapsed) => {
@@ -63,7 +59,6 @@ export class KututaSidebar extends Component {
                 section,
                 hasTitle: children.length > 0,
                 entries,
-                hasActive: entries.some((entry) => this.isActive(entry.menu)),
             };
         });
     }
@@ -78,39 +73,6 @@ export class KututaSidebar extends Component {
 
     isActive(menu) {
         return Boolean(menu.actionID) && menu.actionID === this.currentActionId;
-    }
-
-
-    /** Aberta se o utilizador a abriu; sem escolha guardada, aberta só a da página actual. */
-    isOpen(block) {
-        const stored = this.sectionState[block.section.id];
-        return stored === undefined ? block.hasActive : stored;
-    }
-
-    /** Acordeão: abrir uma secção fecha as outras da mesma aplicação. */
-    setOpenSection(block, open) {
-        const state = { ...this.sectionState };
-        for (const other of this.blocks) {
-            if (other.hasTitle) {
-                state[other.section.id] = false;
-            }
-        }
-        state[block.section.id] = open;
-        this.sectionState = state;
-        setPreference("sidebar_sections", this.sectionState);
-    }
-
-    toggleSection(block) {
-        this.setOpenSection(block, !this.isOpen(block));
-        render(this);
-    }
-
-    /** Ao abrir uma página (pelo menu de topo, por um botão…), a sua secção abre-se no menu lateral. */
-    openActiveSection() {
-        const block = this.blocks.find((item) => item.hasTitle && item.hasActive);
-        if (block && !this.isOpen(block)) {
-            this.setOpenSection(block, true);
-        }
     }
 
     async onClickMenu(menu) {
