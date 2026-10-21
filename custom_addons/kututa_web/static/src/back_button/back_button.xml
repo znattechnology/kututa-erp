@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Botão «Voltar» bem visível quando se chegou a este ecrã a partir de outro (lista → ficha, ficha → turma…).
+         Volta ao ecrã anterior tal como estava (filtros, página). No telemóvel o Odoo já mostra a seta. -->
+    <t t-inherit="web.ControlPanel" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_control_panel_main_buttons')]" position="before">
+            <t t-set="kututaPrevious" t-value="!this.uiService.isSmall and !this.env.config.noBreadcrumbs and this.breadcrumbs.at(-2)"/>
+            <button t-if="kututaPrevious" type="button" class="btn btn-secondary o_kututa_back_button d-print-none text-nowrap"
+                    t-att-title="'Voltar a ' + (kututaPrevious.name or 'o ecrã anterior')"
+                    t-on-click="() => kututaPrevious.onSelected()">
+                <i class="oi" data-icon="arrow_back" aria-hidden="true"/>
+                <span class="ms-1">Voltar</span>
+            </button>
+        </xpath>
+    </t>
+
+</templates>

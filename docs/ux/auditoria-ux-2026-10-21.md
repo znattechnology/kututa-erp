@@ -170,3 +170,12 @@ Primeiro painel revisto: o da Secretaria. O menu segue o do secPed para o perfil
 - Relatórios.
 
 **Por fazer:** enquanto não houver painel, a Secretaria entra em «Anos lectivos», o primeiro item do menu.
+
+## 8. Botão «Voltar» (2026-10-21)
+Pedido do utilizador: quando se abre um registo ou outro ecrã a partir de uma lista, deve haver um botão para voltar onde se estava.
+
+- **Onde está:** `kututa_web/static/src/back_button/`. No painel de controlo, antes do «Novo», aparece «← Voltar» sempre que se chegou ao ecrã a partir de outro: lista → ficha, ficha → alunos da turma, e assim por diante.
+- **O que faz:** usa o trilho de navegação do Odoo. Volta ao ecrã anterior tal como estava, com os filtros, a página e o registo.
+- **Onde não aparece:** no primeiro nível, por exemplo uma lista aberta pelo menu.
+- **No telemóvel:** o Odoo já mostra uma seta de voltar, por isso o botão novo é só para o computador.
+- **Atalho:** o trilho de navegação do Odoo (texto pequeno por cima do título) continua lá, e Alt+B também volta atrás.
