@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_edu_fees" name="Propinas" parent="edu_core.menu_edu_root" sequence="36" groups="edu_core.group_edu_user">
+    <menuitem id="menu_edu_fees" name="Propinas" parent="edu_core.menu_edu_root" sequence="36" groups="edu_fees.group_edu_finance">
+        <menuitem id="menu_edu_fee_students" action="edu_people.action_edu_student" sequence="5"/>
         <menuitem id="menu_edu_invoices" action="action_edu_invoices" sequence="10"/>
         <menuitem id="menu_edu_debtors" action="action_edu_debtors" sequence="20"/>
         <menuitem id="menu_edu_scholarship" action="action_edu_scholarship" sequence="30"/>

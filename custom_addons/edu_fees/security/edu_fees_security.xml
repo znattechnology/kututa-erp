@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- A secretaria emite as facturas das propinas e recebe os pagamentos. -->
+    <!-- Tesouraria: facturas das propinas, pagamentos, bolsas e devedores (no secPed, ADMIN_FINANCAS).
+         A secretaria fica só com o académico. -->
+    <record id="group_edu_finance" model="res.groups">
+        <field name="name">Tesouraria</field>
+        <field name="sequence">15</field>
+        <field name="privilege_id" ref="edu_core.res_groups_privilege_edu"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('account.group_account_invoice'))]"/>
+        <field name="comment">Facturas das propinas, pagamentos ao balcão, serviços a pedido, bolsas e devedores.</field>
+    </record>
+
     <record id="edu_core.group_edu_user" model="res.groups">
-        <field name="implied_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
+        <field name="implied_ids" eval="[(3, ref('account.group_account_invoice'))]"/>
+    </record>
+
+    <record id="edu_core.group_edu_manager" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_edu_finance'))]"/>
     </record>
 </odoo>

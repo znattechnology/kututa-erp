@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menus por perfil (gerado; a ordem segue o menu da aplicação). -->
+    <record id="edu_core.menu_edu_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher'), ref('edu_fees.group_edu_finance')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_students" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_enrollment.menu_edu_application" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_enrollment.menu_edu_enrollment" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_people.menu_edu_student" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_people.menu_edu_guardian" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_enrollment.menu_edu_transfer" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_enrollment.menu_edu_enrollment_renewal" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_academic" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_class" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_people.menu_edu_teacher" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_timetable.menu_edu_teaching_assignment" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_timetable.menu_edu_schedule" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_timetable.menu_edu_schedule_replacement" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_attendance.menu_edu_lesson" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_attendance.menu_edu_lesson_generate" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_attendance.menu_edu_lesson_attendance" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_attendance.menu_edu_absence_summary" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_evaluation" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_assessment" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_term_result" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_subject_result" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_council_session" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_year_result" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_exam_requirement" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_grade_appeal" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_grade_edit_permission" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_rdec" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_documents.menu_edu_pauta_print" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
+    </record>
+    <record id="edu_exam.menu_edu_exam" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_exam.menu_edu_exam_period" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_exam.menu_edu_exam_session" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_records.menu_edu_records" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_documents.menu_edu_document" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_records.menu_edu_graduation" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_records.menu_edu_internship" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_records.menu_edu_final_project" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
+    <record id="edu_fees.menu_edu_fees" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_fees.group_edu_finance')])]"/>
+    </record>
+    <record id="edu_fees.menu_edu_fee_students" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_fees.group_edu_finance')])]"/>
+    </record>
+    <record id="edu_fees.menu_edu_invoices" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_fees.group_edu_finance')])]"/>
+    </record>
+    <record id="edu_fees.menu_edu_debtors" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_fees.group_edu_finance')])]"/>
+    </record>
+    <record id="edu_fees.menu_edu_scholarship" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_fees.group_edu_finance')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_config" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_academic_year" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_course" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_subject" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_coordination" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_shift" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_facilities" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_campus" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_building" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_room" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_curriculum_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_curriculum" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_curriculum_template" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_core.menu_edu_level" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_timetable.menu_edu_time_slot" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_evaluation.menu_edu_evaluation_policy" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_fees.menu_edu_fee_plan" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="edu_fees.menu_edu_late_fee_rule" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="base.menu_management" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="spreadsheet_dashboard.spreadsheet_dashboard_menu_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
+    </record>
+    <record id="hr.menu_hr_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('hr.group_hr_user'), ref('edu_core.group_edu_manager')])]"/>
+    </record>
+    <record id="contacts.menu_contacts" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('base.group_partner_manager'), ref('base.group_system')])]"/>
+    </record>
+</odoo>

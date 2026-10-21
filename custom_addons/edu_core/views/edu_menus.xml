@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_edu_root" name="Matrículas" sequence="40" groups="group_edu_user"
+    <menuitem id="menu_edu_root" name="Secretaria Express" sequence="40" groups="group_edu_user"
               web_icon="edu_core,static/description/icon.png"/>
     <menuitem id="menu_edu_students" name="Alunos" parent="menu_edu_root" sequence="10"/>
     <menuitem id="menu_edu_academic" name="Pedagógico" parent="menu_edu_root" sequence="20"/>

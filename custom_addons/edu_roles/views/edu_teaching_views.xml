@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A minha docência: o espaço do professor -->
+    <record id="action_my_classes" model="ir.actions.act_window">
+        <field name="name">As minhas turmas</field>
+        <field name="res_model">edu.class</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">['|', ('assignment_ids.teacher_id.user_id', '=', uid), ('director_id.user_id', '=', uid)]</field>
+        <field name="context">{'search_default_current_year': 1, 'create': False}</field>
+    </record>
+    <record id="action_my_lessons" model="ir.actions.act_window">
+        <field name="name">As minhas aulas</field>
+        <field name="res_model">edu.lesson</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('teacher_id.user_id', '=', uid)]</field>
+        <field name="context">{'search_default_scheduled': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sem aulas por dar</p>
+            <p>Abra a chamada, marque as faltas, escreva o sumário e dê a aula por dada.</p>
+        </field>
+    </record>
+    <record id="action_my_assessments" model="ir.actions.act_window">
+        <field name="name">As minhas avaliações</field>
+        <field name="res_model">edu.assessment</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('class_id.assignment_ids.teacher_id.user_id', '=', uid)]</field>
+        <field name="context">{'search_default_current_year': 1}</field>
+    </record>
+    <record id="action_my_schedule" model="ir.actions.act_window">
+        <field name="name">O meu horário</field>
+        <field name="res_model">edu.schedule</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('teacher_id.user_id', '=', uid)]</field>
+        <field name="context">{'search_default_current_year': 1, 'search_default_group_weekday': 1, 'create': False, 'edit': False}</field>
+    </record>
+    <record id="action_my_supervisions" model="ir.actions.act_window">
+        <field name="name">As minhas vigilâncias</field>
+        <field name="res_model">edu.exam.session</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('room_ids.supervisor_ids.user_id', '=', uid)]</field>
+        <field name="context">{'create': False}</field>
+    </record>
+
+    <menuitem id="menu_edu_teaching" name="A minha docência" parent="edu_core.menu_edu_root" sequence="1"
+              groups="edu_core.group_edu_teacher">
+        <menuitem id="menu_my_lessons" action="action_my_lessons" sequence="10"/>
+        <menuitem id="menu_my_classes" action="action_my_classes" sequence="20"/>
+        <menuitem id="menu_my_assessments" action="action_my_assessments" sequence="30"/>
+        <menuitem id="menu_my_schedule" action="action_my_schedule" sequence="40"/>
+        <menuitem id="menu_my_supervisions" action="action_my_supervisions" sequence="50"/>
+    </menuitem>
+</odoo>

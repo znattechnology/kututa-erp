@@ -24,6 +24,8 @@ Os significados em kimbundu (mukanda = carta/documento, kitanda = mercado, kimbo
 
 ## Secretaria Express
 
+A aplicação no Odoo chama-se **Secretaria Express** (menu raiz); os nomes curtos abaixo são as secções do menu lateral.
+
 | Nome visível | Nome curto no menu | Módulos técnicos |
 |---|---|---|
 | Secretaria Express Matrículas | Matrículas | `edu_core`, `edu_people`, `edu_enrollment` |
