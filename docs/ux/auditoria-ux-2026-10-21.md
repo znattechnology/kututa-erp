@@ -178,4 +178,4 @@ Pedido do utilizador: quando se abre um registo ou outro ecrã a partir de uma l
 - **O que faz:** usa o trilho de navegação do Odoo. Volta ao ecrã anterior tal como estava, com os filtros, a página e o registo.
 - **Onde não aparece:** no primeiro nível, por exemplo uma lista aberta pelo menu.
 - **No telemóvel:** o Odoo já mostra uma seta de voltar, por isso o botão novo é só para o computador.
-- **Atalho:** o trilho de navegação do Odoo (texto pequeno por cima do título) continua lá, e Alt+B também volta atrás.
+- **Atalho:** o trilho de navegação do Odoo (texto pequeno por cima do título) continua lá.
