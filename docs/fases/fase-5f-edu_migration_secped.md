@@ -18,6 +18,7 @@ Variáveis:
 - `SECPED_ENSAIO=1`: corre tudo e desfaz no fim. Sem ela, cada fase é gravada ao terminar.
 - `SECPED_FASES=grades,decisions`: corre só essas fases.
 - `SECPED_ESCOLA`: o *slug* da escola no secPed (por omissão `vovo-eva`).
+- `SECPED_LOGOTIPO`: ficheiro de imagem com o logótipo, que fica na ficha da escola.
 
 Saída:
 - Imprime as contagens e os indicadores.
@@ -62,6 +63,7 @@ Saída:
 | Planos | `subjects`, `courses`, `curricula`, `curriculum_years`, `curriculum_subjects` | tal como estão no secPed, sem materializar o plano nacional |
 | Turmas | `school_classes` × `class_offerings` | 82 turmas |
 | Pessoas | `users` + `student_profiles`, `teacher_profiles` | 1 697 alunos com os números de matrícula (a sequência continua a seguir ao maior), 53 professores e a direcção |
+| Contas | `users` (fase `users`) | 57 contas ligadas às fichas de funcionário: 53 professores, 2 da Direcção, a Secretaria e a Tesouraria (`financas@`), com os perfis da 5g. Login = email do secPed, sem palavra-passe: define-a quem administra |
 | Matrículas | `enrollments`, `enrollment_subjects` | 3 194 matrículas com as disciplinas e o número de ordem |
 | Docência | `subject_teachers`, `schedules` | atribuições (uma por ano quando o professor é o mesmo nos 3 trimestres) e o horário de 2026/27 |
 | Notas | `grades`, `grade_council_adjustments` | 56 322 médias trimestrais, 19 395 CF assinadas, 18 612 PG, 238 bonificações |
@@ -71,8 +73,8 @@ Saída:
 
 ## O que não migrou, e porquê
 - **As 7 facturas de propinas do secPed.** Eram de teste. A facturação certificada (AGT) recomeça no Odoo.
-- **Contas de acesso e palavras-passe.** Os professores são funcionários sem utilizador. As contas criam-se pela Direcção, e as dos alunos e encarregados na Fase 6 (portal).
-- **O logótipo.** Está no armazenamento do secPed (R2) e não se descarregou: carrega-se na ficha da escola.
+- **Palavras-passe e contas sem perfil.** As palavras-passe do secPed não migram. A biblioteca, a reprografia, o RH e a contabilidade ficam sem conta até aos seus módulos. As contas dos alunos e encarregados vêm na Fase 6 (portal).
+- **O logótipo.** A migração não o descarrega (está no armazenamento do secPed). Descarregou-se à parte e entrou com `SECPED_LOGOTIPO`.
 - **Eventos do calendário, aulas e presenças, auditoria e permissões.** São 89 eventos, 2 aulas de teste e nenhuma presença. A auditoria e as permissões são técnicas do secPed; os perfis do Odoo são os da 5g.
 
 ## Achados (para a escola)
@@ -86,12 +88,13 @@ Saída:
 | Aluna pendente no secPed, transita com atraso no cálculo | 1 | A decisão calculada |
 
 ## Testes
-São 6 testes no `edu_migration_secped`, sobre uma escola técnica em memória (`MemorySource`) com um ano fechado e um em curso:
+São 7 testes no `edu_migration_secped`, sobre uma escola técnica em memória (`MemorySource`) com um ano fechado e um em curso:
 - estrutura (escola, turmas, calendário, tempos sobrepostos, regime);
 - pessoas e matrículas (aluno de teste excluído, tipo e ligação das matrículas, atribuição anual, aula fora do plano);
 - notas (CT, CF de 4 casas, PG numa disciplina de 2 tempos, bonificação do conselho, reconciliação a zero);
 - decisões (decisão assinada que vence o cálculo e estado da matrícula);
 - provas e propinas;
+- contas (perfil por papel, ligação à ficha de funcionário, contas de serviço sem perfil no relatório);
 - idempotência (segunda passagem sem duplicar).
 
 No `edu_evaluation` há mais um teste (`test_technical_imported`): médias importadas que não se recalculam e PG não arredondada na CA.
@@ -102,4 +105,4 @@ Pauta final da 12.ª A de Enfermagem (2025/26) gerada na base `vovo_eva`, com os
 ## Por fazer
 - Rever com a escola as 331 decisões em que o regime e a pauta assinada divergem. A regra que a escola aplica de facto pode pedir afinar o regime técnico, por exemplo o número de negativas que admite a transição.
 - Pôr a Epidemiologia Estatística no plano da 12.ª de AC, ou retirá-la do horário.
-- Carregar o logótipo e criar as contas da Direcção, da Secretaria, da Tesouraria e dos professores.
+- Entregar à escola as palavras-passe temporárias das 57 contas (base local: ficheiro fora do repositório) e pedir que as mudem no primeiro acesso.

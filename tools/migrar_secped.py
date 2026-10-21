@@ -9,6 +9,7 @@ Variáveis:
 * ``SECPED_ESCOLA``: o ``slug`` da escola no secPed (por omissão ``vovo-eva``);
 * ``SECPED_FASES``: fases separadas por vírgulas (por omissão, todas);
 * ``SECPED_ENSAIO=1``: corre tudo e desfaz no fim (nada fica gravado);
+* ``SECPED_LOGOTIPO``: ficheiro de imagem com o logótipo da escola (o do secPed está no armazenamento externo);
 * ``SECPED_SAIDA``: directório para ``avisos.csv`` e ``pauta-diferente.csv``. Têm nomes e notas de alunos: nunca
   dentro do repositório.
 
@@ -23,6 +24,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 from odoo.addons.edu_migration_secped.models.edu_migration_secped import PHASES
 from odoo.addons.edu_migration_secped.models.secped_source import SecpedSource
+from odoo.tools.binary import BinaryBytes
 
 dsn = os.environ['SECPED_DSN']
 dsn = urlunsplit(urlsplit(dsn)._replace(query=''))  # o Prisma acrescenta ?schema=…, que o psycopg2 recusa
@@ -40,6 +42,9 @@ try:
     )
 finally:
     source.close()
+logo = os.environ.get('SECPED_LOGOTIPO')
+if logo:
+    env.company.logo = BinaryBytes(pathlib.Path(logo).read_bytes(), pathlib.Path(logo).name)  # noqa: F821
 if dry_run:
     env.cr.rollback()  # noqa: F821
 else:

@@ -55,6 +55,9 @@ def _tables():
         _row(id='u9', role='STUDENT', email='teste@escola.test', firstName='Aluno', lastName='(teste)'),
         _row(id='t1', role='TEACHER', email='rita@escola.ao', firstName='Rita', lastName='Professora'),
         _row(id='d1', role='SCHOOL_ADMIN', email='direccao@escola.ao', firstName='Maria', lastName='Directora'),
+        _row(id='s1', role='ADMIN_SERVICOS', email='secretaria@escola.ao', firstName='Secretaria', lastName=''),
+        _row(id='f1', role='STAFF', email='Financas@escola.ao', firstName='Gestão', lastName='Financeira'),
+        _row(id='b1', role='ADMIN_BIBLIOTECA', email='biblioteca@escola.ao', firstName='Biblioteca', lastName=''),
     ]
     profiles = [
         _row(id='p1', userId='u1', matriculaNumber='2025-0001', matriculaYear=2025, matriculaSeq=1, gender='F'),
@@ -142,6 +145,7 @@ def _tables():
             _row(id='o11', classId='c11', academicYearId='y26', isActive=True, capacity=40),
         ],
         'student_profiles': profiles,
+        'staff_profiles': [_row(id='sp1', userId='f1', position='Gestão Financeira')],
         'teacher_profiles': [_row(id='tp1', userId='t1', specialization='Enfermagem', departmentId='dep')],
         'enrollments': enrollments,
         'enrollment_subjects': [
@@ -334,6 +338,23 @@ class TestEduMigrationSecped(TransactionCase):
         self.assertEqual((schedule.weekday, schedule.hour_from, schedule.teacher_id), ('0', 7.0, teacher))
         self.assertTrue(schedule.time_slot_id)
 
+    def test_users(self):
+        users = self.env['res.users'].search([('company_ids', 'in', self.company.id), ('login', 'like', '@escola.ao')])
+        by_login = {user.login: user for user in users}
+        self.assertEqual(
+            sorted(by_login), ['direccao@escola.ao', 'financas@escola.ao', 'rita@escola.ao', 'secretaria@escola.ao']
+        )
+        teacher = by_login['rita@escola.ao']
+        self.assertTrue(teacher.has_group('edu_core.group_edu_teacher'))
+        self.assertFalse(teacher.has_group('edu_core.group_edu_user'))
+        self.assertEqual(teacher.employee_id.name, 'Rita Professora')
+        self.assertTrue(by_login['direccao@escola.ao'].has_group('edu_core.group_edu_manager'))
+        self.assertEqual(by_login['direccao@escola.ao'].employee_id.job_title, 'Director(a) geral')
+        self.assertTrue(by_login['secretaria@escola.ao'].has_group('edu_core.group_edu_user'))
+        self.assertTrue(by_login['financas@escola.ao'].has_group('edu_fees.group_edu_finance'))
+        self.assertIn(('contas', 'Sem perfil na Secretaria Express, ficaram sem conta: biblioteca@escola.ao'),
+                      self.report['issues'])  # fmt: skip
+
     def test_grades_and_decisions(self):
         lp = self._result('2025-0001', 'LP')
         self.assertEqual((lp.mt1, lp.mt2, lp.mt3), (14.33, 14.29, 12.9))
@@ -368,8 +389,9 @@ class TestEduMigrationSecped(TransactionCase):
         def counts():
             return {
                 model: self.env[model].search_count([('company_id', '=', self.company.id)])
-                for model in ('edu.student', 'edu.enrollment', 'edu.class', 'edu.grade', 'edu.subject.result',
-                              'edu.term.result', 'edu.schedule', 'edu.year.result', 'edu.fee.plan.line')
+                for model in ('res.users', 'edu.student', 'edu.enrollment', 'edu.class', 'edu.grade',
+                              'edu.subject.result', 'edu.term.result', 'edu.schedule', 'edu.year.result',
+                              'edu.fee.plan.line')
             }  # fmt: skip
 
         before = counts()

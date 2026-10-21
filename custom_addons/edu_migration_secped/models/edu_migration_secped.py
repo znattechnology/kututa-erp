@@ -22,6 +22,7 @@ PHASES = (
     'curriculum',
     'classes',
     'people',
+    'users',
     'enrollments',
     'teaching',
     'grades',
@@ -72,6 +73,15 @@ SIGNED_MATCHES = {
     'RETAINED': ('retained',),
     'PENDING': ('pending',),
 }
+# Perfis do secPed → grupo da Secretaria Express (edu_roles). As outras contas de serviço (biblioteca, reprografia,
+# RH, contabilidade) ficam para os módulos respectivos.
+USER_GROUPS = {
+    'SCHOOL_ADMIN': 'edu_core.group_edu_manager',
+    'ADMIN_SERVICOS': 'edu_core.group_edu_user',
+    'ADMIN_FINANCAS': 'edu_fees.group_edu_finance',
+    'TEACHER': 'edu_core.group_edu_teacher',
+}
+FINANCE_POSITIONS = ('gestão financeira', 'tesouraria', 'finanças')
 SIGNED_REASON = 'Decisão da pauta assinada (migração do secPed-Express)'
 
 
@@ -713,6 +723,56 @@ class EduMigrationSecped(models.AbstractModel):
         excluded = len(run.test_users)
         if excluded:
             run.issue('pessoas', f'{excluded} contas de teste do secPed (endereços .test) ficaram de fora')
+
+    # ------------------------------------------------------------------
+    # 5b. Contas de acesso (sem palavra-passe: define-a a Direcção ou o convite por email)
+    # ------------------------------------------------------------------
+    def _phase_users(self, run):
+        positions = {p['userId']: (p.get('position') or '').strip() for p in run.src.rows('staff_profiles')}
+        Users = self.env['res.users'].with_context(no_reset_password=True)
+        internal = self.env.ref('base.group_user')
+        skipped = []
+        items = []
+        for user in run.users.values():
+            role = user.get('role')
+            position = positions.get(user['id'], '')
+            if role == 'STAFF' and position.lower() in FINANCE_POSITIONS:
+                role = 'ADMIN_FINANCAS'
+            group = self.env.ref(USER_GROUPS[role], raise_if_not_found=False) if role in USER_GROUPS else None
+            if not group:
+                if role not in {'STUDENT', 'GUARDIAN'}:
+                    skipped.append(user.get('email') or user['id'])
+                continue
+            login = (user.get('email') or '').strip().lower()
+            if not login:
+                continue
+            employee_id = run.ref('teachers', user['id']) or run.ref('staff', user['id'])
+            name = self.env['hr.employee'].browse(employee_id).name if employee_id else (position or full_name(user))
+            vals = {
+                'name': name,
+                'login': login,
+                'company_id': run.company.id,
+                'company_ids': [fields.Command.link(run.company.id)],
+                'group_ids': [fields.Command.link(internal.id), fields.Command.link(group.id)],
+            }
+            if not run.ref('users', user['id']):
+                existing = Users.with_context(active_test=False).search([('login', '=', login)], limit=1)
+                if existing:
+                    run.ids['users'][user['id']] = existing.id
+                    self.env['ir.model.data'].create(
+                        {'module': XID_MODULE, 'name': f'users__{user["id"]}', 'model': 'res.users',
+                         'res_id': existing.id, 'noupdate': True}
+                    )  # fmt: skip
+            items.append((user['id'], vals))
+        mapped = run.upsert('users', 'res.users', items) if items else {}
+        for sid, user_id in mapped.items():
+            employee_id = run.ref('teachers', sid) or run.ref('staff', sid)
+            if employee_id:
+                employee = self.env['hr.employee'].browse(employee_id)
+                if employee.user_id.id != user_id:
+                    employee.user_id = user_id
+        if skipped:
+            run.issue('contas', f'Sem perfil na Secretaria Express, ficaram sem conta: {", ".join(sorted(skipped))}')
 
     def _guardian_partner(self, run, guardian):
         Partner = self.env['res.partner']
