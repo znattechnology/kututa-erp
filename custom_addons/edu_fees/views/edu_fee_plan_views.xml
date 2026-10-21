@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_fee_plan_list" model="ir.ui.view">
+        <field name="name">edu.fee.plan.list</field>
+        <field name="model">edu.fee.plan</field>
+        <field name="arch" type="xml">
+            <list string="Planos de propinas">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="academic_year_id"/>
+                <field name="course_id" optional="show"/>
+                <field name="class_number" optional="show"/>
+                <field name="class_id" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_fee_plan_form" model="ir.ui.view">
+        <field name="name">edu.fee.plan.form</field>
+        <field name="model">edu.fee.plan</field>
+        <field name="arch" type="xml">
+            <form string="Plano de propinas">
+                <sheet>
+                    <widget name="web_ribbon" title="Arquivado" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title"><h1><field name="name" placeholder="Propinas 2026/2027 — Técnico de Enfermagem"/></h1></div>
+                    <group>
+                        <group string="Âmbito">
+                            <field name="academic_year_id" options="{'no_create': True}"/>
+                            <field name="course_id" options="{'no_create': True}"/>
+                            <field name="class_number"/>
+                            <field name="class_id" options="{'no_create': True}"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Período de cobrança">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="category"/>
+                            <field name="recurrence"/>
+                            <field name="occurrences" optional="hide"/>
+                            <field name="due_day"/>
+                            <field name="amount"/>
+                            <field name="tax_id" options="{'no_create': True}"/>
+                            <field name="product_id" optional="hide" options="{'no_create': True}"/>
+                            <field name="mandatory"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="company_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                    <div class="text-muted">
+                        O plano da turma prevalece sobre o da classe, este sobre o do curso e este sobre o geral. As taxas
+                        obrigatórias (matrícula, propina, exames) facturam-se mês a mês até ao mês corrente; os serviços, o
+                        cartão e os outros cobram-se a pedido. Ensino isento de IVA (M21); cartão e bens com IVA a 14%.
+                    </div>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_fee_plan" model="ir.actions.act_window">
+        <field name="name">Planos de propinas</field>
+        <field name="res_model">edu.fee.plan</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="edu_late_fee_rule_list" model="ir.ui.view">
+        <field name="name">edu.late.fee.rule.list</field>
+        <field name="model">edu.late.fee.rule</field>
+        <field name="arch" type="xml">
+            <list string="Multas por atraso" editable="bottom">
+                <field name="name"/>
+                <field name="fee_line_id" options="{'no_create': True}"/>
+                <field name="fee_type"/>
+                <field name="percent" invisible="fee_type != 'percent'"/>
+                <field name="amount" invisible="fee_type != 'fixed'"/>
+                <field name="grace_days"/>
+                <field name="max_amount"/>
+                <field name="tax_id" options="{'no_create': True}"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_edu_late_fee_rule" model="ir.actions.act_window">
+        <field name="name">Multas por atraso</field>
+        <field name="res_model">edu.late.fee.rule</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+</odoo>

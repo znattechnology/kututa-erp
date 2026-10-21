@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_scholarship_list" model="ir.ui.view">
+        <field name="name">edu.scholarship.list</field>
+        <field name="model">edu.scholarship</field>
+        <field name="arch" type="xml">
+            <list string="Bolsas" decoration-muted="state == 'cancelled'" decoration-info="state == 'draft'">
+                <field name="student_id"/>
+                <field name="academic_year_id"/>
+                <field name="scholarship_type"/>
+                <field name="discount_percent"/>
+                <field name="discount_amount"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="requested_by_id" optional="hide"/>
+                <field name="approved_by_id" optional="show"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge" decoration-success="state == 'approved'"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_scholarship_form" model="ir.ui.view">
+        <field name="name">edu.scholarship.form</field>
+        <field name="model">edu.scholarship</field>
+        <field name="arch" type="xml">
+            <form string="Bolsa">
+                <header>
+                    <button name="action_approve" type="object" string="Aprovar" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Anular" invisible="state == 'cancelled'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="student_id" options="{'no_create': True}"/>
+                            <field name="academic_year_id" options="{'no_create': True}"/>
+                            <field name="scholarship_type"/>
+                            <field name="discount_percent" invisible="scholarship_type == 'full'"/>
+                            <field name="discount_amount" invisible="scholarship_type == 'full'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="requested_by_id"/>
+                            <field name="approved_by_id" invisible="not approved_by_id"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Fundamento da bolsa"/>
+                    <div class="text-muted">
+                        A bolsa aplica-se só à propina e à data de vencimento de cada mês. Com várias bolsas em vigor, vale a mais
+                        vantajosa. As facturas já emitidas não mudam. Os bolseiros do Estado ficam isentos do bloqueio por dívida.
+                    </div>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_scholarship" model="ir.actions.act_window">
+        <field name="name">Bolsas</field>
+        <field name="res_model">edu.scholarship</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

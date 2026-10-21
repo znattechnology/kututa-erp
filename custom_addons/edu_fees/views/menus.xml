@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_edu_fees" name="Propinas" parent="edu_core.menu_edu_root" sequence="36" groups="edu_core.group_edu_user">
+        <menuitem id="menu_edu_invoices" action="action_edu_invoices" sequence="10"/>
+        <menuitem id="menu_edu_debtors" action="action_edu_debtors" sequence="20"/>
+        <menuitem id="menu_edu_scholarship" action="action_edu_scholarship" sequence="30"/>
+    </menuitem>
+    <menuitem id="menu_edu_fee_plan" action="action_edu_fee_plan" parent="edu_core.menu_edu_config" sequence="60"/>
+    <menuitem id="menu_edu_late_fee_rule" action="action_edu_late_fee_rule" parent="edu_core.menu_edu_config" sequence="65"/>
+</odoo>

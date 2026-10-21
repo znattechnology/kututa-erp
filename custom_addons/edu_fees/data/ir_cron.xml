@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_edu_fees_monthly" model="ir.cron">
+        <field name="name">Propinas: gerar as cobranças do mês</field>
+        <field name="model_id" ref="model_edu_fee_plan"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_generate()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+    <record id="ir_cron_edu_fees_overdue" model="ir.cron">
+        <field name="name">Propinas: multas e situação financeira</field>
+        <field name="model_id" ref="model_edu_late_fee_rule"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_overdue()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

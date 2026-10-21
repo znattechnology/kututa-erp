@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A secretaria emite as facturas das propinas e recebe os pagamentos. -->
+    <record id="edu_core.group_edu_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
+    </record>
+</odoo>

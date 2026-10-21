@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_edu_fees" model="ir.ui.view">
+        <field name="name">res.company.form.edu.fees</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="edu_core.view_company_form_edu"/>
+        <field name="arch" type="xml">
+            <page name="edu" position="inside">
+                <group string="Propinas e devedores" invisible="not edu_is_school">
+                    <group>
+                        <field name="edu_fees_journal_id" options="{'no_create': True}"/>
+                        <field name="edu_scholarship_approval"/>
+                        <field name="edu_mark_irregular"/>
+                    </group>
+                    <group>
+                        <field name="edu_gate_mode"/>
+                        <field name="edu_gate_grace_days"/>
+                        <field name="edu_gate_min_age"/>
+                        <field name="edu_gate_reenrollment"/>
+                        <field name="edu_gate_documents"/>
+                        <field name="edu_gate_exams"/>
+                    </group>
+                </group>
+            </page>
+        </field>
+    </record>
+</odoo>

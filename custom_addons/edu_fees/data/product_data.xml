@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="product_tuition" model="product.product">
+        <field name="name">Propina</field>
+        <field name="type">service</field>
+        <field name="default_code">PROP</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <record id="product_enrollment" model="product.product">
+        <field name="name">Matrícula / confirmação</field>
+        <field name="type">service</field>
+        <field name="default_code">MAT</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <record id="product_exam" model="product.product">
+        <field name="name">Exame</field>
+        <field name="type">service</field>
+        <field name="default_code">EXA</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <record id="product_service" model="product.product">
+        <field name="name">Serviço escolar</field>
+        <field name="type">service</field>
+        <field name="default_code">SERV</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <record id="product_card" model="product.product">
+        <field name="name">Cartão de estudante</field>
+        <field name="type">service</field>
+        <field name="default_code">CART</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <record id="product_late_fee" model="product.product">
+        <field name="name">Multa por atraso no pagamento</field>
+        <field name="type">service</field>
+        <field name="default_code">MULTA</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+</odoo>
