@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_enrollment_drop_form" model="ir.ui.view">
+        <field name="name">edu.enrollment.drop.form</field>
+        <field name="model">edu.enrollment.drop</field>
+        <field name="arch" type="xml">
+            <form string="Anular a matrícula">
+                <group>
+                    <field name="enrollment_ids" widget="many2many_tags" readonly="1"/>
+                    <field name="date"/>
+                    <field name="reason" placeholder="Desistência, mudança de residência…"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Anular" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

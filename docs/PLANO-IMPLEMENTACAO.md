@@ -36,7 +36,7 @@ Decisões tomadas:
 | 2. `l10n_ao_edi` e `l10n_ao_edi_pos` | Concluída e auditada; falta a homologação AGT (sem credenciais) | `docs/fases/fase-2*.md`, `auditoria-fase-2.md` |
 | 3. Contabilidade | Concluída e auditada: `l10n_ao_reports` (3a), `l10n_ao_asset` (3b), `l10n_ao_saft` (3c), `l10n_ao_stock` (3d, no lugar do `l10n_ao_edi_stock`) | `docs/fases/fase-3*.md` |
 | 4. RH e salários | Concluída e auditada: `l10n_ao_hr` (4a) e `l10n_ao_payroll` (4b) | `docs/fases/fase-4-l10n_ao_hr-payroll.md`, `auditoria-fase-4.md` |
-| 5. Académico | Em curso: 5a concluída (`edu_core`, `edu_people`); a seguir 5b (`edu_enrollment`, `edu_timetable`) | `docs/fases/fase-5a-edu_core-people.md` |
+| 5. Académico | Em curso: 5a (`edu_core`, `edu_people`) e 5b (`edu_timetable`, `edu_enrollment`) concluídas; a seguir 5c (`edu_attendance`, `edu_evaluation`) | `docs/fases/fase-5a-edu_core-people.md`, `fase-5b-edu_timetable-enrollment.md` |
 
 ## Princípios de arquitectura
 1. **Nunca editar `odoo/`.** Todo o código fica em `custom_addons/`, para que as actualizações do Odoo 20.0 continuem a ser só `git submodule update`.

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_application_list" model="ir.ui.view">
+        <field name="name">edu.application.list</field>
+        <field name="model">edu.application</field>
+        <field name="arch" type="xml">
+            <list string="Candidaturas" decoration-muted="state in ('rejected', 'cancelled')" decoration-info="state in ('submitted', 'review')">
+                <field name="name"/>
+                <field name="academic_year_id"/>
+                <field name="desired_course_id" optional="show"/>
+                <field name="desired_class_number" optional="show"/>
+                <field name="guardian_name" optional="show"/>
+                <field name="guardian_phone" optional="hide"/>
+                <field name="submitted_date" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'" decoration-info="state in ('submitted', 'review')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_application_form" model="ir.ui.view">
+        <field name="name">edu.application.form</field>
+        <field name="model">edu.application</field>
+        <field name="arch" type="xml">
+            <form string="Candidatura">
+                <header>
+                    <button name="action_submit" type="object" string="Submeter" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_review" type="object" string="Pôr em análise" invisible="state != 'submitted'"/>
+                    <button name="action_approve" type="object" string="Aprovar e matricular" class="btn-primary" invisible="state not in ('submitted', 'review')"/>
+                    <button name="action_reject" type="object" string="Rejeitar" invisible="state not in ('submitted', 'review')"/>
+                    <button name="action_cancel" type="object" string="Cancelar" invisible="state in ('approved', 'cancelled')"/>
+                    <button name="action_draft" type="object" string="Voltar a rascunho" invisible="state not in ('rejected', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,review,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="Nome completo do candidato"/></h1></div>
+                    <group>
+                        <group string="Candidato(a)">
+                            <field name="birth_date"/>
+                            <field name="gender"/>
+                            <field name="id_number"/>
+                            <field name="vat"/>
+                            <field name="birthplace"/>
+                            <field name="father_name"/>
+                            <field name="mother_name"/>
+                            <field name="street"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="email" widget="email"/>
+                        </group>
+                        <group string="Encarregado(a) de educação">
+                            <field name="guardian_name"/>
+                            <field name="guardian_relationship"/>
+                            <field name="guardian_phone" widget="phone"/>
+                            <field name="guardian_email" widget="email"/>
+                            <field name="guardian_vat"/>
+                        </group>
+                        <group string="Pretensão">
+                            <field name="academic_year_id" options="{'no_create': True}"/>
+                            <field name="desired_level_id" options="{'no_create': True}"/>
+                            <field name="desired_course_id" options="{'no_create': True}"/>
+                            <field name="desired_class_number"/>
+                            <field name="previous_school"/>
+                            <field name="transfer_in"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Decisão">
+                            <field name="class_id" options="{'no_create': True}" readonly="state not in ('submitted', 'review')"/>
+                            <field name="decision_note"/>
+                            <field name="student_id" invisible="not student_id"/>
+                            <field name="enrollment_id" invisible="not enrollment_id"/>
+                            <field name="submitted_date" invisible="not submitted_date"/>
+                            <field name="reviewed_by_id" invisible="not reviewed_by_id"/>
+                            <field name="reviewed_date" invisible="not reviewed_date"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_application_search" model="ir.ui.view">
+        <field name="name">edu.application.search</field>
+        <field name="model">edu.application</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', '|', ('name', 'ilike', self), ('id_number', 'ilike', self), ('guardian_name', 'ilike', self)]"/>
+                <filter name="to_review" string="Por decidir" domain="[('state', 'in', ('submitted', 'review'))]"/>
+                <filter name="approved" string="Aprovadas" domain="[('state', '=', 'approved')]"/>
+                <group>
+                    <filter name="group_course" string="Curso" context="{'group_by': 'desired_course_id'}"/>
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_application" model="ir.actions.act_window">
+        <field name="name">Candidaturas</field>
+        <field name="res_model">edu.application</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_to_review': 1}</field>
+    </record>
+
+    <menuitem id="menu_edu_application" action="action_edu_application" parent="edu_core.menu_edu_students" sequence="3"/>
+</odoo>

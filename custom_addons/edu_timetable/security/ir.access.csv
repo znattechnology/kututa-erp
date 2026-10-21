@@ -1,0 +1,17 @@
+id,name,model_id,group_id/id,operation,domain
+access_edu_time_slot_user,access_edu_time_slot_user,edu.time.slot,edu_core.group_edu_user,r,
+access_edu_time_slot_manager,access_edu_time_slot_manager,edu.time.slot,edu_core.group_edu_manager,crud,
+access_edu_time_slot_employee,access_edu_time_slot_employee,edu.time.slot,base.group_user,r,
+access_edu_teaching_assignment_user,access_edu_teaching_assignment_user,edu.teaching.assignment,edu_core.group_edu_user,crud,
+access_edu_teaching_assignment_employee,access_edu_teaching_assignment_employee,edu.teaching.assignment,base.group_user,r,
+access_edu_schedule_user,access_edu_schedule_user,edu.schedule,edu_core.group_edu_user,crud,
+access_edu_schedule_employee,access_edu_schedule_employee,edu.schedule,base.group_user,r,
+access_edu_schedule_exception_user,access_edu_schedule_exception_user,edu.schedule.exception,edu_core.group_edu_user,crud,
+access_edu_schedule_exception_employee,access_edu_schedule_exception_employee,edu.schedule.exception,base.group_user,r,
+access_edu_schedule_replacement_user,access_edu_schedule_replacement_user,edu.schedule.replacement,edu_core.group_edu_user,crud,
+access_edu_schedule_replacement_employee,access_edu_schedule_replacement_employee,edu.schedule.replacement,base.group_user,r,
+edu_time_slot_comp_rule,edu.time.slot multi-empresa,edu.time.slot,,crud,"[('company_id', 'in', company_ids)]"
+edu_teaching_assignment_comp_rule,edu.teaching.assignment multi-empresa,edu.teaching.assignment,,crud,"[('company_id', 'in', company_ids)]"
+edu_schedule_comp_rule,edu.schedule multi-empresa,edu.schedule,,crud,"[('company_id', 'in', company_ids)]"
+edu_schedule_exception_comp_rule,edu.schedule.exception multi-empresa,edu.schedule.exception,,crud,"[('company_id', 'in', company_ids)]"
+edu_schedule_replacement_comp_rule,edu.schedule.replacement multi-empresa,edu.schedule.replacement,,crud,"[('company_id', 'in', company_ids)]"

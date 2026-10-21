@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_class_form_timetable" model="ir.ui.view">
+        <field name="name">edu.class.form.timetable</field>
+        <field name="model">edu.class</field>
+        <field name="inherit_id" ref="edu_core.edu_class_form"/>
+        <field name="arch" type="xml">
+            <field name="capacity" position="after">
+                <field name="director_id" options="{'no_create': True}"/>
+            </field>
+            <page name="subjects" position="after">
+                <page string="Professores" name="teachers">
+                    <field name="assignment_ids" context="{'default_class_id': id}">
+                        <list editable="bottom" decoration-warning="not qualified">
+                            <field name="subject_id" options="{'no_create': True}"/>
+                            <field name="teacher_id" options="{'no_create': True}"/>
+                            <field name="trimester_id" options="{'no_create': True}"/>
+                            <field name="weekly_hours"/>
+                            <field name="qualified" column_invisible="1"/>
+                            <field name="academic_year_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="Horário" name="schedule">
+                    <div class="alert alert-warning" role="alert" invisible="not schedule_check">
+                        <strong>Tempos do horário diferentes do plano curricular:</strong>
+                        <field name="schedule_check" nolabel="1"/>
+                    </div>
+                    <field name="schedule_grid" nolabel="1"/>
+                    <field name="schedule_ids" context="{'default_class_id': id}">
+                        <list editable="bottom">
+                            <field name="weekday"/>
+                            <field name="time_slot_id" options="{'no_create': True}"/>
+                            <field name="hour_from" widget="float_time"/>
+                            <field name="hour_to" widget="float_time"/>
+                            <field name="subject_id" options="{'no_create': True}"/>
+                            <field name="teacher_id" options="{'no_create': True}"/>
+                            <field name="room_id" options="{'no_create': True}"/>
+                            <field name="trimester_id" optional="hide" options="{'no_create': True}"/>
+                            <field name="academic_year_id" column_invisible="1"/>
+                            <field name="company_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+            </page>
+        </field>
+    </record>
+
+    <record id="edu_class_list_timetable" model="ir.ui.view">
+        <field name="name">edu.class.list.timetable</field>
+        <field name="model">edu.class</field>
+        <field name="inherit_id" ref="edu_core.edu_class_list"/>
+        <field name="arch" type="xml">
+            <field name="capacity" position="before">
+                <field name="director_id" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_employee_form_edu_timetable" model="ir.ui.view">
+        <field name="name">hr.employee.form.edu.timetable</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="edu_people.view_employee_form_edu"/>
+        <field name="arch" type="xml">
+            <field name="edu_coordination_id" position="after">
+                <label for="edu_weekly_load" invisible="not edu_is_teacher"/>
+                <div class="o_row" invisible="not edu_is_teacher">
+                    <field name="edu_weekly_load" decoration-danger="edu_weekly_load &gt; edu_weekly_load_max"/>
+                    <span>de</span>
+                    <field name="edu_weekly_load_max"/>
+                </div>
+            </field>
+        </field>
+    </record>
+</odoo>

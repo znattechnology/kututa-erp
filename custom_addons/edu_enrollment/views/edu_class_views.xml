@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_class_form_enrollment" model="ir.ui.view">
+        <field name="name">edu.class.form.enrollment</field>
+        <field name="model">edu.class</field>
+        <field name="inherit_id" ref="edu_core.edu_class_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_enrollments" type="object" class="oe_stat_button" icon="fa-users">
+                    <field name="student_count" widget="statinfo" string="Alunos"/>
+                </button>
+            </div>
+            <sheet position="before">
+                <header>
+                    <button name="action_renumber_alphabetical" type="object" string="Numerar por ordem alfabética"
+                            confirm="Renumera os alunos da turma por ordem alfabética. Use no início do ano, antes das primeiras notas. Continuar?"/>
+                </header>
+            </sheet>
+            <field name="capacity" position="after">
+                <field name="seats_available"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="edu_class_list_enrollment" model="ir.ui.view">
+        <field name="name">edu.class.list.enrollment</field>
+        <field name="model">edu.class</field>
+        <field name="inherit_id" ref="edu_core.edu_class_list"/>
+        <field name="arch" type="xml">
+            <field name="capacity" position="after">
+                <field name="student_count"/>
+                <field name="seats_available" optional="show"/>
+            </field>
+        </field>
+    </record>
+</odoo>

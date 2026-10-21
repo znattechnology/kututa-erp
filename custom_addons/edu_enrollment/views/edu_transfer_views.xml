@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_transfer_list" model="ir.ui.view">
+        <field name="name">edu.transfer.list</field>
+        <field name="model">edu.transfer</field>
+        <field name="arch" type="xml">
+            <list string="Transferências">
+                <field name="student_id"/>
+                <field name="transfer_type"/>
+                <field name="from_class_id" optional="show"/>
+                <field name="to_class_id" optional="show"/>
+                <field name="external_school" optional="show"/>
+                <field name="effective_date"/>
+                <field name="state" widget="badge" decoration-success="state == 'completed'" decoration-info="state in ('pending', 'approved')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_transfer_form" model="ir.ui.view">
+        <field name="name">edu.transfer.form</field>
+        <field name="model">edu.transfer</field>
+        <field name="arch" type="xml">
+            <form string="Transferência">
+                <header>
+                    <button name="action_approve" type="object" string="Aprovar" class="btn-primary" invisible="state != 'pending'"/>
+                    <button name="action_reject" type="object" string="Rejeitar" invisible="state != 'pending'"/>
+                    <button name="action_complete" type="object" string="Concluir" class="btn-primary" invisible="state != 'approved'"
+                            confirm="Aplica a transferência à matrícula. Continuar?"/>
+                    <button name="action_cancel" type="object" string="Cancelar" invisible="state in ('completed', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,approved,completed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="student_id" readonly="state != 'pending'" options="{'no_create': True}"/>
+                            <field name="enrollment_id" readonly="state != 'pending'" options="{'no_create': True}"/>
+                            <field name="transfer_type" readonly="state != 'pending'"/>
+                            <field name="academic_year_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="from_class_id" invisible="not from_class_id"/>
+                            <field name="to_class_id" invisible="transfer_type == 'external'" readonly="state not in ('pending', 'approved')" options="{'no_create': True}"/>
+                            <field name="external_school" invisible="transfer_type != 'external'" readonly="state not in ('pending', 'approved')"/>
+                            <field name="effective_date"/>
+                            <field name="reviewed_by_id" invisible="not reviewed_by_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason"/>
+                        <field name="decision_note"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edu_transfer" model="ir.actions.act_window">
+        <field name="name">Transferências</field>
+        <field name="res_model">edu.transfer</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_edu_transfer" action="action_edu_transfer" parent="edu_core.menu_edu_students" sequence="30"/>
+</odoo>

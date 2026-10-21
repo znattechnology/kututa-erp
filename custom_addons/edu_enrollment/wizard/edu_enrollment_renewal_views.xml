@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_enrollment_renewal_form" model="ir.ui.view">
+        <field name="name">edu.enrollment.renewal.form</field>
+        <field name="model">edu.enrollment.renewal</field>
+        <field name="arch" type="xml">
+            <form string="Rematrícula">
+                <group>
+                    <group>
+                        <field name="source_class_id" options="{'no_create': True}"/>
+                        <field name="source_year_id" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group>
+                        <field name="target_class_id" options="{'no_create': True}"/>
+                        <field name="confirm"/>
+                    </group>
+                </group>
+                <field name="enrollment_ids">
+                    <list>
+                        <field name="order_number"/>
+                        <field name="student_id"/>
+                        <field name="state" widget="badge"/>
+                    </list>
+                </field>
+                <div class="text-muted">
+                    Repetentes: escolha uma turma da mesma classe. A decisão de transição e os bloqueios de devedores
+                    são verificados pela avaliação e pelas propinas, quando instaladas.
+                </div>
+                <footer>
+                    <button name="action_confirm" type="object" string="Rematricular" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edu_enrollment_renewal" model="ir.actions.act_window">
+        <field name="name">Rematrícula</field>
+        <field name="res_model">edu.enrollment.renewal</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

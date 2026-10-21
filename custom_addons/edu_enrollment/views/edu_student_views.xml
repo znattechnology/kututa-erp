@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_student_form_enrollment" model="ir.ui.view">
+        <field name="name">edu.student.form.enrollment</field>
+        <field name="model">edu.student</field>
+        <field name="inherit_id" ref="edu_people.edu_student_form"/>
+        <field name="arch" type="xml">
+            <field name="primary_guardian_id" position="before">
+                <field name="current_class_id"/>
+            </field>
+            <page name="guardians" position="before">
+                <page string="Matrículas" name="enrollments">
+                    <field name="enrollment_ids" readonly="1">
+                        <list decoration-muted="state in ('dropped', 'transferred')">
+                            <field name="academic_year_id"/>
+                            <field name="class_id"/>
+                            <field name="order_number"/>
+                            <field name="enrollment_type"/>
+                            <field name="state" widget="badge"/>
+                        </list>
+                    </field>
+                </page>
+            </page>
+        </field>
+    </record>
+
+    <record id="edu_student_list_enrollment" model="ir.ui.view">
+        <field name="name">edu.student.list.enrollment</field>
+        <field name="model">edu.student</field>
+        <field name="inherit_id" ref="edu_people.edu_student_list"/>
+        <field name="arch" type="xml">
+            <field name="primary_guardian_id" position="before">
+                <field name="current_class_id" optional="show"/>
+            </field>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_schedule_list" model="ir.ui.view">
+        <field name="name">edu.schedule.list</field>
+        <field name="model">edu.schedule</field>
+        <field name="arch" type="xml">
+            <list string="Horários" editable="bottom">
+                <field name="class_id" options="{'no_create': True}"/>
+                <field name="academic_year_id" column_invisible="1"/>
+                <field name="company_id" column_invisible="1"/>
+                <field name="weekday"/>
+                <field name="time_slot_id" options="{'no_create': True}"/>
+                <field name="hour_from" widget="float_time"/>
+                <field name="hour_to" widget="float_time"/>
+                <field name="subject_id" options="{'no_create': True}"/>
+                <field name="teacher_id" options="{'no_create': True}"/>
+                <field name="room_id" options="{'no_create': True}"/>
+                <field name="trimester_id" optional="hide" options="{'no_create': True}"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_schedule_form" model="ir.ui.view">
+        <field name="name">edu.schedule.form</field>
+        <field name="model">edu.schedule</field>
+        <field name="arch" type="xml">
+            <form string="Tempo do horário">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="class_id" options="{'no_create': True}"/>
+                            <field name="subject_id" options="{'no_create': True}"/>
+                            <field name="teacher_id" options="{'no_create': True}"/>
+                            <field name="room_id" options="{'no_create': True}"/>
+                            <field name="academic_year_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="weekday"/>
+                            <field name="time_slot_id" options="{'no_create': True}"/>
+                            <field name="hour_from" widget="float_time"/>
+                            <field name="hour_to" widget="float_time"/>
+                            <field name="trimester_id" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Substituições" name="replacements">
+                            <field name="replacement_ids">
+                                <list editable="bottom">
+                                    <field name="date"/>
+                                    <field name="original_teacher_id"/>
+                                    <field name="replacement_teacher_id" options="{'no_create': True}"/>
+                                    <field name="reason"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Aulas sem realização" name="exceptions">
+                            <field name="exception_ids">
+                                <list editable="bottom">
+                                    <field name="date"/>
+                                    <field name="reason"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_schedule_search" model="ir.ui.view">
+        <field name="name">edu.schedule.search</field>
+        <field name="model">edu.schedule</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="class_id"/>
+                <field name="teacher_id"/>
+                <field name="room_id"/>
+                <field name="subject_id"/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <group>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                    <filter name="group_teacher" string="Professor" context="{'group_by': 'teacher_id'}"/>
+                    <filter name="group_weekday" string="Dia" context="{'group_by': 'weekday'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_schedule" model="ir.actions.act_window">
+        <field name="name">Horários</field>
+        <field name="res_model">edu.schedule</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_current_year': 1, 'search_default_group_class': 1}</field>
+    </record>
+
+    <record id="edu_schedule_replacement_list" model="ir.ui.view">
+        <field name="name">edu.schedule.replacement.list</field>
+        <field name="model">edu.schedule.replacement</field>
+        <field name="arch" type="xml">
+            <list string="Substituições">
+                <field name="date"/>
+                <field name="schedule_id"/>
+                <field name="original_teacher_id"/>
+                <field name="replacement_teacher_id"/>
+                <field name="reason"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_edu_schedule_replacement" model="ir.actions.act_window">
+        <field name="name">Substituições</field>
+        <field name="res_model">edu.schedule.replacement</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_edu_schedule" action="action_edu_schedule" parent="edu_core.menu_edu_academic" sequence="40"/>
+    <menuitem id="menu_edu_schedule_replacement" action="action_edu_schedule_replacement" parent="edu_core.menu_edu_academic" sequence="45"/>
+</odoo>

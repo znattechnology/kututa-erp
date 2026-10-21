@@ -1,0 +1,233 @@
+from odoo import api, fields, models
+from odoo.exceptions import ValidationError
+
+from .edu_time_slot import format_hour
+
+WEEKDAYS = [
+    ('0', 'Segunda-feira'),
+    ('1', 'Terça-feira'),
+    ('2', 'Quarta-feira'),
+    ('3', 'Quinta-feira'),
+    ('4', 'Sexta-feira'),
+    ('5', 'Sábado'),
+    ('6', 'Domingo'),
+]
+
+
+class EduSchedule(models.Model):
+    """Tempo do horário semanal da turma. Cada linha é um tempo lectivo e conta para a carga semanal do plano."""
+
+    _name = 'edu.schedule'
+    _description = 'Horário (tempo semanal)'
+    _order = 'class_id, weekday, hour_from'
+    _check_company_auto = True
+
+    class_id = fields.Many2one(
+        'edu.class', string='Turma', required=True, index=True, ondelete='cascade', check_company=True
+    )
+    company_id = fields.Many2one(related='class_id.company_id', store=True, index=True)
+    academic_year_id = fields.Many2one(related='class_id.academic_year_id', store=True, index=True)
+    subject_id = fields.Many2one('edu.subject', string='Disciplina', required=True, index=True, check_company=True)
+    teacher_id = fields.Many2one(
+        'hr.employee',
+        string='Professor(a)',
+        compute='_compute_teacher_id',
+        store=True,
+        readonly=False,
+        precompute=True,
+        index=True,
+        check_company=True,
+        domain="[('edu_is_teacher', '=', True)]",
+    )
+    room_id = fields.Many2one(
+        'edu.room',
+        string='Sala',
+        compute='_compute_room_id',
+        store=True,
+        readonly=False,
+        precompute=True,
+        check_company=True,
+    )
+    trimester_id = fields.Many2one(
+        'edu.trimester',
+        string='Trimestre',
+        domain="[('academic_year_id', '=', academic_year_id)]",
+        help='Vazio: o ano lectivo inteiro.',
+    )
+    weekday = fields.Selection(WEEKDAYS, string='Dia', required=True, default='0')
+    time_slot_id = fields.Many2one(
+        'edu.time.slot',
+        string='Tempo',
+        domain="[('is_break', '=', False), ('company_id', '=', company_id)]",
+        check_company=True,
+    )
+    hour_from = fields.Float(
+        string='Das', compute='_compute_hours', store=True, readonly=False, precompute=True, required=True
+    )
+    hour_to = fields.Float(
+        string='Às', compute='_compute_hours', store=True, readonly=False, precompute=True, required=True
+    )
+    exception_ids = fields.One2many('edu.schedule.exception', 'schedule_id', string='Aulas sem realização')
+    replacement_ids = fields.One2many('edu.schedule.replacement', 'schedule_id', string='Substituições')
+
+    @api.depends('class_id', 'subject_id')
+    def _compute_teacher_id(self):
+        Assignment = self.env['edu.teaching.assignment']
+        for schedule in self:
+            if schedule.class_id and schedule.subject_id and not schedule.teacher_id:
+                schedule.teacher_id = Assignment._teacher_for(schedule.class_id, schedule.subject_id)
+
+    @api.depends('class_id')
+    def _compute_room_id(self):
+        for schedule in self:
+            if not schedule.room_id:
+                schedule.room_id = schedule.class_id.room_id
+
+    @api.depends('time_slot_id')
+    def _compute_hours(self):
+        for schedule in self:
+            if schedule.time_slot_id:
+                schedule.hour_from = schedule.time_slot_id.hour_from
+                schedule.hour_to = schedule.time_slot_id.hour_to
+
+    @api.depends('subject_id', 'weekday', 'hour_from', 'hour_to')
+    def _compute_display_name(self):
+        days = dict(WEEKDAYS)
+        for schedule in self:
+            schedule.display_name = (
+                f'{days.get(schedule.weekday, "")} {format_hour(schedule.hour_from)}-'
+                f'{format_hour(schedule.hour_to)} · {schedule.subject_id.name or ""}'
+            )
+
+    def _overlapping(self, field_name):
+        """Outros tempos no mesmo dia e hora, com o mesmo valor em ``field_name``, em trimestres que se cruzam."""
+        self.ensure_one()
+        domain = [
+            ('id', '!=', self.id),
+            (field_name, '=', self[field_name].id),
+            ('academic_year_id', '=', self.academic_year_id.id),
+            ('weekday', '=', self.weekday),
+            ('hour_from', '<', self.hour_to),
+            ('hour_to', '>', self.hour_from),
+        ]
+        if self.trimester_id:
+            domain.append(('trimester_id', 'in', [False, self.trimester_id.id]))
+        return self.search(domain, limit=1)
+
+    @api.constrains('class_id', 'teacher_id', 'room_id', 'weekday', 'hour_from', 'hour_to', 'trimester_id')
+    def _check_conflicts(self):
+        for schedule in self:
+            if not 0 <= schedule.hour_from < schedule.hour_to <= 24:
+                raise ValidationError(self.env._('As horas do tempo não são válidas.'))
+            subjects = schedule.class_id.subject_line_ids.subject_id
+            if subjects and schedule.subject_id not in subjects:
+                raise ValidationError(self.env._('%s não faz parte do plano da turma.', schedule.subject_id.name))
+            checks = [
+                ('class_id', self.env._('A turma %(name)s já tem %(other)s.')),
+                ('teacher_id', self.env._('O(A) professor(a) %(name)s já está ocupado(a): %(other)s.')),
+                ('room_id', self.env._('A sala %(name)s já está ocupada: %(other)s.')),
+            ]
+            for field_name, message in checks:
+                if not schedule[field_name]:
+                    continue
+                clash = schedule._overlapping(field_name)
+                if clash:
+                    raise ValidationError(
+                        message
+                        % {
+                            'name': schedule[field_name].display_name,
+                            'other': f'{clash.display_name} ({clash.class_id.display_name})',
+                        }
+                    )
+
+    def _occurs_on(self, day):
+        """O tempo realiza-se nesta data: dia da semana, trimestre e sem excepção registada."""
+        self.ensure_one()
+        if str(day.weekday()) != self.weekday:
+            return False
+        if self.trimester_id and not self.trimester_id.date_start <= day <= self.trimester_id.date_end:
+            return False
+        year = self.academic_year_id
+        if not year.date_start <= day <= year.date_end:
+            return False
+        return not self.exception_ids.filtered(lambda e: e.date == day)
+
+    def _teacher_on(self, day):
+        """Professor que dá a aula nesta data (o substituto, se houver)."""
+        self.ensure_one()
+        replacement = self.replacement_ids.filtered(lambda r: r.date == day)
+        return replacement.replacement_teacher_id if replacement else self.teacher_id
+
+
+class EduScheduleException(models.Model):
+    _name = 'edu.schedule.exception'
+    _description = 'Aula sem realização'
+    _order = 'date desc'
+
+    schedule_id = fields.Many2one('edu.schedule', string='Tempo', required=True, ondelete='cascade', index=True)
+    company_id = fields.Many2one(related='schedule_id.company_id', store=True)
+    date = fields.Date(string='Data', required=True)
+    reason = fields.Char(string='Motivo', help='Feriado, greve, actividade da escola…')
+
+    _schedule_date_uniq = models.Constraint('UNIQUE(schedule_id, date)', 'Já está registado para esta data.')
+
+    @api.constrains('date', 'schedule_id')
+    def _check_date(self):
+        for exception in self:
+            if str(exception.date.weekday()) != exception.schedule_id.weekday:
+                raise ValidationError(self.env._('Nesta data não há este tempo no horário.'))
+
+
+class EduScheduleReplacement(models.Model):
+    _name = 'edu.schedule.replacement'
+    _description = 'Substituição de professor'
+    _order = 'date desc'
+    _check_company_auto = True
+
+    schedule_id = fields.Many2one('edu.schedule', string='Tempo', required=True, ondelete='cascade', index=True)
+    company_id = fields.Many2one(related='schedule_id.company_id', store=True)
+    date = fields.Date(string='Data', required=True)
+    original_teacher_id = fields.Many2one(
+        'hr.employee',
+        string='Professor(a) da turma',
+        compute='_compute_original_teacher_id',
+        store=True,
+        precompute=True,
+    )
+    replacement_teacher_id = fields.Many2one(
+        'hr.employee',
+        string='Substituto(a)',
+        required=True,
+        check_company=True,
+        domain="[('edu_is_teacher', '=', True)]",
+    )
+    reason = fields.Char(string='Motivo')
+
+    _schedule_date_uniq = models.Constraint('UNIQUE(schedule_id, date)', 'Esta aula já tem substituto nesta data.')
+
+    @api.depends('schedule_id')
+    def _compute_original_teacher_id(self):
+        for replacement in self:
+            replacement.original_teacher_id = replacement.schedule_id.teacher_id
+
+    @api.constrains('date', 'schedule_id', 'replacement_teacher_id')
+    def _check_replacement(self):
+        for replacement in self:
+            schedule = replacement.schedule_id
+            if not schedule._occurs_on(replacement.date):
+                raise ValidationError(self.env._('Nesta data não há esta aula.'))
+            if replacement.replacement_teacher_id == schedule.teacher_id:
+                raise ValidationError(self.env._('O substituto é o próprio professor da turma.'))
+            busy = self.env['edu.schedule'].search(
+                [
+                    ('teacher_id', '=', replacement.replacement_teacher_id.id),
+                    ('weekday', '=', schedule.weekday),
+                    ('hour_from', '<', schedule.hour_to),
+                    ('hour_to', '>', schedule.hour_from),
+                ]
+            )
+            teacher = replacement.replacement_teacher_id
+            if any(
+                other._occurs_on(replacement.date) and other._teacher_on(replacement.date) == teacher for other in busy
+            ):
+                raise ValidationError(self.env._('%s tem aula a essa hora.', replacement.replacement_teacher_id.name))
