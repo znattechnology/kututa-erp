@@ -263,13 +263,6 @@ class EduPautaPrint(models.TransientModel):
                 chunks.append([last.pop()])
 
         legend = LEGEND_TECHNICAL if technical else LEGEND_GENERAL + (LEGEND_NATIONAL if national else '')
-        context = [
-            f'ANO LECTIVO: {self.class_id.academic_year_id.name}',
-            f'CLASSE: {self.class_id.class_number}ª',
-            f'TURMA: {self.class_id.name}',
-        ]
-        if self.class_id.course_id:
-            context.append(f'CURSO: {self.class_id.course_id.name}')
         return {
             'technical': technical,
             'final': final,
@@ -280,7 +273,7 @@ class EduPautaPrint(models.TransientModel):
             'rows': rows,
             'teachers': teachers,
             'title': f'MAPA DE APROVEITAMENTO DO {ROMAN.get(number, number)}º TRIMESTRE',
-            'context': '\u2003\u2003'.join(context),
+            'context': self.class_id._document_context(),
             'legend': f'{legend}; {LEGEND_COMMON}',
             'scale': f'Escala 0–{policy.scale_max} · aprovação mínima {round_units(pass_grade)} valores.',
         }
@@ -344,30 +337,19 @@ class EduPautaPrint(models.TransientModel):
         count = max(len(subjects), 1)
         name_pct = 22 if count <= 8 else (19 if count <= 12 else 16)
         subject_pct = (100 - 2.2 - 3.2 - name_pct) / count
-        location = ', '.join(p for p in [self.company_id.street, self.company_id.city] if p)
-        contacts = ' · '.join(
-            p
-            for p in [
-                self.company_id.phone and f'Tel.: {self.company_id.phone}',
-                self.company_id.email and f'E-mail: {self.company_id.email}',
-            ]
-            if p
-        )
         return {
             'subjects': subjects,
             'letters': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
             'label': label,
             'rows': rows,
-            'title': f'MAPA DE APROVEITAMENTO REFERENTE AO {ROMAN.get(number, number)} TRIMESTRE'
-            f' · {self.class_id.academic_year_id.name}',
+            'title': f'MAPA DE APROVEITAMENTO REFERENTE AO {ROMAN.get(number, number)} TRIMESTRE',
+            'context': self.class_id._document_context(),
             'note': f'{label} — {description} · FJ/FI — faltas justificadas/injustificadas · negativas '
             f'(< {round_units(policy.pass_grade)}) a vermelho.',
             'name_pct': name_pct,
             'subject_pct': subject_pct,
             # Colunas estreitas: os nomes das disciplinas em minúsculas e mais pequenos, para não partirem a meio.
             'tight': subject_pct < 7.5,
-            'location': location,
-            'contacts': contacts,
         }
 
     def _year_results(self):

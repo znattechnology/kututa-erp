@@ -12,60 +12,28 @@
                     <t t-set="m" t-value="o._mini_pauta_data()"/>
                     <style>
                         .mp { font-family: Arial, "Liberation Sans", Helvetica, sans-serif; color: #000; line-height: 1.3; }
-                        .mp-mast { display: table; width: 100%; margin-bottom: 4px; line-height: 1.2; }
-                        .mp-mast > div { display: table-cell; vertical-align: middle; }
-                        .mp-mast .mp-logo { width: 130px; }
-                        .mp-mast .mp-logo img { max-height: 46px; max-width: 120px; }
-                        .mp-mast .mp-text { text-align: center; }
-                        .mp-official { font-weight: bold; font-size: 12.5px; }
-                        .mp-school { font-weight: bold; font-size: 13.5px; text-transform: uppercase; margin-top: 2px; }
-                        .mp-sub { font-size: 11.5px; color: #333; }
-                        .mp-small { font-size: 11px; color: #6b6b6b; }
-                        .mp-title { text-align: center; margin-bottom: 5px; }
-                        .mp-title span { font-weight: bold; font-size: 15px; text-transform: uppercase; }
-                        .mp-line { font-size: 12px; margin-top: 2px; }
                         table.mp-grid { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
-                        table.mp-grid th, table.mp-grid td { border-right: 1px solid #bbb; border-bottom: 1px solid #bbb; text-align: center; padding: 0; line-height: 1.15; }
-                        table.mp-grid tr > :first-child { border-left: 1px solid #bbb; }
-                        table.mp-grid thead tr:first-child th { border-top: 1px solid #999; }
+                        table.mp-grid th, table.mp-grid td { border-right: 1px solid #c8c8c8; border-bottom: 1px solid #c8c8c8; text-align: center; padding: 0; line-height: 1.15; }
+                        table.mp-grid tr > :first-child { border-left: 1px solid #c8c8c8; }
+                        table.mp-grid thead tr:first-child th { border-top: 1px solid #969696; }
                         table.mp-grid th { border-color: #969696; vertical-align: middle; background: #fff; color: #141414; }
                         table.mp-grid td { vertical-align: middle; }
                         table.mp-grid .mp-group { font-weight: bold; text-transform: uppercase; line-height: 1.15; word-wrap: break-word; padding: 1px 1px; }
                         table.mp-grid .mp-subhead { font-weight: 600; font-size: 10.5px; }
                         table.mp-grid td.mp-name { text-align: left; padding: 1px 4px; line-height: 1.15; word-wrap: break-word; }
                         table.mp-grid td.mp-value { font-weight: 600; }
-                        table.mp-grid td.mp-neg { color: #dc2626; }
+                        table.mp-grid td.mp-neg { color: #c42b2b; }
                         .mp-note { font-size: 11.5px; margin: 5px 0 0; }
-                        .mp-signatures { width: 100%; margin-top: 14px; font-size: 13px; text-transform: uppercase; text-align: center; page-break-inside: avoid; }
+                        .mp .ep-signatures { height: 58px; margin-top: 12px; }
+                        .mp .ep-generated { margin-top: 2px; }
                         /* A 2.ª folha continua as linhas da 1.ª (sem repetir o cabeçalho da tabela). */
                         table.mp-grid thead { display: table-row-group; }
                         table.mp-grid tr { page-break-inside: avoid; }
-                        .mp-signatures > div { display: inline-block; width: 49%; padding: 0 40px; vertical-align: bottom; box-sizing: border-box; }
-                        .mp-signatures .mp-role { font-weight: 600; }
-                        .mp-signatures .mp-sign { border-top: 1px solid #000; margin-top: 24px; padding-top: 2px; }
                     </style>
+                    <t t-call="edu_documents.pauta_styles"/>
                     <t t-set="size" t-value="'10.5px' if m['tight'] else '11.5px'"/>
-                    <div class="page mp">
-                        <div class="mp-mast">
-                            <div class="mp-logo"><img t-if="company.logo and not company.uses_default_logo" t-att-src="image_data_uri(company.logo)" alt=""/></div>
-                            <div class="mp-text">
-                                <div class="mp-official">REPÚBLICA DE ANGOLA</div>
-                                <div class="mp-official">MINISTÉRIO DA EDUCAÇÃO</div>
-                                <div class="mp-school" t-out="company.name"/>
-                                <div class="mp-sub" t-if="company.edu_letterhead_subtitle" t-out="company.edu_letterhead_subtitle"/>
-                                <div class="mp-small" t-if="m['location']" t-out="m['location']"/>
-                                <div class="mp-small" t-if="m['contacts']" t-out="m['contacts']"/>
-                            </div>
-                            <div class="mp-logo"/>
-                        </div>
-                        <div class="mp-title">
-                            <span t-out="m['title']"/>
-                            <div class="mp-line">
-                                <b>Turma:</b> <t t-out="'%sª %s' % (c.class_number, c.name)"/>
-                                <t t-if="c.course_id"> · <b>Curso:</b> <t t-out="c.course_id.name"/></t>
-                                <t t-if="c.director_id"> · <b>Coordenador(a) de turma:</b> <t t-out="c.director_id.name"/></t>
-                            </div>
-                        </div>
+                    <div class="page mp ep">
+                        <t t-call="edu_documents.pauta_head" visto="True" title="m['title']" context="m['context']"/>
                         <table class="mp-grid o_ignore_layout_styling" t-att-style="'font-size: %s' % size">
                             <colgroup>
                                 <col style="width: 2.2%"/>
@@ -110,16 +78,8 @@
                             </tbody>
                         </table>
                         <p class="mp-note" t-out="m['note']"/>
-                        <div class="mp-signatures">
-                            <div>
-                                <div class="mp-role">O(A) Coordenador(a) de Turma</div>
-                                <div class="mp-sign" t-out="c.director_id.name or '&#160;'"/>
-                            </div>
-                            <div>
-                                <div class="mp-role">O(A) Subdirector(a) Pedagógico(a)</div>
-                                <div class="mp-sign" t-out="company.edu_pedagogical_director_name or '&#160;'"/>
-                            </div>
-                        </div>
+                        <t t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.employee_role(c.director_id, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA', 'O(A) DIRECTOR(A) DE TURMA'))" left_name="c.director_id.name" right_role="h.role_case(h.pedagogical_title())" right_name="company.edu_pedagogical_director_name"/>
+                        <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
                     </div>
                 </t>
             </t>
@@ -166,6 +126,34 @@
         </style>
     </template>
 
+    <!-- Cabeçalho e assinaturas comuns à pauta, à mini-pauta e ao horário. -->
+    <template id="pauta_head">
+        <div class="ep-head" t-att-style="None if visto else 'min-height: 0;'">
+            <div class="ep-visto" t-if="visto">
+                <strong>Visto</strong>
+                <div t-out="h.role_case(h.director_title())"/>
+                <div class="ep-line" t-out="company.edu_director_name or '&#160;'"/>
+            </div>
+            <div class="ep-state"><strong>REPÚBLICA DE ANGOLA</strong><br/>Ministério da Educação</div>
+            <div class="ep-school" t-out="company.name"/>
+            <div class="ep-title" t-out="title"/>
+            <div class="ep-context" t-out="context"/>
+        </div>
+    </template>
+
+    <template id="pauta_signatures">
+        <div class="ep-signatures">
+            <div style="left: 0;">
+                <div t-out="left_role"/>
+                <div class="ep-line" t-out="left_name or '&#160;'"/>
+            </div>
+            <div style="right: 70px; width: 200px;">
+                <div t-out="right_role"/>
+                <div class="ep-line" t-out="right_name or '&#160;'"/>
+            </div>
+        </div>
+    </template>
+
     <template id="report_pauta">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
@@ -173,7 +161,6 @@
                     <t t-set="company" t-value="o.company_id"/>
                     <t t-set="c" t-value="o.class_id"/>
                     <t t-set="d" t-value="o._pauta_data()"/>
-                    <t t-set="director_role" t-value="h.role_case(h.director_title())"/>
                     <t t-set="class_director_role" t-value="h.role_case(h.employee_role(c.director_id, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA', 'O(A) DIRECTOR(A) DE TURMA'))"/>
                     <t t-set="pedagogical_role" t-value="h.role_case(h.pedagogical_title())"/>
                     <t t-call="edu_documents.pauta_styles"/>
@@ -182,19 +169,8 @@
                     <t t-set="pdf" t-value="report_type == 'pdf'"/>
                     <t t-foreach="d['chunks'] if pdf else [d['subjects']]" t-as="chunk">
                         <div class="page ep" t-att-style="'' if chunk_last else 'page-break-after: always;'">
-                            <div class="ep-head">
-                                <t t-if="chunk_first">
-                                    <div class="ep-visto">
-                                        <strong>Visto</strong>
-                                        <div t-out="director_role"/>
-                                        <div class="ep-line" t-out="company.edu_director_name or '&#160;'"/>
-                                    </div>
-                                    <div class="ep-state"><strong>REPÚBLICA DE ANGOLA</strong><br/>Ministério da Educação</div>
-                                    <div class="ep-school" t-out="company.name"/>
-                                    <div class="ep-title" t-out="d['title']"/>
-                                    <div class="ep-context" t-out="d['context']"/>
-                                </t>
-                            </div>
+                            <t t-if="chunk_first" t-call="edu_documents.pauta_head" visto="True" title="d['title']" context="d['context']"/>
+                            <div t-else="" class="ep-head" style="min-height: 0;"/>
                             <div t-att-class="None if pdf else 'ep-scroll'">
                             <table class="ep-grid o_ignore_layout_styling" t-att-style="'width: 100%;' if pdf and not chunk_last else None">
                                 <thead>
@@ -240,16 +216,7 @@
                             <t t-if="chunk_first">
                                 <div class="ep-legend" t-out="d['legend']"/>
                                 <div class="ep-scale" t-out="d['scale']"/>
-                                <div class="ep-signatures">
-                                    <div style="left: 0;">
-                                        <div t-out="class_director_role"/>
-                                        <div class="ep-line" t-out="c.director_id.name or '&#160;'"/>
-                                    </div>
-                                    <div style="right: 70px; width: 200px;">
-                                        <div t-out="pedagogical_role"/>
-                                        <div class="ep-line" t-out="company.edu_pedagogical_director_name or '&#160;'"/>
-                                    </div>
-                                </div>
+                                <t t-call="edu_documents.pauta_signatures" left_role="class_director_role" left_name="c.director_id.name" right_role="pedagogical_role" right_name="company.edu_pedagogical_director_name"/>
                             </t>
                             <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/><t t-if="pdf"> · Folha <t t-out="chunk_index + 1"/>/<t t-out="len(d['chunks'])"/></t></div>
                         </div>
@@ -292,17 +259,46 @@
     </template>
 
     <!-- Horário da turma -->
+    <!-- Horário da turma, como a folha do secPed (schedule-export.ts): A4 horizontal, cabeçalho oficial com o timbre
+         e uma régua curta na cor da escola, grelha Hora × dias nas cores da escola, assinaturas do Director
+         Pedagógico e do Director Geral. Dados: edu.class._schedule_doc. -->
     <template id="report_class_schedule">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="c">
                 <t t-call="web.basic_layout">
                     <t t-set="company" t-value="c.company_id"/>
-                    <t t-call="edu_documents.styles"/>
-                    <div class="page edu-doc">
-                        <t t-call="edu_documents.header" official="False"/>
-                        <div class="edu-subtitle">HORÁRIO ESCOLAR · <t t-out="c.display_name.upper()"/><t t-if="c.shift_id"> · PERÍODO: <t t-out="c.shift_id.name.upper()"/></t></div>
-                        <div class="edu-grid" t-out="c.schedule_grid"/>
-                        <t t-call="edu_documents.signatures" left_role="h.employee_role(c.director_id, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA', 'O(A) DIRECTOR(A) DE TURMA')" left_name="c.director_id.name" right_role="h.pedagogical_title()" right_name="company.edu_pedagogical_director_name"/>
+                    <t t-set="d" t-value="c._schedule_doc()"/>
+                    <t t-call="edu_documents.pauta_styles"/>
+                    <style>
+                        table.ep-grid.ep-week { width: 100%; table-layout: fixed; font-size: 10.5px; }
+                        table.ep-grid.ep-week td { height: 46px; white-space: normal; line-height: 1.3; padding: 3px 5px; }
+                        table.ep-grid.ep-week th { height: 24px; }
+                    </style>
+                    <div class="page ep">
+                        <t t-call="edu_documents.pauta_head" visto="False" title="d['title']" context="d['context']"/>
+                        <table class="ep-grid ep-week o_ignore_layout_styling">
+                            <colgroup>
+                                <col style="width: 8%"/>
+                                <col t-foreach="d['days']" t-as="day" t-att-style="'width: ' + str(d['day_width']) + '%'"/>
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>Hora</th>
+                                    <th t-foreach="d['days']" t-as="day" t-out="day"/>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="d['rows']" t-as="r">
+                                    <th><t t-out="r['hours'][0]"/><br/><t t-out="r['hours'][1]"/></th>
+                                    <t t-foreach="r['cells']" t-as="cell">
+                                        <td t-if="cell"><strong t-out="cell[0]"/><t t-foreach="cell[1:]" t-as="text"><br/><t t-out="text"/></t></td>
+                                        <td t-else=""/>
+                                    </t>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <t t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.pedagogical_title())" left_name="company.edu_pedagogical_director_name" right_role="h.role_case(h.director_title())" right_name="company.edu_director_name"/>
+                        <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
                     </div>
                 </t>
             </t>

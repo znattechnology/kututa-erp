@@ -69,7 +69,9 @@ class TestEduRoles(TransactionCase):
                     if report_name == 'edu_documents.report_pauta':
                         self.assertIn('A Directora de Turma', html)
                     elif report_name == 'edu_documents.report_mini_pauta':
-                        self.assertIn('Coordenador(a) de Turma', html)
+                        self.assertIn('Directora de Turma', html)
+                    elif report_name == 'edu_documents.report_class_schedule':
+                        self.assertIn('HORÁRIO DA TURMA', html)
                     elif report_name != 'edu_documents.report_class_list':
                         self.assertIn('A DIRECTORA DE TURMA', html)
 

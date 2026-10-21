@@ -182,13 +182,13 @@ class TestEduDocuments(TransactionCase):
         self.assertNotIn('Resultado', html)
         self.assertNotIn('Transita', html)
         # Mini-pauta como a do secPed: mapa condensado da turma no trimestre (letra e nome por disciplina, CT/CF
-        # com FJ e FI, média), A4 horizontal, assinaturas do coordenador de turma e da direcção pedagógica.
+        # com FJ e FI, média), A4 horizontal, cabeçalho e assinaturas da pauta.
         mini = self.env['edu.pauta.print'].create(
             {'class_id': self.edu_class.id, 'kind': 'mini', 'trimester_id': trimesters[-1].id}
         )
         html = self._render('edu_documents.action_report_mini_pauta', mini)
         self.assertIn('MAPA DE APROVEITAMENTO REFERENTE AO III TRIMESTRE', html)
-        for text in ('A)', 'Língua Portuguesa', '>CF<', '>FJ<', '>FI<', 'Méd.', 'Coordenador(a) de Turma'):
+        for text in ('A)', 'Língua Portuguesa', '>CF<', '>FJ<', '>FI<', 'Méd.', 'Director(a) de Turma', 'Visto'):
             self.assertIn(text, html)
         self.assertIn('mp-neg', html)
         mini.trimester_id = trimesters[0]
@@ -199,7 +199,11 @@ class TestEduDocuments(TransactionCase):
         self.assertEqual(mini.action_preview()['report_type'], 'qweb-html')
         self.assertEqual(self.edu_class.action_print_class_list()['report_type'], 'qweb-html')
         self.assertIn('RELAÇÃO NOMINAL', self._render('edu_documents.action_report_class_list', self.edu_class))
-        self.assertIn('HORÁRIO ESCOLAR', self._render('edu_documents.action_report_class_schedule', self.edu_class))
+        # Horário no estilo da pauta: título, grelha Hora × dias e as assinaturas da direcção.
+        schedule = self._render('edu_documents.action_report_class_schedule', self.edu_class)
+        for text in ('HORÁRIO DA TURMA', 'REPÚBLICA DE ANGOLA', '>Hora<', '>Segunda<', '>Sexta<', 'ANO LECTIVO:'):
+            self.assertIn(text, schedule)
+        self.assertNotIn('>Sábado<', schedule)
         self.assertIn(
             'Pessoal e intransmissível', self._render('edu_documents.action_report_student_card', self.student)
         )

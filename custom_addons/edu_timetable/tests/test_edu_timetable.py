@@ -126,7 +126,13 @@ class TestEduTimetable(TransactionCase):
                 }  # fmt: skip
             )
         self.assertIn('Língua Portuguesa: 1 de 4 tempos', self.class_a.schedule_check)
-        self.assertIn('LP', self.class_a.schedule_grid)
+        # Grelha semanal no estilo da pauta: tempos × dias e, em cada aula, a disciplina, o professor e a sala.
+        grid = self.class_a.schedule_grid
+        self.assertIn('o_edu_schedule_grid', grid)
+        self.assertIn('Língua Portuguesa', grid)
+        self.assertIn('07:30 – 08:15', grid)
+        self.assertIn(self.teacher.name, grid)
+        self.assertIn('Segunda-feira', grid)
         self.assertEqual(self.teacher.edu_weekly_load, 1)
 
     def test_exceptions_and_replacements(self):

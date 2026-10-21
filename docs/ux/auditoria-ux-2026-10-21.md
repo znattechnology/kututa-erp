@@ -246,3 +246,16 @@ Referência: `apps/web/components/academic/mini-pauta-document.tsx` do secPed.
 - **Colunas estreitas:** os nomes das disciplinas passam a minúsculas, mais pequenas, para não partirem a meio.
 - **Verificação:** os PDFs geram-se com o servidor a correr. Sem servidor, o motor de PDF não carrega os estilos base do Odoo e o resultado engana.
 - **Assistente das pautas:** o trimestre é obrigatório para os dois documentos e a escolha da disciplina desapareceu.
+
+## 13. Horário e documentos da turma no estilo da pauta (2026-10-21)
+- **Regra:** a pauta da turma é o modelo dos documentos da turma. A pauta, a mini-pauta e o horário partilham o cabeçalho e as assinaturas (`edu_documents.pauta_head` e `edu_documents.pauta_signatures`), os estilos (`pauta_styles`) e a linha da turma (`edu.class._document_context`).
+- **Cabeçalho:**
+  - «Visto» do Director Geral à direita, na pauta e na mini-pauta;
+  - REPÚBLICA DE ANGOLA e Ministério da Educação, o nome da escola, o título e a linha «ANO LECTIVO · CLASSE · TURMA · CURSO». O horário acrescenta o turno e a sala.
+  - Sem logótipo, sem contactos e sem as cores da escola.
+- **Rodapé:** duas assinaturas com o cargo por cima e o nome por baixo da linha; o cargo concorda com o sexo de quem o ocupa. A seguir, «Gerado em».
+  - Pauta e mini-pauta: Director(a) de Turma e Subdirector(a) Pedagógico(a).
+  - Horário: Subdirector(a) Pedagógico(a) e Director Geral.
+- **Horário (PDF):** grelha Hora × dias, de segunda a sexta (o sábado só aparece se tiver aulas). Em cada aula: a disciplina a negrito, o professor e a sala. Linhas cinzentas, sem fundos e sem a cor da escola.
+- **Horário (separador da turma):** deixou de imitar o secPed (blocos coloridos por quartos de hora). É a mesma grelha do PDF, com «Sem professor» quando a aula ainda não tem professor.
+- **Mini-pauta:** o timbre da escola e as assinaturas em maiúsculas deram lugar ao cabeçalho e ao rodapé da pauta. A grelha continua numa só folha A4 (41 alunos na 12.ª A AC).

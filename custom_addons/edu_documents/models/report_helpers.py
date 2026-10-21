@@ -197,8 +197,57 @@ class EduStudent(models.Model):
     birth_municipality = fields.Char(string='Município de naturalidade')
 
 
+SCHEDULE_DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+
+
 class EduClass(models.Model):
     _inherit = 'edu.class'
+
+    def _document_context(self, *extra):
+        """A linha da turma por baixo do título da pauta, da mini-pauta e do horário."""
+        self.ensure_one()
+        context = [
+            f'ANO LECTIVO: {self.academic_year_id.name}',
+            f'CLASSE: {self.class_number}ª',
+            f'TURMA: {self.name}',
+        ]
+        if self.course_id:
+            context.append(f'CURSO: {self.course_id.name}')
+        return '\u2003\u2003'.join(context + [p for p in extra if p])
+
+    def _schedule_doc(self):
+        """Horário da turma no estilo da pauta: grelha com os tempos na vertical e segunda a sexta (e o sábado, se
+        tiver aulas) na horizontal; em cada aula a disciplina, o professor e a sala."""
+        self.ensure_one()
+        schedules = self.schedule_ids.filtered(lambda s: not s.trimester_id)
+        days = [0, 1, 2, 3, 4] + ([5] if schedules.filtered(lambda s: s.weekday == '5') else [])
+        rows = sorted({(s.hour_from, s.hour_to) for s in schedules})
+        cells = {(int(s.weekday), s.hour_from, s.hour_to): s for s in schedules}
+
+        def hour(value):
+            hours, minutes = divmod(round(value * 60), 60)
+            return f'{hours:02d}:{minutes:02d}'
+
+        grid = []
+        for hour_from, hour_to in rows:
+            line = []
+            for day in days:
+                schedule = cells.get((day, hour_from, hour_to))
+                line.append(
+                    [p for p in [schedule.subject_id.name, schedule.teacher_id.name, schedule.room_id.name] if p]
+                    if schedule
+                    else None
+                )
+            grid.append({'hours': (hour(hour_from), hour(hour_to)), 'cells': line})
+        return {
+            'title': 'HORÁRIO DA TURMA',
+            'context': self._document_context(
+                self.shift_id and f'TURNO: {self.shift_id.name}', self.room_id and f'SALA: {self.room_id.name}'
+            ),
+            'days': [SCHEDULE_DAYS[d] for d in days],
+            'rows': grid,
+            'day_width': (100 - 8) / len(days),
+        }
 
     def action_print_class_list(self):
         # Abre a pré-visualização; o visualizador de PDF imprime e descarrega.
