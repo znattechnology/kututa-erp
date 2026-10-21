@@ -13,7 +13,7 @@ class L10nAoHrSanction(models.Model):
     _inherit = ['mail.thread']
     _order = 'date desc, id desc'
 
-    employee_id = fields.Many2one('hr.employee', required=True, index=True, tracking=True)
+    employee_id = fields.Many2one('hr.employee', string='Trabalhador', required=True, index=True, tracking=True)
     company_id = fields.Many2one(related='employee_id.company_id', store=True)
     date = fields.Date(string='Data da decisão', required=True, default=fields.Date.context_today, tracking=True)
     kind = fields.Selection(
@@ -37,6 +37,7 @@ class L10nAoHrSanction(models.Model):
     reason = fields.Text(string='Factos e fundamentos', required=True)
     state = fields.Selection(
         [('draft', 'Rascunho'), ('applied', 'Aplicada'), ('cancelled', 'Anulada')],
+        string='Estado',
         default='draft',
         required=True,
         tracking=True,

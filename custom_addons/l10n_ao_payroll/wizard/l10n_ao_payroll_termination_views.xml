@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_payroll_termination_form" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.termination.form</field>
+        <field name="model">l10n_ao_payroll.termination</field>
+        <field name="arch" type="xml">
+            <form string="Contas finais">
+                <group>
+                    <group string="Cessação">
+                        <field name="employee_id" options="{'no_create': True}"/>
+                        <field name="date"/>
+                        <field name="departure_reason_id" options="{'no_create': True}"/>
+                        <field name="compensation_article"/>
+                        <field name="missing_notice"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="Base do cálculo">
+                        <field name="base_salary"/>
+                        <field name="weekly_hours"/>
+                        <field name="seniority_years"/>
+                        <field name="months_worked"/>
+                        <field name="vacation_days_due"/>
+                        <field name="vacation_days_proportional"/>
+                        <field name="vacation_subsidy_paid"/>
+                    </group>
+                </group>
+                <group string="Valores (brutos)">
+                    <field name="compensation_amount"/>
+                    <field name="notice_amount"/>
+                    <field name="vacation_amount"/>
+                    <field name="subsidies_amount"/>
+                    <field name="total_amount" class="fw-bold"/>
+                </group>
+                <div class="text-muted">
+                    Regista a saída do trabalhador e cria o recibo de contas finais na folha do mês. A compensação não entra
+                    na base do INSS; as férias não gozadas e os subsídios entram. Tudo é sujeito a IRT (CIRT, art. 2.º).
+                </div>
+                <footer>
+                    <button name="action_confirm" type="object" string="Registar a cessação e calcular" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_payroll_termination" model="ir.actions.act_window">
+        <field name="name">Contas finais (cessação)</field>
+        <field name="res_model">l10n_ao_payroll.termination</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_view_types">form</field>
+        <field name="context">{'default_employee_id': active_id}</field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_payroll_termination" action="action_l10n_ao_payroll_termination" parent="menu_l10n_ao_payroll_root" sequence="40"/>
+</odoo>

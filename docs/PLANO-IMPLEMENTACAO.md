@@ -29,13 +29,14 @@ Decisões tomadas:
 
 > **Realismo do calendário.** Para uma pessoa, o sistema completo representa cerca de 12 meses de trabalho. Até 01/01/2027 (cerca de 10 semanas) cabe **o que é legalmente obrigatório**: o `l10n_ao` e a facturação certificada AGT com vendas, compras e POS. O resto vem por fases. **O académico arranca a tempo do ano lectivo 2027/28**, com o piloto Vovó Eva em Setembro de 2027.
 
-## Estado (actualizado a 2026-10-20)
+## Estado (actualizado a 2026-10-21)
 | Fase | Estado | Documento |
 |---|---|---|
 | 1. `l10n_ao` | Concluída | `docs/fases/fase-1-l10n_ao.md` |
 | 2. `l10n_ao_edi` e `l10n_ao_edi_pos` | Concluída e auditada; falta a homologação AGT (sem credenciais) | `docs/fases/fase-2*.md`, `auditoria-fase-2.md` |
 | 3. Contabilidade | Concluída: `l10n_ao_reports` (3a), `l10n_ao_asset` (3b), `l10n_ao_saft` (3c), `l10n_ao_stock` (3d, no lugar do `l10n_ao_edi_stock`) | `docs/fases/fase-3*.md` |
-| 4. RH e salários | Por iniciar | |
+| 4. RH e salários | Concluída: `l10n_ao_hr` (4a) e `l10n_ao_payroll` (4b) | `docs/fases/fase-4-l10n_ao_hr-payroll.md` |
+| 5. Académico | Por iniciar | |
 
 ## Princípios de arquitectura
 1. **Nunca editar `odoo/`.** Todo o código fica em `custom_addons/`, para que as actualizações do Odoo 20.0 continuem a ser só `git submodule update`.

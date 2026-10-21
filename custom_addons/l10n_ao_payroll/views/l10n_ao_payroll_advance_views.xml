@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_payroll_advance_list" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.advance.list</field>
+        <field name="model">l10n_ao_payroll.advance</field>
+        <field name="arch" type="xml">
+            <list string="Adiantamentos">
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="amount"/>
+                <field name="monthly_deduction"/>
+                <field name="deducted"/>
+                <field name="balance"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge" decoration-success="state == 'settled'" decoration-info="state == 'approved'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="l10n_ao_payroll_advance_form" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.advance.form</field>
+        <field name="model">l10n_ao_payroll.advance</field>
+        <field name="arch" type="xml">
+            <form string="Adiantamento">
+                <header>
+                    <button name="action_approve" type="object" string="Conceder" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Anular" invisible="state not in ('draft', 'approved')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="amount" readonly="state != 'draft'"/>
+                            <field name="monthly_deduction" readonly="state != 'draft'"/>
+                            <field name="note" readonly="state != 'draft'"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="journal_id" readonly="state != 'draft'"/>
+                            <field name="move_id" invisible="not move_id"/>
+                            <field name="deducted"/>
+                            <field name="balance"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        LGT, art. 248.º: a dívida de adiantamentos não excede 3 salários-base e o desconto mensal não
+                        excede 25% do líquido. Com diário, o lançamento «Adiantamentos ao pessoal / Caixa ou Banco» é imediato.
+                    </div>
+                    <field name="deduction_ids" readonly="1">
+                        <list><field name="payslip_id"/><field name="amount"/><field name="currency_id" column_invisible="1"/></list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_payroll_advance" model="ir.actions.act_window">
+        <field name="name">Adiantamentos</field>
+        <field name="res_model">l10n_ao_payroll.advance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_payroll_advance" action="action_l10n_ao_payroll_advance" parent="menu_l10n_ao_payroll_root" sequence="30"/>
+</odoo>

@@ -1,0 +1,19 @@
+id,name,model_id,group_id/id,operation,domain
+access_l10n_ao_payroll_irt_bracket_user,access_l10n_ao_payroll_irt_bracket_user,l10n_ao_payroll.irt.bracket,base.group_user,r,
+access_l10n_ao_payroll_irt_bracket_manager,access_l10n_ao_payroll_irt_bracket_manager,l10n_ao_payroll.irt.bracket,hr.group_hr_manager,crud,
+access_l10n_ao_payroll_component_user,access_l10n_ao_payroll_component_user,l10n_ao_payroll.component,hr.group_hr_user,crud,
+access_l10n_ao_payroll_run_user,access_l10n_ao_payroll_run_user,l10n_ao_payroll.run,hr.group_hr_user,crud,
+access_l10n_ao_payroll_run_account,access_l10n_ao_payroll_run_account,l10n_ao_payroll.run,account.group_account_readonly,r,
+access_l10n_ao_payroll_payslip_user,access_l10n_ao_payroll_payslip_user,l10n_ao_payroll.payslip,hr.group_hr_user,crud,
+access_l10n_ao_payroll_payslip_account,access_l10n_ao_payroll_payslip_account,l10n_ao_payroll.payslip,account.group_account_readonly,r,
+access_l10n_ao_payroll_payslip_employee,access_l10n_ao_payroll_payslip_employee,l10n_ao_payroll.payslip,base.group_user,r,"[('employee_id.user_id', '=', user.id), ('state', '=', 'done')]"
+access_l10n_ao_payroll_payslip_line_user,access_l10n_ao_payroll_payslip_line_user,l10n_ao_payroll.payslip.line,hr.group_hr_user,crud,
+access_l10n_ao_payroll_payslip_line_account,access_l10n_ao_payroll_payslip_line_account,l10n_ao_payroll.payslip.line,account.group_account_readonly,r,
+access_l10n_ao_payroll_payslip_line_employee,access_l10n_ao_payroll_payslip_line_employee,l10n_ao_payroll.payslip.line,base.group_user,r,"[('payslip_id.employee_id.user_id', '=', user.id)]"
+access_l10n_ao_payroll_payslip_extra_user,access_l10n_ao_payroll_payslip_extra_user,l10n_ao_payroll.payslip.extra,hr.group_hr_user,crud,
+access_l10n_ao_payroll_advance_user,access_l10n_ao_payroll_advance_user,l10n_ao_payroll.advance,hr.group_hr_user,crud,
+access_l10n_ao_payroll_advance_deduction_user,access_l10n_ao_payroll_advance_deduction_user,l10n_ao_payroll.advance.deduction,hr.group_hr_user,crud,
+access_l10n_ao_payroll_termination,access_l10n_ao_payroll_termination,l10n_ao_payroll.termination,hr.group_hr_user,crud,
+l10n_ao_payroll_run_comp_rule,Folhas multi-empresa,l10n_ao_payroll.run,,crud,"[('company_id', 'in', company_ids)]"
+l10n_ao_payroll_payslip_comp_rule,Recibos multi-empresa,l10n_ao_payroll.payslip,,crud,"[('company_id', 'in', company_ids)]"
+l10n_ao_payroll_advance_comp_rule,Adiantamentos multi-empresa,l10n_ao_payroll.advance,,crud,"[('company_id', 'in', company_ids)]"

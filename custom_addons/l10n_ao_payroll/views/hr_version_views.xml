@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_l10n_ao_payroll" model="ir.ui.view">
+        <field name="name">hr.employee.form.l10n_ao_payroll</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="l10n_ao_hr.view_employee_form_l10n_ao_hr"/>
+        <field name="arch" type="xml">
+            <field name="l10n_ao_weekly_hours" position="after">
+                <field name="l10n_ao_payroll_bank_account_id" context="{'default_partner_id': work_contact_id}"/>
+                <field name="l10n_ao_payroll_vacation_subsidy_year" options="{'enable_formatting': false}"/>
+            </field>
+            <group name="schedule" position="after">
+                <group name="l10n_ao_payroll_components" string="Componentes fixas da remuneração" colspan="2">
+                    <field name="l10n_ao_payroll_component_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="amount"/>
+                            <field name="subject_irt"/>
+                            <field name="subject_inss"/>
+                            <field name="proportional"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </group>
+            </group>
+            <page name="l10n_ao_hr" position="inside">
+                <group string="Adiantamentos">
+                    <field name="l10n_ao_payroll_advance_ids" nolabel="1" context="{'default_employee_id': id}">
+                        <list>
+                            <field name="date"/>
+                            <field name="amount"/>
+                            <field name="monthly_deduction"/>
+                            <field name="balance"/>
+                            <field name="state" widget="badge"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </group>
+            </page>
+        </field>
+    </record>
+</odoo>

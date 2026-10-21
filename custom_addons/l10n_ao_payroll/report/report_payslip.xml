@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_payslip" model="ir.actions.report">
+        <field name="name">Recibo de salário</field>
+        <field name="model">l10n_ao_payroll.payslip</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_ao_payroll.report_payslip</field>
+        <field name="print_report_name">'Recibo %s - %s' % (object.number or 'rascunho', object.employee_id.name)</field>
+        <field name="binding_model_id" ref="model_l10n_ao_payroll_payslip"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_payroll_sheet" model="ir.actions.report">
+        <field name="name">Folha de salários</field>
+        <field name="model">l10n_ao_payroll.run</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_ao_payroll.report_payroll_sheet</field>
+        <field name="print_report_name">'Folha de salários %s' % object.name</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <!-- Recibo (LGT, art. 247.º): empregador, trabalhador, n.º INSS, período, remunerações, descontos e líquido -->
+    <template id="report_payslip">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <div class="page">
+                        <h3>Recibo de salário <span t-field="o.number"/></h3>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Trabalhador:</strong> <span t-field="o.employee_id.name"/><br/>
+                                <strong>N.º de segurado (INSS):</strong> <span t-out="o.employee_id.sudo().l10n_ao_inss_number or '-'"/><br/>
+                                <strong>Categoria:</strong> <span t-out="o.employee_id.job_title or '-'"/><br/>
+                                <strong>Departamento:</strong> <span t-out="o.employee_id.department_id.name or '-'"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Período:</strong> <span t-field="o.date_from"/> a <span t-field="o.date_to"/><br/>
+                                <strong>Salário base:</strong> <span t-field="o.base_salary"/><br/>
+                                <strong>Salário-hora (art. 237.º):</strong> <span t-field="o.hourly_rate"/><br/>
+                                <strong>Dias úteis:</strong> <span t-out="o.worked_days"/> de <span t-out="o.month_days"/>
+                            </div>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr><th>Remunerações</th><th class="text-end">Quantidade</th><th class="text-end">Valor unitário</th><th class="text-end">Valor</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids.filtered(lambda l: l.kind == 'earning')" t-as="line">
+                                    <td t-out="line.name"/>
+                                    <td class="text-end" t-out="'%g' % line.quantity if line.quantity != 1 else ''"/>
+                                    <td class="text-end"><span t-if="line.rate" t-field="line.rate"/></td>
+                                    <td class="text-end"><span t-field="line.amount"/></td>
+                                </tr>
+                                <tr class="fw-bold"><td colspan="3">Total ilíquido</td><td class="text-end"><span t-field="o.gross"/></td></tr>
+                            </tbody>
+                            <thead>
+                                <tr><th>Descontos</th><th class="text-end">Quantidade</th><th class="text-end">Valor unitário</th><th class="text-end">Valor</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids.filtered(lambda l: l.kind == 'deduction')" t-as="line">
+                                    <td t-out="line.name"/>
+                                    <td class="text-end" t-out="'%g' % line.quantity if line.quantity != 1 else ''"/>
+                                    <td class="text-end"><span t-if="line.rate" t-field="line.rate"/></td>
+                                    <td class="text-end"><span t-field="line.amount"/></td>
+                                </tr>
+                                <tr class="fw-bold"><td colspan="3">Total de descontos</td><td class="text-end"><span t-field="o.deductions"/></td></tr>
+                                <tr class="fw-bold fs-5"><td colspan="3">Líquido a receber</td><td class="text-end"><span t-field="o.net"/></td></tr>
+                            </tbody>
+                        </table>
+                        <div class="row small text-muted">
+                            <div class="col-6">
+                                Matéria colectável do IRT: <span t-field="o.irt_base"/> · Base do INSS: <span t-field="o.inss_base"/><br/>
+                                Encargo da entidade empregadora (INSS 8%): <span t-field="o.inss_employer"/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <t t-if="o.bank_account_id">Pago por transferência para <span t-out="o.bank_account_id.account_number"/></t>
+                            </div>
+                        </div>
+                        <div class="row mt-5">
+                            <div class="col-6 text-center">______________________________<br/>A entidade empregadora</div>
+                            <div class="col-6 text-center">______________________________<br/>O trabalhador</div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Folha colectiva de salários -->
+    <template id="report_payroll_sheet">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="run">
+                <t t-call="web.internal_layout">
+                    <t t-set="company" t-value="run.company_id"/>
+                    <div class="page">
+                        <h3>Folha de salários: <span t-field="run.name"/></h3>
+                        <div><span t-field="run.company_id.name"/> · NIF <span t-out="run.company_id.vat or ''"/></div>
+                        <table class="table table-sm mt-3" style="font-size: 11px;">
+                            <thead>
+                                <tr>
+                                    <th>N.º</th><th>Trabalhador</th><th>INSS</th>
+                                    <th class="text-end">Bruto</th><th class="text-end">Faltas</th><th class="text-end">INSS 3%</th>
+                                    <th class="text-end">IRT</th><th class="text-end">Adiant.</th><th class="text-end">Líquido</th><th class="text-end">INSS 8%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="run.payslip_ids.filtered(lambda s: s.state != 'cancelled').sorted(lambda s: s.employee_id.name or '')" t-as="s">
+                                    <td t-out="s.number or ''"/>
+                                    <td t-out="s.employee_id.name"/>
+                                    <td t-out="s.employee_id.sudo().l10n_ao_inss_number or ''"/>
+                                    <td class="text-end"><span t-field="s.gross"/></td>
+                                    <td class="text-end"><span t-field="s.absences"/></td>
+                                    <td class="text-end"><span t-field="s.inss_employee"/></td>
+                                    <td class="text-end"><span t-field="s.irt"/></td>
+                                    <td class="text-end"><span t-field="s.advance"/></td>
+                                    <td class="text-end"><span t-field="s.net"/></td>
+                                    <td class="text-end"><span t-field="s.inss_employer"/></td>
+                                </tr>
+                                <tr class="fw-bold">
+                                    <td colspan="3">TOTAIS</td>
+                                    <td class="text-end"><span t-field="run.total_gross"/></td>
+                                    <td class="text-end" t-out="'%.2f' % sum(run.payslip_ids.mapped('absences'))"/>
+                                    <td class="text-end" t-out="'%.2f' % sum(run.payslip_ids.mapped('inss_employee'))"/>
+                                    <td class="text-end"><span t-field="run.total_irt"/></td>
+                                    <td class="text-end" t-out="'%.2f' % sum(run.payslip_ids.mapped('advance'))"/>
+                                    <td class="text-end"><span t-field="run.total_net"/></td>
+                                    <td class="text-end" t-out="'%.2f' % sum(run.payslip_ids.mapped('inss_employer'))"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

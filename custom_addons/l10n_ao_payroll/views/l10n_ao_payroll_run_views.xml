@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_payroll_run_list" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.run.list</field>
+        <field name="model">l10n_ao_payroll.run</field>
+        <field name="arch" type="xml">
+            <list string="Folhas de salários">
+                <field name="name"/>
+                <field name="payslip_count"/>
+                <field name="total_gross"/>
+                <field name="total_irt"/>
+                <field name="total_inss"/>
+                <field name="total_net"/>
+                <field name="total_cost"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge" decoration-info="state == 'computed'" decoration-success="state == 'closed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="l10n_ao_payroll_run_form" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.run.form</field>
+        <field name="model">l10n_ao_payroll.run</field>
+        <field name="arch" type="xml">
+            <form string="Folha de salários">
+                <header>
+                    <button name="action_compute" type="object" string="Calcular" class="btn-primary" invisible="state not in ('draft', 'computed')"/>
+                    <button name="action_close" type="object" string="Fechar e contabilizar" class="btn-primary" invisible="state != 'computed'" confirm="Fecha a folha: numera os recibos, amortiza os adiantamentos e cria o lançamento contabilístico. Continuar?"/>
+                    <button name="action_print_sheet" type="object" string="Folha colectiva" invisible="state == 'draft'"/>
+                    <button name="action_export_bank_file" type="object" string="Ficheiro bancário" invisible="state != 'closed'"/>
+                    <button name="action_export_irt_map" type="object" string="Mapa IRT (AGT)" invisible="state != 'closed'"/>
+                    <button name="action_export_inss_map" type="object" string="Folha INSS" invisible="state != 'closed'"/>
+                    <button name="action_cancel" type="object" string="Anular" invisible="state in ('draft', 'cancelled')" confirm="Anula a folha e o lançamento contabilístico. Continuar?"/>
+                    <button name="action_draft" type="object" string="Voltar a rascunho" invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,computed,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" readonly="1"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="year" readonly="state != 'draft'" options="{'enable_formatting': false}"/>
+                            <field name="month" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="payslip_count"/>
+                            <field name="total_gross"/>
+                            <field name="total_irt"/>
+                            <field name="total_inss"/>
+                            <field name="total_net"/>
+                            <field name="total_cost"/>
+                            <field name="move_id" invisible="not move_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Recibos" name="payslips">
+                            <field name="payslip_ids" readonly="state in ('closed', 'cancelled')">
+                                <list decoration-warning="warning" decoration-muted="state == 'cancelled'">
+                                    <field name="number"/>
+                                    <field name="employee_id"/>
+                                    <field name="kind" optional="hide"/>
+                                    <field name="base_salary"/>
+                                    <field name="lesson_count" optional="hide"/>
+                                    <field name="gross"/>
+                                    <field name="inss_employee"/>
+                                    <field name="irt"/>
+                                    <field name="advance" optional="hide"/>
+                                    <field name="net"/>
+                                    <field name="inss_employer" optional="hide"/>
+                                    <field name="warning" optional="hide"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="state" widget="badge"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas" name="notes"><field name="note" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_payroll_run" model="ir.actions.act_window">
+        <field name="name">Folhas de salários</field>
+        <field name="res_model">l10n_ao_payroll.run</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crie a folha do mês</p>
+            <p>Calcule, reveja os recibos e feche: a numeração, os adiantamentos e o lançamento contabilístico são automáticos.</p>
+        </field>
+    </record>
+
+    <!-- Recibos -->
+    <record id="l10n_ao_payroll_payslip_form" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.payslip.form</field>
+        <field name="model">l10n_ao_payroll.payslip</field>
+        <field name="arch" type="xml">
+            <form string="Recibo de salário">
+                <header>
+                    <button name="action_compute" type="object" string="Recalcular" invisible="state != 'draft'"/>
+                    <button name="action_print" type="object" string="Imprimir recibo"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="not warning"><field name="warning" nolabel="1"/></div>
+                    <div class="oe_title"><h1><field name="display_name" readonly="1"/></h1></div>
+                    <group>
+                        <group string="Trabalhador">
+                            <field name="run_id" readonly="1"/>
+                            <field name="employee_id" readonly="state != 'draft'"/>
+                            <field name="version_id"/>
+                            <field name="kind" readonly="state != 'draft'"/>
+                            <field name="number"/>
+                            <field name="bank_account_id"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Dados do mês">
+                            <field name="base_salary"/>
+                            <field name="weekly_hours"/>
+                            <field name="hourly_rate"/>
+                            <label for="worked_days"/>
+                            <div class="o_row"><field name="worked_days"/> de <field name="month_days"/></div>
+                            <field name="lesson_count" readonly="state != 'draft'"/>
+                            <field name="lesson_rate"/>
+                            <field name="overtime_hours" widget="float_time"/>
+                            <field name="night_hours" widget="float_time"/>
+                            <field name="rest_day_hours" widget="float_time"/>
+                            <field name="holiday_hours" widget="float_time"/>
+                            <field name="absence_hours" widget="float_time"/>
+                            <field name="sanction_pct"/>
+                            <field name="vacation_subsidy" readonly="state != 'draft'"/>
+                            <field name="christmas_months" readonly="state != 'draft'"/>
+                            <field name="advance_requested"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Linhas" name="lines">
+                            <field name="line_ids" readonly="1">
+                                <list>
+                                    <field name="kind"/>
+                                    <field name="code" optional="hide"/>
+                                    <field name="name"/>
+                                    <field name="quantity"/>
+                                    <field name="rate"/>
+                                    <field name="amount" sum="Total"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="gross"/>
+                                <field name="inss_base"/>
+                                <field name="irt_base"/>
+                                <field name="deductions"/>
+                                <field name="net" class="oe_subtotal_footer_separator"/>
+                                <field name="inss_employer"/>
+                            </group>
+                        </page>
+                        <page string="Outras linhas" name="extra">
+                            <field name="extra_line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="amount"/>
+                                    <field name="subject_irt"/>
+                                    <field name="subject_inss"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                            <div class="text-muted">Prémios, acertos e compensações. Recalcule o recibo depois de as alterar.</div>
+                        </page>
+                        <page string="Adiantamentos" name="advances" invisible="not advance_deduction_ids">
+                            <field name="advance_deduction_ids" readonly="1">
+                                <list><field name="advance_id"/><field name="amount"/><field name="currency_id" column_invisible="1"/></list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="l10n_ao_payroll_payslip_list" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.payslip.list</field>
+        <field name="model">l10n_ao_payroll.payslip</field>
+        <field name="arch" type="xml">
+            <list string="Recibos de salário">
+                <field name="number"/>
+                <field name="run_id"/>
+                <field name="employee_id"/>
+                <field name="gross"/>
+                <field name="irt"/>
+                <field name="inss_employee"/>
+                <field name="net"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_payroll_payslip" model="ir.actions.act_window">
+        <field name="name">Recibos de salário</field>
+        <field name="res_model">l10n_ao_payroll.payslip</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="l10n_ao_payroll_irt_bracket_list" model="ir.ui.view">
+        <field name="name">l10n_ao_payroll.irt.bracket.list</field>
+        <field name="model">l10n_ao_payroll.irt.bracket</field>
+        <field name="arch" type="xml">
+            <list string="Escalões do IRT" editable="bottom">
+                <field name="date_from"/>
+                <field name="lower"/>
+                <field name="upper"/>
+                <field name="fixed"/>
+                <field name="rate"/>
+                <field name="source"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_payroll_irt_bracket" model="ir.actions.act_window">
+        <field name="name">Escalões do IRT</field>
+        <field name="res_model">l10n_ao_payroll.irt.bracket</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_payroll_root" name="Salários" parent="hr.menu_hr_root" sequence="20" groups="hr.group_hr_user">
+        <menuitem id="menu_l10n_ao_payroll_run" action="action_l10n_ao_payroll_run" sequence="10"/>
+        <menuitem id="menu_l10n_ao_payroll_payslip" action="action_l10n_ao_payroll_payslip" sequence="20"/>
+    </menuitem>
+    <menuitem id="menu_l10n_ao_payroll_irt_bracket" action="action_l10n_ao_payroll_irt_bracket"
+              parent="hr.menu_human_resources_configuration" sequence="90"/>
+</odoo>

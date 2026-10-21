@@ -31,15 +31,16 @@ class L10nAoHrOvertime(models.Model):
     _inherit = ['mail.thread']
     _order = 'date desc, id desc'
 
-    employee_id = fields.Many2one('hr.employee', required=True, index=True, tracking=True)
+    employee_id = fields.Many2one('hr.employee', string='Trabalhador', required=True, index=True, tracking=True)
     company_id = fields.Many2one(related='employee_id.company_id', store=True)
-    date = fields.Date(required=True, default=fields.Date.context_today, tracking=True)
+    date = fields.Date(string='Data', required=True, default=fields.Date.context_today, tracking=True)
     kind = fields.Selection(OVERTIME_KINDS, string='Tipo', required=True, default='extra', tracking=True)
     hours = fields.Float(
         string='Horas', required=True, tracking=True, help='Horas efectivas (por exemplo 1,75 = 1h45).'
     )
     state = fields.Selection(
         [('draft', 'Rascunho'), ('approved', 'Aprovado'), ('refused', 'Recusado')],
+        string='Estado',
         default='draft',
         required=True,
         tracking=True,
