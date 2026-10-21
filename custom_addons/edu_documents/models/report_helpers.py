@@ -60,6 +60,15 @@ class Helpers:
     def by_gender(gender, male, female):
         return female if gender in {'female', 'f'} else male
 
+    @staticmethod
+    def employee_role(employee, male, female, unknown):
+        """Cargo de quem assina pelo sexo do funcionário. O sexo é um campo do RH: lê-se só ele, sem dar acesso à
+        ficha (a secretaria e os professores imprimem pautas e horários)."""
+        sex = employee.sudo().sex if employee else False
+        if not sex:
+            return unknown
+        return female if sex in {'female', 'f'} else male
+
     def director_title(self):
         title = (self.company.edu_director_title or 'Director Geral').upper()
         if self.company.edu_director_gender == 'f':

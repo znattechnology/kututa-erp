@@ -21,6 +21,15 @@ export class KututaSidebar extends Component {
         useListener(this.env.bus, "MENUS:APP-CHANGED", refresh);
         useListener(this.env.bus, "ACTION_MANAGER:UI-UPDATED", refresh);
         useListener(window, "resize", refresh);
+        // A aplicação encontrada pela acção passa para o Odoo, para a barra de topo mostrar o seu nome.
+        useLayoutEffect(
+            (app) => {
+                if (app && !this.menuService.getCurrentApp()) {
+                    this.menuService.setCurrentMenu(app);
+                }
+            },
+            () => [this.app]
+        );
         useLayoutEffect(
             (visible, collapsed) => {
                 document.body.classList.toggle("o_kututa_with_sidebar", visible);
@@ -30,8 +39,30 @@ export class KututaSidebar extends Component {
         );
     }
 
+    /**
+     * A aplicação do menu lateral. Alguns ecrãs não pertencem a um menu (a pré-visualização de um relatório) e um
+     * endereço aberto directamente não indica a aplicação: fica a última aplicação aberta ou, sem ela, a que tem a
+     * acção aberta nos seus menus (ou a primeira, a de entrada).
+     */
     get app() {
-        return this.menuService.getCurrentApp();
+        const current = this.menuService.getCurrentApp();
+        if (current) {
+            this.lastApp = current;
+        } else if (!this.lastApp) {
+            this.lastApp = this.appForCurrentAction();
+        }
+        return current || this.lastApp;
+    }
+
+    appForCurrentAction() {
+        const actionId = this.currentActionId;
+        if (!actionId) {
+            return undefined;
+        }
+        const apps = this.menuService.getApps();
+        const contains = (menu) => menu.actionID === actionId || (menu.childrenTree || []).some(contains);
+        // Sem menu com esta acção (por exemplo, aberta por uma acção de servidor): a primeira aplicação, a de entrada.
+        return apps.find((app) => contains(this.menuService.getMenuAsTree(app.id))) || apps[0];
     }
 
     get sections() {

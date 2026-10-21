@@ -99,13 +99,14 @@ class TestEduDocuments(TransactionCase):
         self.assertEqual(document.print_count, 1)
 
     def test_preview(self):
-        # Visualizar abre o PDF final num separador, sem emitir o documento nem contar como impressão.
+        # Visualizar mostra o documento na própria aplicação (HTML), sem o emitir nem contar como impressão.
         draft = self.env['edu.document'].create(
             {'document_type': 'frequency', 'student_id': self.student.id, 'enrollment_id': self.enrollment.id}
         )
         action = draft.action_preview()
-        self.assertEqual(action['type'], 'ir.actions.act_url')
-        self.assertEqual(action['url'], f'/report/pdf/edu_documents.report_declaration_frequency/{draft.id}')
+        self.assertEqual((action['type'], action['report_type']), ('ir.actions.report', 'qweb-html'))
+        self.assertEqual(action['report_name'], 'edu_documents.report_declaration_frequency')
+        self.assertEqual(action['context']['active_ids'], [draft.id])
         self.assertEqual((draft.state, draft.print_count), ('draft', 0))
         self.assertIn('RASCUNHO', self._render('edu_documents.action_report_declaration_frequency', draft))
 
@@ -146,12 +147,27 @@ class TestEduDocuments(TransactionCase):
 
     def test_class_documents(self):
         self._grades(9)
+        trimesters = self.edu_class.academic_year_id.trimester_ids.sorted('number')
         wizard = self.env['edu.pauta.print'].create({'class_id': self.edu_class.id, 'kind': 'final'})
+        # Por omissão, o trimestre em curso (ou o último, num ano fechado).
+        self.assertEqual(wizard.trimester_id, trimesters.filtered('is_current')[:1] or trimesters[-1:])
+        wizard.trimester_id = trimesters[-1]
         html = self._render('edu_documents.action_report_pauta', wizard)
         self.assertIn('MAPA DE APROVEITAMENTO FINAL', html)
+        self.assertIn('RESULTADO', html)
         self.assertIn('edu-neg', html)
+        # Pauta de um trimestre: só as classificações até lá, sem a classificação do ano nem a situação.
+        wizard.trimester_id = trimesters[0]
+        html = self._render('edu_documents.action_report_pauta', wizard)
+        self.assertNotIn('MAPA DE APROVEITAMENTO FINAL', html)
+        self.assertIn('CT1', html)
+        self.assertNotIn('CT2', html)
+        self.assertNotIn('RESULTADO', html)
+        self.assertNotIn('TRANSITA', html)
         lp = self.subjects.filtered(lambda s: s.code == 'LP')
-        mini = self.env['edu.pauta.print'].create({'class_id': self.edu_class.id, 'kind': 'mini', 'subject_id': lp.id})
+        mini = self.env['edu.pauta.print'].create(
+            {'class_id': self.edu_class.id, 'kind': 'mini', 'subject_id': lp.id, 'trimester_id': trimesters[-1].id}
+        )
         html = self._render('edu_documents.action_report_mini_pauta', mini)
         self.assertIn('MINI-PAUTA', html)
         self.assertIn('CT3', html)
@@ -162,8 +178,8 @@ class TestEduDocuments(TransactionCase):
         self.assertIn('CT1', html)
         self.assertNotIn('CT2', html)
         self.assertNotIn('>CF<', html)
-        self.assertEqual(mini.action_preview()['type'], 'ir.actions.act_url')
-        self.assertEqual(self.edu_class.action_print_class_list()['type'], 'ir.actions.act_url')
+        self.assertEqual(mini.action_preview()['report_type'], 'qweb-html')
+        self.assertEqual(self.edu_class.action_print_class_list()['report_type'], 'qweb-html')
         self.assertIn('RELAÇÃO NOMINAL', self._render('edu_documents.action_report_class_list', self.edu_class))
         self.assertIn('HORÁRIO ESCOLAR', self._render('edu_documents.action_report_class_schedule', self.edu_class))
         self.assertIn(

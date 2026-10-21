@@ -47,6 +47,28 @@ class TestEduRoles(TransactionCase):
         )
         cls.lp = lp
 
+    def test_class_documents_without_hr_access(self):
+        # A secretaria e o professor imprimem os documentos da turma sem acesso às fichas do RH (o cargo de quem
+        # assina usa o sexo do director de turma, que é um campo do RH).
+        self.teacher.sex = 'female'
+        self.class_a.director_id = self.teacher
+        Report = self.env['ir.actions.report']
+        for user in (self.clerk, self.teacher_user):
+            Wizard = self.env['edu.pauta.print'].with_user(user)
+            final = Wizard.create({'class_id': self.class_a.id, 'kind': 'final'})
+            mini = Wizard.create({'class_id': self.class_a.id, 'kind': 'mini', 'subject_id': self.lp.id})
+            documents = (
+                ('edu_documents.report_pauta', final.ids),
+                ('edu_documents.report_mini_pauta', mini.ids),
+                ('edu_documents.report_class_list', self.class_a.ids),
+                ('edu_documents.report_class_schedule', self.class_a.ids),
+            )
+            for report_name, ids in documents:
+                with self.subTest(user=user.login, report=report_name):
+                    html = Report.with_user(user)._render_qweb_html(report_name, ids)[0].decode()
+                    if report_name != 'edu_documents.report_class_list':
+                        self.assertIn('A DIRECTORA DE TURMA', html)
+
     def _menus(self, user):
         # Como na interface: um menu só aparece se todos os ascendentes também aparecerem.
         Menu = self.env['ir.ui.menu'].with_user(user)

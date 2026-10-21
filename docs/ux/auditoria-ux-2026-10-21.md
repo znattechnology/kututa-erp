@@ -187,3 +187,20 @@ Pedido: na lista de turmas, o ano em curso por omissão, com a possibilidade de 
 - **Abertura:** o menu Turmas abre por uma acção de servidor (`edu.class.action_open_classes`) que selecciona o ano em curso no painel. Um clique muda de ano.
 - **Alunos das turmas de anos fechados:** o contador «Alunos» e o filtro «Matriculados» passam a contar também as matrículas concluídas e retidas. Antes, uma turma de 2024/25 mostrava «Alunos 0». As vagas continuam a ser verificadas só com as matrículas em curso.
 - **Menu lateral:** os itens que abrem por acção de servidor ficam destacados pelo último clique.
+
+## 10. Documentos na própria página e pauta por trimestre (2026-10-21)
+Pedido: os botões da turma (pautas, relação nominal, horário) devem mostrar o documento na mesma página, em HTML, sem abrir outro separador; a pauta pede primeiro o trimestre, e só a do III trimestre mostra a situação.
+
+- **Visualizar** (`ir.actions.report.preview_action`, no `kututa_web`): passa a ser um relatório `qweb-html`, aberto pelo ecrã de relatórios do Odoo dentro da aplicação.
+  - **Botões:** «Imprimir» gera o PDF e «Voltar» regressa à turma.
+  - **Onde se aplica:** turma (relação nominal, horário), assistente das pautas e documentos emitidos.
+- **Pauta da turma** (`edu.pauta.print`):
+  - **Trimestre obrigatório.** Por omissão, o trimestre em curso; num ano fechado, o III.
+  - **Pauta de um trimestre:** colunas CT1…CTn (ou MT1…MTn), sem PG, CA/MFD, recurso nem RESULTADO. O título é «MAPA DE APROVEITAMENTO · II TRIMESTRE».
+  - **Pauta do último trimestre:** a pauta final, como antes.
+- **Defeito encontrado na verificação:** a Secretaria e os professores recebiam «403: Proibido» nas pautas e no horário. O cargo de quem assina («O/A DIRECTOR(A) DE TURMA») lia o sexo do funcionário, que é um campo do RH.
+  - **Correcção:** o auxiliar `h.employee_role` lê só esse campo, com permissões de sistema.
+  - **Teste:** `edu_roles` gera os quatro documentos da turma como Secretaria e como professor.
+- **Menu lateral:** já não desaparece nos ecrãs sem menu, como a pré-visualização ou um endereço aberto directamente.
+  - Fica a última aplicação aberta. Sem ela, usa a que tem a acção, ou a primeira, que é a de entrada.
+  - A barra de topo mostra o nome da aplicação.

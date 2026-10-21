@@ -12,10 +12,11 @@ class TestKututaWeb(TransactionCase):
         report = self.env.ref('web.action_report_externalpreview', raise_if_not_found=False) or self.env[
             'ir.actions.report'
         ].search([], limit=1)
+        # Pré-visualização na própria aplicação (HTML), não num separador novo.
         action = report.preview_action([1, 2])
-        self.assertEqual(action, {
-            'type': 'ir.actions.act_url', 'url': f'/report/pdf/{report.report_name}/1,2', 'target': 'new',
-        })  # fmt: skip
+        self.assertEqual(action['type'], 'ir.actions.report')
+        self.assertEqual((action['report_name'], action['report_type']), (report.report_name, 'qweb-html'))
+        self.assertEqual(action['context']['active_ids'], [1, 2])
 
     def test_no_odoo_onboarding(self):
         # Nem tours de boas-vindas nem a conversa do OdooBot em inglês.

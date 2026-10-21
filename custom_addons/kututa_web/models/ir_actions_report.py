@@ -5,11 +5,9 @@ class IrActionsReport(models.Model):
     _inherit = 'ir.actions.report'
 
     def preview_action(self, docids):
-        """Abre o PDF num separador novo: o mesmo ficheiro que a impressão gera, para ver antes de imprimir."""
+        """Mostra o documento na própria aplicação, em HTML, no lugar da página: «Imprimir» gera o PDF e «Voltar»
+        regressa a onde se estava. Sem separadores novos."""
         self.ensure_one()
-        ids = docids.ids if isinstance(docids, models.BaseModel) else docids
-        return {
-            'type': 'ir.actions.act_url',
-            'url': f'/report/pdf/{self.report_name}/{",".join(map(str, ids))}',
-            'target': 'new',
-        }
+        action = self.report_action(docids, config=False)
+        action['report_type'] = 'qweb-html'
+        return action

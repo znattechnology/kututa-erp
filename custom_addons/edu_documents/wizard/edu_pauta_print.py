@@ -20,15 +20,41 @@ class EduPautaPrint(models.TransientModel):
     )
     subject_id = fields.Many2one('edu.subject', string='Disciplina')
     trimester_id = fields.Many2one(
-        'edu.trimester', string='Trimestre', domain="[('academic_year_id', '=', academic_year_id)]"
+        'edu.trimester',
+        string='Trimestre',
+        domain="[('academic_year_id', '=', academic_year_id)]",
+        compute='_compute_trimester_id',
+        store=True,
+        readonly=False,
+        help='A pauta mostra as classificações até este trimestre. A situação (transita, não transita) só sai na '
+        'pauta do último trimestre.',
     )
     regime = fields.Char(compute='_compute_regime')
+
+    @api.depends('class_id')
+    def _compute_trimester_id(self):
+        """No ano em curso, o trimestre em curso; num ano fechado, o último (o da pauta final)."""
+        for wizard in self:
+            trimesters = wizard.class_id.academic_year_id.trimester_ids.sorted('number')
+            if wizard.trimester_id in trimesters:
+                continue
+            wizard.trimester_id = trimesters.filtered('is_current')[:1] or trimesters[-1:]
 
     @api.depends('class_id')
     def _compute_regime(self):
         for wizard in self:
             policy = self.env['edu.evaluation.policy']._get(wizard.class_id.company_id, wizard.class_id.level_id)
             wizard.regime = policy.regime
+
+    def _trimester_number(self):
+        """Até que trimestre vai a pauta (sem trimestre escolhido, o ano inteiro)."""
+        trimesters = self.class_id.academic_year_id.trimester_ids
+        return self.trimester_id.number or max(trimesters.mapped('number') or [3])
+
+    def _is_final(self):
+        """A pauta do último trimestre é a final: classificação do ano, exames e situação."""
+        trimesters = self.class_id.academic_year_id.trimester_ids
+        return self._trimester_number() >= max(trimesters.mapped('number') or [3])
 
     def _policy(self):
         return self.env['edu.evaluation.policy']._get(self.class_id.company_id, self.class_id.level_id)
