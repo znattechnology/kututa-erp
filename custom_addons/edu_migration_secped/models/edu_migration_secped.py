@@ -240,6 +240,11 @@ class EduMigrationSecped(models.AbstractModel):
             'edu_pedagogical_director_name': school.get('pedagogicalDirectorName') or False,
             'edu_student_capacity': school.get('studentCapacity') or 0,
         }
+        # Cores da escola (timbre dos documentos, como no secPed).
+        if school.get('primaryColor'):
+            vals['primary_color'] = school['primaryColor']
+        if school.get('secondaryColor'):
+            vals['secondary_color'] = school['secondaryColor']
         run.company.write(vals)
         if school.get('taxNumber') and run.company.vat != school['taxNumber']:
             try:

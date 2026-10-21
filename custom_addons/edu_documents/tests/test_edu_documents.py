@@ -181,19 +181,20 @@ class TestEduDocuments(TransactionCase):
         self.assertNotIn('>CA<', html)
         self.assertNotIn('Resultado', html)
         self.assertNotIn('Transita', html)
-        lp = self.subjects.filtered(lambda s: s.code == 'LP')
+        # Mini-pauta como a do secPed: mapa condensado da turma no trimestre (letra e nome por disciplina, CT/CF
+        # com FJ e FI, média), A4 horizontal, assinaturas do coordenador de turma e da direcção pedagógica.
         mini = self.env['edu.pauta.print'].create(
-            {'class_id': self.edu_class.id, 'kind': 'mini', 'subject_id': lp.id, 'trimester_id': trimesters[-1].id}
+            {'class_id': self.edu_class.id, 'kind': 'mini', 'trimester_id': trimesters[-1].id}
         )
         html = self._render('edu_documents.action_report_mini_pauta', mini)
-        self.assertIn('MINI-PAUTA', html)
-        self.assertIn('CT3', html)
-        # Só até ao trimestre escolhido, e sem a classificação final antes do último trimestre.
-        first = self.edu_class.academic_year_id.trimester_ids.sorted('number')[:1]
-        mini.trimester_id = first
+        self.assertIn('MAPA DE APROVEITAMENTO REFERENTE AO III TRIMESTRE', html)
+        for text in ('A)', 'Língua Portuguesa', '>CF<', '>FJ<', '>FI<', 'Méd.', 'Coordenador(a) de Turma'):
+            self.assertIn(text, html)
+        self.assertIn('mp-neg', html)
+        mini.trimester_id = trimesters[0]
         html = self._render('edu_documents.action_report_mini_pauta', mini)
-        self.assertIn('CT1', html)
-        self.assertNotIn('CT2', html)
+        self.assertIn('REFERENTE AO I TRIMESTRE', html)
+        self.assertIn('>CT1<', html)
         self.assertNotIn('>CF<', html)
         self.assertEqual(mini.action_preview()['report_type'], 'qweb-html')
         self.assertEqual(self.edu_class.action_print_class_list()['report_type'], 'qweb-html')

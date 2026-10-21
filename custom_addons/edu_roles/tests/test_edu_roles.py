@@ -68,6 +68,8 @@ class TestEduRoles(TransactionCase):
                     html = Report.with_user(user)._render_qweb_html(report_name, ids)[0].decode()
                     if report_name == 'edu_documents.report_pauta':
                         self.assertIn('A Directora de Turma', html)
+                    elif report_name == 'edu_documents.report_mini_pauta':
+                        self.assertIn('Coordenador(a) de Turma', html)
                     elif report_name != 'edu_documents.report_class_list':
                         self.assertIn('A DIRECTORA DE TURMA', html)
 

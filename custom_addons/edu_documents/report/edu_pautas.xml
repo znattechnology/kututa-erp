@@ -1,80 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Mini-pauta: uma disciplina da turma (geral: MAC NPT MT por trimestre e MFD; técnico: CT e faltas) -->
+    <!-- Mini-pauta, como a do secPed-Express (mini-pauta-document.tsx): mapa de aproveitamento condensado do
+         trimestre da turma, em A4 horizontal. Uma letra por disciplina, a classificação do trimestre (CT/MT; no
+         último trimestre a CF) com as faltas FJ/FI, e a média do aluno. Dados: edu.pauta.print._mini_pauta_data. -->
     <template id="report_mini_pauta">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.basic_layout">
                     <t t-set="company" t-value="o.company_id"/>
                     <t t-set="c" t-value="o.class_id"/>
-                    <t t-set="terms" t-value="o._terms()"/>
-                    <t t-set="results" t-value="o._results()"/>
-                    <t t-set="absences" t-value="o._absences()"/>
-                    <t t-set="policy" t-value="o._policy()"/>
-                    <t t-set="exam_class" t-value="policy._is_exam_class(c.class_number)"/>
-                    <t t-set="technical" t-value="o.regime == 'technical'"/>
-                    <t t-set="all_numbers" t-value="[t.number for t in c.academic_year_id.trimester_ids.sorted('number')]"/>
-                    <!-- Até ao trimestre escolhido; a classificação final só com o último trimestre -->
-                    <t t-set="numbers" t-value="[n for n in all_numbers if not o.trimester_id or n &lt;= o.trimester_id.number]"/>
-                    <t t-set="final" t-value="bool(numbers) and numbers[-1] == all_numbers[-1]"/>
-                    <t t-set="teacher" t-value="c.assignment_ids.filtered(lambda a: a.subject_id == o.subject_id)[:1].teacher_id"/>
-                    <t t-call="edu_documents.styles"/>
-                    <div class="page edu-doc">
-                        <t t-call="edu_documents.header" official="False"/>
-                        <div class="edu-subtitle">
-                            MINI-PAUTA<t t-if="o.trimester_id"> · <t t-out="o.trimester_id.name.upper()"/></t>
+                    <t t-set="m" t-value="o._mini_pauta_data()"/>
+                    <style>
+                        .mp { font-family: Arial, "Liberation Sans", Helvetica, sans-serif; color: #000; line-height: 1.3; }
+                        .mp-mast { display: table; width: 100%; margin-bottom: 4px; line-height: 1.2; }
+                        .mp-mast > div { display: table-cell; vertical-align: middle; }
+                        .mp-mast .mp-logo { width: 130px; }
+                        .mp-mast .mp-logo img { max-height: 46px; max-width: 120px; }
+                        .mp-mast .mp-text { text-align: center; }
+                        .mp-official { font-weight: bold; font-size: 12.5px; }
+                        .mp-school { font-weight: bold; font-size: 13.5px; text-transform: uppercase; margin-top: 2px; }
+                        .mp-sub { font-size: 11.5px; color: #333; }
+                        .mp-small { font-size: 11px; color: #6b6b6b; }
+                        .mp-title { text-align: center; margin-bottom: 5px; }
+                        .mp-title span { font-weight: bold; font-size: 15px; text-transform: uppercase; }
+                        .mp-line { font-size: 12px; margin-top: 2px; }
+                        table.mp-grid { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+                        table.mp-grid th, table.mp-grid td { border-right: 1px solid #bbb; border-bottom: 1px solid #bbb; text-align: center; padding: 0; line-height: 1.15; }
+                        table.mp-grid tr > :first-child { border-left: 1px solid #bbb; }
+                        table.mp-grid thead tr:first-child th { border-top: 1px solid #999; }
+                        table.mp-grid th { border-color: #969696; vertical-align: middle; background: #fff; color: #141414; }
+                        table.mp-grid td { vertical-align: middle; }
+                        table.mp-grid .mp-group { font-weight: bold; text-transform: uppercase; line-height: 1.15; word-wrap: break-word; padding: 1px 1px; }
+                        table.mp-grid .mp-subhead { font-weight: 600; font-size: 10.5px; }
+                        table.mp-grid td.mp-name { text-align: left; padding: 1px 4px; line-height: 1.15; word-wrap: break-word; }
+                        table.mp-grid td.mp-value { font-weight: 600; }
+                        table.mp-grid td.mp-neg { color: #dc2626; }
+                        .mp-note { font-size: 11.5px; margin: 5px 0 0; }
+                        .mp-signatures { width: 100%; margin-top: 14px; font-size: 13px; text-transform: uppercase; text-align: center; page-break-inside: avoid; }
+                        /* A 2.ª folha continua as linhas da 1.ª (sem repetir o cabeçalho da tabela). */
+                        table.mp-grid thead { display: table-row-group; }
+                        table.mp-grid tr { page-break-inside: avoid; }
+                        .mp-signatures > div { display: inline-block; width: 49%; padding: 0 40px; vertical-align: bottom; box-sizing: border-box; }
+                        .mp-signatures .mp-role { font-weight: 600; }
+                        .mp-signatures .mp-sign { border-top: 1px solid #000; margin-top: 24px; padding-top: 2px; }
+                    </style>
+                    <t t-set="size" t-value="'10.5px' if m['tight'] else '11.5px'"/>
+                    <div class="page mp">
+                        <div class="mp-mast">
+                            <div class="mp-logo"><img t-if="company.logo and not company.uses_default_logo" t-att-src="image_data_uri(company.logo)" alt=""/></div>
+                            <div class="mp-text">
+                                <div class="mp-official">REPÚBLICA DE ANGOLA</div>
+                                <div class="mp-official">MINISTÉRIO DA EDUCAÇÃO</div>
+                                <div class="mp-school" t-out="company.name"/>
+                                <div class="mp-sub" t-if="company.edu_letterhead_subtitle" t-out="company.edu_letterhead_subtitle"/>
+                                <div class="mp-small" t-if="m['location']" t-out="m['location']"/>
+                                <div class="mp-small" t-if="m['contacts']" t-out="m['contacts']"/>
+                            </div>
+                            <div class="mp-logo"/>
                         </div>
-                        <p style="text-align: center;">
-                            DISCIPLINA: <strong t-out="o.subject_id.name.upper()"/> · CLASSE: <t t-out="c.class_number"/>ª ·
-                            TURMA: <t t-out="c.name"/><t t-if="c.course_id"> · CURSO: <t t-out="c.course_id.name.upper()"/></t> ·
-                            ANO LECTIVO: <t t-out="c.academic_year_id.name"/>
-                        </p>
-                        <table class="edu-grid o_ignore_layout_styling">
+                        <div class="mp-title">
+                            <span t-out="m['title']"/>
+                            <div class="mp-line">
+                                <b>Turma:</b> <t t-out="'%sª %s' % (c.class_number, c.name)"/>
+                                <t t-if="c.course_id"> · <b>Curso:</b> <t t-out="c.course_id.name"/></t>
+                                <t t-if="c.director_id"> · <b>Coordenador(a) de turma:</b> <t t-out="c.director_id.name"/></t>
+                            </div>
+                        </div>
+                        <table class="mp-grid o_ignore_layout_styling" t-att-style="'font-size: %s' % size">
+                            <colgroup>
+                                <col style="width: 2.2%"/>
+                                <col t-att-style="'width: ' + str(m['name_pct']) + '%'"/>
+                                <t t-foreach="m['subjects']" t-as="s">
+                                    <col t-att-style="'width: ' + str(m['subject_pct'] * 0.4) + '%'"/>
+                                    <col t-att-style="'width: ' + str(m['subject_pct'] * 0.3) + '%'"/>
+                                    <col t-att-style="'width: ' + str(m['subject_pct'] * 0.3) + '%'"/>
+                                </t>
+                                <col style="width: 3.2%"/>
+                            </colgroup>
                             <thead>
                                 <tr>
-                                    <th rowspan="2">Nº</th><th rowspan="2">NOME COMPLETO</th>
-                                    <t t-foreach="numbers" t-as="n">
-                                        <th t-att-colspan="2 if (exam_class and n == numbers[-1] and not technical) else 3"><t t-out="n"/>.º TRIMESTRE</th>
-                                    </t>
-                                    <th t-if="final" rowspan="2" t-out="technical and 'CF' or 'MFD'"/>
-                                    <th t-if="final and exam_class and not technical" rowspan="2">N.E</th>
-                                    <th t-if="final and exam_class and not technical" rowspan="2">MF</th>
-                                    <th rowspan="2">FALTAS J/I</th>
+                                    <th rowspan="3" class="mp-group">Nº</th>
+                                    <th rowspan="3" class="mp-group" style="text-align: left;">Nome completo</th>
+                                    <th t-foreach="m['subjects']" t-as="s" colspan="3" class="mp-group"><t t-out="m['letters'][s_index] if s_index &lt; 26 else '?'"/>)</th>
+                                    <th rowspan="3" class="mp-group">Méd.</th>
                                 </tr>
                                 <tr>
-                                    <t t-foreach="numbers" t-as="n">
-                                        <th t-out="technical and 'NPP' or 'MAC'"/>
-                                        <th t-if="not (exam_class and n == numbers[-1] and not technical)">NPT</th>
-                                        <th t-out="(technical and 'CT' or 'MT') + str(n)"/>
+                                    <th t-foreach="m['subjects']" t-as="s" colspan="3" class="mp-group" t-att-style="'font-size: 9px; text-transform: none;' if m['tight'] else 'font-size: 11px;'" t-out="s.name"/>
+                                </tr>
+                                <tr>
+                                    <t t-foreach="m['subjects']" t-as="s">
+                                        <th class="mp-subhead" t-out="m['label']"/>
+                                        <th class="mp-subhead">FJ</th>
+                                        <th class="mp-subhead">FI</th>
                                     </t>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr t-foreach="o._enrollments()" t-as="e">
-                                    <td t-out="e.order_number"/>
-                                    <td class="edu-name" t-out="e.student_id.name"/>
-                                    <t t-foreach="numbers" t-as="n">
-                                        <t t-set="t" t-value="terms.get((e.id, n))"/>
-                                        <td t-out="h.num(t.mac, bool(t and t.has_mac)) if t else ''"/>
-                                        <td t-if="not (exam_class and n == numbers[-1] and not technical)" t-out="h.num(t.npt, bool(t and t.has_npt)) if t else ''"/>
-                                        <td t-att-class="t and t.has_mt and h.color(t.mt, policy.pass_grade) or ''" t-out="h.num(t.mt, bool(t and t.has_mt)) if t else ''"/>
+                                <tr t-foreach="m['rows']" t-as="r">
+                                    <td t-out="r['number']"/>
+                                    <td class="mp-name" t-out="r['name']"/>
+                                    <t t-foreach="m['subjects']" t-as="s">
+                                        <t t-set="cell" t-value="r['cells'][s.id]"/>
+                                        <td t-att-class="'mp-value mp-neg' if cell[1] else 'mp-value'" t-out="cell[0]"/>
+                                        <td t-out="cell[2]"/>
+                                        <td t-out="cell[3]"/>
                                     </t>
-                                    <t t-set="r" t-value="results.get((e.id, o.subject_id.id))"/>
-                                    <td t-if="final" t-att-class="r and r.complete and h.color(r.cf, policy.pass_grade) or ''" t-out="h.num(r.cf, bool(r and r.complete)) if r else ''"/>
-                                    <td t-if="final and exam_class and not technical" t-out="h.num(r.national, bool(r and r.has_national)) if r else ''"/>
-                                    <td t-if="final and exam_class and not technical" t-att-class="r and r.complete and h.color(r.annual, policy.pass_grade) or ''" t-out="h.num(r.annual, bool(r and r.has_national)) if r else ''"/>
-                                    <t t-set="a" t-value="absences.get(e.id, (0, 0))"/>
-                                    <td t-out="'%s/%s' % a"/>
+                                    <td class="mp-value" t-out="r['average']"/>
                                 </tr>
                             </tbody>
                         </table>
-                        <table class="edu-signatures o_ignore_layout_styling">
-                            <tr>
-                                <td><div class="edu-role" t-out="h.employee_role(teacher, 'O PROFESSOR', 'A PROFESSORA', 'O(A) PROFESSOR(A)')"/><div class="edu-line" t-out="teacher.name or '&#160;'"/></td>
-                                <td><div class="edu-role" t-out="h.employee_role(c.director_id, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA', 'O(A) DIRECTOR(A) DE TURMA')"/><div class="edu-line" t-out="c.director_id.name or ''"/></td>
-                                <td><div class="edu-role" t-out="h.pedagogical_title()"/><div class="edu-line" t-out="company.edu_pedagogical_director_name or ''"/></td>
-                            </tr>
-                        </table>
+                        <p class="mp-note" t-out="m['note']"/>
+                        <div class="mp-signatures">
+                            <div>
+                                <div class="mp-role">O(A) Coordenador(a) de Turma</div>
+                                <div class="mp-sign" t-out="c.director_id.name or '&#160;'"/>
+                            </div>
+                            <div>
+                                <div class="mp-role">O(A) Subdirector(a) Pedagógico(a)</div>
+                                <div class="mp-sign" t-out="company.edu_pedagogical_director_name or '&#160;'"/>
+                            </div>
+                        </div>
                     </div>
                 </t>
             </t>
@@ -103,7 +148,7 @@
             }
             table.ep-grid tr > :first-child { border-left: 1px solid #c8c8c8; }
             table.ep-grid thead tr:first-child th { border-top: 1px solid #969696; }
-            table.ep-grid th { font-weight: bold; border-color: #969696; }
+            table.ep-grid th { font-weight: bold; border-color: #969696; vertical-align: middle; }
             table.ep-grid .ep-name { text-align: left; min-width: 170px; max-width: 200px; overflow: hidden; }
             table.ep-grid th.ep-subject { white-space: normal; line-height: 1.15; }
             table.ep-grid .ep-teachers td { background: #e9ecf3; font-weight: bold; white-space: normal; }

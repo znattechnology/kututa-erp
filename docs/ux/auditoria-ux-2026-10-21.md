@@ -223,3 +223,26 @@ Referência: a pauta da 12.ª A de Enfermagem (2025/26) da Vovó Eva no secPed (
   - A largura das colunas está calibrada pelo PDF real. Na 12.ª A de Enfermagem: 8 disciplinas na 1.ª folha e 5 mais o Resultado na 2.ª.
 - **Classificação do trimestre:** a CT/MT mostra-se arredondada (12,0), como no secPed; a importada guarda as casas decimais.
 - **Código:** `edu.pauta.print._pauta_data` prepara os dados do modelo `report_pauta`; o HTML e o PDF usam o mesmo modelo.
+
+## 12. Mini-pauta como a do secPed (2026-10-21)
+Referência: `apps/web/components/academic/mini-pauta-document.tsx` do secPed.
+
+- **O que mudou:** a mini-pauta deixou de ser de uma só disciplina. Passou a ser o mapa de aproveitamento condensado da turma num trimestre, em A4 horizontal.
+- **Cabeçalho:**
+  - o timbre da escola: logótipo à esquerda, REPÚBLICA DE ANGOLA / MINISTÉRIO DA EDUCAÇÃO, o nome, o subtítulo, a morada e os contactos, na cor secundária da escola;
+  - o título «MAPA DE APROVEITAMENTO REFERENTE AO II TRIMESTRE · 2025/2026», sublinhado na cor primária;
+  - a linha «Turma · Curso · Coordenador(a) de turma».
+- **Tabela** (largura fixa repartida pelas disciplinas):
+  - uma letra por disciplina (A), B)…, a referência das disciplinas em dívida) e o nome;
+  - por disciplina, CT1/CT2 no técnico ou MT no geral; no último trimestre, a CF. A seguir, FJ e FI, com «·» quando não há faltas;
+  - no fim, a média do aluno; as negativas a vermelho.
+- **Rodapé:** a nota explicativa e as assinaturas do Coordenador de Turma e do Subdirector Pedagógico.
+- **Cores:** o cabeçalho e o timbre ficam a preto e branco, como na pauta da turma. A migração copia as cores da escola (Vovó Eva: `#0FB417` e `#191F35`) para uso futuro.
+- **PDF:**
+  - uma folha A4 para turmas até cerca de 45 alunos;
+  - numa turma maior, as linhas continuam na folha seguinte sem repetir o cabeçalho;
+  - as linhas nunca se partem entre folhas;
+  - as assinaturas ficam juntas.
+- **Colunas estreitas:** os nomes das disciplinas passam a minúsculas, mais pequenas, para não partirem a meio.
+- **Verificação:** os PDFs geram-se com o servidor a correr. Sem servidor, o motor de PDF não carrega os estilos base do Odoo e o resultado engana.
+- **Assistente das pautas:** o trimestre é obrigatório para os dois documentos e a escolha da disciplina desapareceu.

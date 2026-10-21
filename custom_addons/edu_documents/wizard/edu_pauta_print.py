@@ -50,7 +50,7 @@ class EduPautaPrint(models.TransientModel):
     company_id = fields.Many2one(related='class_id.company_id')
     academic_year_id = fields.Many2one(related='class_id.academic_year_id')
     kind = fields.Selection(
-        [('mini', 'Mini-pauta (disciplina)'), ('final', 'Pauta da turma')],
+        [('mini', 'Mini-pauta (mapa condensado)'), ('final', 'Pauta da turma')],
         string='Documento',
         required=True,
         default='final',
@@ -109,19 +109,16 @@ class EduPautaPrint(models.TransientModel):
             for r in self.env['edu.subject.result'].search([('class_id', '=', self.class_id.id)])
         }
 
-    def _terms(self):
-        domain = [('class_id', '=', self.class_id.id), ('subject_id', '=', self.subject_id.id)]
-        return {(t.enrollment_id.id, t.trimester_id.number): t for t in self.env['edu.term.result'].search(domain)}
-
-    def _absences(self):
-        domain = [('class_id', '=', self.class_id.id), ('subject_id', '=', self.subject_id.id)]
-        if self.trimester_id:
-            domain.append(('trimester_id', '=', self.trimester_id.id))
-        rows = self.env['edu.absence.summary'].search(domain)
+    def _trimester_absences(self, trimester):
+        """Faltas justificadas e injustificadas do trimestre por (matrícula, disciplina)."""
         totals = {}
-        for row in rows:
-            excused, absent = totals.get(row.enrollment_id.id, (0, 0))
-            totals[row.enrollment_id.id] = (excused + row.excused, absent + row.absent)
+        if 'edu.absence.summary' not in self.env:
+            return totals
+        domain = [('class_id', '=', self.class_id.id), ('trimester_id', '=', trimester.id)]
+        for row in self.env['edu.absence.summary'].search(domain):
+            key = (row.enrollment_id.id, row.subject_id.id)
+            excused, absent = totals.get(key, (0, 0))
+            totals[key] = (excused + row.excused, absent + row.absent)
         return totals
 
     # ------------------------------------------------------------------
@@ -159,14 +156,7 @@ class EduPautaPrint(models.TransientModel):
                 [('class_id', '=', self.class_id.id), ('trimester_id', '=', trimester.id)]
             )
         }
-        absences = {}
-        if 'edu.absence.summary' in self.env:
-            for row in self.env['edu.absence.summary'].search(
-                [('class_id', '=', self.class_id.id), ('trimester_id', '=', trimester.id)]
-            ):
-                key = (row.enrollment_id.id, row.subject_id.id)
-                excused, absent = absences.get(key, (0, 0))
-                absences[key] = (excused + row.excused, absent + row.absent)
+        absences = self._trimester_absences(trimester)
         year_results = self._year_results()
 
         def grade(value, decimals=1, show=True):
@@ -293,6 +283,91 @@ class EduPautaPrint(models.TransientModel):
             'context': '\u2003\u2003'.join(context),
             'legend': f'{legend}; {LEGEND_COMMON}',
             'scale': f'Escala 0–{policy.scale_max} · aprovação mínima {round_units(pass_grade)} valores.',
+        }
+
+    def _mini_pauta_data(self):
+        """Mini-pauta como a do secPed: mapa condensado do trimestre da turma — uma letra por disciplina (A), B)…, a
+        referência das disciplinas em dívida), por aluno e disciplina a classificação do trimestre (CT no técnico,
+        MT no geral; no último trimestre a CF) com as faltas justificadas e injustificadas, e a média."""
+        self.ensure_one()
+        policy = self._policy()
+        technical = self.regime == 'technical'
+        number = self._trimester_number()
+        final = self._is_final()
+        trimester = (
+            self.trimester_id or self.class_id.academic_year_id.trimester_ids.filtered(lambda t: t.number == number)[:1]
+        )
+        subjects = self._subjects().sorted(lambda s: unicodedata.normalize('NFKD', s.name or '').casefold())
+        label = 'CF' if final else (f'CT{number}' if technical else 'MT')
+        if final:
+            description = 'classificação de frequência do ano'
+        else:
+            description = 'classificação do trimestre (cumulativa)' if technical else 'média do trimestre'
+        results = self._results()
+        terms = {
+            (t.enrollment_id.id, t.subject_id.id): t
+            for t in self.env['edu.term.result'].search(
+                [('class_id', '=', self.class_id.id), ('trimester_id', '=', trimester.id)]
+            )
+        }
+        absences = self._trimester_absences(trimester)
+        rows = []
+        for enrollment in self._enrollments():
+            cells, values = {}, []
+            for subject in subjects:
+                key = (enrollment.id, subject.id)
+                if final:
+                    result = results.get(key)
+                    value = result.cf if result and result.complete else None
+                else:
+                    term = terms.get(key)
+                    value = term.mt if term and term.has_mt else None
+                excused, absent = absences.get(key, (0, 0))
+                shown = round_units(value) if value is not None else None
+                cells[subject.id] = (
+                    '—' if shown is None else str(shown),
+                    shown is not None and shown < policy.pass_grade,
+                    str(excused) if excused else '·',
+                    str(absent) if absent else '·',
+                )
+                if value is not None:
+                    values.append(value)
+            average = round_units(sum(values) / len(values)) if values else None
+            rows.append(
+                {
+                    'number': enrollment.order_number or '',
+                    'name': enrollment.student_id.name,
+                    'cells': cells,
+                    'average': '—' if average is None else str(average),
+                }
+            )
+        count = max(len(subjects), 1)
+        name_pct = 22 if count <= 8 else (19 if count <= 12 else 16)
+        subject_pct = (100 - 2.2 - 3.2 - name_pct) / count
+        location = ', '.join(p for p in [self.company_id.street, self.company_id.city] if p)
+        contacts = ' · '.join(
+            p
+            for p in [
+                self.company_id.phone and f'Tel.: {self.company_id.phone}',
+                self.company_id.email and f'E-mail: {self.company_id.email}',
+            ]
+            if p
+        )
+        return {
+            'subjects': subjects,
+            'letters': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            'label': label,
+            'rows': rows,
+            'title': f'MAPA DE APROVEITAMENTO REFERENTE AO {ROMAN.get(number, number)} TRIMESTRE'
+            f' · {self.class_id.academic_year_id.name}',
+            'note': f'{label} — {description} · FJ/FI — faltas justificadas/injustificadas · negativas '
+            f'(< {round_units(policy.pass_grade)}) a vermelho.',
+            'name_pct': name_pct,
+            'subject_pct': subject_pct,
+            # Colunas estreitas: os nomes das disciplinas em minúsculas e mais pequenos, para não partirem a meio.
+            'tight': subject_pct < 7.5,
+            'location': location,
+            'contacts': contacts,
         }
 
     def _year_results(self):

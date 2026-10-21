@@ -61,7 +61,7 @@
         <field name="model">edu.pauta.print</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">edu_documents.report_mini_pauta</field>
-        <field name="print_report_name">'Mini-pauta %s %s' % (object.class_id.display_name, object.subject_id.name)</field>
+        <field name="print_report_name">'Mini-pauta %s %sº trimestre' % (object.class_id.display_name, object.trimester_id.number)</field>
         <field name="paperformat_id" ref="paperformat_a4_landscape"/>
     </record>
     <record id="action_report_pauta" model="ir.actions.report">
