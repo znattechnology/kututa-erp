@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_version_view_list_l10n_ao_hr" model="ir.ui.view">
+        <field name="name">hr.version.list.l10n_ao_hr</field>
+        <field name="model">hr.version</field>
+        <field name="inherit_id" ref="hr.hr_version_list_view"/>
+        <field name="arch" type="xml">
+            <field name="contract_date_end" position="after">
+                <field name="l10n_ao_contract_type" optional="show"/>
+                <field name="l10n_ao_fixed_term_reason" optional="hide"/>
+                <field name="trial_date_end" optional="hide"/>
+            </field>
+        </field>
+    </record>
+</odoo>

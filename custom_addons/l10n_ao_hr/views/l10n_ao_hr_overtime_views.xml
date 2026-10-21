@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_hr_overtime_list" model="ir.ui.view">
+        <field name="name">l10n_ao_hr.overtime.list</field>
+        <field name="model">l10n_ao_hr.overtime</field>
+        <field name="arch" type="xml">
+            <list string="Trabalho extraordinário" editable="bottom" decoration-muted="state == 'refused'">
+                <field name="employee_id"/>
+                <field name="date"/>
+                <field name="kind"/>
+                <field name="hours" widget="float_time" sum="Total"/>
+                <field name="note"/>
+                <field name="authorized_by_igt" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-danger="state == 'refused'"/>
+                <button name="action_approve" type="object" string="Aprovar" icon="fa-check" invisible="state != 'draft'" groups="hr.group_hr_user"/>
+                <button name="action_refuse" type="object" string="Recusar" icon="fa-times" invisible="state != 'draft'" groups="hr.group_hr_user"/>
+                <button name="action_draft" type="object" string="Repor" icon="fa-undo" invisible="state == 'draft'" groups="hr.group_hr_user"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="l10n_ao_hr_overtime_search" model="ir.ui.view">
+        <field name="name">l10n_ao_hr.overtime.search</field>
+        <field name="model">l10n_ao_hr.overtime</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <filter name="draft" string="Por aprovar" domain="[('state', '=', 'draft')]"/>
+                <filter name="approved" string="Aprovados" domain="[('state', '=', 'approved')]"/>
+                <filter name="month" string="Este mês" date="date" default_period="month"/>
+                <group>
+                    <filter name="group_employee" string="Trabalhador" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_kind" string="Tipo" context="{'group_by': 'kind'}"/>
+                    <filter name="group_month" string="Mês" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_hr_overtime" model="ir.actions.act_window">
+        <field name="name">Trabalho extraordinário</field>
+        <field name="res_model">l10n_ao_hr.overtime</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_month': 1, 'search_default_group_employee': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Registe o trabalho extraordinário (LGT, art. 187.º)</p>
+            <p>Limites sem autorização da IGT: 2 h por dia, 40 h por mês e 200 h por ano (art. 185.º).</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_hr_overtime" name="Trabalho extraordinário" action="action_l10n_ao_hr_overtime"
+              parent="hr.menu_hr_root" sequence="15" groups="hr.group_hr_user"/>
+</odoo>

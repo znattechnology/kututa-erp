@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_work_entry_type_view_form_l10n_ao_hr" model="ir.ui.view">
+        <field name="name">hr.work.entry.type.form.l10n_ao_hr</field>
+        <field name="model">hr.work.entry.type</field>
+        <field name="inherit_id" ref="hr_holidays.hr_work_entry_type_view_form"/>
+        <field name="arch" type="xml">
+            <group name="allocation_validation" position="after">
+                <group name="l10n_ao_hr" string="Lei Geral do Trabalho (Angola)" invisible="count_as != 'absence'">
+                    <field name="l10n_ao_justified"/>
+                    <field name="l10n_ao_max_days_event"/>
+                    <field name="l10n_ao_max_days_month"/>
+                    <field name="l10n_ao_max_days_year"/>
+                    <field name="l10n_ao_payroll_code"/>
+                </group>
+            </group>
+        </field>
+    </record>
+</odoo>

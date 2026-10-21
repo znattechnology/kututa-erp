@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Período normal de trabalho: 44 horas por semana e 8 por dia (LGT, art. 148.º): 8 h de segunda a sexta e 4 h ao sábado. -->
+    <record id="resource_calendar_ao_44h" model="resource.calendar">
+        <field name="name">Angola: 44 horas (segunda a sábado)</field>
+        <field name="company_id" eval="False"/>
+        <field name="full_time_required_hours">44</field>
+        <field name="attendance_ids" eval="[(5, 0, 0),
+            (0, 0, {'dayofweek': '0', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '0', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '1', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '1', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '2', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '2', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '3', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '3', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '4', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '4', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '5', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+        ]"/>
+    </record>
+    <!-- Variante de 40 horas, de segunda a sexta, para quem não trabalha ao sábado. -->
+    <record id="resource_calendar_ao_40h" model="resource.calendar">
+        <field name="name">Angola: 40 horas (segunda a sexta)</field>
+        <field name="company_id" eval="False"/>
+        <field name="full_time_required_hours">40</field>
+        <field name="attendance_ids" eval="[(5, 0, 0),
+            (0, 0, {'dayofweek': '0', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '0', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '1', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '1', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '2', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '2', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '3', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '3', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            (0, 0, {'dayofweek': '4', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            (0, 0, {'dayofweek': '4', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+        ]"/>
+    </record>
+</odoo>

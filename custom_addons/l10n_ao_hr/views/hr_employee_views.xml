@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_l10n_ao_hr" model="ir.ui.view">
+        <field name="name">hr.employee.form.l10n_ao_hr</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <field name="identification_id" position="after">
+                <field name="l10n_ao_inss_number"/>
+            </field>
+            <div name="contract_dates" position="after">
+                <field name="l10n_ao_contract_type" invisible="not contract_date_start"/>
+                <field name="l10n_ao_fixed_term_reason" invisible="l10n_ao_contract_type not in ('fixed', 'fixed_uncertain')" required="l10n_ao_contract_type in ('fixed', 'fixed_uncertain')"/>
+                <label for="l10n_ao_term_months" invisible="l10n_ao_contract_type not in ('fixed', 'fixed_uncertain')"/>
+                <div class="o_row" invisible="l10n_ao_contract_type not in ('fixed', 'fixed_uncertain')">
+                    <field name="l10n_ao_term_months" class="o_hr_narrow_field"/>
+                    <span>de</span>
+                    <field name="l10n_ao_fixed_term_max_months" class="o_hr_narrow_field"/>
+                    <span>meses, com</span>
+                    <field name="l10n_ao_renewal_count" class="o_hr_narrow_field"/>
+                    <span>renovações</span>
+                </div>
+                <field name="trial_date_end" invisible="not contract_date_start"/>
+                <field name="l10n_ao_is_director" invisible="not contract_date_start"/>
+                <field name="l10n_ao_trial_written" invisible="not contract_date_start or l10n_ao_contract_type != 'indefinite'"/>
+            </div>
+            <div name="wage" position="after">
+                <field name="l10n_ao_pay_basis"/>
+                <field name="l10n_ao_lesson_rate" invisible="l10n_ao_pay_basis == 'month'"/>
+                <field name="l10n_ao_weekly_hours"/>
+            </div>
+            <page name="departure" position="before">
+                <page name="l10n_ao_hr" string="LGT" groups="hr.group_hr_user">
+                    <group>
+                        <group string="Antiguidade">
+                            <field name="l10n_ao_admission_date"/>
+                            <field name="l10n_ao_seniority_years"/>
+                        </group>
+                    </group>
+                    <group string="Trabalho extraordinário">
+                        <field name="l10n_ao_overtime_ids" nolabel="1" context="{'default_employee_id': id}">
+                            <list editable="bottom">
+                                <field name="date"/>
+                                <field name="kind"/>
+                                <field name="hours" widget="float_time"/>
+                                <field name="note"/>
+                                <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-danger="state == 'refused'"/>
+                                <button name="action_approve" type="object" string="Aprovar" icon="fa-check" invisible="state != 'draft'"/>
+                                <button name="action_refuse" type="object" string="Recusar" icon="fa-times" invisible="state != 'draft'"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Sanções disciplinares">
+                        <field name="l10n_ao_sanction_ids" nolabel="1" context="{'default_employee_id': id}">
+                            <list>
+                                <field name="date"/>
+                                <field name="kind"/>
+                                <field name="reduction_pct"/>
+                                <field name="months"/>
+                                <field name="state" widget="badge"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </page>
+        </field>
+    </record>
+</odoo>

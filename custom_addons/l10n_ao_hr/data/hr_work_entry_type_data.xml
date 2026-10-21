@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Ausências da Lei Geral do Trabalho (Lei n.º 12/23). Os limites estão nos arts. 201.º a 230.º. -->
+    <record id="work_entry_type_ao_ferias" model="hr.work.entry.type">
+        <field name="name">Férias</field>
+        <field name="code">AO_FERIAS</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="True"/>
+        <field name="request_unit">day</field>
+        <field name="l10n_ao_payroll_code">VACATION</field>
+        <field name="color">4</field>
+    </record>
+    <record id="work_entry_type_ao_doenca" model="hr.work.entry.type">
+        <field name="name">Doença</field>
+        <field name="code">AO_DOENCA</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="support_document" eval="True"/>
+        <field name="l10n_ao_payroll_code">SICK</field>
+        <field name="description">Paga até 6 meses, com direito de regresso sobre o INSS (LGT, art. 226.º).</field>
+    </record>
+    <record id="work_entry_type_ao_casamento" model="hr.work.entry.type">
+        <field name="name">Casamento</field>
+        <field name="code">AO_CASAMENTO</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_event">8</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_luto_proximo" model="hr.work.entry.type">
+        <field name="name">Falecimento de cônjuge, pais, filhos ou irmãos</field>
+        <field name="code">AO_LUTO_PROXIMO</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_event">8</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_luto_outro" model="hr.work.entry.type">
+        <field name="name">Falecimento de outros familiares</field>
+        <field name="code">AO_LUTO_OUTRO</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_event">3</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_obrigacao_legal" model="hr.work.entry.type">
+        <field name="name">Cumprimento de obrigações legais</field>
+        <field name="code">AO_OBRIGACAO_LEGAL</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_month">2</field>
+        <field name="l10n_ao_max_days_year">8</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_assistencia_familiar" model="hr.work.entry.type">
+        <field name="name">Assistência inadiável à família</field>
+        <field name="code">AO_ASSISTENCIA_FAMILIAR</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_year">8</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_cultural" model="hr.work.entry.type">
+        <field name="name">Actividade cultural ou desportiva</field>
+        <field name="code">AO_CULTURAL</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_year">8</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_sindical" model="hr.work.entry.type">
+        <field name="name">Actividade sindical</field>
+        <field name="code">AO_SINDICAL</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_month">4</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_pre_natal" model="hr.work.entry.type">
+        <field name="name">Consulta pré-natal ou pós-natal</field>
+        <field name="code">AO_PRE_NATAL</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_month">1</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_provas" model="hr.work.entry.type">
+        <field name="name">Provas escolares (trabalhador-estudante)</field>
+        <field name="code">AO_PROVAS</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_formacao" model="hr.work.entry.type">
+        <field name="name">Formação profissional</field>
+        <field name="code">AO_FORMACAO</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_maternidade" model="hr.work.entry.type">
+        <field name="name">Licença de maternidade</field>
+        <field name="code">AO_MATERNIDADE</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_payroll_code">MATERNITY</field>
+        <field name="description">3 meses (mais 4 semanas em parto múltiplo), com subsídio do INSS (LGT, arts. 31.º a 34.º).</field>
+    </record>
+    <record id="work_entry_type_ao_paternidade" model="hr.work.entry.type">
+        <field name="name">Licença de paternidade</field>
+        <field name="code">AO_PATERNIDADE</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="l10n_ao_max_days_event">1</field>
+        <field name="l10n_ao_payroll_code">PAID</field>
+    </record>
+    <record id="work_entry_type_ao_sem_vencimento" model="hr.work.entry.type">
+        <field name="name">Licença sem remuneração</field>
+        <field name="code">AO_SEM_VENCIMENTO</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="unpaid" eval="True"/>
+        <field name="l10n_ao_payroll_code">UNPAID</field>
+    </record>
+    <record id="work_entry_type_ao_injustificada" model="hr.work.entry.type">
+        <field name="name">Falta injustificada</field>
+        <field name="code">AO_INJUSTIFICADA</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="unpaid" eval="True"/>
+        <field name="l10n_ao_justified" eval="False"/>
+        <field name="l10n_ao_payroll_code">UNJUSTIFIED</field>
+        <field name="color">1</field>
+    </record>
+    <record id="work_entry_type_ao_suspensao" model="hr.work.entry.type">
+        <field name="name">Suspensão disciplinar</field>
+        <field name="code">AO_SUSPENSAO</field>
+        <field name="count_as">absence</field>
+        <field name="country_id" ref="base.ao"/>
+        <field name="requires_allocation" eval="False"/>
+        <field name="unpaid" eval="True"/>
+        <field name="l10n_ao_payroll_code">UNPAID</field>
+    </record>
+</odoo>

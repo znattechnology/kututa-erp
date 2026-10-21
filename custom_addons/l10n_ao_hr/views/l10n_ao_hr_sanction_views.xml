@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_ao_hr_sanction_list" model="ir.ui.view">
+        <field name="name">l10n_ao_hr.sanction.list</field>
+        <field name="model">l10n_ao_hr.sanction</field>
+        <field name="arch" type="xml">
+            <list string="Sanções disciplinares">
+                <field name="employee_id"/>
+                <field name="date"/>
+                <field name="kind"/>
+                <field name="reduction_pct"/>
+                <field name="months"/>
+                <field name="state" widget="badge" decoration-success="state == 'applied'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="l10n_ao_hr_sanction_form" model="ir.ui.view">
+        <field name="name">l10n_ao_hr.sanction.form</field>
+        <field name="model">l10n_ao_hr.sanction</field>
+        <field name="arch" type="xml">
+            <form string="Sanção disciplinar">
+                <header>
+                    <button name="action_apply" type="object" string="Aplicar" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Anular" invisible="state != 'applied'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="kind" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="reduction_pct" invisible="kind != 'reduction'" readonly="state != 'draft'"/>
+                            <field name="months" invisible="kind != 'reduction'" readonly="state != 'draft'"/>
+                            <field name="suspension_date_from" invisible="kind != 'suspension'" readonly="state != 'draft'"/>
+                            <field name="suspension_date_to" invisible="kind != 'suspension'" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <group string="Factos e fundamentos (processo disciplinar, LGT arts. 88.º a 95.º)">
+                        <field name="reason" nolabel="1" readonly="state != 'draft'"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_ao_hr_sanction" model="ir.actions.act_window">
+        <field name="name">Sanções disciplinares</field>
+        <field name="res_model">l10n_ao_hr.sanction</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_l10n_ao_hr_sanction" name="Sanções disciplinares" action="action_l10n_ao_hr_sanction"
+              parent="hr.menu_hr_root" sequence="16" groups="hr.group_hr_user"/>
+</odoo>

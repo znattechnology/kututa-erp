@@ -1,0 +1,678 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html><head id="j_id_4"><link type="text/css" rel="stylesheet" href="/javax.faces.resource/theme.css.jsf?ln=primefaces-bootstrap" /><link rel="stylesheet" type="text/css" href="/javax.faces.resource/bootstrap-3.3.6-dist/css/bootstrap.min.css.jsf" /><link rel="stylesheet" type="text/css" href="/javax.faces.resource/css/font-awesome.css.jsf" /><link rel="stylesheet" type="text/css" href="/javax.faces.resource/css/zabuto_calendar.css.jsf" /><script type="text/javascript" src="/javax.faces.resource/jquery/jquery.js.jsf?ln=primefaces&amp;v=6.1"></script><script type="text/javascript" src="/javax.faces.resource/jquery/jquery-plugins.js.jsf?ln=primefaces&amp;v=6.1"></script><script type="text/javascript" src="/javax.faces.resource/core.js.jsf?ln=primefaces&amp;v=6.1"></script><script type="text/javascript" src="/javax.faces.resource/components.js.jsf?ln=primefaces&amp;v=6.1"></script><link rel="stylesheet" type="text/css" href="/javax.faces.resource/components.css.jsf?ln=primefaces&amp;v=6.1" /><link rel="stylesheet" type="text/css" href="/javax.faces.resource/css/style.css.jsf" /><script type="text/javascript" src="/javax.faces.resource/validation/validation.js.jsf?ln=primefaces&amp;v=6.1"></script><script type="text/javascript" src="/javax.faces.resource/validation/beanvalidation.js.jsf?ln=primefaces&amp;v=6.1"></script><script type="text/javascript">if(window.PrimeFaces){PrimeFaces.settings.locale='pt';PrimeFaces.settings.validateEmptyFields=true;PrimeFaces.settings.considerEmptyStringNull=false;}</script>
+		<title> | Portal do Contribuinte</title>
+        <link rel="shortcut icon" type="image/png" href="/resources/images/fav/favicon-16x16.png" /><script type="text/javascript" src="/javax.faces.resource/zabuto_calendar.min.js.jsf?ln=js"></script>
+
+    	<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async="async" src="https://www.googletagmanager.com/gtag/js?id=UA-50373626-2"></script>
+		<script>
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag('js', new Date());
+
+		  gtag('config', 'UA-50373626-2');
+		</script></head><body>
+	    <div id="header"><form id="j_id_g" name="j_id_g" method="post" action="/impostos-e-taxas/imposto-sobre-rendimentos-do-trabalho" enctype="application/x-www-form-urlencoded">
+			<header class="header">
+				<div class="banner clearfix">
+					<div class="banner-top">
+
+					</div>
+					<div class="banner-middle"><img src="/javax.faces.resource/images/roda_dentada.png.jsf" alt="insignia da republica de angola" />
+					</div>
+					<div class="banner-bottom">
+
+					</div>
+					<div class="container">
+
+						<div class="col-md-8 inner-banner">
+							<a class="banner-agt-logo" href="/"><img src="/javax.faces.resource/images/agt-banner-blue.png.jsf" alt="insignia da republica de angola" class="pull-right" /></a>
+
+							<a class="governo-angola-logo" href="/"><img src="/javax.faces.resource/images/logo-governo-Minfin.png.jsf" alt="republica de angola" class="pull-right hidden-xs hidden-sm hidden-md" /></a>
+
+						</div>
+
+						<div class="user-container">
+							<nav class="navbar-right-content navbar-default navbar-static-top">
+								<div class="navbar-right-header">
+									<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar1" aria-expanded="false" aria-controls="navbar1">
+										<span class="sr-only">Toggle navigation</span>
+									</button>
+								</div>
+							</nav>
+						</div>
+
+						<div class="col-md-4">
+						<ul class="login-button-container">
+								<li class="login-button"><a href="/login">
+									<i class="fa fa-unlock" aria-hidden="true"></i>Entrar</a>
+								</li>
+						</ul>
+						</div>
+					</div>
+				</div>
+
+				<div class="header-container-holder"><img src="/javax.faces.resource/images/agt-banner.png.jsf" alt="agt baner" class="image-banner" />
+
+					<div class="header-container">
+						<div class="container">
+							<div class="nome-do-site">
+								<h1>
+									<a href="/">Portal do Contribuinte</a>
+								</h1>
+							</div>
+							<!-- Navigation -->
+							<nav class="navbar main-menu navbar-default navbar-static-top">
+								<div class="navbar-header">
+									<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+										<span class="sr-only">Toggle navigation</span>
+										<span class="icon-bar"></span>
+										<span class="icon-bar"></span>
+										<span class="icon-bar"></span>
+									</button>
+								</div>
+								<div id="navbar" class="navbar-collapse collapse">
+									<ul class="nav navbar-nav">
+										<li class="inicio">
+											<a href="/"><i class="fa fa-home"></i>Início</a>
+										</li>
+										<li class="dropdown">
+											<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Serviços<span class="caret"></span>
+											</a>
+											<ul class="dropdown-menu">
+												<!--<h:panelGroup rendered="false">
+													<li class="dropdown-submenu">
+														<a tabindex="-1" class="dropdown-toggle"
+														   data-toggle="dropdown" role="button"
+														   aria-haspopup="true" aria-expanded="false" href="#">
+															Cadastro de Património<span class="caret" />
+														</a>
+														<ul class="dropdown-menu">
+															<li>
+																<a tabindex="-1" href="/consultar-patrimonio">
+																	Consultar Património
+																</a>
+															</li>
+                                                            <li>
+																<a tabindex="-1" href="/cadastrar-fraccao">
+                                                                    Cadastrar Fracção
+																</a>
+															</li>
+                                                            <li>
+                                                                <a tabindex="-1" href="/pre-cadastro-eletronico-de-patrimonio">
+                                                                    Pré-Cadastro Electrónico
+                                                                </a>
+                                                            </li>
+														</ul>
+													</li>
+												</h:panelGroup>-->
+												<li class="dropdown-submenu">
+													<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">
+														Liquidações<span class="caret"></span>
+													</a>
+													<ul class="dropdown-menu">
+															<li>
+																<a tabindex="-1" href="/liquidacao-de-receita-consignada">
+																	Receitas Consignadas
+																</a>
+															</li>
+													</ul>
+												</li>
+												<li class="dropdown-submenu">
+													<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">
+														Pagamentos<span class="caret"></span>
+													</a>
+													<ul class="dropdown-menu">
+														<!--<li>
+															<a tabindex="-1" href="/imprimir-verificar-nota-de-liquidacao">
+																Verificar Nota de Liquidação
+															</a>
+														</li>
+														<li>
+															<a tabindex="-1" href="/imprimir-verificar-recibo-de-pagamento">
+																Verificar Recibo de Pagamento
+															</a>
+														</li>-->
+														<li>
+															<a tabindex="-1" href="/imprimir-verificar-nf-nl">
+																Verificar Nº NL / RP
+															</a>
+														</li>
+													</ul>
+
+												</li>
+													<li class="dropdown-submenu">
+														<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">Cadastro de Contribuinte<span class="caret"></span></a>
+														<ul class="dropdown-menu">
+														<li><a href="/registrar-singular-solicitacao"><span>Registar NIF Singular</span></a></li>
+
+																<li>
+																	<a href="/consultar-nif-do-contribuinte"><span>Consulta de NIF</span></a>
+																</li>
+
+														</ul>
+													</li>
+													<li class="dropdown-submenu">
+														<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">Produtores de software<span class="caret"></span></a>
+														<ul class="dropdown-menu">
+															<li class="fatura"><a id="j_id_g:j_id_1q" href="#" class="ui-commandlink ui-widget" onclick="PrimeFaces.ab({s:&quot;j_id_g:j_id_1q&quot;});return false;">
+																	<span>Submissão do Modelo 8</span></a><a id="j_id_g:j_id_1u" href="#" class="ui-commandlink ui-widget" onclick="PrimeFaces.ab({s:&quot;j_id_g:j_id_1u&quot;});return false;">
+																	<span>Consultar Certificado</span></a>
+															</li>
+														</ul>
+													</li>
+
+												<li class="dropdown-submenu">
+													<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">Verificar Certificado<span class="caret"></span></a>
+													<ul class="dropdown-menu">
+														<li><a href="/verificar-certificado-residencia-fiscal"><span>Residência Fiscal</span></a></li>
+													</ul>
+												</li>
+													<li class="dropdown-submenu">
+														<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">Gráficas e Tipografias<span class="caret"></span></a>
+														<ul class="dropdown-menu">
+															<li class="fatura"><a id="j_id_g:j_id_22" href="#" class="ui-commandlink ui-widget" onclick="PrimeFaces.ab({s:&quot;j_id_g:j_id_22&quot;});return false;">
+																	<span>Solicitação de Licenciamento</span></a><a id="j_id_g:j_id_26" href="#" class="ui-commandlink ui-widget" onclick="PrimeFaces.ab({s:&quot;j_id_g:j_id_26&quot;});return false;">
+																	<span>Consultar Factura</span></a>
+															</li>
+														</ul>
+													</li>
+
+												<li class="dropdown-submenu">
+													<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">
+														Validar Documentos<span class="caret"></span>
+													</a>
+													<ul class="dropdown-menu">
+														<li><a href="/verificar-autenticidade-certidao-conformidade-tributaria"><span>Certidão de Conformidade Tributária</span></a></li>
+
+														<li><a href="/verificar-autenticidade-certidao-divida-tributaria"><span>Certidão de Dívida Tributária</span></a></li>
+														<li><a href="/verificar-autenticidade-mandado-citacao"><span>Mandado de Citação</span></a></li>
+														<li><a href="/verificar-autenticidade-mandado-penhora"><span>Mandado de Penhora</span></a></li>
+														<li><a href="/verificar-autenticidade-mandado-notificacao"><span>Mandado de Notificação</span></a></li>
+														<li><a href="/verificar-autenticidade-levantamento-penhora"><span>Levantamento de Penhora</span></a></li>
+
+													</ul>
+												</li>
+											</ul>
+										</li>
+										<li class="dropdown">
+											<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">
+												Ajuda<span class="caret"></span>
+											</a>
+											<ul class="dropdown-menu">
+												<li>
+													<a tabindex="-1" href="/perguntas-frequentes">Perguntas Frequentes</a>
+												</li>
+												<li>
+													<a tabindex="-1" href="/fale-connosco">Fale Connosco</a>
+												</li>
+												<li>
+													<a tabindex="-1" href="/contactos">Contactos</a>
+												</li>
+												<li class="dropdown-submenu">
+													<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">
+														Guias Rápidos<span class="caret"></span>
+													</a>
+													<ul class="dropdown-menu">
+														<li class="dropdown-submenu">
+															<li>
+																<a tabindex="-1" href="/guia-rapido-acordos-dupla-tributacao">
+																	Acordos de Dupla Tributação (ADT)
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-cadastro-patrimonio">
+																	Cadastro de Património
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-certidao-conformidade-tributaria">
+																	Certidão de Conformidade Tributária
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-do-ceoc">
+																	CEOC
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-dossier-de-precos-de-transferencia">
+																	Dossier de Preços de Transferência
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-emissao-de-facturas">
+																	Emissão de Facturas
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-execucoes-fiscais">
+																	Execuções Fiscais
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-facturacao-electronica">
+																	Facturação Electrónica
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-fiscalizacao">
+																	Fiscalização
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-do-iac">
+																	IAC
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-do-iec">
+																	IEC
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-do-iej">
+																	IEJ
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-imposto-industrial">
+																	II
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-imposto-selo">
+																	Imposto de Selo
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-imposto-predial-urbano">
+																	IP
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-do-irt">
+																	IRT
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-do-iva">
+																	IVA
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-do-ivm">
+																	IVM
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-pagamento-prestacoes">
+																	Pagamento em Prestações
+																</a>
+															</li>
+															<li>
+																<a tabindex="-1" href="/guia-rapido-do-utilizador">
+																	Portal do Contribuinte
+																</a>
+															</li>
+														</li>
+													</ul>
+												</li>
+												<li>
+													<a tabindex="-1" href="/selecionar-novo-acesso">
+														Solicitar Novo Acesso
+													</a>
+												</li>
+											</ul>
+										</li>
+										<li class="dropdown">
+											<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">
+												Biblioteca Virtual<span class="caret"></span>
+											</a>
+											<ul class="dropdown-menu">
+												<li>
+													<a tabindex="-1" href="/legislacao">Legislação</a>
+												</li>
+												<li class="inicio">
+													<a href="modelos">Modelos</a>
+												</li>
+
+												<li class="dropdown-submenu">
+													<a tabindex="-1" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="#">
+														Formulários<span class="caret"></span>
+													</a>
+													<ul class="dropdown-menu">
+														<li>
+															<a tabindex="-1" href="/formularios-nao-editaveis">
+																Não Editáveis
+															</a>
+														</li>
+														<li>
+															<a tabindex="-1" href="/formularios-editaveis">
+																Editáveis
+															</a>
+														</li>
+													</ul>
+												</li>
+												<li>
+													<a tabindex="-1" href="/impostos-e-taxas">
+														Impostos e Taxas
+													</a>
+												</li>
+												<li>
+													<a tabindex="-1" href="/noticias">Notícias</a>
+												</li>
+												<li>
+													<a tabindex="-1" href="/videos">Videos</a>
+												</li>
+												<li>
+													<a tabindex="-1" href="/links-uteis">Links Úteis</a>
+												</li>
+											</ul>
+										</li>
+									</ul>
+								</div>
+							</nav>
+						</div>
+					</div>
+				</div>
+
+				<div id="popover_content_wrapper" class="popover" role="tooltip">
+					<div class="arrow"></div>
+					<h3 class="popover-title">sdfsd</h3>
+					<div class="popover-content"></div>
+				</div>
+
+			</header><input type="hidden" name="j_id_g_SUBMIT" value="1" /><input type="hidden" name="javax.faces.ViewState" id="j_id__v_0:javax.faces.ViewState:1" value="8J0RRBDObXOGbFU/OFzMTKexSDh1vB4GeAro1HctbC5uF5TC" autocomplete="off" /></form>
+	    </div>
+	    
+	    <section class="container" id="content">
+	    	<div class="row-md">
+		<div class="col-md-3 column">
+			<ul id="accordion" class="nav nav-pills nav-stacked margin-bottom-fitteen">
+				<li class="menu-titulo"><a href="#"><span>Menu de Serviços</span></a></li>
+				<li class="submenu servico-1 panel">
+					<a href="javascript:" id="btn-cadastro" class="collapsed" data-parent="#accordion" data-toggle="collapse" data-target="#cadastromenuid" aria-expanded="false">
+						<span>Cadastro de Contribuinte</span></a>
+					<ul class="nav collapse" id="cadastromenuid" role="menu" aria-labelledby="btn-cadastro">
+						<li>
+							<li><a href="/registrar-singular-solicitacao"><span>Registar NIF Singular</span></a></li>
+						</li>
+					</ul>
+				</li>
+				<li class="submenu servico-1 panel">
+					<a href="javascript:" id="btn-reg" class="collapsed" data-parent="#accordion" data-toggle="collapse" data-target="#submenu1" aria-expanded="false">
+						<span>Liquidações</span></a>
+					<ul class="nav collapse" id="submenu1" role="menu" aria-labelledby="btn-reg">
+						<li>
+							<li><a href="/liquidacao-de-receita-consignada"><span>Receitas Consignadas</span></a></li>
+						</li>
+					</ul>
+				</li>
+				<li class="submenu servico-3 panel">
+					<a href="javascript:" id="btn-dli" class="collapsed" data-parent="#accordion" data-toggle="collapse" data-target="#submenu2" aria-expanded="false">
+						<span>Pagamentos</span></a>
+					<ul class="nav collapse" id="submenu2" role="menu" aria-labelledby="btn-dli">
+						<!--<li><a href="/imprimir-verificar-nota-de-liquidacao" ><span>Verificar Nota de Liquidação</span></a></li>
+						<li><a href="/imprimir-verificar-recibo-de-pagamento" style="padding-left: 58px !important;"><span style="padding-left: 0 !important;">Verificar Recibo de Pagamento</span></a></li>-->
+						<li><a href="/imprimir-verificar-nf-nl" style="padding-left: 58px !important;"><span style="padding-left: 0 !important;">Verificar Nº NL / RP</span></a></li>
+						<li><a href="/consultar-comprovativo-liquidacao"><span>Comprovativo Liquidação</span></a></li>
+						<!--<li><a href="/consultar-nota-credito"><span>Nota de Crédito</span></a></li>-->
+					</ul>
+				</li>
+				<li class="submenu servico-4 panel">
+					<a href="javascript:" id="btn-verificar" class="collapsed" data-parent="#accordion" data-toggle="collapse" data-target="#verificar-menu" aria-expanded="false">
+						<span>Verificar Certificado</span></a>
+					<ul class="nav collapse" id="verificar-menu" role="menu" aria-labelledby="btn-dli">
+						<li><a href="/verificar-certificado-residencia-fiscal"><span>Residência Fiscal</span></a></li>
+<!--						<li><a href="/verificar-certificado-declaracao-conformidade-adt"><span>Declaração de Conformidade ADT</span></a></li>-->
+					</ul>
+				</li>
+
+				<li class="submenu produtores-software panel">
+					<a href="javascript:" id="btn-software" class="collapsed" data-parent="#accordion" data-toggle="collapse" data-target="#producto-software" aria-expanded="false">
+						<span>Produtores de software</span>
+					</a>
+					<ul class="nav collapse" id="producto-software" role="menu" aria-labelledby="btn-ipu-pat">
+						<li><a id="portalExtarno-saf-t3" href="#" class="ui-commandlink ui-widget" onclick="PrimeFaces.ab({s:&quot;portalExtarno-saf-t3&quot;});return false;">
+								<span>Submissão do Modelo 8</span></a><a id="j_id_2u_9" href="#" class="ui-commandlink ui-widget" onclick="PrimeFaces.ab({s:&quot;j_id_2u_9&quot;});return false;">
+								<span>Consultar Certificado</span></a>
+						</li>
+					</ul>
+				</li>
+
+				<li class="submenu tipografia panel">
+					<a href="javascript:" class="collapsed" data-parent="#accordion" data-toggle="collapse" data-target="#btn-grafica" aria-expanded="false">
+						<span>Gráficas e Tipografias</span></a>
+					<ul class="nav collapse" id="btn-grafica" role="menu" aria-labelledby="btn-ipu-pat">
+						<li><a id="j_id_2u_e" href="#" class="ui-commandlink ui-widget" onclick="PrimeFaces.ab({s:&quot;j_id_2u_e&quot;});return false;">
+								<span>Solicitação de Licenciamento</span></a><a id="j_id_2u_i" href="#" class="ui-commandlink ui-widget" onclick="PrimeFaces.ab({s:&quot;j_id_2u_i&quot;});return false;">
+								<span>Consultar Factura</span></a>
+						</li>
+					</ul>
+				</li>
+
+				<li class="submenu cnd-submenu panel">
+					<a href="javascript:" class="collapsed" data-parent="#accordion" data-toggle="collapse" data-target="#btn-validar-documentos" aria-expanded="false">
+						<span>Validar Documentos</span>
+					</a>
+					<ul class="nav collapse" id="btn-validar-documentos" role="menu">
+						<li>
+							<li><a href="/verificar-autenticidade-certidao-conformidade-tributaria"><span>Certidão de Conformidade Tributária</span></a></li>
+
+							<li><a href="/verificar-autenticidade-certidao-divida-tributaria"><span>Certidão de Dívida Tributária</span></a></li>
+							<li><a href="/verificar-autenticidade-mandado-citacao"><span>Mandado de Citação</span></a></li>
+							<li><a href="/verificar-autenticidade-mandado-penhora"><span>Mandado de Penhora</span></a></li>
+							<li><a href="/verificar-autenticidade-mandado-notificacao"><span>Mandado de Notificação</span></a></li>
+							<li><a href="/verificar-autenticidade-levantamento-penhora"><span>Levantamento de Penhora</span></a></li>
+
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+				<main class="main-content">
+            		<div class="col-md-9"><span id="growl" class="ui-growl-pl" data-widget="widget_growl" data-summary="data-summary" data-detail="data-detail" data-severity="all,error" data-redisplay="true"></span><script id="growl_s" type="text/javascript">$(function(){PrimeFaces.cw('Growl','widget_growl',{id:'growl',sticky:false,life:6000,escape:true,msgs:[]});});</script>
+			<div class="panel panel-default default-article clearfix">
+				<h1>Imposto Sobre Rendimentos do Trabalho (IRT)</h1>					
+				<h2 style="text-decoration: underline"><strong>Incidência Objectiva</strong></h2>
+				<p>O Imposto sobre os Rendimentos do Trabalho (IRT) incide sobre os rendimentos dos trabalhadores por conta própria (profissionais liberais, comerciais e industriais) ou por conta de outrem (trabalhadores dependentes).</p>
+				<p>Para efeitos deste imposto, constituem rendimentos do trabalho todas as remunerações percebidas a título de ordenados, vencimentos, salários, honorários, avenças, gratificações, subsídios, prémios, comissões, participações, senhas de presença, emolumentos, participações em multas, custas e outras remunerações acessórias.</p>
+
+				<h2 style="text-decoration: underline"><strong>Incidência Subjectiva</strong></h2>
+				<p>O Imposto sobre os Rendimentos do Trabalho (IRT) é devido pelas pessoas singulares, quer residam, quer não, em território nacional, cujos rendimentos sejam obtidos por serviços prestados, directa ou indirectamente, a pessoas singulares ou colectivas com domicílio, sede, direcção efectiva ou estabelecimento estável no país.</p>
+				<p>Consideram-se sempre rendimentos obtidos no país derivados de:</p>
+				<ul class="list-disc">
+					<li>Actividades dos tripulantes dos navios ou aeronaves pertencentes a empresas que possuam no território nacional sede, direcção efectiva ou estabelecimento estável no país;</li>
+					<li>Actividades dos titulares de cargo de gerência, administração e órgãos sociais de sociedades que tenham sede, direcção efectiva ou estabelecimento estável no país.</li>
+				</ul>
+				<h2 style="text-decoration: underline"><strong>Grupos de Tributação</strong></h2>
+				<p>Os rendimentos do Imposto sobre os Rendimentos do Trabalho dividem-se em três Grupos de tributação: A, B e C.</p>
+
+				<p><strong>Grupo A</strong></p>
+				<p>Neste grupo incluem-se:</p>
+				<ul class="list-disc">
+					<li>Todas as remunerações percebidas pelos trabalhadores por conta de outrem e pagas por uma entidade patronal, por força de vínculo laboral como definido nos termos da Lei Geral do Trabalho;</li>
+					<li>Os rendimentos dos trabalhadores cujo vínculo de emprego se encontra regulado pelo Regime Jurídico da Função Pública;</li>
+					<li>Os rendimentos auferidos por titulares dos órgãos sociais das pessoas colectivas;</li>
+				</ul>
+
+				<p><strong>Grupo B</strong></p>
+				<p>Neste grupo incluem-se todas as remunerações percebidas pelos trabalhadores por conta própria que desempenhem, de forma independente, actividades constantes da lista de profissões anexa ao presente Código.</p>
+
+				<p><strong>Grupo C</strong></p>
+				<p>Neste grupo incluem-se todas as remunerações percebidas pelo desempenho de actividades industriais e comerciais, que se presumem, todas as constantes na Tabela de lucros mínimos em vigor.</p>
+
+				<h2 style="text-decoration: underline"><strong>Não Sujeição</strong></h2>
+				<p>Não estão sujeitas ao IRT:</p>
+				<ul class="list-disc">
+					<li>As prestações sociais pagas pelo Instituto Nacional da Segurança Social no âmbito da protecção social obrigatória, nos termos da lei;</li>
+					<li>O abono de família, pago pela entidade empregadora, em montante que não ultrapasse o limite máximo de 5% do ordenado base mensal do trabalhador, excluídos os trabalhadores sujeitos ao regime remuneratório da função pública;</li>
+					<li>As contribuições para a segurança social;</li>
+					<li>Os salários e outras remunerações devidas, até ao limite de Kz 100 000,00 (cem mil kwanzas) aos trabalhadores eventuais agrícolas nacionais e aos trabalhadores domésticos contratados directamente por pessoas singulares ou agregados familiares e inscritos na Segurança Social;</li>
+					<li>Os subsídios atribuídos por lei aos cidadãos nacionais portadores de deficiências motoras, sensoriais e mentais;</li>
+					<li>Os subsídios diários, os subsídios de representação, os subsídios de viagem e deslocação atribuídos aos funcionários do Estado, que não ultrapassem os limites estabelecidos na legislação específica;</li>
+					<li>Os subsídios diários de alimentação atribuídos a trabalhadores até ao limite mensal de AKz. 30 000,00 (Trinta Mil Kwanzas);</li>
+					<li>Os subsídios diários de transporte atribuídos a trabalhadores dependentes até ao limite mensal de AKz. 30 000,00 (Trinta Mil Kwanzas);</li>
+					<li>O reembolso de despesas incorridas pelos trabalhadores dependentes de entidades sujeitas a Imposto Industrial ou a outros regimes especiais de tributação, quando deslocados ao serviço da entidade patronal, desde que estas despesas se encontrem devidamente documentadas nos termos do Código do Imposto Industrial e legislação complementar. </li>
+				</ul>
+
+				<h2 style="text-decoration: underline"><strong>Isenção</strong></h2>
+				<p>Estão isentos do Imposto sobre o Rendimento do Trabalho:</p>
+				<ul class="list-disc">
+					<li>Os rendimentos auferidos pelos agentes das Missões Diplomáticas e Consulares Estrangeiras sempre que haja reciprocidade de tratamento;</li>
+					<li>Os rendimentos auferidos pelo pessoal estrangeiro ao serviço de Organizações Internacionais, nos termos estabelecidos em acordos ratificados pelo órgão competente do Estado;</li>
+					<li>Os rendimentos auferidos pelo pessoal estrangeiro ao serviço das Organizações Não- governamentais, nos termos estabelecidos nos acordos com entidades nacionais, com o reconhecimento prévio por escrito da Administração Geral Tributária;</li>
+					<li>Os rendimentos auferidos pelos deficientes físicos e mutilados de guerra cujo grau de invalidez ou incapacidade seja igual ou superior a 50% comprovada com a apresentação, pelo contribuinte, de documentação emitida por autoridade competente para o efeito;</li>
+					<li>Os rendimentos decorrentes do exercício das actividades previstas nos grupos de tributação A, B e C auferidos pelos antigos combatentes, veteranos da pátria e deficientes de guerra, desde que devidamente registados no Departamento Ministerial de tutela. </li>
+				</ul>
+
+
+				<h2 style="text-decoration: underline"><strong>Determinação da Matéria Colectável</strong></h2>
+				<p><strong>Grupo A</strong></p>
+				<p>A matéria colectável é constituída por todas as remunerações expressas em dinheiro ainda que auferidas em espécie, de natureza contratual e não contratual, periódicas ou ocasionais fixas ou variáveis, independentemente da sua proveniência, local, moeda, forma estipulada para o seu cálculo e pagamento, auferidas pelo trabalhador por conta de outrem, deduzidas da retribuição global das contribuições obrigatórias para a Segurança Social e das componentes remuneratórias não sujeitas ou isentas, nos termos do CIRT.2	</p>
+
+				<p><strong>Grupo B</strong></p>
+				<p>A matéria colectável dos rendimentos pagos por pessoas singulares, colectivas ou equiparadas que possuam contabilidade ou modelo de contabilidade simplificada, corresponde ao valor do serviço.</p>
+				<p>A matéria colectável dos rendimentos pagos por entidades sem contabilidade, é apurada pelo próprio sujeito passivo, com base na sua contabilidade, modelo de contabilidade simplificada, registos disponíveis sobre compras e vendas ou serviços prestados.</p>
+				<p>Os contribuintes que possuem contabilidade sujeitam-se, com as devidas adaptações, às regras aplicáveis ao apuramento da matéria colectável dos contribuintes do Regime Geral do Imposto Industrial.</p>
+				<p>Os contribuintes deste grupo que possuam contabilidade, modelo de contabilidade simplificada ou livro de registo de compra e venda e serviços prestados têm direito a deduzir até 30% dos custos incorridos</p>
+				<p>Quando o contribuinte preste ou contrate serviços sujeitos à retenção na fonte, nos termos do CII, a matéria colectável corresponde ao valor do serviço.</p>
+				<p>Para os contribuintes que não possuam contabilidade, modelo de contabilidade simplificada ou livro de registo de compra e venda e serviços prestados, não têm direito a dedução de custos, devendo a taxa do imposto incidir sobre todo o rendimento.</p>
+
+				<p><strong>Grupo C</strong></p>
+				<p>A matéria colectável é a que consta da tabela dos lucros mínimos ou sobre a venda e serviços prestados.</p>
+				<p>Os contribuintes que possuem contabilidade sujeitam-se, com as devidas adaptações, às regras aplicáveis ao apuramento da matéria colectável dos contribuintes do Regime Geral do Imposto Industrial.</p>
+				<p>Quando o contribuinte preste ou contrate serviços sujeitos à retenção na fonte, nos termos do CII, a matéria colectável corresponde ao valor do serviço.</p>
+				<p>Os contribuintes deste grupo que possuam contabilidade, modelo de contabilidade simplificada ou livro de registo de compra e venda e serviços prestados têm direito a deduzir até 30% dos custos incorridos</p>
+				<p>Quando o contribuinte preste ou contrate serviços sujeitos à retenção na fonte, nos termos do CII, a matéria colectável corresponde ao valor do serviço.</p>
+				<p>Os contribuintes que não possuam contabilidade, modelo de contabilidade simplificada ou livro de registo de compra e venda e serviços prestados, não têm direito a dedução de custos, devendo a taxa do imposto incidir sobre todo o rendimento.</p>
+
+				<h2 style="text-decoration: underline"><strong>Taxa</strong></h2>
+				<p>Sobre os rendimentos sujeitos a IRT aplicam-se a seguintes taxas:</p>
+
+				<p><strong>Grupo A</strong></p>
+				<p>As taxas constantes da tabela anexa ao Código do Imposto sobre o Rendimento do Trabalho;</p>
+
+				<p><strong>Grupo B</strong></p>
+				<p>À matéria colectável não sujeita a retenção na fonte aplica-se a taxa de 25% (Vinte cinco por cento).</p>
+				<p>À matéria colectável sujeita a retenção na fonte aplica-se a taxa de 6,5%;( seis vírgula cinco por cento)</p>
+
+				<p><strong>Grupo C</strong></p>
+				<p>À matéria colectável não sujeita a retenção na fonte aplica-se a taxa de 25% (Vinte cinco por cento).</p>
+				<p>À matéria colectável sujeita a retenção na fonte aplica-se a taxa de 6,5%;( seis vírgula cinco por cento)</p>
+
+				<h2 style="text-decoration: underline"><strong>Liquidação</strong></h2>
+				<p><strong>Grupo A</strong></p>
+				<p>A liquidação deve ser efectuada pela entidade responsável pelo pagamento dos rendimentos, mensalmente, após a realização das deduções previstas no CIRT, pela aplicação das taxas constantes da Tabela do IRT.</p>
+
+				<p><strong>Grupo B</strong></p>
+				<p>A liquidação do imposto devido pela atribuição de rendimentos deste grupo é efectuada nos seguintes termos:</p>
+				<ul class="list-disc">
+					<li>Pela entidade pagadora desses rendimentos, mediante retenção na fonte, quando os rendimentos sejam pagos por pessoas singulares, colectivas ou equiparadas que possuam contabilidade ou modelo de contabilidade simplificada;</li>
+					<li>Pelo contribuinte, quando os rendimentos são pagos por entidades sem contabilidade.</li>
+				</ul>
+
+				<p><strong>Grupo C</strong></p>
+				<p> A liquidação do imposto devido pelos contribuintes deste grupo é efectuada nos seguintes termos:</p>
+				<ul class="list-disc">
+					<li>Pelo contribuinte, nos casos em que o rendimento colectável é o que corresponde à sua actividade na Tabela dos Lucros Mínimos, anexa ao CIRT;</li>
+					<li>Pela entidade pagadora dos rendimentos, mediante retenção na fonte, quando o contribuinte preste serviços sujeitos à retenção na fonte a pessoas singulares, colectivas ou equiparadas que possuam contabilidade ou modelo de contabilidade simplificada;</li>
+				</ul>
+
+				<p>Os contribuintes dos Grupos B e C, que se substituem na emissão de facturas aos respectivos fornecedores ou prestadores no regime de auto-facturação definido em legislação própria devem no momento do efectivo pagamento ao fornecedor do bem ou prestador de serviços, efectuar a retenção na fonte não liberatória de 2% (dois por cento) ou 6,5% (seis vírgula cinco por cento), respectivamente, sobre o valor global da auto-factura, bem como proceder a respectiva entrega aos cofres do Estado dentro de 5 (cinco) dias após a retenção.</p>
+
+				<h2 style="text-decoration: underline"><strong>Pagamento e Entrega</strong></h2>
+				<p>O IRT é pago e entregue do seguinte modo:</p>
+
+				<p><strong>Grupo A</strong></p>
+				<p>O Imposto devido pela atribuição de rendimentos deste grupo deve ser entregue, pela entidade empregadora, até ao final do mês seguinte ao do respectivo pagamento, na Repartição Fiscal competente.</p>
+				
+				<p><strong>Grupo B</strong></p>
+				<p>O Imposto devido pela atribuição de rendimentos deve ser entregue:</p>
+				<ul class="list-disc">
+					<li>Pela entidade pagadora dos rendimentos, até ao final do mês seguinte ao do pagamento, na Repartição Fiscal competente, quanto aos rendimentos liquidados pelas pessoas singulares, colectivas ou equiparadas que possuam contabilidade ou modelo de contabilidade simplificada;</li>
+					<li>Pelo titular do rendimento, até ao final do mês em que deve ser entregue a declaração anual de rendimentos, quanto aos rendimentos pagos por pessoas, singulares ou colectivas, sem contabilidade.</li>
+				</ul>
+
+				<p><strong>Grupo C</strong></p>
+				<p>O Imposto devido pela atribuição de rendimentos deve ser entregue:</p>
+				<ul class="list-disc">
+					<li>Pelo titular desses rendimentos, até ao último dia do mês de Março, quanto aos rendimentos liquidados com base na Tabela dos Lucros Mínimos, anexa ao CIRT;</li>
+					<li>Pela entidade pagadora dos rendimentos na Repartição Fiscal competente, até ao final do mês seguinte ao do respectivo pagamento, quanto aos rendimentos sujeitos à retenção na fonte.</li>
+				</ul>
+
+
+
+				<div class="form-buttons clearfix">
+						<div class="col-sm-12 text-center margin-top-twenty">
+							<a class="link-btn-style" href="/impostos-e-taxas"><i class="fa fa-chevron-left fa-1"></i>Voltar</a>
+						</div>
+					</div>
+			</div>
+					</div>
+				</main>
+	    	</div>
+	    </section><div id="outdate-reg" class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-shadow ui-hidden-container custom-dialog dialog-title-left font-arial bckcolor-grey bckcolor-gradient"><div class="ui-dialog-titlebar ui-widget-header ui-helper-clearfix ui-corner-top"><span id="outdate-reg_title" class="ui-dialog-title">
+                <div>
+                    <ul class="margin-left-15 margin-bottom-0">
+                        <li class="font-size-13 color-bullet">Aviso</li>
+                    </ul>
+                </div></span></div><div class="ui-dialog-content ui-widget-content">
+
+            <div>
+                <div>
+                    <p>Caro Contribuinte,</p>
+                    <p>Os seus dados de cadastro encontram-se desactualizados. Deverá proceder à sua actualização na opção</p>
+                    <p>Cadastro de Contribuinte -&gt; Actualizar Cadastro.</p>
+                    <p>Persistindo esta situação, poderá ser limitada a sua utilização do Portal, em nome próprio</p>
+                    <p>ou através dos seus representantes, passando a disponibilizar somente consultas e actualização ao Cadastro.</p>
+                    <div align="right">
+                    <p> <i><b>Resta 0 dia</b></i></p>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="col-sm-12 text-center clearfix" style="border-top: 1px solid #AAA;"><form id="formOutDatedReg" name="formOutDatedReg" method="post" action="/impostos-e-taxas/imposto-sobre-rendimentos-do-trabalho" enctype="application/x-www-form-urlencoded">
+                    <br /><button id="formOutDatedReg:confirm-outdate-reg" name="formOutDatedReg:confirm-outdate-reg" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only btn continue margin-left box-shadow-none fixed-size bckcolor-gradient" onclick="PrimeFaces.ab({s:&quot;formOutDatedReg:confirm-outdate-reg&quot;,onco:function(xhr,status,args){PF('outdate-reg').hide();;}});return false;" style="margin-top: 10px" type="submit"><span class="ui-button-text ui-c">Fechar</span></button><script id="formOutDatedReg:confirm-outdate-reg_s" type="text/javascript">PrimeFaces.cw("CommandButton","widget_formOutDatedReg_confirm_outdate_reg",{id:"formOutDatedReg:confirm-outdate-reg"});</script><input type="hidden" name="formOutDatedReg_SUBMIT" value="1" /><input type="hidden" name="javax.faces.ViewState" id="j_id__v_0:javax.faces.ViewState:2" value="8J0RRBDObXOGbFU/OFzMTKexSDh1vB4GeAro1HctbC5uF5TC" autocomplete="off" /></form>
+            </div></div></div><script id="outdate-reg_s" type="text/javascript">$(function(){PrimeFaces.cw("Dialog","outdate-reg",{id:"outdate-reg",draggable:false,resizable:false,modal:true,width:"auto",appendTo:"@(body)"});});</script>
+		<!-- Footer -->
+<footer class="footer">
+	<div class="footer-top">
+		<div class="container">
+			<p><a href="#"><img src="/javax.faces.resource/images/portal-do-contribuinte-footer.png.jsf" alt="Portal do contribuinte logo" /></a></p>
+			<div class="footer-top-right">
+				<ul class="social-network">
+					<li class="facebook"><a title="Facebook AGT Angola" target="_blank" href="https://facebook.com/AGTAngola"><i class="fa fa-facebook"></i></a></li>
+                    <li class="twitter"><a title="Twitter AGT Angola" target="_blank" href="https://twitter.com/agtangola"><i class="fa fa-twitter"></i></a></li>
+                    <li class="linkedin"><a title="Linkedin AGT Angola" target="_blank" href="https://www.linkedin.com/company/administra%C3%A7%C3%A3o-geral-tribut%C3%A1ria-agt/"><i class="fa  fa-linkedin"></i></a></li>
+                    <li class="youtube"><a title="Youtube AGT Angola" target="_blank" href="https://www.youtube.com/channel/UCPK5NFtJb7QJwOBF8TpM3ag/featured?disable_polymer=1"><i class="fa fa-youtube"></i></a></li>
+					<li class="agt"><a class="text-hide" title="AGT" target="_blank" href="https://agt.minfin.gov.ao/PortalAGT/#!/">AGT</a></li>
+				</ul>
+				<ul class="footer-links">
+				 	<li><a href="/fale-connosco">Fale Connosco</a></li>
+					<li><a href="/contactos">Contactos</a></li>
+					<li><a href="/perguntas-frequentes ">Perguntas Frequentes</a></li>
+					<li><a href="/imprimir-verificar-nota-de-liquidacao">Verificar Nota de Liquidação</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+    <div class="footer-bottom clearfix">
+    	<div class="footer-separator-container"><img src="/javax.faces.resource/images/footer-separator.png.jsf" alt="footer separator" class="footer-separator" />
+    	</div>
+    	<div class="footer-bottom-left"><img src="/javax.faces.resource/images/logoAngola-dark.png.jsf" alt="Ministerio das finanças" class="pull-right" />
+    	</div>
+    	<div class="footer-bottom-right"><img src="/javax.faces.resource/images/agt-logo.png.jsf" alt="agt" class="pull-left" />
+    	</div>
+<!--		<div style="float: left; z-index: 5000; position: absolute; text-align: center; margin-left: 10%; padding: 24px 20px; color: #636363">-->
+<!--			<p:outputLabel value="v"/>-->
+<!--		</div>-->
+    </div>           
+</footer><div id="j_id_3f"></div><script id="j_id_3f_s" type="text/javascript">$(function(){PrimeFaces.cw("AjaxStatus","widget_j_id_3f",{id:"j_id_3f",start:function(){PF('statusDialog').show()},complete:function(){PF('statusDialog').hide()}});});</script><div id="dialog" class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-shadow ui-hidden-container"><div class="ui-dialog-content ui-widget-content"><img src="/javax.faces.resource/relatorios/loading.gif.jsf" alt="loading" /></div></div><script id="dialog_s" type="text/javascript">$(function(){PrimeFaces.cw("Dialog","statusDialog",{id:"dialog",draggable:false,resizable:false,modal:true});});</script>
+	<!-- Versao do primefaces nao e comaptivel com a versao mais recente do jquery -->
+	<!-- <h:outputScript library="jquery" name="jquery-3.1.1.min.js" target="body"/> --><script type="text/javascript" src="/javax.faces.resource/primefaces-pt.js.jsf?ln=js"></script><script type="text/javascript" src="/javax.faces.resource/1.12.1-jquery-ui.js.jsf?ln=jquery-ui"></script><script type="text/javascript" src="/javax.faces.resource/js/bootstrap.min.js.jsf?ln=bootstrap-3.3.6-dist"></script><script type="text/javascript" src="/javax.faces.resource/custom.js.jsf?ln=js"></script></body>
+</html>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="ir_cron_contract_alerts" model="ir.cron">
+        <field name="name">RH Angola: avisos de fim de contrato a termo</field>
+        <field name="model_id" ref="hr.model_hr_version"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_l10n_ao_hr_contract_alerts()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+    <record id="ir_cron_public_holidays" model="ir.cron">
+        <field name="name">RH Angola: feriados nacionais do ano seguinte</field>
+        <field name="model_id" ref="base.model_res_company"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_l10n_ao_hr_public_holidays()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">months</field>
+    </record>
+</odoo>

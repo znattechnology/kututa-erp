@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_l10n_ao_hr" model="ir.ui.view">
+        <field name="name">res.company.form.l10n_ao_hr</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <page name="general_info" position="after">
+                <page string="Recursos humanos (Angola)" name="l10n_ao_hr" invisible="country_code != 'AO'">
+                    <group>
+                        <field name="l10n_ao_hr_holidays_generated_until"/>
+                    </group>
+                    <button name="action_l10n_ao_hr_generate_public_holidays" type="object" string="Gerar feriados nacionais (este ano e o próximo)" class="btn-secondary"/>
+                    <div class="text-muted mt-2">
+                        Feriados da Lei n.º 10/11 (com a Lei n.º 11/18), incluindo as pontes de segunda e sexta-feira e as tardes
+                        de 24 e 31 de Dezembro. Ficam como dias de encerramento da empresa e descontam nas ausências.
+                    </div>
+                </page>
+            </page>
+        </field>
+    </record>
+</odoo>
