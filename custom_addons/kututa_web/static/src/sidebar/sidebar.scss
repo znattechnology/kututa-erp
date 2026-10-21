@@ -78,10 +78,39 @@ body.o_web_client.o_kututa_with_sidebar {
     }
 
     .o_kututa_sidebar_section + .o_kututa_sidebar_section {
-        margin-top: map-get($spacers, 2);
+        margin-top: 2px;
     }
 
-    .o_kututa_sidebar_section_title,
+    .o_kututa_sidebar_section_title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: calc(100% - #{map-get($spacers, 2)} * 2);
+        margin: 0 map-get($spacers, 2);
+        padding: map-get($spacers, 1) map-get($spacers, 2);
+        border: 0;
+        border-radius: $border-radius;
+        background: transparent;
+        font-weight: $font-weight-bold;
+        color: $headings-color;
+        text-align: left;
+        cursor: pointer;
+
+        &:hover {
+            background-color: $o-gray-100;
+        }
+    }
+    .o_kututa_sidebar_section.o_has_active:not(.o_open) > .o_kututa_sidebar_section_title {
+        color: $o-action;
+    }
+    .o_kututa_sidebar_chevron {
+        color: $text-muted;
+        flex: 0 0 auto;
+    }
+    .o_kututa_sidebar_entries {
+        padding-bottom: map-get($spacers, 1);
+    }
+
     .o_kututa_sidebar_group {
         display: block;
         padding: map-get($spacers, 1) map-get($spacers, 3);
@@ -94,7 +123,6 @@ body.o_web_client.o_kututa_with_sidebar {
         margin-top: map-get($spacers, 1);
     }
 
-    a.o_kututa_sidebar_section_title,
     .o_kututa_sidebar_item {
         text-decoration: none;
     }
@@ -113,8 +141,7 @@ body.o_web_client.o_kututa_with_sidebar {
         }
     }
 
-    .o_kututa_sidebar_item.active,
-    a.o_kututa_sidebar_section_title.active {
+    .o_kututa_sidebar_item.active {
         background-color: rgba($o-action, .12);
         color: $o-action;
         font-weight: $font-weight-bold;
