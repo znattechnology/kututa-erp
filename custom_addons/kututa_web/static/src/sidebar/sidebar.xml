@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="kututa_web.Sidebar">
+        <nav t-if="this.visible" class="o_kututa_sidebar d-print-none" t-att-class="{ o_collapsed: this.collapsed }"
+             aria-label="Menu da aplicação">
+            <div class="o_kututa_sidebar_header" t-if="!this.collapsed">
+                <span class="o_kututa_sidebar_title text-truncate" t-out="this.app.name"/>
+            </div>
+            <div class="o_kututa_sidebar_body" t-if="!this.collapsed">
+                <t t-foreach="this.blocks" t-as="block" t-key="block.section.id">
+                    <div class="o_kututa_sidebar_section">
+                        <t t-if="block.hasTitle">
+                            <a t-if="block.section.actionID" href="#" class="o_kututa_sidebar_section_title"
+                               t-att-class="{ active: this.isActive(block.section) }"
+                               t-on-click.prevent="() => this.onClickMenu(block.section)" t-out="block.section.name"/>
+                            <div t-else="" class="o_kututa_sidebar_section_title" t-out="block.section.name"/>
+                        </t>
+                        <t t-foreach="block.entries" t-as="entry" t-key="entry.menu.id">
+                            <div t-if="entry.isGroup" class="o_kututa_sidebar_group"
+                                 t-att-style="'padding-left: ' + (16 + entry.depth * 12) + 'px'" t-out="entry.menu.name"/>
+                            <a t-else="" href="#" class="o_kututa_sidebar_item text-truncate"
+                               t-att-class="{ active: this.isActive(entry.menu) }"
+                               t-att-style="'padding-left: ' + (8 + entry.depth * 12) + 'px'" t-att-title="entry.menu.name"
+                               t-on-click.prevent="() => this.onClickMenu(entry.menu)" t-out="entry.menu.name"/>
+                        </t>
+                    </div>
+                </t>
+            </div>
+            <div t-else="" class="o_kututa_sidebar_body"/>
+            <button type="button" class="btn btn-link o_kututa_sidebar_toggle" t-on-click="() => this.toggle()"
+                    t-att-title="this.collapsed ? 'Mostrar o menu' : 'Recolher o menu'"
+                    t-att-aria-label="this.collapsed ? 'Mostrar o menu' : 'Recolher o menu'">
+                <i class="oi" t-att-data-icon="this.collapsed ? 'left_panel_open' : 'left_panel_close'" aria-hidden="true"/>
+                <span t-if="!this.collapsed" class="ms-2">Recolher</span>
+            </button>
+        </nav>
+    </t>
+
+    <t t-inherit="web.WebClient" t-inherit-mode="extension">
+        <xpath expr="//ActionContainer" position="before">
+            <t t-if="!this.state.fullscreen">
+                <KututaSidebar/>
+            </t>
+        </xpath>
+    </t>
+
+</templates>

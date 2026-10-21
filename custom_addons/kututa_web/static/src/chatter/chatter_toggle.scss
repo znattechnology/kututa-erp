@@ -1,0 +1,12 @@
+// Painel de mensagens ao lado, mais estreito do que no Odoo (530 px), para dar espaço ao formulário.
+.o-mail-Form-chatter.o-aside {
+    width: 380px;
+    max-width: 380px;
+    flex-grow: 0;
+}
+
+.o_kututa_chatter_toggle {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}

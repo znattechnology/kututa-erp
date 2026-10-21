@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="kututa_web.ChatterToggle">
+        <button type="button" class="btn btn-sm o_kututa_chatter_toggle ms-2"
+                t-att-class="this.open ? 'btn-secondary' : 'btn-outline-secondary'"
+                t-on-click="() => this.toggle()"
+                t-att-title="this.open ? 'Esconder as mensagens e actividades' : 'Mostrar as mensagens e actividades'">
+            <i class="oi me-1" data-icon="forum" aria-hidden="true"/>
+            <span>Mensagens</span>
+        </button>
+    </t>
+
+    <t t-inherit="web.FormView" t-inherit-mode="extension">
+        <xpath expr="//t[@t-set-slot='control-panel-status-indicator']" position="inside">
+            <t t-if="this.kututaHasChatter">
+                <ChatterToggle/>
+            </t>
+        </xpath>
+    </t>
+
+</templates>
