@@ -54,7 +54,7 @@
 
 ## Notas
 - No Odoo 20, o QWeb do servidor só passa ao modelo chamado as variáveis dadas como atributos do `t-call`. As definidas dentro do corpo já não chegam.
-- O PDF exige o `wkhtmltopdf`: está na imagem Docker de produção, mas não na máquina de desenvolvimento. Em desenvolvimento usa-se a versão HTML (`/report/html/…`).
+- O PDF exige o `wkhtmltopdf`: está na imagem Docker de produção; em desenvolvimento corre numa imagem própria (ver o README). Desde 2026-10-21, «Visualizar» abre o PDF final num separador, sem emitir nem contar como impressão.
 
 ## Por fazer
 - Logótipo e insígnia da escola nos dados da empresa (a demo usa o logótipo por omissão).

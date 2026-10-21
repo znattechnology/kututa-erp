@@ -6,6 +6,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tools import SQL, float_round
 
 from .l10n_ao_edi_series import AGT_DOCUMENT_TYPES
+from .res_partner import FINAL_CONSUMER_NIF
 
 AGT_QR_URL = 'https://quiosqueagt.minfin.gov.ao/facturacao-eletronica/consultar-fe'
 EDI_LOCKED_STATES = ('to_send', 'sent', 'valid')
@@ -527,6 +528,13 @@ class AccountMove(models.Model):
 
     def _l10n_ao_edi_customer_tax_id(self):
         return self.commercial_partner_id._l10n_ao_edi_customer_tax_id()
+
+    def _get_document_partner_ident_line(self):
+        # DP 71/25: o documento identifica sempre o adquirente; sem NIF, é o consumidor final (o mesmo que vai à AGT).
+        if not self.l10n_ao_edi_series_id or not self.partner_id:
+            return super()._get_document_partner_ident_line()
+        tax_id = self._l10n_ao_edi_customer_tax_id()
+        return self.env._('NIF: Consumidor final') if tax_id == FINAL_CONSUMER_NIF else self.env._('NIF: %s', tax_id)
 
     @api.model
     def _l10n_ao_edi_round_up(self, amount):

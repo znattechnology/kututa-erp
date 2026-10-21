@@ -55,7 +55,7 @@
                                 <t t-out="student.process_number or '—'"/>, com a Média Final de <t t-out="h.num(g.plan_average)"/> valores
                                 obtida nas seguintes classificações por disciplinas:
                             </p>
-                            <table class="edu-table">
+                            <table class="edu-table o_ignore_layout_styling">
                                 <thead>
                                     <tr>
                                         <th>Disciplinas</th>
@@ -86,7 +86,7 @@
                         </t>
                         <p class="edu-date"><t t-out="h.city()"/>, <t t-out="h.date(o.date)"/></p>
                         <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
-                        <div class="edu-ref" t-out="o.name"/>
+                        <div class="edu-ref" t-out="o.name if o.state != 'draft' else 'RASCUNHO: o número é atribuído ao emitir'"/>
                     </div>
                 </t>
             </t>
@@ -153,7 +153,7 @@
                             NATURAL DE <t t-out="(student.birthplace or '—').upper()"/> · B.I. N.º <t t-out="student.id_number or '—'"/> ·
                             ENCARREGADO DE EDUCAÇÃO: <t t-out="(student.primary_guardian_id.name or '—').upper()"/>
                         </p>
-                        <table class="edu-grid">
+                        <table class="edu-grid o_ignore_layout_styling">
                             <thead>
                                 <tr>
                                     <th rowspan="2">DISCIPLINAS</th>

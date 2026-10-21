@@ -66,9 +66,15 @@ class EduPautaPrint(models.TransientModel):
             r.enrollment_id.id: r for r in self.env['edu.year.result'].search([('class_id', '=', self.class_id.id)])
         }
 
-    def action_print(self):
-        self.ensure_one()
-        report = (
+    def _report(self):
+        return self.env.ref(
             'edu_documents.action_report_mini_pauta' if self.kind == 'mini' else 'edu_documents.action_report_pauta'
         )
-        return self.env.ref(report).report_action(self)
+
+    def action_preview(self):
+        self.ensure_one()
+        return self._report().preview_action(self)
+
+    def action_print(self):
+        self.ensure_one()
+        return self._report().report_action(self)

@@ -185,10 +185,11 @@ class EduClass(models.Model):
     _inherit = 'edu.class'
 
     def action_print_class_list(self):
-        return self.env.ref('edu_documents.action_report_class_list').report_action(self)
+        # Abre a pré-visualização; o visualizador de PDF imprime e descarrega.
+        return self.env.ref('edu_documents.action_report_class_list').preview_action(self)
 
     def action_print_schedule(self):
-        return self.env.ref('edu_documents.action_report_class_schedule').report_action(self)
+        return self.env.ref('edu_documents.action_report_class_schedule').preview_action(self)
 
     def action_print_pautas(self):
         self.ensure_one()
@@ -200,3 +201,14 @@ class EduClass(models.Model):
             'target': 'new',
             'context': {'default_class_id': self.id},
         }
+
+
+class IrActionsReport(models.Model):
+    _inherit = 'ir.actions.report'
+
+    def report_action(self, docids, data=None, config=True):
+        # Os documentos escolares têm timbre próprio: não passam pelo assistente do layout das facturas.
+        report = self
+        if self.report_name and self.report_name.startswith('edu_documents.'):
+            report = self.with_context(discard_logo_check=True)
+        return super(IrActionsReport, report).report_action(docids, data=data, config=config)

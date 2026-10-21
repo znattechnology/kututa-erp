@@ -25,6 +25,7 @@
                 <header>
                     <button name="action_issue" type="object" string="Emitir" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_print" type="object" string="Imprimir" class="btn-primary" invisible="state != 'issued'"/>
+                    <button name="action_preview" type="object" string="Visualizar" invisible="state == 'cancelled'"/>
                     <button name="action_cancel" type="object" string="Anular" invisible="state != 'issued'"/>
                     <field name="state" widget="statusbar"/>
                 </header>

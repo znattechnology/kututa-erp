@@ -13,7 +13,11 @@
                     <t t-set="policy" t-value="o._policy()"/>
                     <t t-set="exam_class" t-value="policy._is_exam_class(c.class_number)"/>
                     <t t-set="technical" t-value="o.regime == 'technical'"/>
-                    <t t-set="numbers" t-value="[t.number for t in c.academic_year_id.trimester_ids.sorted('number')]"/>
+                    <t t-set="all_numbers" t-value="[t.number for t in c.academic_year_id.trimester_ids.sorted('number')]"/>
+                    <!-- Até ao trimestre escolhido; a classificação final só com o último trimestre -->
+                    <t t-set="numbers" t-value="[n for n in all_numbers if not o.trimester_id or n &lt;= o.trimester_id.number]"/>
+                    <t t-set="final" t-value="bool(numbers) and numbers[-1] == all_numbers[-1]"/>
+                    <t t-set="teacher" t-value="c.assignment_ids.filtered(lambda a: a.subject_id == o.subject_id)[:1].teacher_id"/>
                     <t t-call="edu_documents.styles"/>
                     <div class="page edu-doc">
                         <t t-call="edu_documents.header" official="False"/>
@@ -25,16 +29,16 @@
                             TURMA: <t t-out="c.name"/><t t-if="c.course_id"> · CURSO: <t t-out="c.course_id.name.upper()"/></t> ·
                             ANO LECTIVO: <t t-out="c.academic_year_id.name"/>
                         </p>
-                        <table class="edu-grid">
+                        <table class="edu-grid o_ignore_layout_styling">
                             <thead>
                                 <tr>
                                     <th rowspan="2">Nº</th><th rowspan="2">NOME COMPLETO</th>
                                     <t t-foreach="numbers" t-as="n">
                                         <th t-att-colspan="2 if (exam_class and n == numbers[-1] and not technical) else 3"><t t-out="n"/>.º TRIMESTRE</th>
                                     </t>
-                                    <th rowspan="2" t-out="technical and 'CF' or 'MFD'"/>
-                                    <th t-if="exam_class and not technical" rowspan="2">N.E</th>
-                                    <th t-if="exam_class and not technical" rowspan="2">MF</th>
+                                    <th t-if="final" rowspan="2" t-out="technical and 'CF' or 'MFD'"/>
+                                    <th t-if="final and exam_class and not technical" rowspan="2">N.E</th>
+                                    <th t-if="final and exam_class and not technical" rowspan="2">MF</th>
                                     <th rowspan="2">FALTAS J/I</th>
                                 </tr>
                                 <tr>
@@ -56,18 +60,18 @@
                                         <td t-att-class="t and t.has_mt and h.color(t.mt, policy.pass_grade) or ''" t-out="h.num(t.mt, bool(t and t.has_mt)) if t else ''"/>
                                     </t>
                                     <t t-set="r" t-value="results.get((e.id, o.subject_id.id))"/>
-                                    <td t-att-class="r and r.complete and h.color(r.cf, policy.pass_grade) or ''" t-out="h.num(r.cf, bool(r and r.complete)) if r else ''"/>
-                                    <td t-if="exam_class and not technical" t-out="h.num(r.national, bool(r and r.has_national)) if r else ''"/>
-                                    <td t-if="exam_class and not technical" t-att-class="r and r.complete and h.color(r.annual, policy.pass_grade) or ''" t-out="h.num(r.annual, bool(r and r.has_national)) if r else ''"/>
+                                    <td t-if="final" t-att-class="r and r.complete and h.color(r.cf, policy.pass_grade) or ''" t-out="h.num(r.cf, bool(r and r.complete)) if r else ''"/>
+                                    <td t-if="final and exam_class and not technical" t-out="h.num(r.national, bool(r and r.has_national)) if r else ''"/>
+                                    <td t-if="final and exam_class and not technical" t-att-class="r and r.complete and h.color(r.annual, policy.pass_grade) or ''" t-out="h.num(r.annual, bool(r and r.has_national)) if r else ''"/>
                                     <t t-set="a" t-value="absences.get(e.id, (0, 0))"/>
                                     <td t-out="'%s/%s' % a"/>
                                 </tr>
                             </tbody>
                         </table>
-                        <table class="edu-signatures">
+                        <table class="edu-signatures o_ignore_layout_styling">
                             <tr>
-                                <td><div class="edu-role">O(A) PROFESSOR(A)</div><div class="edu-line">&#160;</div></td>
-                                <td><div class="edu-role">O(A) DIRECTOR(A) DE TURMA</div><div class="edu-line" t-out="c.director_id.name or ''"/></td>
+                                <td><div class="edu-role" t-out="h.by_gender(teacher.sex, 'O PROFESSOR', 'A PROFESSORA') if teacher.sex else 'O(A) PROFESSOR(A)'"/><div class="edu-line" t-out="teacher.name or '&#160;'"/></td>
+                                <td><div class="edu-role" t-out="h.by_gender(c.director_id.sex, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA') if c.director_id.sex else 'O(A) DIRECTOR(A) DE TURMA'"/><div class="edu-line" t-out="c.director_id.name or ''"/></td>
                                 <td><div class="edu-role" t-out="h.pedagogical_title()"/><div class="edu-line" t-out="company.edu_pedagogical_director_name or ''"/></td>
                             </tr>
                         </table>
@@ -95,7 +99,7 @@
                     <div class="page edu-doc">
                         <t t-call="edu_documents.header" official="False"/>
                         <div class="edu-subtitle">MAPA DE APROVEITAMENTO FINAL · <t t-out="c.display_name.upper()"/></div>
-                        <table class="edu-grid">
+                        <table class="edu-grid o_ignore_layout_styling">
                             <thead>
                                 <tr>
                                     <th rowspan="2">Nº</th><th rowspan="2">NOME COMPLETO</th>
@@ -133,10 +137,10 @@
                         <p style="font-size: 10px; margin-top: 4px;" t-if="technical">CT: Classificação do Trimestre = (NPP + NPT)/2 · PG: Prova Global · CA: Classificação Anual = 60% CF + 40% PG (com a bonificação do conselho de turma) · REC: Exame especial</p>
                         <p style="font-size: 10px; margin-top: 4px;" t-else="">MT: Média do Trimestre = (MAC + NPT)/2 · MFD: Média Final da Disciplina (MFED nas disciplinas de exame nacional) · REC: Exame especial</p>
                         <p class="edu-date" style="text-align: center;"><t t-out="h.city().upper()"/>, <t t-out="h.date(today, True)"/></p>
-                        <table class="edu-signatures">
+                        <table class="edu-signatures o_ignore_layout_styling">
                             <tr>
                                 <td><div class="edu-role" t-out="h.director_title()"/><div class="edu-line" t-out="company.edu_director_name or ''"/></td>
-                                <td><div class="edu-role">O(A) DIRECTOR(A) DE TURMA</div><div class="edu-line" t-out="c.director_id.name or ''"/></td>
+                                <td><div class="edu-role" t-out="h.by_gender(c.director_id.sex, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA') if c.director_id.sex else 'O(A) DIRECTOR(A) DE TURMA'"/><div class="edu-line" t-out="c.director_id.name or ''"/></td>
                                 <td><div class="edu-role" t-out="h.pedagogical_title()"/><div class="edu-line" t-out="company.edu_pedagogical_director_name or ''"/></td>
                             </tr>
                         </table>
@@ -157,7 +161,7 @@
                         <t t-call="edu_documents.header" official="False"/>
                         <div class="edu-subtitle">RELAÇÃO NOMINAL DOS ALUNOS DA <t t-out="c.class_number"/>ª CLASSE · ANO LECTIVO <t t-out="c.academic_year_id.name"/></div>
                         <p style="text-align: center;">TURMA: <t t-out="c.name"/><t t-if="c.room_id"> · SALA: <t t-out="c.room_id.display_name"/></t><t t-if="c.course_id"> · CURSO: <t t-out="c.course_id.name.upper()"/></t><t t-if="c.shift_id"> · PERÍODO: <t t-out="c.shift_id.name.upper()"/></t></p>
-                        <table class="edu-table">
+                        <table class="edu-table o_ignore_layout_styling">
                             <thead><tr><th>Nº</th><th>NOME COMPLETO</th><th>IDADE</th><th>SEXO</th><th>N.º DE MATRÍCULA</th><th>OBS.</th></tr></thead>
                             <tbody>
                                 <tr t-foreach="c.enrollment_ids.filtered(lambda e: e.state != 'draft').sorted('order_number')" t-as="e">
@@ -189,7 +193,7 @@
                         <t t-call="edu_documents.header" official="False"/>
                         <div class="edu-subtitle">HORÁRIO ESCOLAR · <t t-out="c.display_name.upper()"/><t t-if="c.shift_id"> · PERÍODO: <t t-out="c.shift_id.name.upper()"/></t></div>
                         <div class="edu-grid" t-out="c.schedule_grid"/>
-                        <t t-call="edu_documents.signatures" left_role="'O(A) DIRECTOR(A) DE TURMA'" left_name="c.director_id.name" right_role="h.pedagogical_title()" right_name="company.edu_pedagogical_director_name"/>
+                        <t t-call="edu_documents.signatures" left_role="h.by_gender(c.director_id.sex, 'O DIRECTOR DE TURMA', 'A DIRECTORA DE TURMA') if c.director_id.sex else 'O(A) DIRECTOR(A) DE TURMA'" left_name="c.director_id.name" right_role="h.pedagogical_title()" right_name="company.edu_pedagogical_director_name"/>
                     </div>
                 </t>
             </t>
@@ -207,7 +211,7 @@
                         <t t-set="e" t-value="s.current_enrollment_id"/>
                         <div style="display: inline-block; width: 85.6mm; height: 54mm; border: 1px solid #1F4E79; border-radius: 3mm; margin: 2mm; overflow: hidden; font-family: Arial, sans-serif; font-size: 8px; vertical-align: top;">
                             <div style="background: #1F4E79; color: #fff; padding: 2mm; font-weight: bold; font-size: 9px;">
-                                <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="height: 7mm; vertical-align: middle; margin-right: 2mm;"/>
+                                <img t-if="company.logo and not company.uses_default_logo" t-att-src="image_data_uri(company.logo)" style="height: 7mm; vertical-align: middle; margin-right: 2mm;"/>
                                 <t t-out="company.name"/>
                             </div>
                             <div style="padding: 2mm; display: flex;">

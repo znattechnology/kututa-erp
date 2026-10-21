@@ -121,6 +121,11 @@ class EduDocument(models.Model):
         self.sudo().print_count += 1
         return self.env.ref(REPORTS[self.document_type]).report_action(self)
 
+    def action_preview(self):
+        # Ver o documento tal como sai impresso, sem o emitir nem contar como impressão.
+        self.ensure_one()
+        return self.env.ref(REPORTS[self.document_type]).preview_action(self)
+
     def action_cancel(self):
         self.write({'state': 'cancelled'})
         return True

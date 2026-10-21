@@ -63,6 +63,8 @@ class TestL10nAoEdiPayload(L10nAoEdiCommon):
     def test_final_consumer_without_nif(self):
         invoice = self._create_invoice(partner=self.consumer)
         self.assertEqual(invoice._l10n_ao_edi_document_values()['customerTaxID'], '999999999')
+        # O documento impresso identifica o adquirente como consumidor final (DP 71/25).
+        self.assertEqual(invoice._get_document_partner_ident_line(), 'NIF: Consumidor final')
 
     def test_credit_note_references_origin(self):
         invoice = self._create_invoice()

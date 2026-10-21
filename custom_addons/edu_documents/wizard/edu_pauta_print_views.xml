@@ -13,7 +13,8 @@
                     <field name="trimester_id" options="{'no_create': True}" invisible="kind != 'mini'"/>
                 </group>
                 <footer>
-                    <button name="action_print" type="object" string="Imprimir" class="btn-primary"/>
+                    <button name="action_preview" type="object" string="Visualizar" class="btn-primary"/>
+                    <button name="action_print" type="object" string="Imprimir"/>
                     <button special="cancel" string="Cancelar"/>
                 </footer>
             </form>

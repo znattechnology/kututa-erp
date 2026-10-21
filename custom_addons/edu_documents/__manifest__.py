@@ -19,7 +19,7 @@ do Despacho n.º 60/08.
     'author': 'Kututa ERP',
     'countries': ['ao'],
     'category': 'Education',
-    'depends': ['edu_records'],
+    'depends': ['edu_records', 'kututa_web'],
     'data': [
         'security/ir.access.csv',
         'report/edu_layout.xml',

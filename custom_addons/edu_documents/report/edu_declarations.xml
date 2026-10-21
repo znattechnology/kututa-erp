@@ -27,7 +27,7 @@
                         </p>
                         <p class="edu-date"><t t-out="company.name.upper()"/> EM <t t-out="h.city().upper()"/>, A <t t-out="h.date(o.date, True)"/>.</p>
                         <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
-                        <div class="edu-ref" t-out="o.name"/>
+                        <div class="edu-ref" t-out="o.name if o.state != 'draft' else 'RASCUNHO: o número é atribuído ao emitir'"/>
                     </div>
                 </t>
             </t>
@@ -57,7 +57,7 @@
                             final <strong t-out="h.by_gender(student.gender, 'Apto', 'Apta') if year_result.status in ('promoted', 'graduated', 'conditional') else h.by_gender(student.gender, 'Não apto', 'Não apta')"/></t>,
                             com as seguintes classificações:
                         </p>
-                        <table class="edu-table">
+                        <table class="edu-table o_ignore_layout_styling">
                             <thead><tr><th>DISCIPLINAS</th><th>NOTAS</th></tr></thead>
                             <tbody>
                                 <tr t-foreach="results" t-as="r">
@@ -74,7 +74,7 @@
                         </p>
                         <p class="edu-date"><t t-out="company.name.upper()"/> EM <t t-out="h.city().upper()"/>, A <t t-out="h.date(o.date, True)"/>.</p>
                         <t t-call="edu_documents.signatures" left_role="False" right_role="h.director_title()" right_name="company.edu_director_name"/>
-                        <div class="edu-ref" t-out="o.name"/>
+                        <div class="edu-ref" t-out="o.name if o.state != 'draft' else 'RASCUNHO: o número é atribuído ao emitir'"/>
                     </div>
                 </t>
             </t>
@@ -98,15 +98,18 @@
                         <t t-call="edu_documents.header" official="True"/>
                         <div class="edu-title" style="clear: both;">DECLARAÇÃO</div>
                         <t t-set="signer" t-value="company.edu_supervisor_director or company.edu_director_name"/>
+                        <!-- O género só se conhece quando assina o(a) director(a) da própria escola -->
+                        <t t-set="own_signer" t-value="not company.edu_supervisor_director"/>
+                        <t t-set="signer_title" t-value="h.by_gender(company.edu_director_gender, 'Director', 'Directora') if own_signer else 'Director(a)'"/>
                         <t t-set="school" t-value="company.edu_supervisor_school or company.name"/>
                         <p><strong>
-                            <t t-out="signer"/>, Director(a) do <t t-out="school"/>, declara que <t t-call="edu_documents.identity"/>,
+                            <t t-out="signer"/>, <t t-out="signer_title"/> do <t t-out="school"/>, declara que <t t-call="edu_documents.identity"/>,
                             concluiu a <t t-out="h.klass(e.class_number)"/> no ano lectivo <t t-out="e.academic_year_id.name"/>,
                             no <t t-out="company.name"/><t t-if="company.edu_licence_text">, <t t-out="company.edu_licence_text"/></t><t t-if="e.course_id">,
                             Curso de <t t-out="e.course_id.name"/></t>, Turma <t t-out="e.class_id.name"/>, número <t t-out="e.order_number"/>,
                             com as seguintes classificações:
                         </strong></p>
-                        <table class="edu-table">
+                        <table class="edu-table o_ignore_layout_styling">
                             <thead><tr><th>DISCIPLINAS</th><th>NOTAS</th></tr></thead>
                             <tbody>
                                 <tr t-foreach="results" t-as="r">
@@ -117,8 +120,8 @@
                         </table>
                         <p>Para efeitos legais lhe é passada a presente DECLARAÇÃO, assinada por mim e autenticada com carimbo a óleo em uso neste estabelecimento de ensino.</p>
                         <p class="edu-date" style="text-align: center;"><t t-out="h.city()"/>, <t t-out="h.date(o.date)"/></p>
-                        <t t-call="edu_documents.signatures" left_role="False" right_role="'O Director'" right_name="signer"/>
-                        <div class="edu-ref" t-out="o.name"/>
+                        <t t-call="edu_documents.signatures" left_role="False" right_role="h.director_title() if own_signer else 'O(A) DIRECTOR(A)'" right_name="signer"/>
+                        <div class="edu-ref" t-out="o.name if o.state != 'draft' else 'RASCUNHO: o número é atribuído ao emitir'"/>
                     </div>
                 </t>
             </t>
@@ -138,7 +141,7 @@
                     <div class="page edu-doc">
                         <t t-call="edu_documents.header" official="False"/>
                         <p style="margin-top: 18px;"><strong>À<br/>DIRECÇÃO DO <t t-out="(transfer.external_school or '').upper()"/></strong></p>
-                        <p style="font-size: 15px;"><strong>Assunto: Guia de Transferência nº <t t-out="o.name"/></strong></p>
+                        <p style="font-size: 15px;"><strong>Assunto: Guia de Transferência nº <t t-out="o.name if o.state != 'draft' else '(rascunho)'"/></strong></p>
                         <p><strong>
                             Conforme o solicitado pelo(a) aluno(a) em requerimento que fica arquivado na Secretaria deste
                             estabelecimento de ensino, o(a) aluno(a) <t t-out="h.by_gender(student.gender, 'matriculado', 'matriculada')"/> na

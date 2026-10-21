@@ -13,6 +13,15 @@ make setup      # venv + dependências
 make run        # abre http://localhost:8069
 ```
 
+### PDF (wkhtmltopdf) em desenvolvimento
+O macOS arm64 não corre o binário oficial sem Rosetta. Usa-se o mesmo `wkhtmltopdf` da produção numa imagem Docker,
+chamada pelo script `tools/bin/wkhtmltopdf` (o `config/odoo.conf` aponta `bin_path` para `tools/bin`):
+```bash
+docker build -t kututa/wkhtmltopdf docker/wkhtmltopdf
+```
+Em cada base local, o PDF vai buscar os estilos ao Odoo do anfitrião: Definições › Técnico › Parâmetros do sistema,
+`report.url` = `http://host.docker.internal:8069`.
+
 ## Dia a dia
 ```bash
 make help                         # lista de comandos

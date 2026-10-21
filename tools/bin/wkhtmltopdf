@@ -1,0 +1,12 @@
+#!/bin/sh
+# wkhtmltopdf para o Odoo local em macOS (sem Rosetta): corre a imagem kututa/wkhtmltopdf.
+# Os ficheiros temporários do Odoo ficam em /var/folders (macOS) e são montados no mesmo caminho;
+# o HTML pede os estilos a report.url, que na base local aponta para http://host.docker.internal:8069.
+# Construir a imagem: docker build -t kututa/wkhtmltopdf docker/wkhtmltopdf
+exec docker run --rm -i \
+    --add-host=host.docker.internal:host-gateway \
+    -v /private/var/folders:/private/var/folders \
+    -v /private/var/folders:/var/folders \
+    -v /private/tmp:/private/tmp \
+    -v /private/tmp:/tmp \
+    kututa/wkhtmltopdf "$@"

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- O logótipo de exemplo do Odoo («Your logo») não sai nos documentos: sem logótipo próprio, fica só o nome. -->
+    <template id="external_layout_standard" inherit_id="web.external_layout_standard">
+        <xpath expr="//td[@t-if='company.logo']" position="attributes">
+            <attribute name="t-if">company.logo and not company.uses_default_logo</attribute>
+        </xpath>
+    </template>
+    <template id="external_layout_wave" inherit_id="web.external_layout_wave">
+        <xpath expr="//img[@t-if='company.logo']" position="attributes">
+            <attribute name="t-if">company.logo and not company.uses_default_logo</attribute>
+        </xpath>
+    </template>
+    <template id="external_layout_bubble" inherit_id="web.external_layout_bubble">
+        <xpath expr="//img[@t-if='company.logo']" position="attributes">
+            <attribute name="t-if">company.logo and not company.uses_default_logo</attribute>
+        </xpath>
+    </template>
+    <template id="external_layout_folder" inherit_id="web.external_layout_folder">
+        <xpath expr="//img[@t-if='company.logo']" position="attributes">
+            <attribute name="t-if">company.logo and not company.uses_default_logo</attribute>
+        </xpath>
+    </template>
+    <template id="external_layout_center" inherit_id="web.external_layout_center">
+        <xpath expr="//img[@t-if='company.logo']" position="attributes">
+            <attribute name="t-if">company.logo and not company.uses_default_logo</attribute>
+        </xpath>
+    </template>
+    <template id="external_layout_dual" inherit_id="web.external_layout_dual">
+        <xpath expr="//img[@t-if='company.logo']" position="attributes">
+            <attribute name="t-if">company.logo and not company.uses_default_logo</attribute>
+        </xpath>
+    </template>
+    <template id="external_layout_lines" inherit_id="web.external_layout_lines">
+        <xpath expr="//img[@t-if='company.logo']" position="attributes">
+            <attribute name="t-if">company.logo and not company.uses_default_logo</attribute>
+        </xpath>
+    </template>
+    <template id="external_layout_compact" inherit_id="web.external_layout_compact">
+        <xpath expr="//img[@t-if='company.logo']" position="attributes">
+            <attribute name="t-if">company.logo and not company.uses_default_logo</attribute>
+        </xpath>
+    </template>
+</odoo>

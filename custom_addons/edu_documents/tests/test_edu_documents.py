@@ -94,9 +94,20 @@ class TestEduDocuments(TransactionCase):
                      'DSN/Nº01/2026-2027', 'Província de Cuanza Sul'):  # fmt: skip
             self.assertIn(text, html)
         action = document.action_print()
-        # Sem o wkhtmltopdf instalado, o Odoo devolve o aviso em vez do PDF.
-        self.assertIn(action['type'], ('ir.actions.report', 'ir.actions.act_window'))
+        # Os documentos escolares não passam pelo assistente do layout das facturas.
+        self.assertEqual(action['type'], 'ir.actions.report')
         self.assertEqual(document.print_count, 1)
+
+    def test_preview(self):
+        # Visualizar abre o PDF final num separador, sem emitir o documento nem contar como impressão.
+        draft = self.env['edu.document'].create(
+            {'document_type': 'frequency', 'student_id': self.student.id, 'enrollment_id': self.enrollment.id}
+        )
+        action = draft.action_preview()
+        self.assertEqual(action['type'], 'ir.actions.act_url')
+        self.assertEqual(action['url'], f'/report/pdf/edu_documents.report_declaration_frequency/{draft.id}')
+        self.assertEqual((draft.state, draft.print_count), ('draft', 0))
+        self.assertIn('RASCUNHO', self._render('edu_documents.action_report_declaration_frequency', draft))
 
     def test_grades_and_term(self):
         with self.assertRaises(UserError):
@@ -141,7 +152,18 @@ class TestEduDocuments(TransactionCase):
         self.assertIn('edu-neg', html)
         lp = self.subjects.filtered(lambda s: s.code == 'LP')
         mini = self.env['edu.pauta.print'].create({'class_id': self.edu_class.id, 'kind': 'mini', 'subject_id': lp.id})
-        self.assertIn('MINI-PAUTA', self._render('edu_documents.action_report_mini_pauta', mini))
+        html = self._render('edu_documents.action_report_mini_pauta', mini)
+        self.assertIn('MINI-PAUTA', html)
+        self.assertIn('CT3', html)
+        # Só até ao trimestre escolhido, e sem a classificação final antes do último trimestre.
+        first = self.edu_class.academic_year_id.trimester_ids.sorted('number')[:1]
+        mini.trimester_id = first
+        html = self._render('edu_documents.action_report_mini_pauta', mini)
+        self.assertIn('CT1', html)
+        self.assertNotIn('CT2', html)
+        self.assertNotIn('>CF<', html)
+        self.assertEqual(mini.action_preview()['type'], 'ir.actions.act_url')
+        self.assertEqual(self.edu_class.action_print_class_list()['type'], 'ir.actions.act_url')
         self.assertIn('RELAÇÃO NOMINAL', self._render('edu_documents.action_report_class_list', self.edu_class))
         self.assertIn('HORÁRIO ESCOLAR', self._render('edu_documents.action_report_class_schedule', self.edu_class))
         self.assertIn(

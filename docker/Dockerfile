@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Dependências de runtime + build; as de build são removidas depois do pip install.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl ca-certificates fontconfig xfonts-75dpi xfonts-base fonts-dejavu-core \
+        curl ca-certificates fontconfig xfonts-75dpi xfonts-base fonts-dejavu-core fonts-liberation \
         libpq5 libldap-2.5-0 libsasl2-2 libxml2 libxslt1.1 libjpeg62-turbo zlib1g libffi8 libcairo2 npm \
     && apt-get install -y --no-install-recommends \
         build-essential libpq-dev libldap2-dev libsasl2-dev libxml2-dev libxslt1-dev \
