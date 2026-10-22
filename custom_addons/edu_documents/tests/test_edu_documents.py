@@ -454,3 +454,36 @@ class TestEduDocuments(TransactionCase):
         self.assertEqual(Page.print_year_term(result.id)['report_type'], 'qweb-html')
         self.assertEqual(Page.print_course_term(self.student.id)['report_type'], 'qweb-html')
         self.assertEqual(Page.subject_history(self.student.id)['type'], 'ir.actions.act_window')
+
+    def test_graduations_page(self):
+        """Diplomas e certificados, como no secPed: registar conclusões pela turma da classe final, a lista por ano
+        e curso com o resumo, emitir, o diploma e o certificado, verificar e assinar."""
+        self._grades(14)
+        self.edu_class.action_compute_year_results()
+        result = self.enrollment.year_result_id
+        Page = self.env['edu.graduation.page']
+        options = Page.page_options()
+        self.assertEqual(options['year_id'], self.year.id)
+        self.assertTrue(options['is_manager'])
+        self.assertEqual(Page.graduations(self.year.id)['summary']['total'], 0)
+        self.assertIn(self.edu_class.id, [c['id'] for c in Page.final_classes(self.year.id)])
+        finishers = Page.finishers(self.edu_class.id)
+        self.assertEqual([(f['result_id'], f['registered']) for f in finishers], [(result.id, False)])
+        self.assertEqual(Page.register([result.id]), {'done': 1, 'errors': []})
+        self.assertTrue(Page.finishers(self.edu_class.id)[0]['registered'])
+        self.assertEqual(Page.register([result.id])['done'], 0)
+
+        data = Page.graduations(self.year.id, self.course.id)
+        row = data['rows'][0]
+        self.assertEqual((row['diploma_state'], row['diploma_label']), ('draft', 'Por emitir'))
+        self.assertEqual(data['summary'], {'total': 1, 'signed': 0, 'to_verify': 0, 'draft': 1})
+        with self.assertRaises(UserError):
+            Page.print_document(row['id'], 'diploma')
+        row = Page.issue(row['id'])
+        self.assertEqual(row['diploma_label'], 'Por verificar')
+        self.assertTrue(row['diploma_number'])
+        self.assertEqual(Page.print_document(row['id'], 'diploma')['report_type'], 'qweb-html')
+        self.assertEqual(Page.print_document(row['id'], 'certificate')['report_type'], 'qweb-html')
+        self.assertEqual(Page.verify(row['id'])['diploma_label'], 'Verificado, falta assinar')
+        self.assertEqual(Page.sign(row['id'])['diploma_label'], 'Assinado')
+        self.assertEqual(Page.graduations(False)['summary']['signed'], 1)

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Diplomas e certificados (acção cliente), como no secPed: lista por ano e curso, resumo, emitir, imprimir,
+         verificar e assinar, e registar conclusões. -->
+    <record id="action_edu_graduations" model="ir.actions.client">
+        <field name="name">Diplomas e certificados</field>
+        <field name="tag">edu_documents.graduations</field>
+    </record>
+    <record id="edu_records.menu_edu_graduation" model="ir.ui.menu">
+        <field name="action" ref="action_edu_graduations"/>
+    </record>
+    <!-- Uma conclusão regista-se a partir do resultado do conselho, não à mão. -->
+    <record id="edu_records.action_edu_graduation" model="ir.actions.act_window">
+        <field name="context">{'search_default_current_year': 1, 'create': False}</field>
+    </record>
+</odoo>

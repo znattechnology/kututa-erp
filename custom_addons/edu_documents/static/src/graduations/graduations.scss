@@ -1,0 +1,133 @@
+// Diplomas e certificados: a página do secPed-Express (lista, resumo, filtros e registar conclusões).
+.o_edu_graduations {
+    .o_edu_gr_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_gr_intro,
+    .o_edu_gr_bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .o_edu_gr_intro {
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .o_edu_gr_lead {
+        max-width: 72ch;
+        margin: 0;
+        color: $text-muted;
+    }
+
+    .o_edu_gr_h2 {
+        margin: 4px 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .o_edu_gr_filter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        font-size: 0.875rem;
+        color: $text-muted;
+
+        > .form-select {
+            width: auto;
+            min-width: 160px;
+        }
+    }
+
+    .o_edu_gr_card {
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_gr_table {
+        th,
+        td {
+            vertical-align: middle;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+    }
+
+    .o_edu_gr_actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+    .o_edu_gr_register {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 760px;
+        padding: 20px;
+    }
+
+    .o_edu_gr_fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+
+        @include media-breakpoint-down(sm) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_gr_field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0;
+
+        > span:first-child {
+            font-size: 0.875rem;
+            color: $text-muted;
+        }
+    }
+
+    .o_edu_gr_split {
+        padding-top: 20px;
+        border-top: 1px solid $border-color;
+    }
+
+    .o_edu_gr_list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+
+        > li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-bottom: 1px solid $border-color;
+
+            &:last-child {
+                border-bottom: 0;
+            }
+        }
+    }
+
+    .o_edu_gr_num {
+        min-width: 2.5em;
+        color: $text-muted;
+        font-variant-numeric: tabular-nums;
+    }
+}

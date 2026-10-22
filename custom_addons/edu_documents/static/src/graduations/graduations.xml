@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_documents.Graduations">
+        <div class="o_action o_edu_graduations">
+            <Layout display="this.display">
+                <div class="o_edu_gr_body">
+                    <!-- Lista -->
+                    <t t-if="this.state.mode === 'list'">
+                        <div class="o_edu_gr_intro">
+                            <p class="o_edu_gr_lead">
+                                Os alunos que concluíram o curso. Daqui imprime-se o diploma e o certificado de habilitações;
+                                o diploma verifica-se e assina-se aqui.
+                            </p>
+                            <button type="button" class="btn btn-primary" t-on-click="() => this.openRegister()">
+                                <i class="oi me-1" data-icon="add" aria-hidden="true"/>Registar conclusões
+                            </button>
+                        </div>
+
+                        <div class="o_edu_gr_bar">
+                            <p class="mb-0 flex-grow-1" t-out="this.summaryText"/>
+                            <label class="o_edu_gr_filter">
+                                <span>Ano lectivo</span>
+                                <select class="form-select" t-on-change="(ev) => this.onYearChange(ev)">
+                                    <option value="" t-att-selected="!this.state.yearId">Todos os anos</option>
+                                    <option t-foreach="this.state.years" t-as="y" t-key="y.id" t-att-value="y.id"
+                                            t-att-selected="y.id === this.state.yearId" t-out="y.name"/>
+                                </select>
+                            </label>
+                            <label class="o_edu_gr_filter">
+                                <span>Curso</span>
+                                <select class="form-select" t-on-change="(ev) => this.onCourseChange(ev)">
+                                    <option value="" t-att-selected="!this.state.courseId">Todos os cursos</option>
+                                    <option t-foreach="this.state.courses" t-as="c" t-key="c.id" t-att-value="c.id"
+                                            t-att-selected="c.id === this.state.courseId" t-out="c.name"/>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="o_edu_gr_card">
+                            <p t-if="!this.state.rows.length" class="mb-0 text-muted p-3" t-out="this.emptyText"/>
+                            <div t-else="" class="table-responsive">
+                                <table class="table table-sm o_edu_gr_table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Aluno</th>
+                                            <th>Curso</th>
+                                            <th>Ano lectivo</th>
+                                            <th class="text-center">Média final</th>
+                                            <th>Concluiu</th>
+                                            <th>Diploma</th>
+                                            <th><span class="visually-hidden">Acções</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="this.state.rows" t-as="g" t-key="g.id" t-att-class="{'text-muted': g.state === 'cancelled'}">
+                                            <td>
+                                                <div class="fw-semibold" t-out="g.student"/>
+                                                <div class="small text-muted" t-out="g.diploma_number ? 'Diploma n.º ' + g.diploma_number : 'Sem número de diploma'"/>
+                                            </td>
+                                            <td><t t-out="g.course"/><span t-if="g.course_code" class="text-muted"> (<t t-out="g.course_code"/>)</span></td>
+                                            <td class="text-nowrap" t-out="g.year"/>
+                                            <td class="text-center" t-out="this.fmtAverage(g.average)"/>
+                                            <td class="text-nowrap" t-out="g.date"/>
+                                            <td class="text-nowrap" t-att-class="this.toneClass(g.tone)" t-out="g.diploma_label"/>
+                                            <td>
+                                                <div class="o_edu_gr_actions">
+                                                    <button t-if="g.state === 'draft'" type="button" class="btn btn-sm btn-primary"
+                                                            t-att-disabled="this.state.busy" t-on-click="() => this.rowAction('issue', g)"
+                                                            title="Dá o número do diploma">Emitir</button>
+                                                    <t t-if="g.state === 'issued'">
+                                                        <button type="button" class="btn btn-sm btn-secondary" t-att-disabled="this.state.busy"
+                                                                t-on-click="() => this.printDocument(g, 'diploma')" t-att-aria-label="'Diploma de ' + g.student">
+                                                            <i class="oi me-1" data-icon="workspace_premium" aria-hidden="true"/>Diploma
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-secondary" t-att-disabled="this.state.busy"
+                                                                t-on-click="() => this.printDocument(g, 'certificate')" t-att-aria-label="'Certificado de habilitações de ' + g.student">
+                                                            <i class="oi me-1" data-icon="description" aria-hidden="true"/>Certificado
+                                                        </button>
+                                                        <button t-if="!g.verified" type="button" class="btn btn-sm btn-link"
+                                                                t-att-disabled="this.state.busy" t-on-click="() => this.rowAction('verify', g)">Verificar</button>
+                                                        <button t-elif="!g.signed and this.state.isManager" type="button" class="btn btn-sm btn-link"
+                                                                t-att-disabled="this.state.busy" t-on-click="() => this.rowAction('sign', g)">Assinar</button>
+                                                    </t>
+                                                    <button type="button" class="btn btn-sm btn-link" t-on-click="() => this.openForm(g)"
+                                                            t-att-aria-label="'Abrir a conclusão de ' + g.student" title="Abrir a conclusão">
+                                                        <i class="oi" data-icon="edit" aria-hidden="true"/>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Registar conclusões -->
+                    <t t-else="">
+                        <div class="o_edu_gr_intro">
+                            <div>
+                                <button type="button" class="btn btn-link px-0" t-on-click="() => this.backToList()">
+                                    <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/>Voltar aos diplomas
+                                </button>
+                                <h2 class="o_edu_gr_h2">Registar conclusões</h2>
+                                <p class="o_edu_gr_lead">
+                                    Os alunos da classe final a quem o conselho de turma deu a conclusão do curso. Ao registar,
+                                    o aluno passa para a lista de diplomas, com a classificação final calculada.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="o_edu_gr_card o_edu_gr_register">
+                            <div class="o_edu_gr_fields">
+                                <label class="o_edu_gr_field">
+                                    <span>Ano lectivo</span>
+                                    <select class="form-select" t-on-change="(ev) => this.onRegYearChange(ev)">
+                                        <option t-foreach="this.state.years" t-as="y" t-key="y.id" t-att-value="y.id"
+                                                t-att-selected="y.id === this.state.regYearId">
+                                            <t t-out="y.name"/><t t-if="y.is_current"> (em curso)</t>
+                                        </option>
+                                    </select>
+                                </label>
+                                <label class="o_edu_gr_field">
+                                    <span>Turma da classe final</span>
+                                    <select class="form-select" t-on-change="(ev) => this.onRegClassChange(ev)">
+                                        <option value="" t-att-selected="!this.state.classId">
+                                            <t t-out="this.state.classes.length ? 'Escolha a turma' : 'Sem turmas da classe final'"/>
+                                        </option>
+                                        <option t-foreach="this.state.classes" t-as="c" t-key="c.id" t-att-value="c.id"
+                                                t-att-selected="c.id === this.state.classId">
+                                            <t t-out="c.name"/><t t-if="c.course">, <t t-out="c.course"/></t>
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div class="o_edu_gr_split">
+                                <p t-if="!this.state.classId" class="mb-0 text-muted">Escolha a turma para ver quem tem a conclusão do curso.</p>
+                                <p t-elif="!this.state.finishers.length" class="mb-0">
+                                    Nenhum aluno da <t t-out="this.selectedRegClass.name"/> tem ainda a conclusão do curso.
+                                    Aparecem aqui quando o conselho de turma a decidir.
+                                </p>
+                                <t t-else="">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                        <p class="mb-0 flex-grow-1">
+                                            <t t-out="this.state.finishers.length"/>
+                                            <t t-out="this.state.finishers.length === 1 ? 'aluno concluiu' : 'alunos concluíram'"/> o curso<t t-if="!this.pendingFinishers.length">; todos já registados.</t><t t-else="">; <t t-out="this.pendingFinishers.length"/> por registar.</t>
+                                        </p>
+                                        <button t-if="this.pendingFinishers.length > 1" type="button" class="btn btn-primary"
+                                                t-att-disabled="this.state.busy" t-on-click="() => this.register(this.pendingFinishers)">
+                                            Registar os <t t-out="this.pendingFinishers.length"/>
+                                        </button>
+                                    </div>
+                                    <ul class="o_edu_gr_list">
+                                        <li t-foreach="this.state.finishers" t-as="f" t-key="f.result_id">
+                                            <span class="o_edu_gr_num" t-out="f.number"/>
+                                            <div class="flex-grow-1">
+                                                <div t-out="f.student"/>
+                                                <div class="small text-muted">Média final <t t-out="this.fmtAverage(f.average)"/></div>
+                                            </div>
+                                            <span t-if="f.registered" class="small text-success">Registado</span>
+                                            <span t-elif="f.average === null" class="small text-muted" title="O conselho de turma não apurou a média final deste aluno.">sem média</span>
+                                            <button t-else="" type="button" class="btn btn-sm btn-secondary" t-att-disabled="this.state.busy"
+                                                    t-on-click="() => this.register([f])" t-att-aria-label="'Registar a conclusão de ' + f.student">Registar</button>
+                                        </li>
+                                    </ul>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>
