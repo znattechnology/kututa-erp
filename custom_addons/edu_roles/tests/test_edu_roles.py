@@ -221,3 +221,40 @@ class TestEduRoles(TransactionCase):
             .search(eval(action.domain, {'uid': self.teacher_user.id}))
         )
         self.assertEqual(mine, self.class_a)
+
+    def test_grade_grid_profiles(self):
+        """Notas da turma: o professor vê só as turmas e disciplinas que lecciona; o director de turma vê todas as
+        disciplinas da turma mas só altera as suas e imprime a pauta; a secretaria consulta e imprime."""
+        self.year.action_generate_trimesters()
+        self.year.trimester_ids.sorted('number')[0].is_current = True
+        Grid = self.env['edu.grade.grid'].with_user(self.teacher_user)
+        self.assertEqual([c['id'] for c in Grid.grid_classes()['classes']], self.class_a.ids)
+        self.assertEqual([(s['id'], s['editable']) for s in Grid.grid_subjects(self.class_a.id)], [(self.lp.id, True)])
+        data = Grid.grid_data(self.class_a.id, self.lp.id)
+        self.assertTrue(data['can_edit'])
+        self.assertFalse(data['can_print'])
+        trimester = data['trimesters'][0]['id']
+        with self.assertRaises(AccessError):
+            Grid.grid_print(self.class_a.id, trimester, True)
+        other = self.class_a.subject_line_ids.subject_id.filtered(lambda s: s.code != 'LP')[:1]
+        with self.assertRaises(AccessError):
+            Grid.grid_data(self.class_a.id, other.id)
+
+        # Director da turma B, onde não dá aulas: vê todas as disciplinas, não altera nenhuma, imprime a pauta.
+        self.class_b.director_id = self.teacher
+        self.assertEqual([c['id'] for c in Grid.grid_classes()['classes']], (self.class_a | self.class_b).ids)
+        subjects = Grid.grid_subjects(self.class_b.id)
+        self.assertEqual(len(subjects), len(self.class_b.subject_line_ids.filtered('weekly_hours')))
+        self.assertFalse(any(s['editable'] for s in subjects))
+        data = Grid.grid_data(self.class_b.id, self.lp.id)
+        self.assertFalse(data['can_edit'])
+        self.assertTrue(data['can_print'])
+        self.assertEqual(Grid.grid_print(self.class_b.id, trimester, True)['report_type'], 'qweb-html')
+        with self.assertRaises(AccessError):
+            Grid.grid_save(self.class_b.id, self.lp.id, [])
+
+        # A secretaria vê todas as turmas, imprime, mas não altera.
+        Clerk = self.env['edu.grade.grid'].with_user(self.clerk)
+        self.assertEqual(len(Clerk.grid_classes()['classes']), 2)
+        data = Clerk.grid_data(self.class_a.id, self.lp.id)
+        self.assertEqual((data['can_edit'], data['can_print']), (False, True))
