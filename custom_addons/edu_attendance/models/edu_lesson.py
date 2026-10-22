@@ -279,7 +279,12 @@ class EduLessonAttendance(models.Model):
     @api.constrains('enrollment_id', 'lesson_id')
     def _check_enrollment(self):
         for line in self:
-            if line.enrollment_id.class_id != line.lesson_id.class_id:
+            lesson = line.lesson_id
+            # Também os alunos de outra turma que fazem a disciplina nesta (Decreto Executivo 60/08, arts. 9.º e 10.º).
+            visiting = line.enrollment_id.lower_subject_ids.filtered(
+                lambda s, lesson=lesson: s.class_id == lesson.class_id and s.subject_id == lesson.subject_id
+            )
+            if line.enrollment_id.class_id != lesson.class_id and not visiting:
                 raise ValidationError(self.env._('%s não é desta turma.', line.student_id.name))
 
     def write(self, vals):

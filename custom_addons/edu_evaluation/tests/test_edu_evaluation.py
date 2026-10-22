@@ -528,6 +528,12 @@ class TestEduEvaluation(TransactionCase):
         )
         assessment.action_fill_students()
         self.assertIn(bento_enrollment, assessment.grade_ids.enrollment_id)
+        # E na chamada das aulas dessa disciplina na 10.ª.
+        lesson = self.env['edu.lesson'].create(
+            {'class_id': self.class10.id, 'subject_id': subject.id, 'date': self.t1.date_start}
+        )
+        lesson.action_open_roll_call()
+        self.assertIn(bento_enrollment, lesson.attendance_ids.enrollment_id)
         # Pautas (edu_documents): na 10.ª, o Bento só nessa disciplina; na 11.ª, «e)» e a disciplina anulada «c)».
         if 'edu.pauta.print' not in self.env:
             return
