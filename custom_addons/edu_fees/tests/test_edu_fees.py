@@ -40,6 +40,9 @@ class TestEduFees(AccountTestInvoicingCommon):
                         {'name': 'Matrícula', 'category': 'enrollment', 'recurrence': 'one_off', 'amount': 20_000}
                     ),
                     Command.create(
+                        {'name': 'Confirmação', 'category': 'confirmation', 'recurrence': 'one_off', 'amount': 5_000}
+                    ),
+                    Command.create(
                         {'name': 'Propina', 'category': 'tuition', 'recurrence': 'monthly', 'amount': 50_000}
                     ),
                     Command.create(
@@ -107,6 +110,10 @@ class TestEduFees(AccountTestInvoicingCommon):
         self.company.edu_billing_mode = 'fee_free'
         other = self._enroll(date(2026, 9, 1), self.env['edu.student'].create({'name': 'Carla'}))
         self.assertEqual(self._generate(other, date(2026, 10, 1)).mapped('edu_category'), ['enrollment'])
+        # Quem continua na escola paga a confirmação, não a matrícula (DE Conjunto 40/21 tabela as duas).
+        renewal = self._enroll(date(2026, 9, 1), self.env['edu.student'].create({'name': 'Domingos'}))
+        renewal.enrollment_type = 'renewal'
+        self.assertEqual(self._generate(renewal, date(2026, 10, 1)).mapped('edu_category'), ['confirmation'])
 
     def test_plan_resolution(self):
         enrollment = self._enroll(date(2026, 9, 1))

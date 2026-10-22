@@ -32,6 +32,55 @@ class EduClass(models.Model):
             'context': {'default_class_id': self.id, 'search_default_enrolled': 1},
         }
 
+    @api.model
+    def _create_next_year_classes(self, source_year, target_year, entry_classes=True):
+        """Turmas do ano seguinte a partir das do ano que acaba: a classe seguinte do mesmo curso, com o mesmo nome,
+        capacidade, turno e sala, no plano em vigor do curso; e, com ``entry_classes``, as da classe de entrada de cada
+        curso (para os novos alunos e os repetentes). As que já existem ficam como estão. Devolve as criadas."""
+        sources = self.search(
+            [('academic_year_id', '=', source_year.id), ('company_id', '=', source_year.company_id.id)]
+        )
+        wanted = []
+        for edu_class in sources:
+            wanted.append((edu_class, edu_class.class_number + 1))
+        if entry_classes:
+            for course in sources.course_id:
+                first = min(sources.filtered(lambda c, co=course: c.course_id == co).mapped('class_number'))
+                wanted += [
+                    (c, first)
+                    for c in sources.filtered(lambda c, co=course, n=first: c.course_id == co and c.class_number == n)
+                ]
+        created = self.browse()
+        for edu_class, number in wanted:
+            curriculum = edu_class.course_id.curriculum_id
+            year_line = curriculum.year_ids.filtered(lambda y, n=number: y.class_number == n)[:1]
+            if not year_line:
+                continue  # classe terminal: não há classe seguinte
+            exists = self.with_context(active_test=False).search_count(
+                [
+                    ('academic_year_id', '=', target_year.id),
+                    ('course_id', '=', edu_class.course_id.id),
+                    ('class_number', '=', number),
+                    ('name', '=', edu_class.name),
+                ]
+            )
+            if exists:
+                continue
+            created |= self.create(
+                {
+                    'name': edu_class.name,
+                    'academic_year_id': target_year.id,
+                    'course_id': edu_class.course_id.id,
+                    'curriculum_id': curriculum.id,
+                    'curriculum_year_id': year_line.id,
+                    'capacity': edu_class.capacity,
+                    'shift_id': edu_class.shift_id.id,
+                    'room_id': edu_class.room_id.id,
+                    'company_id': edu_class.company_id.id,
+                }
+            )
+        return created
+
     def _edu_can_renumber(self):
         """A avaliação impede a renumeração depois de haver notas (a pauta já usa os números)."""
         self.ensure_one()

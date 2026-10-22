@@ -1,1 +1,1 @@
-from . import edu_application, edu_class, edu_enrollment, edu_student, edu_transfer
+from . import edu_application, edu_class, edu_course, edu_enrollment, edu_student, edu_transfer

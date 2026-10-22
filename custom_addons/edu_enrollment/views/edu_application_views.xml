@@ -9,6 +9,8 @@
                 <field name="academic_year_id"/>
                 <field name="desired_course_id" optional="show"/>
                 <field name="desired_class_number" optional="show"/>
+                <field name="admission_score" optional="show" invisible="not has_admission_score"/>
+                <field name="has_admission_score" column_invisible="1"/>
                 <field name="guardian_name" optional="show"/>
                 <field name="guardian_phone" optional="hide"/>
                 <field name="submitted_date" optional="show"/>
@@ -63,6 +65,17 @@
                             <field name="transfer_in"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         </group>
+                        <group string="Prova de acesso" invisible="not admission_test_required">
+                            <field name="admission_test_required" invisible="1"/>
+                            <field name="has_admission_score" readonly="state not in ('draft', 'submitted', 'review')"/>
+                            <field name="admission_score" invisible="not has_admission_score"
+                                   readonly="state not in ('draft', 'submitted', 'review')"/>
+                            <field name="admission_min_score" readonly="1"/>
+                            <div colspan="2" class="text-muted small">
+                                Abaixo da nota mínima, a candidatura é rejeitada, mesmo que sobrem vagas
+                                (DP 167/23, art. 52.º). Quem vem transferido não faz prova.
+                            </div>
+                        </group>
                         <group string="Decisão">
                             <field name="class_id" options="{'no_create': True}" readonly="state not in ('submitted', 'review')"/>
                             <field name="decision_note"/>
@@ -103,4 +116,16 @@
     </record>
 
     <menuitem id="menu_edu_application" action="action_edu_application" parent="edu_core.menu_edu_students" sequence="3"/>
+
+    <record id="edu_course_form_admission" model="ir.ui.view">
+        <field name="name">edu.course.form.admission</field>
+        <field name="model">edu.course</field>
+        <field name="inherit_id" ref="edu_core.edu_course_form"/>
+        <field name="arch" type="xml">
+            <field name="has_special_exam" position="after">
+                <field name="admission_test_required"/>
+                <field name="admission_min_score" invisible="not admission_test_required"/>
+            </field>
+        </field>
+    </record>
 </odoo>

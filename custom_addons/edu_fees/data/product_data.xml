@@ -9,9 +9,33 @@
         <field name="taxes_id" eval="[(5, 0, 0)]"/>
     </record>
     <record id="product_enrollment" model="product.product">
-        <field name="name">Matrícula / confirmação</field>
+        <field name="name">Matrícula</field>
         <field name="type">service</field>
         <field name="default_code">MAT</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <record id="product_confirmation" model="product.product">
+        <field name="name">Confirmação de matrícula</field>
+        <field name="type">service</field>
+        <field name="default_code">CONF</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <record id="product_application" model="product.product">
+        <field name="name">Inscrição / candidatura</field>
+        <field name="type">service</field>
+        <field name="default_code">INSC</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+    </record>
+    <record id="product_transfer" model="product.product">
+        <field name="name">Transferência</field>
+        <field name="type">service</field>
+        <field name="default_code">TRF</field>
         <field name="sale_ok" eval="True"/>
         <field name="purchase_ok" eval="False"/>
         <field name="taxes_id" eval="[(5, 0, 0)]"/>

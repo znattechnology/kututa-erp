@@ -419,3 +419,54 @@ class TestEduEvaluation(TransactionCase):
             self.env['edu.assessment'].create(
                 {'name': 'Teste', 'class_id': edu_class.id, 'subject_id': lp.id, 'trimester_id': self.t1.id}
             )
+
+    def test_enrollment_confirmation(self):
+        """Confirmação de matrículas pela escola: fecha o ano pelo resultado, cria as turmas do ano seguinte e
+        confirma cada aluno na classe que lhe cabe; quem não pode fica pendente ou de fora, com o motivo."""
+        ana, bento, carla, domingos = self.students
+        enrollments = {}
+        for student in self.students:
+            enrollments[student] = self.env['edu.enrollment'].create(
+                {'student_id': student.id, 'class_id': self.class10.id}
+            )
+            enrollments[student].action_confirm()
+        nono = self.env['edu.student'].create({'name': 'Eva'})
+        ninth = self.env['edu.enrollment'].create({'student_id': nono.id, 'class_id': self.class9.id})
+        ninth.action_confirm()
+        Result = self.env['edu.year.result']
+        Result.create({'enrollment_id': enrollments[ana].id, 'status': 'promoted'})
+        Result.create({'enrollment_id': enrollments[bento].id, 'status': 'retained'})
+        Result.create({'enrollment_id': enrollments[carla].id, 'status': 'retained', 'absence_excluded': True})
+        Result.create({'enrollment_id': ninth.id, 'status': 'promoted'})
+        wizard = self.env['edu.enrollment.confirmation'].create(
+            {'source_year_id': self.year.id, 'target_year_id': self.next_year.id}
+        )
+        wizard.action_prepare()
+        # Matrículas fechadas pelo resultado; a de quem ainda não tem resultado fica em aberto.
+        self.assertEqual(enrollments[ana].state, 'completed')
+        self.assertEqual(enrollments[bento].state, 'retained')
+        self.assertEqual(enrollments[domingos].state, 'active')
+        # Turmas do ano seguinte: a 11.ª A (classe seguinte) e a 10.ª A (entrada e repetentes).
+        new_classes = self.env['edu.class'].search([('academic_year_id', '=', self.next_year.id)])
+        self.assertIn((11, 'ENF'), [(c.class_number, c.course_id.code) for c in new_classes])
+        self.assertIn((10, 'ENF'), [(c.class_number, c.course_id.code) for c in new_classes])
+        lines = {line.student_id: line for line in wizard.line_ids}
+        self.assertEqual((lines[ana].state, lines[ana].target_class_id.class_number), ('confirm', 11))
+        self.assertEqual((lines[bento].state, lines[bento].target_class_id.class_number), ('confirm', 10))
+        self.assertEqual(lines[carla].state, 'excluded')
+        self.assertIn('art. 24.º, n.º 4', lines[carla].reason)
+        self.assertEqual(lines[domingos].state, 'pending')
+        self.assertEqual(lines[nono].state, 'excluded')
+        self.assertIn('II Ciclo', lines[nono].reason)
+        wizard.action_confirm()
+        self.assertEqual(lines[ana].state, 'done')
+        self.assertEqual(
+            (lines[ana].enrollment_id.enrollment_type, lines[ana].enrollment_id.state), ('renewal', 'active')
+        )
+        self.assertEqual(lines[bento].enrollment_id.enrollment_type, 'repeat')
+        self.assertEqual(lines[domingos].state, 'pending')
+        # Depois do resultado, «Tentar de novo» fecha a matrícula e confirma o aluno.
+        Result.create({'enrollment_id': enrollments[domingos].id, 'status': 'conditional'})
+        lines[domingos].action_retry()
+        self.assertEqual((lines[domingos].state, lines[domingos].enrollment_id.class_number), ('done', 11))
+        self.assertEqual(enrollments[domingos].state, 'completed')

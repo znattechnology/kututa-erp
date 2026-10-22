@@ -252,3 +252,44 @@ Não se encontrou o «diploma próprio» das transferências (DP 162/23, art. 30
 - **Processo incompleto:** se a anulação aos 60 dias é automática ou só um alerta à direcção.
 - **Taxas:** se são públicas (tabela do DE Conjunto 40/21, zonas A/B) ou livres (privado). Ficam parametrizáveis no plano de propinas.
 - **Vigência do Despacho 60/08:** confirmar com a escola se a anulação e a matrícula por disciplina no técnico continuam a aplicar-se (a vigência é incerta).
+
+## 5. Feito (2026-10-22): fase A e prova de acesso
+
+### Confirmação de matrículas
+Menu Matrículas › Confirmação de matrículas, que substitui a antiga «Rematrícula».
+
+- **Preparar**
+  1. Fecha as matrículas do ano que acaba pelo resultado do ano:
+     - transita, transita com disciplinas em atraso ou concluiu → «Concluída»;
+     - retido → «Retido»;
+     - sem resultado ou com exames pendentes → fica em aberto.
+  2. Cria as turmas que faltam: a classe seguinte de cada turma, com o mesmo nome, capacidade, turno e sala, no plano em vigor do curso, e as turmas da classe de entrada.
+  3. Propõe a classe de cada aluno: a seguinte, ou a mesma se ficou retido.
+- **Fora da confirmação**, com o motivo:
+  - já matriculado;
+  - anulado ou transferido;
+  - concluiu o curso;
+  - reprovado por faltas injustificadas no II Ciclo (art. 24.º, n.º 4);
+  - 9.ª → 10.ª no ensino geral, porque é nova matrícula (art. 24.º, n.º 9).
+- **Pendentes**, com o motivo:
+  - o ano ainda não fechou;
+  - reprovado por faltas, que aguarda justificação (art. 24.º, n.º 3);
+  - não há turma de destino.
+- **Confirmar:** cada aluno é tratado à parte, com as regras de sempre (vagas, retenções, disciplinas em atraso, dívida). Se uma falhar, só esse aluno fica pendente, com a mensagem. «Tentar de novo» volta a ver o aluno depois de resolvido.
+- **Regra «retido não sobe de classe»:** passa a olhar só para a matrícula imediatamente anterior. Antes olhava para o último resultado que existisse, e uma retenção antiga já repetida bloqueava sem razão.
+- **Falta confirmar:** novo menu com os alunos sem matrícula no ano em curso, agrupados pelo último ano lectivo.
+- **Ensaio na Vovó Eva (2025/26 → 2026/27, desfeito):** 33 a confirmar (26 repetiriam a 12.ª, 7 passariam à 13.ª), 0 falhas. Não foi aplicado: a escola decide se estes alunos continuam.
+
+### Taxas no plano de propinas
+- Categorias novas: «Inscrição / candidatura», «Matrícula (primeira vez)», «Confirmação de matrícula» e «Transferência».
+- A matrícula cobra-se a quem entra (nova ou transferido) e a confirmação a quem continua.
+- A inscrição e a transferência são taxas a pedido: não se geram pelo plano.
+
+### Prova de acesso
+- O curso tem «Prova de acesso» e «Nota mínima de acesso», com 10 por omissão.
+- A prova vem activa no técnico e no ensino geral a partir da 7.ª classe.
+- Na candidatura lança-se a nota:
+  - abaixo do mínimo, a candidatura é **rejeitada automaticamente**, com a fundamentação «DP 167/23, art. 52.º, n.º 1»;
+  - sem nota, não se aprova.
+- Quem vem transferido não faz prova.
+- A turma escolhida na aprovação tem de ser do curso pretendido.

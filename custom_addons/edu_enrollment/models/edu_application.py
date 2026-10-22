@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 RELATIONSHIPS = [
@@ -83,6 +83,13 @@ class EduApplication(models.Model):
     desired_course_id = fields.Many2one('edu.course', string='Curso pretendido', check_company=True)
     desired_class_number = fields.Integer(string='Classe pretendida')
     transfer_in = fields.Boolean(string='Vem transferido(a) de outra escola')
+    # Prova de acesso (DP 167/23, arts. 49.º e 52.º): admitido só com a nota mínima, mesmo que sobrem vagas.
+    admission_test_required = fields.Boolean(
+        string='Exige prova de acesso', compute='_compute_admission_test', help='Definido no curso pretendido.'
+    )
+    admission_min_score = fields.Float(string='Nota mínima', compute='_compute_admission_test')
+    admission_score = fields.Float(string='Nota da prova de acesso', digits=(4, 1), tracking=True)
+    has_admission_score = fields.Boolean(string='Prova realizada', tracking=True)
     # Decisão
     class_id = fields.Many2one(
         'edu.class',
@@ -98,11 +105,46 @@ class EduApplication(models.Model):
     student_id = fields.Many2one('edu.student', string='Aluno', readonly=True, copy=False)
     enrollment_id = fields.Many2one('edu.enrollment', string='Matrícula', readonly=True, copy=False)
 
+    @api.depends('desired_course_id')
+    def _compute_admission_test(self):
+        for application in self:
+            course = application.desired_course_id
+            application.admission_test_required = bool(course.admission_test_required)
+            application.admission_min_score = course.admission_min_score if course else 0.0
+
+    @api.onchange('admission_score')
+    def _onchange_admission_score(self):
+        if self.admission_score:
+            self.has_admission_score = True
+
+    def _reject_below_minimum(self):
+        """Nota abaixo do mínimo: a candidatura é rejeitada com a fundamentação da lei."""
+        for application in self.filtered(
+            lambda a: a.state in REVIEWABLE and a.admission_test_required and a.has_admission_score
+        ):
+            if application.admission_score < application.admission_min_score:
+                application.write(
+                    {
+                        'state': 'rejected',
+                        'decision_note': self.env._(
+                            'Nota da prova de acesso (%(score)s) abaixo do mínimo de %(min)s valores '
+                            '(DP 167/23, art. 52.º, n.º 1).',
+                            score=f'{application.admission_score:g}',
+                            min=f'{application.admission_min_score:g}',
+                        ),
+                        'reviewed_by_id': self.env.uid,
+                        'reviewed_date': fields.Datetime.now(),
+                    }
+                )
+
     def write(self, vals):
         protected = set(vals) - DECISION_FIELDS
         if protected and self.filtered(lambda a: a.state not in EDITABLE):
             raise UserError(self.env._('Uma candidatura decidida não se altera.'))
-        return super().write(vals)
+        result = super().write(vals)
+        if {'admission_score', 'has_admission_score'} & set(vals):
+            self._reject_below_minimum()
+        return result
 
     def action_submit(self):
         for application in self:
@@ -145,6 +187,19 @@ class EduApplication(models.Model):
                 raise UserError(self.env._('Escolha a turma onde o aluno fica matriculado.'))
             if application.class_id.academic_year_id != application.academic_year_id:
                 raise UserError(self.env._('A turma não é do ano lectivo da candidatura.'))
+            course = application.desired_course_id
+            if course and application.class_id.course_id != course:
+                raise UserError(self.env._('A turma não é do curso pretendido (%s).', course.name))
+            if application.admission_test_required and not application.transfer_in:
+                if not application.has_admission_score:
+                    raise UserError(self.env._('Lance a nota da prova de acesso antes de aprovar.'))
+                if application.admission_score < application.admission_min_score:
+                    raise UserError(
+                        self.env._(
+                            'Nota da prova de acesso abaixo do mínimo de %s valores: a candidatura é rejeitada.',
+                            f'{application.admission_min_score:g}',
+                        )
+                    )
             student = application._find_or_create_student()
             application._link_guardian(student)
             enrollment = self.env['edu.enrollment'].create(

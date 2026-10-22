@@ -24,14 +24,15 @@ class EduEnrollment(models.Model):
         atraso, não entra na 9.ª nem na 12.ª e, nas outras, no máximo com 2; ao fim de 2 retenções no nível, decide a
         direcção."""
         result = super()._edu_check_enrollment_allowed()
-        Result = self.env['edu.year.result'].sudo()
-        previous = Result.search(
-            [
-                ('student_id', '=', self.student_id.id),
-                ('academic_year_id.date_start', '<', self.academic_year_id.date_start),
-            ],
-            order='id desc',
-        ).sorted(lambda r: r.academic_year_id.date_start, reverse=True)[:1]
+        # O resultado da matrícula imediatamente anterior (não o último que exista: uma retenção antiga, já repetida,
+        # não volta a contar).
+        before = self.student_id.enrollment_ids.filtered(
+            lambda e: (
+                e.academic_year_id.date_start < self.academic_year_id.date_start
+                and e.state not in ('draft', 'dropped', 'transferred')
+            )
+        ).sorted(lambda e: e.academic_year_id.date_start, reverse=True)[:1]
+        previous = before.sudo().year_result_id
         if previous:
             if previous.status == 'retained' and self.class_number > previous.class_id.class_number:
                 raise UserError(
@@ -59,6 +60,27 @@ class EduEnrollment(models.Model):
                     self.env._('%s excede o número de retenções no nível: decide a direcção.', self.student_id.name)
                 )
         return result
+
+    def _edu_is_terminal(self):
+        """A última classe do plano do curso."""
+        self.ensure_one()
+        curriculum = self.class_id.curriculum_id
+        return bool(curriculum) and self.class_number >= curriculum.class_to
+
+    def _edu_close_year(self):
+        """Fecha as matrículas pelo resultado do ano: transita, transita com disciplinas em atraso ou concluiu →
+        «Concluída»; retido → «Retido». Quem ainda espera exames ou decisão fica em aberto. Devolve as que ficaram."""
+        open_enrollments = self.browse()
+        self.invalidate_recordset(['year_result_id'])  # o resultado pode ter sido decidido entretanto
+        for enrollment in self.filtered(lambda e: e.state in ('active', 'irregular')):
+            status = enrollment.sudo().year_result_id.status
+            if status in ('promoted', 'conditional', 'graduated'):
+                enrollment.state = 'completed'
+            elif status == 'retained':
+                enrollment.state = 'retained'
+            else:
+                open_enrollments |= enrollment
+        return open_enrollments
 
 
 class EduClass(models.Model):

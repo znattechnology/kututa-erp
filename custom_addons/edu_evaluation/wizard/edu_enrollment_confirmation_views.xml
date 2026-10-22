@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_enrollment_confirmation_form" model="ir.ui.view">
+        <field name="name">edu.enrollment.confirmation.form</field>
+        <field name="model">edu.enrollment.confirmation</field>
+        <field name="arch" type="xml">
+            <form string="Confirmação de matrículas">
+                <header>
+                    <button name="action_prepare" type="object" string="Preparar a confirmação" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_confirm" type="object" string="Confirmar as matrículas" class="btn-primary"
+                            invisible="state != 'prepared'"
+                            confirm="Confirmar as matrículas dos alunos «A confirmar»? Os pendentes ficam na lista para resolver."/>
+                    <button name="action_prepare" type="object" string="Preparar de novo" invisible="state != 'prepared'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1>Confirmação de matrículas</h1></div>
+                    <p class="text-muted" invisible="state != 'draft'">
+                        A escola confirma as matrículas: os encarregados não precisam de se deslocar e a confirmação não
+                        depende de documentos (DP 162/23, arts. 24.º e 27.º; DP 167/23, art. 50.º). Preparar fecha as
+                        matrículas do ano que acaba pelo resultado do ano, cria as turmas que faltam e propõe a classe de
+                        cada aluno. Nada é gravado até «Confirmar as matrículas».
+                    </p>
+                    <group>
+                        <group>
+                            <field name="source_year_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="target_year_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="create_classes" readonly="state != 'draft'"/>
+                            <field name="classes_created" string="Turmas criadas" invisible="state == 'draft'"/>
+                            <field name="summary" string="Resumo" invisible="state == 'draft'"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="line_ids" invisible="state == 'draft'">
+                        <list editable="bottom" create="false" delete="false"
+                              decoration-danger="state == 'pending'" decoration-success="state == 'done'"
+                              decoration-muted="state == 'excluded'">
+                            <field name="student_id" readonly="1"/>
+                            <field name="previous_class_id" readonly="1"/>
+                            <field name="previous_state" readonly="1" widget="badge"/>
+                            <field name="target_class_id" readonly="state in ('done', 'excluded')" options="{'no_create': True}"/>
+                            <field name="state" readonly="1" widget="badge"
+                                   decoration-success="state == 'done'" decoration-info="state == 'confirm'"
+                                   decoration-danger="state == 'pending'"/>
+                            <field name="reason" readonly="1"/>
+                            <field name="enrollment_id" readonly="1" optional="hide"/>
+                            <button name="action_retry" type="object" string="Tentar de novo" icon="refresh"
+                                    invisible="state != 'pending'"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edu_enrollment_confirmation" model="ir.actions.act_window">
+        <field name="name">Confirmação de matrículas</field>
+        <field name="res_model">edu.enrollment.confirmation</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <!-- O menu «Rematrícula» passa a ser a confirmação da escola inteira. -->
+    <record id="edu_enrollment.menu_edu_enrollment_renewal" model="ir.ui.menu">
+        <field name="name">Confirmação de matrículas</field>
+        <field name="action" ref="action_edu_enrollment_confirmation"/>
+    </record>
+
+    <!-- Alunos do ano anterior sem matrícula no ano em curso. -->
+    <record id="action_edu_student_unconfirmed" model="ir.actions.act_window">
+        <field name="name">Falta confirmar</field>
+        <field name="res_model">edu.student</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('student_status', '=', 'former')]</field>
+        <field name="context">{'group_by': 'last_academic_year_id'}</field>
+        <field name="help" type="html">
+            <p>Todos os alunos do ano anterior que continuam na escola têm matrícula no ano em curso.</p>
+        </field>
+    </record>
+    <menuitem id="menu_edu_student_unconfirmed" action="action_edu_student_unconfirmed"
+              parent="edu_core.menu_edu_students" sequence="65" groups="edu_core.group_edu_user"/>
+</odoo>

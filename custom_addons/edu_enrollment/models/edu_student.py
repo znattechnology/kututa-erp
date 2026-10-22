@@ -31,6 +31,9 @@ class EduStudent(models.Model):
     current_class_number = fields.Integer(
         string='Classe', related='current_class_id.class_number', store=True, aggregator=None
     )
+    last_academic_year_id = fields.Many2one(
+        'edu.academic.year', string='Último ano lectivo', compute='_compute_current_enrollment_id', store=True
+    )
     student_status = fields.Selection(
         STUDENT_STATUS, string='Situação', compute='_compute_current_enrollment_id', store=True, index=True
     )
@@ -48,6 +51,7 @@ class EduStudent(models.Model):
             student.current_enrollment_id = current
             student.current_class_id = current.class_id
             student.student_status = student._status_of(enrollments[:1])
+            student.last_academic_year_id = enrollments[:1].academic_year_id
 
     def _status_of(self, last):
         """A situação pela última matrícula: matriculado no ano em curso, ou porque deixou de o estar."""

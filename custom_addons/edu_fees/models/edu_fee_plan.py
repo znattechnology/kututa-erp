@@ -8,7 +8,10 @@ from odoo.exceptions import ValidationError
 _logger = logging.getLogger(__name__)
 
 CATEGORIES = [
-    ('enrollment', 'Matrícula / confirmação'),
+    ('application', 'Inscrição / candidatura'),
+    ('enrollment', 'Matrícula (primeira vez)'),
+    ('confirmation', 'Confirmação de matrícula'),
+    ('transfer', 'Transferência'),
     ('tuition', 'Propina'),
     ('exam', 'Exame'),
     ('service', 'Serviço a pedido'),
@@ -21,9 +24,14 @@ RECURRENCES = [
     ('quarterly', 'Trimestral'),
     ('annual', 'Anual'),
 ]
-ON_REQUEST = ('service', 'card', 'other')
+ON_REQUEST = ('service', 'card', 'other', 'application', 'transfer')
+# A matrícula cobra-se a quem entra na escola; a confirmação a quem continua (DE Conjunto 40/21 tabela as duas).
+FIRST_ENROLLMENT_TYPES = ('new', 'transfer_in')
 PRODUCTS = {
+    'application': 'edu_fees.product_application',
     'enrollment': 'edu_fees.product_enrollment',
+    'confirmation': 'edu_fees.product_confirmation',
+    'transfer': 'edu_fees.product_transfer',
     'tuition': 'edu_fees.product_tuition',
     'exam': 'edu_fees.product_exam',
     'service': 'edu_fees.product_service',
@@ -152,6 +160,9 @@ class EduFeePlan(models.Model):
         created = self.env['account.move']
         for line in self.line_ids.filtered(lambda line: line.mandatory and line.category not in ON_REQUEST):
             if line.category == 'tuition' and company.edu_billing_mode == 'fee_free':
+                continue
+            first = enrollment.enrollment_type in FIRST_ENROLLMENT_TYPES
+            if (line.category == 'enrollment' and not first) or (line.category == 'confirmation' and first):
                 continue
             for due in due_dates(line.recurrence, start, end, line.due_day, line.occurrences):
                 if month_start(due) > month_start(today):

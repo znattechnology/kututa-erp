@@ -136,6 +136,11 @@ class TestEduEnrollment(TransactionCase):
         with self.assertRaises(UserError):
             application.action_approve()
         application.class_id = self.class_b
+        # Prova de acesso (técnico): sem nota não se aprova.
+        self.assertTrue(application.admission_test_required)
+        with self.assertRaisesRegex(UserError, 'prova de acesso'):
+            application.action_approve()
+        application.write({'has_admission_score': True, 'admission_score': 12.5})
         application.action_approve()
         self.assertEqual(application.state, 'approved')
         student = application.student_id
@@ -143,6 +148,14 @@ class TestEduEnrollment(TransactionCase):
         self.assertEqual(student.primary_guardian_id.name, 'Rosa Neto')
         self.assertEqual(application.enrollment_id.state, 'active')
         self.assertTrue(student.matricula_number)
+        # Abaixo da nota mínima (10), a candidatura é rejeitada com a fundamentação da lei.
+        weak = self.env['edu.application'].create(
+            {'name': 'Ermelinda Sousa', 'desired_course_id': self.nursing.id, 'desired_class_number': 10}
+        )
+        weak.action_submit()
+        weak.write({'has_admission_score': True, 'admission_score': 9})
+        self.assertEqual(weak.state, 'rejected')
+        self.assertIn('art. 52.º', weak.decision_note)
         with self.assertRaises(UserError):
             application.name = 'Outro'
         with self.assertRaises(UserError):

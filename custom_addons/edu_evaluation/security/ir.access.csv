@@ -42,3 +42,5 @@ edu_grade_appeal_comp_rule,edu.grade.appeal multi-empresa,edu.grade.appeal,,crud
 edu_grade_edit_permission_comp_rule,edu.grade.edit.permission multi-empresa,edu.grade.edit.permission,,crud,"[('company_id', 'in', company_ids)]"
 edu_rdec_comp_rule,edu.rdec multi-empresa,edu.rdec,,crud,"[('company_id', 'in', company_ids)]"
 edu_rdec_line_comp_rule,edu.rdec.line multi-empresa,edu.rdec.line,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_enrollment_confirmation_user,access_edu_enrollment_confirmation_user,edu.enrollment.confirmation,edu_core.group_edu_user,crud,
+access_edu_enrollment_confirmation_line_user,access_edu_enrollment_confirmation_line_user,edu.enrollment.confirmation.line,edu_core.group_edu_user,crud,
