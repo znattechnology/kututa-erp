@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_documents.StudentHistory">
+        <div class="o_action o_edu_student_history">
+            <Layout display="this.display">
+                <div class="o_edu_sh_body">
+                    <p class="o_edu_sh_lead">
+                        O percurso do aluno na escola, um ano lectivo por linha: a média final, a assiduidade e o resultado
+                        do conselho de turma. Daqui imprime-se o termo de cada ano e o termo do curso.
+                    </p>
+
+                    <section class="o_edu_sh_card">
+                        <StudentPicker t-if="!this.state.data" onPick="(row) => this.choose(row)"/>
+                        <div t-else="" class="o_edu_sh_student">
+                            <t t-set="st" t-value="this.state.data.student"/>
+                            <div class="flex-grow-1">
+                                <h2 class="o_edu_sh_name" t-out="st.name"/>
+                                <div class="small text-muted">
+                                    <t t-if="st.process_number">Processo n.º <t t-out="st.process_number"/>. </t>
+                                    <t t-if="st.class">Última turma: <t t-out="st.class"/>. </t>
+                                    <span t-if="st.situation" class="badge text-bg-light" t-out="st.situation"/>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.otherStudent()">
+                                <i class="oi me-1" data-icon="close" aria-hidden="true"/>Outro aluno
+                            </button>
+                        </div>
+                    </section>
+
+                    <section t-if="this.state.data" class="o_edu_sh_card">
+                        <t t-set="d" t-value="this.state.data"/>
+                        <div class="o_edu_sh_head">
+                            <p class="mb-0 flex-grow-1" t-out="d.summary"/>
+                            <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy" t-on-click="() => this.subjects()">
+                                <i class="oi me-1" data-icon="list_alt" aria-hidden="true"/>Classificações por disciplina
+                            </button>
+                            <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy or !d.has_results"
+                                    t-att-title="d.has_results ? 'Todas as classes do curso' : 'Ainda não há anos fechados no histórico'"
+                                    t-on-click="() => this.printCourse()">
+                                <i class="oi me-1" data-icon="print" aria-hidden="true"/>Termo do curso
+                            </button>
+                        </div>
+
+                        <p t-if="!d.rows.length" class="mb-0 text-muted">Este aluno ainda não tem matrículas.</p>
+                        <div t-else="" class="table-responsive">
+                            <table class="table table-sm o_edu_sh_table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Ano lectivo</th>
+                                        <th>Turma</th>
+                                        <th class="text-center">Média final</th>
+                                        <th t-if="d.has_attendance" class="text-center">Assiduidade</th>
+                                        <th>Resultado</th>
+                                        <th><span class="visually-hidden">Termo do ano</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d.rows" t-as="r" t-key="r.enrollment_id" t-att-class="{'o_edu_sh_current': r.tone === 'current'}">
+                                        <td class="text-nowrap" t-out="r.year"/>
+                                        <td>
+                                            <span class="fw-semibold text-nowrap" t-out="r.class"/>
+                                            <span t-if="r.course" class="text-muted">, <t t-out="r.course"/></span>
+                                            <span t-if="r.number" class="text-muted small">, n.º <t t-out="r.number"/></span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span t-att-class="this.averageClass(r.average)" t-out="this.fmtAverage(r.average)"/>
+                                        </td>
+                                        <td t-if="d.has_attendance" class="text-center" t-out="this.fmtRate(r.attendance)"/>
+                                        <td t-att-class="this.toneClass(r.tone)" t-out="r.result"/>
+                                        <td class="text-end">
+                                            <button t-if="r.year_result_id" type="button" class="btn btn-sm btn-link text-nowrap"
+                                                    t-att-disabled="this.state.busy" t-on-click="() => this.printYear(r)">
+                                                <i class="oi me-1" data-icon="description" aria-hidden="true"/>Termo de <t t-out="r.year"/>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p t-if="d.rows.length and !d.has_attendance" class="small text-muted mb-0">
+                            A assiduidade aparece quando houver faltas registadas nos anos do histórico.
+                        </p>
+                    </section>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

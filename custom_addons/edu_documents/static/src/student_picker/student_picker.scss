@@ -1,0 +1,68 @@
+// Escolher aluno (declarações, histórico): ano, turma com a lista dos alunos, ou procura pelo nome.
+.o_edu_picker {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .o_edu_picker_fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+
+        @include media-breakpoint-down(sm) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_picker_field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0;
+
+        > span:first-child {
+            font-size: 0.875rem;
+            color: $text-muted;
+        }
+    }
+
+    .o_edu_picker_list {
+        display: flex;
+        flex-direction: column;
+        max-height: 360px;
+        overflow-y: auto;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+    }
+
+    .o_edu_picker_row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border: 0;
+        border-bottom: 1px solid $border-color;
+        background: transparent;
+        text-align: left;
+
+        &:last-child {
+            border-bottom: 0;
+        }
+
+        &:hover,
+        &:focus-visible {
+            background: $o-gray-100;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $o-action;
+            outline-offset: -2px;
+        }
+    }
+
+    .o_edu_picker_num {
+        min-width: 2.5em;
+        color: $text-muted;
+        font-variant-numeric: tabular-nums;
+    }
+}

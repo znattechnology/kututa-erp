@@ -403,16 +403,17 @@ class TestEduDocuments(TransactionCase):
         """Página «Declarações», como no secPed: o aluno pela turma ou pelo nome, os dados de identificação, ver
         (rascunho, sem número), emitir e imprimir (com número) e a 2.ª via."""
         Page = self.env['edu.declaration.page']
+        Picker = self.env['edu.student.picker']
         options = Page.page_options()
-        self.assertIn(self.edu_class.id, [c['id'] for c in options['classes']])
+        self.assertIn(self.edu_class.id, [c['id'] for c in Picker.picker_options()['classes']])
         self.assertEqual(
             [t['key'] for t in options['types']], ['frequency', 'grades', 'enrollment', 'transfer_declaration']
         )
-        rows = Page.class_students(self.edu_class.id)
+        rows = Picker.class_students(self.edu_class.id)
         self.assertIn(self.enrollment.id, [r['enrollment_id'] for r in rows])
-        found = Page.search_students(self.year.id, self.student.name[:4])
+        found = Picker.search_students(self.year.id, self.student.name[:4])
         self.assertIn(self.enrollment.id, [r['enrollment_id'] for r in found])
-        self.assertEqual(Page.search_students(self.year.id, 'a'), [])
+        self.assertEqual(Picker.search_students(self.year.id, 'a'), [])
 
         data = Page.student_data(self.enrollment.id, 'frequency')
         self.assertFalse(data['blocked'])
@@ -434,3 +435,22 @@ class TestEduDocuments(TransactionCase):
         self.assertEqual(draft.print_count, 2)
         with self.assertRaises(UserError):
             Page.preview(self.enrollment.id, 'grades', identity, '')
+
+    def test_student_history_page(self):
+        """Histórico do aluno, como no secPed: um ano por linha, o ano em curso, o resultado no passado, os termos."""
+        Page = self.env['edu.history.page']
+        data = Page.student_history(self.student.id)
+        self.assertEqual([r['result'] for r in data['rows']], ['Em curso'])
+        self.assertFalse(data['has_results'])
+        with self.assertRaises(UserError):
+            Page.print_course_term(self.student.id)
+        result = self.env['edu.year.result'].create({'enrollment_id': self.enrollment.id})
+        result.action_manual_promote()
+        data = Page.student_history(self.student.id)
+        row = data['rows'][0]
+        self.assertEqual((row['year'], row['class'], row['result']), ('2026/2027', '13ª A', 'Concluiu'))
+        self.assertEqual(row['year_result_id'], result.id)
+        self.assertFalse(data['has_attendance'])
+        self.assertEqual(Page.print_year_term(result.id)['report_type'], 'qweb-html')
+        self.assertEqual(Page.print_course_term(self.student.id)['report_type'], 'qweb-html')
+        self.assertEqual(Page.subject_history(self.student.id)['type'], 'ir.actions.act_window')

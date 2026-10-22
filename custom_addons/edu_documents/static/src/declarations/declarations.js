@@ -1,8 +1,9 @@
-import { Component, onWillStart, onWillUnmount, proxy, useProps } from "@odoo/owl";
+import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
+import { StudentPicker } from "../student_picker/student_picker";
 
 /**
  * «Declarações», como a página do secPed-Express: escolhe-se o aluno pela turma (a lista dos alunos, pelo número)
@@ -12,7 +13,7 @@ import { standardActionServiceProps } from "@web/webclient/actions/action_plugin
  */
 export class Declarations extends Component {
     static template = "edu_documents.Declarations";
-    static components = { Layout };
+    static components = { Layout, StudentPicker };
 
     props = useProps(standardActionServiceProps);
 
@@ -21,14 +22,6 @@ export class Declarations extends Component {
         this.action = useService("action");
         this.notification = useService("notification");
         this.state = proxy({
-            yearId: false,
-            years: [],
-            classes: [],
-            classId: false,
-            students: [],
-            query: "",
-            results: [],
-            searching: false,
             types: [],
             states: [],
             fields: [],
@@ -40,82 +33,23 @@ export class Declarations extends Component {
             purpose: "",
             busy: false,
         });
-        this.searchTimer = null;
-        onWillUnmount(() => clearTimeout(this.searchTimer));
-        onWillStart(() => this.loadYear(false));
+        onWillStart(async () => {
+            const options = await this.orm.call("edu.declaration.page", "page_options", []);
+            this.state.types = options.types;
+            this.state.states = options.states;
+            this.state.fields = options.identity_fields;
+        });
     }
 
     get display() {
         return { controlPanel: {} };
     }
 
-    // Ano, turma e aluno
-
-    async loadYear(yearId) {
-        const options = await this.orm.call("edu.declaration.page", "page_options", [yearId]);
-        Object.assign(this.state, {
-            yearId: options.year_id,
-            years: options.years,
-            classes: options.classes,
-            types: options.types,
-            states: options.states,
-            fields: options.identity_fields,
-            classId: false,
-            students: [],
-            results: [],
-            query: "",
-        });
-    }
-
-    async onYearChange(ev) {
-        await this.loadYear(parseInt(ev.target.value, 10) || false);
-    }
-
-    async onClassChange(ev) {
-        this.state.classId = parseInt(ev.target.value, 10) || false;
-        this.state.students = this.state.classId
-            ? await this.orm.call("edu.declaration.page", "class_students", [this.state.classId])
-            : [];
-    }
-
-    get selectedClass() {
-        return this.state.classes.find((c) => c.id === this.state.classId);
-    }
-
-    onQuery(ev) {
-        this.state.query = ev.target.value;
-        clearTimeout(this.searchTimer);
-        this.searchTimer = setTimeout(() => this.search(), 300);
-    }
-
-    async search() {
-        const query = this.state.query.trim();
-        if (query.length < 2) {
-            this.state.results = [];
-            return;
-        }
-        this.state.searching = true;
-        try {
-            this.state.results = await this.orm.call("edu.declaration.page", "search_students", [
-                this.state.yearId,
-                query,
-            ]);
-        } finally {
-            this.state.searching = false;
-        }
-    }
+    // O aluno
 
     async choose(row) {
         this.state.pick = row;
         await this.loadStudent();
-    }
-
-    onStudentSelect(ev) {
-        const id = parseInt(ev.target.value, 10);
-        const row = this.state.students.find((s) => s.enrollment_id === id);
-        if (row) {
-            this.choose(row);
-        }
     }
 
     otherStudent() {

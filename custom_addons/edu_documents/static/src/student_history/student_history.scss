@@ -1,0 +1,54 @@
+// Histórico do aluno: a página do secPed-Express (escolher o aluno e o percurso, um ano por linha).
+.o_edu_student_history {
+    .o_edu_sh_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_sh_lead {
+        max-width: 72ch;
+        margin: 0;
+        color: $text-muted;
+    }
+
+    .o_edu_sh_card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_sh_student,
+    .o_edu_sh_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .o_edu_sh_name {
+        margin: 0 0 2px;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .o_edu_sh_table {
+        font-variant-numeric: tabular-nums;
+
+        th,
+        td {
+            vertical-align: middle;
+        }
+    }
+
+    .o_edu_sh_current td {
+        background: rgba($info, 0.06);
+    }
+}

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Histórico do aluno (acção cliente), como no secPed: escolher o aluno e o percurso, um ano por linha. -->
+    <record id="action_edu_student_history_page" model="ir.actions.client">
+        <field name="name">Histórico do aluno</field>
+        <field name="tag">edu_documents.student_history</field>
+    </record>
+</odoo>

@@ -29,68 +29,7 @@
                                 <i class="oi me-1" data-icon="close" aria-hidden="true"/>Outro aluno
                             </button>
                         </div>
-                        <t t-else="">
-                            <div class="o_edu_dc_fields">
-                                <label class="o_edu_dc_field">
-                                    <span>Ano lectivo</span>
-                                    <select class="form-select" t-on-change="(ev) => this.onYearChange(ev)">
-                                        <option t-foreach="this.state.years" t-as="y" t-key="y.id" t-att-value="y.id"
-                                                t-att-selected="y.id === this.state.yearId">
-                                            <t t-out="y.name"/><t t-if="y.is_current"> (em curso)</t>
-                                        </option>
-                                    </select>
-                                </label>
-                                <label class="o_edu_dc_field">
-                                    <span>Turma (opcional)</span>
-                                    <select class="form-select" t-on-change="(ev) => this.onClassChange(ev)">
-                                        <option value="" t-att-selected="!this.state.classId">Todas as turmas</option>
-                                        <option t-foreach="this.state.classes" t-as="c" t-key="c.id" t-att-value="c.id"
-                                                t-att-selected="c.id === this.state.classId">
-                                            <t t-out="c.name"/><t t-if="c.shift"> · <t t-out="c.shift"/></t>
-                                        </option>
-                                    </select>
-                                </label>
-                            </div>
-
-                            <div class="o_edu_dc_field">
-                                <span>Aluno</span>
-                                <!-- Pela turma: a lista dos alunos. -->
-                                <t t-if="this.selectedClass">
-                                    <p t-if="!this.state.students.length" class="mb-0 text-muted">
-                                        A <t t-out="this.selectedClass.name"/> não tem alunos matriculados neste ano.
-                                    </p>
-                                    <div t-else="" class="o_edu_dc_list" role="listbox" aria-label="Alunos da turma">
-                                        <button t-foreach="this.state.students" t-as="s" t-key="s.enrollment_id" type="button"
-                                                role="option" class="o_edu_dc_row" t-on-click="() => this.choose(s)">
-                                            <span class="o_edu_dc_num" t-out="s.number"/>
-                                            <span class="flex-grow-1" t-out="s.name"/>
-                                            <span t-if="s.gone" class="badge text-bg-light" t-out="s.state"/>
-                                        </button>
-                                    </div>
-                                    <p class="small text-muted mt-2 mb-0"><t t-out="this.state.students.length"/> alunos, pelo número da turma.</p>
-                                </t>
-                                <!-- Pelo nome. -->
-                                <t t-else="">
-                                    <input type="search" class="form-control" placeholder="Escreva o nome do aluno ou o n.º de processo"
-                                           t-att-value="this.state.query" t-on-input="(ev) => this.onQuery(ev)" aria-label="Procurar aluno"/>
-                                    <div t-if="this.state.results.length" class="o_edu_dc_list mt-2" role="listbox" aria-label="Alunos encontrados">
-                                        <button t-foreach="this.state.results" t-as="s" t-key="s.enrollment_id" type="button"
-                                                role="option" class="o_edu_dc_row" t-on-click="() => this.choose(s)">
-                                            <span class="flex-grow-1" t-out="s.name"/>
-                                            <span class="small text-muted"><t t-out="s.class"/><t t-if="s.number">, n.º <t t-out="s.number"/></t></span>
-                                            <span t-if="s.gone" class="badge text-bg-light" t-out="s.state"/>
-                                        </button>
-                                    </div>
-                                    <p t-elif="this.state.query.trim().length >= 2 and !this.state.searching" class="small text-muted mt-2 mb-0">
-                                        Nenhum aluno com esse nome neste ano lectivo.
-                                    </p>
-                                    <p class="small text-muted mt-2 mb-0">
-                                        Ou escolha a turma para ver a lista dos alunos. Quem já saiu da escola encontra-se no último
-                                        ano lectivo em que esteve matriculado.
-                                    </p>
-                                </t>
-                            </div>
-                        </t>
+                        <StudentPicker t-else="" onPick="(row) => this.choose(row)"/>
                     </section>
 
                     <!-- A declaração -->

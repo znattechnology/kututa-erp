@@ -20,66 +20,22 @@ IDENTITY_LABELS = {
 
 class EduDeclarationPage(models.AbstractModel):
     """Página «Declarações» (acção cliente ``edu_documents.declarations``), como a do secPed-Express: escolhe-se o
-    aluno pela turma (a lista dos alunos) ou pelo nome, no ano lectivo; depois o tipo de declaração, completam-se os
-    dados de identificação (ficam na ficha do aluno) e vê-se ou emite-se a declaração, que fica no registo
-    (``edu.document``) com o seu número."""
+    aluno (``edu.student.picker``: pela turma, com a lista dos alunos, ou pelo nome, no ano lectivo); depois o tipo
+    de declaração, completam-se os dados de identificação (ficam na ficha do aluno) e vê-se ou emite-se a
+    declaração, que fica no registo (``edu.document``) com o seu número."""
 
     _name = 'edu.declaration.page'
     _description = 'Declarações'
 
-    # Ano, turmas e alunos
-
     @api.model
-    def page_options(self, year_id=False):
-        options = self.env['edu.grade.grid'].grid_classes(year_id)
-        classes = self.env['edu.class'].sudo().browse([c['id'] for c in options['classes']])
-        shifts = {c.id: c.shift_id.name or '' for c in classes}
-        for row in options['classes']:
-            row['shift'] = shifts.get(row['id'], '')
+    def page_options(self):
         angola = self.env.ref('base.ao', raise_if_not_found=False)
         states = self.env['res.country.state'].search([('country_id', '=', angola.id)] if angola else [])
-        options['states'] = [{'id': s.id, 'name': s.name} for s in states.sorted('name')]
-        options['types'] = [{'key': k, 'name': n} for k, n in DOCUMENT_TYPES if k in DECLARATIONS]
-        options['identity_fields'] = [{'key': k, 'label': IDENTITY_LABELS[k]} for k, _label in IDENTITY_FIELDS]
-        return options
-
-    @api.model
-    def _enrollments(self, domain):
-        return self.env['edu.enrollment'].search([('state', '!=', 'draft'), *domain])
-
-    @api.model
-    def _student_row(self, enrollment):
         return {
-            'student_id': enrollment.student_id.id,
-            'enrollment_id': enrollment.id,
-            'name': enrollment.student_id.name,
-            'number': enrollment.order_number or '',
-            'class': enrollment.class_id._editor_label(),
-            'state': dict(enrollment._fields['state']._description_selection(self.env))[enrollment.state],
-            'gone': enrollment.state in ('dropped', 'transferred'),
+            'states': [{'id': s.id, 'name': s.name} for s in states.sorted('name')],
+            'types': [{'key': k, 'name': n} for k, n in DOCUMENT_TYPES if k in DECLARATIONS],
+            'identity_fields': [{'key': k, 'label': IDENTITY_LABELS[k]} for k, _label in IDENTITY_FIELDS],
         }
-
-    @api.model
-    def class_students(self, class_id):
-        """Os alunos da turma, pelo número (quem saiu também, para a declaração de frequência de quem já saiu)."""
-        enrollments = self._enrollments([('class_id', '=', class_id)])
-        return [self._student_row(e) for e in enrollments.sorted(lambda e: (e.order_number or 9999, e.student_id.name))]
-
-    @api.model
-    def search_students(self, year_id, query):
-        """Pelo nome (ou n.º de processo), no ano lectivo: quem saiu encontra-se no último ano em que esteve."""
-        query = (query or '').strip()
-        if len(query) < 2:
-            return []
-        enrollments = self._enrollments(
-            [
-                ('academic_year_id', '=', year_id),
-                '|',
-                ('student_id.name', 'ilike', query),
-                ('student_id.process_number', 'ilike', query),
-            ]
-        )
-        return [self._student_row(e) for e in enrollments.sorted(lambda e: e.student_id.name)[:20]]
 
     # O aluno escolhido
 
@@ -111,7 +67,7 @@ class EduDeclarationPage(models.AbstractModel):
                 'number': enrollment.order_number or '',
                 'regime': Helpers.regime(enrollment),
                 'year': enrollment.academic_year_id.name,
-                'state': self._student_row(enrollment)['state'],
+                'state': self.env['edu.student.picker']._row(enrollment)['state'],
             },
             'identity': identity,
             'blocked': self._blocked(enrollment, document_type),
