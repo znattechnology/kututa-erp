@@ -6,10 +6,14 @@ disciplina, 3 faltas com 1 tempo semanal, 4 com 2 tempos e 5 com mais de 2.
 Técnico-profissional (Despacho n.º 60/08, art. 12.º, n.º 2): «o número máximo anual de faltas injustificadas é
 o triplo do número de tempos semanais», portanto reprova com o triplo mais uma. A exclusão numa disciplina retém
 o aluno no ano (decisão da escola, como no Resumo do Regime de Avaliação, VI.1).
+
+Primário e iniciação: sem limite por disciplina. No primário retém só a frequência inferior a 2/3 das aulas do ano
+(Decreto Executivo n.º 424/25, art. 21.º, n.º 2, al. b)), calculada na decisão final; a iniciação não retém.
 """
 
 GENERAL = 'general'
 TECHNICAL = 'technical'
+PRIMARY = 'primary'
 
 OK = 'ok'
 AT_RISK = 'at_risk'
@@ -18,7 +22,7 @@ FAILED = 'failed'
 
 def absence_limit(weekly_hours, regime):
     """Limite de faltas injustificadas (None = sem limite): no geral, as que retêm; no técnico, o máximo permitido."""
-    if not weekly_hours or weekly_hours <= 0:
+    if regime == PRIMARY or not weekly_hours or weekly_hours <= 0:
         return None
     if regime == TECHNICAL:
         return 3 * weekly_hours

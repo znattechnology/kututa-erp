@@ -1,6 +1,6 @@
 from odoo import api, fields, models
 
-from .absence_rules import FAILED, GENERAL, TECHNICAL
+from .absence_rules import FAILED, GENERAL, PRIMARY, TECHNICAL
 
 
 class EduClass(models.Model):
@@ -15,9 +15,15 @@ class EduClass(models.Model):
             edu_class.lesson_count = len(edu_class.lesson_ids)
 
     def _edu_regime(self):
-        """Regime de avaliação: o técnico-profissional tem regras próprias (Despacho 60/08)."""
+        """Regime das faltas: o técnico-profissional tem regras próprias (Despacho 60/08); o limite por disciplina
+        (DE 424/25, art. 25.º) é do ensino secundário, não do primário nem da iniciação."""
         self.ensure_one()
-        return TECHNICAL if self.level_id.subsystem == 'technical' else GENERAL
+        level = self.level_id
+        if level.subsystem == 'technical':
+            return TECHNICAL
+        if level.subsystem == 'general' and self.class_number <= 6:
+            return PRIMARY
+        return GENERAL
 
     def _edu_weekly_hours(self, subject):
         """Tempos semanais da disciplina no plano curricular da turma (a classe da turma, ou a mais

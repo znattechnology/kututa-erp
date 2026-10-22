@@ -1,5 +1,7 @@
 from datetime import date
 
+from freezegun import freeze_time
+
 from odoo import Command
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
@@ -70,6 +72,7 @@ class TestEduAttendance(TransactionCase):
             elif line.student_id in late:
                 line.state = 'late'
         if state == 'done':
+            lesson.summary = 'Matéria dada'
             lesson.action_done()
         elif state == 'cancelled':
             lesson.action_cancel()
@@ -122,6 +125,7 @@ class TestEduAttendance(TransactionCase):
         self.assertEqual(lessons.mapped('lesson_number'), [1, 2, 3, 0])
         self.assertEqual(lessons[0].trimester_id, self.t1)
 
+    @freeze_time('2027-06-30')
     def test_technical_yearly_limit(self):
         enrollments = self._enroll(self.class_tec, self.students[0])
         subject = self._subject_with_hours(self.class_tec, 2)  # limite anual 6
@@ -187,3 +191,154 @@ class TestEduAttendance(TransactionCase):
             Lesson.create({'class_id': self.class_sec.id, 'subject_id': other.id, 'date': date(2026, 9, 8)})
         with self.assertRaises(UserError):
             lesson.sudo().unlink()
+
+    def test_primary_has_no_subject_limit(self):
+        """No primário retém só a frequência inferior a 2/3 (DE 424/25, art. 21.º); os 3/4/5 são do secundário."""
+        primary = self._course('Primário', 'PRI', 'level_primario', 'tpl_prim_base', 1)['class']
+        ana = self.students[0]
+        enrollment = self._enroll(primary, ana)
+        subject = primary.subject_line_ids.filtered('weekly_hours')[:1].subject_id
+        for day in (7, 8, 9, 10, 11, 14):
+            self._lesson(primary, subject, date(2026, 9, day), absent=[ana])
+        summary = self._summary(enrollment, subject, self.t1)
+        self.assertEqual((summary.absent, summary.limit, summary.status), (6, 0, 'ok'))
+        self.assertFalse(primary._edu_absence_exclusions())
+
+    def test_lesson_rules(self):
+        self._enroll(self.class_sec)
+        subject = self._subject_with_hours(self.class_sec, 2)
+        # Aula futura ou sem sumário não se dá por dada.
+        future = self.env['edu.lesson'].create(
+            {'class_id': self.class_sec.id, 'subject_id': subject.id, 'date': date(2027, 5, 3), 'summary': 'X'}
+        )
+        with freeze_time('2026-10-22'), self.assertRaisesRegex(UserError, 'ainda não aconteceu'):
+            future.action_done()
+        lesson = self._lesson(self.class_sec, subject, date(2026, 9, 7), state='scheduled')
+        with self.assertRaisesRegex(UserError, 'sumário'):
+            lesson.action_done()
+        lesson.summary = 'Equações'
+        lesson.action_done()
+        # Trimestre fechado: as faltas e as aulas não mudam.
+        self.t1.action_close()
+        with self.assertRaisesRegex(UserError, 'fechado'):
+            lesson.attendance_ids[0].state = 'absent'
+        with self.assertRaisesRegex(UserError, 'fechado'):
+            lesson.action_reset()
+        with self.assertRaisesRegex(UserError, 'fechado'):
+            self.env['edu.lesson'].create(
+                {'class_id': self.class_sec.id, 'subject_id': subject.id, 'date': date(2026, 9, 8)}
+            )
+
+    def test_generate_skips_holidays(self):
+        subject = self._subject_with_hours(self.class_sec, 2)
+        schedule = self.env['edu.schedule'].create(
+            {'class_id': self.class_sec.id, 'subject_id': subject.id, 'weekday': '0', 'hour_from': 7.5, 'hour_to': 8.25}
+        )
+        self.env['edu.calendar.event'].create(
+            [
+                {
+                    'name': 'Feriado',
+                    'academic_year_id': self.year.id,
+                    'event_type': 'holiday',
+                    'date_start': date(2026, 9, 14),
+                },
+                {
+                    'name': 'Pausa',
+                    'academic_year_id': self.year.id,
+                    'event_type': 'holiday',
+                    'date_start': date(2026, 9, 26),
+                    'date_end': date(2026, 10, 2),
+                },
+                {
+                    'name': 'Só no primário',
+                    'academic_year_id': self.year.id,
+                    'event_type': 'holiday',
+                    'date_start': date(2026, 9, 21),
+                    'level_ids': [Command.set(self.env.ref('edu_core.level_primario').ids)],
+                },
+            ]
+        )
+        self.env['edu.lesson']._generate(self.class_sec, date(2026, 9, 1), date(2026, 10, 6))
+        lessons = self.env['edu.lesson'].search([('schedule_id', '=', schedule.id)], order='date')
+        self.assertEqual(lessons.mapped('date'), [date(2026, 9, 7), date(2026, 9, 21), date(2026, 10, 5)])
+
+    def test_replacement(self):
+        subject = self._subject_with_hours(self.class_sec, 2)
+        other_subject = self._subject_with_hours(self.class_tec, 2)
+        substitute = self.env['hr.employee'].create({'name': 'Rita Substituta', 'edu_is_teacher': True})
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': self.class_sec.id, 'subject_id': subject.id, 'teacher_id': self.teacher.id}
+        )
+        schedule = self.env['edu.schedule'].create(
+            {'class_id': self.class_sec.id, 'subject_id': subject.id, 'weekday': '0', 'hour_from': 7.5, 'hour_to': 8.25}
+        )
+        other = self.env['edu.schedule'].create(
+            {
+                'class_id': self.class_tec.id,
+                'subject_id': other_subject.id,
+                'weekday': '0',
+                'hour_from': 7.5,
+                'hour_to': 8.25,
+            }
+        )
+        day = date(2026, 9, 7)
+        self.env['edu.lesson']._generate(self.class_sec, day, day)
+        lesson = self.env['edu.lesson'].search([('schedule_id', '=', schedule.id), ('date', '=', day)])
+        self.assertEqual(lesson.teacher_id, self.teacher)
+        # A aula já gerada passa para o substituto; ao apagar a substituição, volta ao professor.
+        replacement = self.env['edu.schedule.replacement'].create(
+            {'schedule_id': schedule.id, 'date': day, 'replacement_teacher_id': substitute.id}
+        )
+        self.assertEqual(replacement.original_teacher_id, self.teacher)
+        self.assertEqual(replacement.class_id, self.class_sec)
+        self.assertIn(self.class_sec.display_name, replacement.display_name)
+        self.assertEqual(lesson.teacher_id, substitute)
+        # Não substitui duas aulas à mesma hora.
+        with self.assertRaisesRegex(ValidationError, 'já substitui'):
+            self.env['edu.schedule.replacement'].create(
+                {'schedule_id': other.id, 'date': day, 'replacement_teacher_id': substitute.id}
+            )
+        replacement.unlink()
+        self.assertEqual(lesson.teacher_id, self.teacher)
+
+    def test_who_justifies(self):
+        """Justificam as faltas só a secretaria e o director de turma (decisão da escola)."""
+        ana = self.students[0]
+        enrollment = self._enroll(self.class_sec, ana)
+        subject = self._subject_with_hours(self.class_sec, 2)
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': self.class_sec.id, 'subject_id': subject.id, 'teacher_id': self.teacher.id}
+        )
+        for day in (7, 8, 9):
+            self._lesson(self.class_sec, subject, date(2026, 9, day), absent=[ana])
+        lines = self.env['edu.lesson.attendance'].search([('enrollment_id', '=', enrollment.id)], order='date')
+        # O professor da disciplina marca faltas mas não as justifica.
+        line = lines[0].with_user(self.teacher_user)
+        self.assertFalse(line.can_justify)
+        with self.assertRaises(AccessError):
+            line.write({'state': 'excused', 'justification': 'Doença'})
+        wizard = (
+            self.env['edu.absence.justify']
+            .with_user(self.teacher_user)
+            .create(
+                {
+                    'student_id': ana.id,
+                    'date_from': date(2026, 9, 7),
+                    'date_to': date(2026, 9, 8),
+                    'justification': 'Doença',
+                }
+            )
+        )
+        self.assertEqual(len(wizard.line_ids), 2)
+        with self.assertRaises(AccessError):
+            wizard.action_justify()
+        # Sem motivo, não se justifica.
+        with self.assertRaisesRegex(UserError, 'motivo'):
+            lines[0].state = 'excused'
+        # Director de turma: justifica o período (o atestado de dois dias).
+        self.class_sec.director_id = self.teacher
+        self.assertTrue(lines[0].with_user(self.teacher_user).can_justify)
+        wizard.action_justify()
+        self.assertEqual(lines.mapped('state'), ['excused', 'excused', 'absent'])
+        self.assertEqual(lines[0].justified_by_id, self.teacher_user)
+        self.assertEqual(lines[0].justification, 'Doença')

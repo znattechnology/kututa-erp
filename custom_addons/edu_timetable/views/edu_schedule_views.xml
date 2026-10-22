@@ -48,7 +48,7 @@
                             <field name="replacement_ids">
                                 <list editable="bottom">
                                     <field name="date"/>
-                                    <field name="original_teacher_id"/>
+                                    <field name="original_teacher_id" readonly="1"/>
                                     <field name="replacement_teacher_id" options="{'no_create': True}"/>
                                     <field name="reason"/>
                                 </list>
@@ -100,6 +100,7 @@
         <field name="arch" type="xml">
             <list string="Substituições">
                 <field name="date"/>
+                <field name="class_id"/>
                 <field name="schedule_id"/>
                 <field name="original_teacher_id"/>
                 <field name="replacement_teacher_id"/>
@@ -107,10 +108,67 @@
             </list>
         </field>
     </record>
+
+    <record id="edu_schedule_replacement_form" model="ir.ui.view">
+        <field name="name">edu.schedule.replacement.form</field>
+        <field name="model">edu.schedule.replacement</field>
+        <field name="arch" type="xml">
+            <form string="Substituição">
+                <sheet>
+                    <group>
+                        <group string="Aula">
+                            <field name="date"/>
+                            <field name="class_id" options="{'no_create': True}" placeholder="Todas"/>
+                            <field name="original_teacher_id" options="{'no_create': True}" placeholder="Todos"/>
+                            <field name="weekday" invisible="1"/>
+                            <field name="schedule_id" options="{'no_create': True, 'no_open': True}"
+                                   context="{'edu_schedule_show_class': True}"/>
+                        </group>
+                        <group string="Substituto(a)">
+                            <field name="replacement_teacher_id" options="{'no_create': True}"/>
+                            <field name="reason"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        Escolha a data e a turma ou o professor que falta: em «Aula» aparecem só os tempos desse dia.
+                        A aula prevista passa para o substituto, que faz a chamada e escreve o sumário.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_schedule_replacement_search" model="ir.ui.view">
+        <field name="name">edu.schedule.replacement.search</field>
+        <field name="model">edu.schedule.replacement</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="class_id"/>
+                <field name="original_teacher_id"/>
+                <field name="replacement_teacher_id"/>
+                <filter name="today" string="Hoje" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="upcoming" string="De hoje em diante" domain="[('date', '>=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="date" string="Data" date="date"/>
+                <group>
+                    <filter name="group_original" string="Professor que falta" context="{'group_by': 'original_teacher_id'}"/>
+                    <filter name="group_replacement" string="Substituto" context="{'group_by': 'replacement_teacher_id'}"/>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_edu_schedule_replacement" model="ir.actions.act_window">
         <field name="name">Substituições</field>
         <field name="res_model">edu.schedule.replacement</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="edu_schedule_replacement_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Registe quem substitui um professor que falta</p>
+            <p>Escolha a data, a turma ou o professor que falta, a aula e o substituto. O sistema recusa substitutos
+            que já tenham aula ou outra substituição a essa hora.</p>
+        </field>
     </record>
 
     <!-- Editor de horários (acção cliente): as disciplinas arrastam-se para a grelha da turma. -->

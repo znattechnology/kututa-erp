@@ -102,14 +102,19 @@ class EduSchedule(models.Model):
                 schedule.hour_from = schedule.time_slot_id.hour_from
                 schedule.hour_to = schedule.time_slot_id.hour_to
 
-    @api.depends('subject_id', 'weekday', 'hour_from', 'hour_to')
+    @api.depends('subject_id', 'weekday', 'hour_from', 'hour_to', 'class_id')
+    @api.depends_context('edu_schedule_show_class')
     def _compute_display_name(self):
         days = dict(WEEKDAYS)
+        show_class = self.env.context.get('edu_schedule_show_class')
         for schedule in self:
-            schedule.display_name = (
+            name = (
                 f'{days.get(schedule.weekday, "")} {format_hour(schedule.hour_from)}-'
                 f'{format_hour(schedule.hour_to)} · {schedule.subject_id.name or ""}'
             )
+            if show_class and schedule.class_id:
+                name = f'{name} · {schedule.class_id.display_name}'
+            schedule.display_name = name
 
     def _overlapping(self, field_name):
         """Outros tempos no mesmo dia e hora, com o mesmo valor em ``field_name``, em trimestres que se cruzam."""
@@ -199,16 +204,38 @@ class EduScheduleReplacement(models.Model):
     _order = 'date desc'
     _check_company_auto = True
 
-    schedule_id = fields.Many2one('edu.schedule', string='Tempo', required=True, ondelete='cascade', index=True)
-    company_id = fields.Many2one(related='schedule_id.company_id', store=True)
-    date = fields.Date(string='Data', required=True)
+    date = fields.Date(string='Data', required=True, default=fields.Date.context_today)
+    weekday = fields.Char(compute='_compute_weekday')
+    class_id = fields.Many2one(
+        'edu.class',
+        string='Turma',
+        compute='_compute_from_schedule',
+        store=True,
+        readonly=False,
+        precompute=True,
+        index=True,
+        help='Para escolher a aula: a turma, o professor que falta, ou os dois.',
+    )
     original_teacher_id = fields.Many2one(
         'hr.employee',
-        string='Professor(a) da turma',
-        compute='_compute_original_teacher_id',
+        string='Professor(a) que falta',
+        compute='_compute_from_schedule',
         store=True,
+        readonly=False,
         precompute=True,
+        index=True,
+        domain="[('edu_is_teacher', '=', True)]",
     )
+    schedule_id = fields.Many2one(
+        'edu.schedule',
+        string='Aula',
+        required=True,
+        ondelete='cascade',
+        index=True,
+        domain="[('weekday', '=', weekday), ('class_id', '=?', class_id), ('teacher_id', '=?', original_teacher_id), "
+        "('academic_year_id.date_start', '<=', date), ('academic_year_id.date_end', '>=', date)]",
+    )
+    company_id = fields.Many2one(related='schedule_id.company_id', store=True)
     replacement_teacher_id = fields.Many2one(
         'hr.employee',
         string='Substituto(a)',
@@ -220,10 +247,24 @@ class EduScheduleReplacement(models.Model):
 
     _schedule_date_uniq = models.Constraint('UNIQUE(schedule_id, date)', 'Esta aula já tem substituto nesta data.')
 
-    @api.depends('schedule_id')
-    def _compute_original_teacher_id(self):
+    @api.depends('date')
+    def _compute_weekday(self):
         for replacement in self:
-            replacement.original_teacher_id = replacement.schedule_id.teacher_id
+            replacement.weekday = str(replacement.date.weekday()) if replacement.date else False
+
+    @api.depends('schedule_id')
+    def _compute_from_schedule(self):
+        for replacement in self:
+            if replacement.schedule_id:
+                replacement.class_id = replacement.schedule_id.class_id
+                replacement.original_teacher_id = replacement.schedule_id.teacher_id
+
+    @api.depends('schedule_id', 'date')
+    def _compute_display_name(self):
+        for replacement in self:
+            schedule = replacement.schedule_id.with_context(edu_schedule_show_class=True)
+            day = replacement.date.strftime('%d/%m/%Y') if replacement.date else ''
+            replacement.display_name = f'{day} · {schedule.display_name}' if schedule else day
 
     @api.constrains('date', 'schedule_id', 'replacement_teacher_id')
     def _check_replacement(self):
@@ -246,3 +287,18 @@ class EduScheduleReplacement(models.Model):
                 other._occurs_on(replacement.date) and other._teacher_on(replacement.date) == teacher for other in busy
             ):
                 raise ValidationError(self.env._('%s tem aula a essa hora.', replacement.replacement_teacher_id.name))
+            other = self.search(
+                [
+                    ('id', '!=', replacement.id),
+                    ('date', '=', replacement.date),
+                    ('replacement_teacher_id', '=', teacher.id),
+                    ('schedule_id.hour_from', '<', schedule.hour_to),
+                    ('schedule_id.hour_to', '>', schedule.hour_from),
+                ],
+                limit=1,
+            )
+            if other:
+                raise ValidationError(
+                    self.env._('%(teacher)s já substitui outra aula a essa hora: %(other)s.', teacher=teacher.name,
+                               other=other.display_name)
+                )  # fmt: skip

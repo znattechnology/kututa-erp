@@ -1,1 +1,1 @@
-from . import edu_lesson_generate
+from . import edu_absence_justify, edu_lesson_generate

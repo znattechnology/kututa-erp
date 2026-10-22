@@ -413,6 +413,7 @@ class TestEduEvaluation(TransactionCase):
             )
             lesson.action_open_roll_call()
             lesson.attendance_ids.state = 'absent'
+            lesson.summary = 'Matéria dada'
             lesson.action_done()
         self.class7.action_compute_year_results()
         result = enrollment.year_result_id

@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from odoo import api, fields, models
@@ -82,6 +82,27 @@ class EduCalendarEvent(models.Model):
         if current:
             return current[0]
         return min(windows, key=lambda w: min(abs((w[0] - around).days), abs((w[1] - around).days)))
+
+    @api.model
+    def _days_without_lessons(self, company, level, date_from, date_to):
+        """Os dias de feriado ou pausa do calendário escolar entre duas datas, para o nível: não há aulas."""
+        events = self.search(
+            [
+                ('company_id', '=', company.id),
+                ('event_type', '=', 'holiday'),
+                ('date_start', '<=', date_to),
+                '|',
+                ('date_end', '>=', date_from),
+                ('date_start', '>=', date_from),
+            ]
+        )
+        days = set()
+        for event in events.filtered(lambda e: not e.level_ids or level in e.level_ids):
+            day, end = max(event.date_start, date_from), min(event.date_end or event.date_start, date_to)
+            while day <= end:
+                days.add(day)
+                day += timedelta(days=1)
+        return days
 
 
 class EduAcademicYear(models.Model):

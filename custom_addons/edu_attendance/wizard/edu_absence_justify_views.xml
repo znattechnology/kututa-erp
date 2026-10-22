@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_absence_justify_form" model="ir.ui.view">
+        <field name="name">edu.absence.justify.form</field>
+        <field name="model">edu.absence.justify</field>
+        <field name="arch" type="xml">
+            <form string="Justificar as faltas de um período">
+                <group>
+                    <group>
+                        <field name="student_id" options="{'no_create': True}"/>
+                        <field name="justification" placeholder="Atestado médico, falecimento de familiar…"/>
+                    </group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                </group>
+                <field name="line_ids" readonly="1">
+                    <list>
+                        <field name="date"/>
+                        <field name="class_id"/>
+                        <field name="subject_id"/>
+                    </list>
+                </field>
+                <div class="text-muted">
+                    Justifica todas as faltas injustificadas do aluno entre as datas. Só a secretaria e o director de
+                    turma justificam; com o trimestre fechado, a direcção tem de o reabrir.
+                </div>
+                <footer>
+                    <button name="action_justify" type="object" string="Justificar" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_absence_justify" model="ir.actions.act_window">
+        <field name="name">Justificar um período</field>
+        <field name="res_model">edu.absence.justify</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

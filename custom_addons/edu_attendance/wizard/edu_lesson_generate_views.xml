@@ -11,8 +11,9 @@
                     <field name="date_to"/>
                 </group>
                 <div class="text-muted">
-                    Cria uma aula prevista por cada tempo do horário entre as datas, saltando as aulas sem realização
-                    registadas. As que já existem não se repetem.
+                    Cria uma aula prevista por cada tempo do horário entre as datas. Salta os feriados e as pausas do
+                    calendário escolar, as aulas sem realização registadas e os trimestres fechados. As que já existem
+                    não se repetem; com substituição registada, a aula fica com o substituto.
                 </div>
                 <footer>
                     <button name="action_generate" type="object" string="Gerar" class="btn-primary"/>

@@ -112,7 +112,7 @@ class EduLesson(models.Model):
                 else:
                     value = 0
                 if lesson.lesson_number != value:
-                    lesson.with_context(edu_lesson_renumber=True).write({'lesson_number': value})
+                    lesson.with_context(edu_lesson_system=True).write({'lesson_number': value})
 
     @api.depends('attendance_ids.state')
     def _compute_counts(self):
@@ -148,6 +148,17 @@ class EduLesson(models.Model):
     # ------------------------------------------------------------------
     # Permissões do professor
     # ------------------------------------------------------------------
+    def _check_open_trimester(self):
+        """Com o trimestre fechado, as aulas e as faltas já não mudam (as retenções por faltas dependem delas)."""
+        closed = self.filtered(lambda lesson: lesson.trimester_id.state == 'closed')
+        if closed:
+            raise UserError(
+                self.env._(
+                    'O %s está fechado: as aulas e as faltas já não se alteram. A direcção pode reabri-lo.',
+                    closed[0].trimester_id.name,
+                )
+            )
+
     def _check_can_manage(self):
         """O professor gere as aulas das disciplinas em que está colocado e, se for director, as da sua turma."""
         if self.env.su or self.env.user.has_group('edu_core.group_edu_user'):
@@ -174,14 +185,20 @@ class EduLesson(models.Model):
     def create(self, vals_list):
         lessons = super().create(vals_list)
         lessons._check_can_manage()
+        lessons._check_open_trimester()
         lessons.filtered(lambda lesson: lesson.state == 'done')._renumber()
         return lessons
 
     def write(self, vals):
-        if self.env.context.get('edu_lesson_renumber'):
+        if self.env.context.get('edu_lesson_system'):
             return super().write(vals)
         self._check_can_manage()
+        locked = {'state', 'date', 'hour_from', 'hour_to', 'class_id', 'subject_id'} & set(vals)
+        if locked:
+            self._check_open_trimester()
         result = super().write(vals)
+        if locked:
+            self._check_open_trimester()
         if {'state', 'date', 'hour_from'} & set(vals):
             self._renumber()
         return result
@@ -208,7 +225,12 @@ class EduLesson(models.Model):
         return True
 
     def action_done(self):
+        today = fields.Date.context_today(self)
         for lesson in self:
+            if lesson.date > today:
+                raise UserError(self.env._('A aula de %s ainda não aconteceu.', lesson.date.strftime('%d/%m/%Y')))
+            if not (lesson.summary or '').strip():
+                raise UserError(self.env._('Escreva o sumário antes de dar a aula por dada: %s.', lesson.display_name))
             if not lesson.attendance_ids:
                 lesson.action_open_roll_call()
             lesson.state = 'done'
@@ -225,19 +247,32 @@ class EduLesson(models.Model):
 
     @api.model
     def _generate(self, classes, date_from, date_to):
-        """Cria as aulas previstas do horário entre duas datas (saltando as aulas sem realização registadas)."""
+        """Cria as aulas previstas do horário entre duas datas. Salta as aulas sem realização registadas, os feriados e
+        as pausas do calendário escolar e os trimestres fechados."""
         existing = {
             (lesson.schedule_id.id, lesson.date)
             for lesson in self.search(
                 [('class_id', 'in', classes.ids), ('date', '>=', date_from), ('date', '<=', date_to)]
             )
         }
+        Calendar = self.env['edu.calendar.event']
+        holidays = {}
         vals = []
         for schedule in classes.schedule_ids:
+            edu_class = schedule.class_id
+            key = (edu_class.company_id, edu_class.level_id)
+            if key not in holidays:
+                holidays[key] = Calendar._days_without_lessons(*key, date_from, date_to)
+            closed = schedule.academic_year_id.trimester_ids.filtered(lambda t: t.state == 'closed')
             day = max(date_from, schedule.academic_year_id.date_start)
             end = min(date_to, schedule.academic_year_id.date_end)
             while day <= end:
-                if schedule._occurs_on(day) and (schedule.id, day) not in existing:
+                if (
+                    schedule._occurs_on(day)
+                    and (schedule.id, day) not in existing
+                    and day not in holidays[key]
+                    and not any(t.date_start <= day <= t.date_end for t in closed)
+                ):
                     vals.append(
                         {
                             'class_id': schedule.class_id.id,
@@ -271,6 +306,7 @@ class EduLessonAttendance(models.Model):
     justified_by_id = fields.Many2one('res.users', string='Justificada por', readonly=True, copy=False)
     justified_date = fields.Date(string='Justificada em', readonly=True, copy=False)
     note = fields.Char(string='Notas')
+    can_justify = fields.Boolean(string='Pode justificar', compute='_compute_can_justify')
 
     _lesson_enrollment_uniq = models.Constraint(
         'UNIQUE(lesson_id, enrollment_id)', 'O aluno já está na chamada desta aula.'
@@ -287,8 +323,51 @@ class EduLessonAttendance(models.Model):
             if line.enrollment_id.class_id != lesson.class_id and not visiting:
                 raise ValidationError(self.env._('%s não é desta turma.', line.student_id.name))
 
+    @api.depends_context('uid')
+    def _compute_can_justify(self):
+        for line in self:
+            line.can_justify = line._can_justify()
+
+    def _can_justify(self):
+        """Justificam as faltas só a secretaria (e a direcção) e o director de turma do aluno."""
+        if self.env.su or self.env.user.has_group('edu_core.group_edu_user'):
+            return True
+        employee = self.env.user.employee_id
+        directors = (self.lesson_id.class_id | self.enrollment_id.class_id).sudo().director_id
+        return bool(employee) and employee in directors
+
+    def _check_can_justify(self):
+        for line in self:
+            if not line._can_justify():
+                raise AccessError(
+                    self.env._(
+                        'Só a secretaria e o director de turma justificam faltas (%s): marque a falta como '
+                        'injustificada.',
+                        line.student_id.name,
+                    )
+                )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        lines.lesson_id._check_open_trimester()
+        lines.filtered(lambda line: line.state == 'excused')._check_can_justify()
+        return lines
+
     def write(self, vals):
         self.lesson_id._check_can_manage()
+        self.lesson_id._check_open_trimester()
+        if {'state', 'justification'} & set(vals):
+            if vals.get('state') == 'excused':
+                self._check_can_justify()
+                if not vals.get('justification'):
+                    missing = self.filtered(lambda line: not line.justification)
+                    if missing:
+                        raise UserError(
+                            self.env._('Indique o motivo da justificação de %s.', missing[0].student_id.name)
+                        )
+            else:
+                self.filtered(lambda line: line.state == 'excused')._check_can_justify()
         if vals.get('state') == 'excused':
             vals = dict(vals, justified_by_id=self.env.uid, justified_date=fields.Date.context_today(self))
         elif vals.get('state') in ('present', 'late', 'absent'):

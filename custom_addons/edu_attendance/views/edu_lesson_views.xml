@@ -66,8 +66,10 @@
                                     <field name="order_number"/>
                                     <field name="student_id"/>
                                     <field name="enrollment_id" column_invisible="1"/>
-                                    <field name="state" widget="radio" options="{'horizontal': true}"/>
-                                    <field name="justification" optional="show"/>
+                                    <field name="can_justify" column_invisible="1"/>
+                                    <field name="state" widget="radio" options="{'horizontal': true}"
+                                           readonly="state == 'excused' and not can_justify"/>
+                                    <field name="justification" optional="show" readonly="not can_justify"/>
                                     <field name="note" optional="hide"/>
                                     <field name="justified_by_id" optional="hide"/>
                                 </list>
@@ -110,7 +112,8 @@
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Gere as aulas da semana a partir do horário</p>
-            <p>Em cada aula: abra a chamada, marque as faltas, escreva o sumário e dê a aula por dada.</p>
+            <p>Em cada aula: abra a chamada, marque as faltas, escreva o sumário e dê a aula por dada. As faltas
+            justificam-nas a secretaria e o director de turma.</p>
         </field>
     </record>
 
@@ -119,15 +122,21 @@
         <field name="model">edu.lesson.attendance</field>
         <field name="arch" type="xml">
             <list string="Faltas" editable="bottom" create="0" decoration-danger="state == 'absent'" decoration-muted="state == 'excused'">
+                <header>
+                    <button name="%(action_edu_absence_justify)d" type="action" string="Justificar um período"
+                            class="btn-primary" display="always"/>
+                </header>
+                <field name="can_justify" column_invisible="1"/>
                 <field name="date" readonly="1"/>
                 <field name="class_id" readonly="1"/>
                 <field name="subject_id" readonly="1"/>
                 <field name="student_id" readonly="1"/>
-                <field name="state"/>
-                <field name="justification"/>
+                <field name="state" readonly="not can_justify"/>
+                <field name="justification" readonly="not can_justify"/>
                 <field name="justified_by_id" optional="show"/>
                 <field name="justified_date" optional="hide"/>
-                <button name="action_justify" type="object" string="Justificar" icon="check" invisible="state != 'absent'"/>
+                <button name="action_justify" type="object" string="Justificar" icon="check"
+                        invisible="state != 'absent' or not can_justify"/>
             </list>
         </field>
     </record>
@@ -141,6 +150,9 @@
                 <field name="subject_id"/>
                 <filter name="absent" string="Por justificar" domain="[('state', '=', 'absent')]"/>
                 <filter name="excused" string="Justificadas" domain="[('state', '=', 'excused')]"/>
+                <separator/>
+                <filter name="my_direction" string="Turmas que dirijo"
+                        domain="['|', ('class_id.director_id.user_id', '=', uid), ('enrollment_id.class_id.director_id.user_id', '=', uid)]"/>
                 <group>
                     <filter name="group_student" string="Aluno" context="{'group_by': 'student_id'}"/>
                     <filter name="group_subject" string="Disciplina" context="{'group_by': 'subject_id'}"/>
@@ -160,5 +172,5 @@
     <menuitem id="menu_edu_lesson_generate" action="action_edu_lesson_generate" parent="edu_core.menu_edu_academic" sequence="52"
               groups="edu_core.group_edu_user"/>
     <menuitem id="menu_edu_lesson_attendance" action="action_edu_lesson_attendance" parent="edu_core.menu_edu_academic" sequence="55"
-              groups="edu_core.group_edu_user"/>
+              groups="edu_core.group_edu_user,edu_core.group_edu_teacher"/>
 </odoo>

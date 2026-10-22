@@ -14,3 +14,5 @@ edu_lesson_comp_rule,edu.lesson multi-empresa,edu.lesson,,crud,"[('company_id', 
 edu_lesson_attendance_comp_rule,edu.lesson.attendance multi-empresa,edu.lesson.attendance,,crud,"[('company_id', 'in', company_ids)]"
 edu_absence_summary_comp_rule,edu.absence.summary multi-empresa,edu.absence.summary,,r,"[('company_id', 'in', company_ids)]"
 edu_absence_alert_comp_rule,edu.absence.alert multi-empresa,edu.absence.alert,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_absence_justify_user,access_edu_absence_justify_user,edu.absence.justify,edu_core.group_edu_user,crud,
+access_edu_absence_justify_teacher,access_edu_absence_justify_teacher,edu.absence.justify,edu_core.group_edu_teacher,crud,
