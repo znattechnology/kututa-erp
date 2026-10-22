@@ -379,7 +379,9 @@ class EduExamSession(models.Model):
             'from': self.hour_from,
             'to': self.hour_to,
             'class_id': edu_class.id,
-            'class': edu_class._editor_label() if edu_class else ', '.join(self.class_ids.mapped('name')),
+            'class_ids': self.class_ids.ids,
+            # Uma prova pode ter várias turmas (marcada na sessão): mostram-se todas.
+            'class': ', '.join(c._editor_label() for c in self.class_ids),
             'subject_id': self.subject_id.id,
             'subject': self.subject_id.name,
             'room_id': self.room_ids[:1].room_id.id,

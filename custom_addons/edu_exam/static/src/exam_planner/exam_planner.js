@@ -406,7 +406,7 @@ export class ExamPlanner extends Component {
     }
 
     hasExam(classId, subjectId) {
-        return this.sessions.some((s) => s.class_id === classId && s.subject_id === subjectId);
+        return this.sessions.some((s) => s.class_ids.includes(classId) && s.subject_id === subjectId);
     }
 
     markingRow(edu_class) {
@@ -503,12 +503,14 @@ export class ExamPlanner extends Component {
     get classSummary() {
         const summary = new Map();
         for (const session of this.sessions) {
-            const item = summary.get(session.class_id) || { exams: 0, incomplete: 0 };
-            item.exams++;
-            if (this.incomplete(session)) {
-                item.incomplete++;
+            for (const classId of session.class_ids) {
+                const item = summary.get(classId) || { exams: 0, incomplete: 0 };
+                item.exams++;
+                if (this.incomplete(session)) {
+                    item.incomplete++;
+                }
+                summary.set(classId, item);
             }
-            summary.set(session.class_id, item);
         }
         return summary;
     }
@@ -541,7 +543,7 @@ export class ExamPlanner extends Component {
     }
 
     get classSessions() {
-        return this.sessions.filter((s) => s.class_id === this.state.classId);
+        return this.sessions.filter((s) => s.class_ids.includes(this.state.classId));
     }
 
     get selectedClass() {
