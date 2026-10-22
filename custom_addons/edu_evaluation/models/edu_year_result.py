@@ -220,6 +220,11 @@ class EduYearResult(models.Model):
         if not self.env.user.has_group('edu_core.group_edu_manager'):
             raise UserError(self.env._('Só a direcção decide manualmente a transição.'))
         self.write({'status': status, 'manual': True, 'decided_by_id': self.env.uid, 'requires_review': False})
+        # Com o ano já fechado, a matrícula acompanha a decisão (a confirmação de matrículas lê-a).
+        for result in self.sudo():
+            enrollment = result.enrollment_id
+            if enrollment.state in ('completed', 'retained'):
+                enrollment.state = 'retained' if status == 'retained' else 'completed'
         return True
 
     def action_manual_promote(self):
@@ -233,19 +238,17 @@ class EduYearResult(models.Model):
         return self.action_recompute()
 
     def _after_exams(self):
-        """Resolvidos os exames: transita (ou conclui) se passou em todos, senão fica retido."""
+        """Resolvidos os exames de recurso, a decisão volta a correr com as notas novas (as mesmas regras da pauta).
+        Se ainda pedir exame, já não há outra época: fica retido. O extraordinário e a melhoria não mudam a decisão
+        do ano em que o aluno transitou (DE 424/25, art. 25.º: o efeito é na matrícula seguinte)."""
         for result in self.filtered(lambda r: r.requirement_ids and not r.pending_exam_count and not r.manual):
-            failed = result.requirement_ids.filtered(lambda r: not r.passed)
-            terminal = result._policy()._rules(result.class_id).terminal
-            status = 'retained' if failed else ('graduated' if terminal else 'promoted')
-            result.write(
-                {
-                    'status': status,
-                    'reason': self.env._('Depois dos exames especiais'),
-                    'negative_count': len(failed),
-                    'negative_subject_ids': [fields.Command.set(failed.subject_id.ids)],
-                }
-            )
+            if result.status != 'exam':
+                continue
+            excluded = result.class_id._edu_absence_exclusions()
+            result._decide(excluded_absence=result.enrollment_id in excluded)
+            if result.status == 'exam':
+                result.write({'status': 'retained'})
+            result.reason = self.env._('Depois dos exames: %s', result.reason or '')
 
 
 class EduExamRequirement(models.Model):
@@ -304,5 +307,7 @@ class EduExamRequirement(models.Model):
             )
             subject_result.sudo().write({'special_exam': resulting, 'has_special_exam': True})
             subject_result._recompute()
+            # Aprovado pela classificação recalculada (no ano terminal de uma plurianual, a CFD).
+            requirement.passed = subject_result.passed
         self.year_result_id._after_exams()
         return True

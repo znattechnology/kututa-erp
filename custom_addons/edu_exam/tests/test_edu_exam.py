@@ -78,8 +78,12 @@ class TestEduExam(TransactionCase):
         seats[bento].attended = False
         session.action_done()
         self.assertEqual(session.state, 'done')
-        self.assertEqual(self.enrollments[0].year_result_id.status, 'promoted')
-        self.assertEqual(self.enrollments[2].year_result_id.status, 'retained')  # faltou: 0 valores
+        # O extraordinário resolve a disciplina em atraso sem mudar a decisão do ano (DE 424/25, art. 25.º).
+        carla_req = self.enrollments[0].year_result_id.requirement_ids
+        bento_req = self.enrollments[2].year_result_id.requirement_ids
+        self.assertEqual((carla_req.state, carla_req.passed), ('done', True))
+        self.assertEqual((bento_req.state, bento_req.passed), ('done', False))  # faltou: 0 valores
+        self.assertEqual(self.enrollments[0].year_result_id.status, 'conditional')
         # A mesma sala e o mesmo vigilante não servem duas sessões à mesma hora.
         other = self.env['edu.exam.session'].create(
             {'period_id': period.id, 'subject_id': self.lp.id, 'date': date(2027, 7, 6), 'hour_from': 8, 'hour_to': 10}

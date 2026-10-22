@@ -298,10 +298,11 @@ class EduSubjectResult(models.Model):
                 cf = grading.frequency_classification(mts, TECHNICAL, round_fn, imported)
                 base_cf = precise if policy.technical_ca_precise else cf
                 annual = grading.technical_ca(base_cf, pg_value, vals['has_global_exam'], round_fn, policy.cf_weight)
-            else:
+            national_subject = policy.regime != TECHNICAL and result._is_national_exam(line)
+            if policy.regime != TECHNICAL:
                 cf = grading.frequency_classification(mts, 'general', round_fn, imported)
                 annual = cf
-                if policy._is_exam_class(enrollment.class_number) and result.subject_id.is_national_exam:
+                if national_subject:
                     # MFED a partir da MT3 (Anexo III, n.os 6 e 7), só com as três médias.
                     annual = (
                         grading.national_final(
@@ -313,26 +314,29 @@ class EduSubjectResult(models.Model):
                         if national_value is not None and graded == len(trimesters)
                         else cf
                     )
-            complete = imported is not None or (graded >= len(trimesters) and annual is not None)
+            # Sem a PG (técnico) ou sem o exame nacional (classe de exame), a disciplina não está completa.
+            complete = imported is not None or (
+                graded >= len(trimesters)
+                and annual is not None
+                and (not vals['has_global_exam'] or pg_value is not None)
+                and (not national_subject or national_value is not None)
+            )
             adjusted = grading.with_adjustment(annual, result.council_points, policy.scale_max)
             # O resultado do exame especial (já com a regra da melhoria) substitui a classificação do ano.
             final = result.special_exam if result.has_special_exam else adjusted
             span, terminal = result._subject_span()
             cfd = final
+            previous = self.browse()
             if len(span) > 1:
-                previous = self.sudo().search(
-                    [
-                        ('student_id', '=', enrollment.student_id.id),
-                        ('subject_id', '=', result.subject_id.id),
-                        ('id', '!=', result.id),
-                        ('complete', '=', True),
-                        ('academic_year_id.date_start', '<', enrollment.academic_year_id.date_start),
-                    ]
-                )
+                previous = result._previous_years(span)
                 cfd = grading.multi_year_final([*previous.mapped('final'), final], round_fn) if terminal else None
             transition = final
             passed = complete and final is not None and final >= policy.pass_grade
-            if policy.regime == TECHNICAL and len(span) > 1 and terminal and final is not None and cfd is not None:
+            if len(span) > 1 and terminal and result.has_special_exam:
+                # Exame no ano terminal da disciplina (Despacho 60/08, art. 36.º): a nota do exame é a CFD.
+                cfd = transition = result.special_exam
+                passed = complete and cfd >= policy.pass_grade
+            elif policy.regime == TECHNICAL and len(span) > 1 and terminal and final is not None and cfd is not None:
                 last = previous.sorted(lambda r: r.academic_year_id.date_start)[-1:]
                 approved = grading.technical_subject_approved(
                     cfd, final, last.final if last else None, policy.pass_grade
@@ -356,6 +360,40 @@ class EduSubjectResult(models.Model):
                 }
             )
             result.write(vals)
+
+    def _is_national_exam(self, line):
+        """Disciplina com exame nacional nesta classe: classe de exame e marca na linha do plano (ou na disciplina)."""
+        self.ensure_one()
+        policy = self._policy()
+        number = self._subject_class().class_number
+        return policy._is_exam_class(number) and bool(line.is_national_exam or self.subject_id.is_national_exam)
+
+    def _previous_years(self, span):
+        """Os resultados da disciplina nas classes anteriores do mesmo nível em que é leccionada (Despacho 60/08,
+        art. 28.º): só o último de cada classe (um ano repetido substitui o anterior)."""
+        self.ensure_one()
+        enrollment = self.enrollment_id
+        number = self._subject_class().class_number
+        candidates = (
+            self.sudo()
+            .search(
+                [
+                    ('student_id', '=', enrollment.student_id.id),
+                    ('subject_id', '=', self.subject_id.id),
+                    ('id', '!=', self.id),
+                    ('complete', '=', True),
+                    ('class_id.level_id', '=', enrollment.class_id.level_id.id),
+                    ('academic_year_id.date_start', '<', enrollment.academic_year_id.date_start),
+                ]
+            )
+            .sorted(lambda r: r.academic_year_id.date_start)
+        )
+        latest = {}
+        for result in candidates:
+            class_number = result._subject_class().class_number
+            if class_number in span and class_number < number:
+                latest[class_number] = result
+        return self.browse([latest[n].id for n in sorted(latest)])
 
     def _subject_span(self):
         """Classes do plano em que a disciplina é leccionada e se esta turma é a última delas."""

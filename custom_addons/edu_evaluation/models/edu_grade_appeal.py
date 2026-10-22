@@ -56,6 +56,10 @@ class EduGradeAppeal(models.Model):
                 raise ValidationError(self.env._('A nova nota vai de 0 a %s.', grade.assessment_id.max_score))
             grade.with_context(edu_grade_appeal=True).write({'score': appeal.new_score, 'absent': False})
             appeal.write({'state': 'granted', 'decided_by_id': self.env.uid})
+            # A decisão do ano (se já tomada e não manual) acompanha a nota reapreciada.
+            year_result = grade.enrollment_id.sudo().year_result_id
+            if year_result and not year_result.manual:
+                year_result.action_recompute()
         return True
 
     def action_deny(self):

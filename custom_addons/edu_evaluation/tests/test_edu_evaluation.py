@@ -101,11 +101,18 @@ class TestEduEvaluation(TransactionCase):
             [('enrollment_id', '=', enrollment.id), ('subject_id.code', '=', code)]
         )
 
-    def _full_year(self, edu_class, code, scores_by_trimester):
+    def _full_year(self, edu_class, code, scores_by_trimester, pg=True):
         """{trimestre: {aluno: (contínua, prova)}}"""
         for trimester, scores in scores_by_trimester.items():
             self._assess(edu_class, code, trimester, 'continuous', {s: v[0] for s, v in scores.items()})
             self._assess(edu_class, code, trimester, 'trimester_test', {s: v[1] for s, v in scores.items()})
+        # Técnico: a disciplina com prova global só fica completa com a PG (lança-se a nota da última prova).
+        line = edu_class.subject_line_ids.filtered(lambda line: line.subject_id.code == code)
+        last = edu_class.academic_year_id.trimester_ids.sorted('number')[-1:]
+        technical = edu_class.level_id.subsystem == 'technical'
+        if pg and technical and line.has_global_exam and last in scores_by_trimester:
+            scores = scores_by_trimester[last]
+            self._assess(edu_class, code, last, 'global_exam', {s: v[1] for s, v in scores.items()})
 
     def test_general_trimester(self):
         ana = self.students[0]
@@ -147,7 +154,9 @@ class TestEduEvaluation(TransactionCase):
         self.assertFalse(conditional._edu_conditional_deadline())
         requirement.score = 12
         requirement.action_record()
-        self.assertEqual(ana_result.status, 'promoted')
+        # O extraordinário resolve a disciplina em atraso; a decisão da 7.ª (transitou) não muda.
+        self.assertTrue(requirement.passed)
+        self.assertEqual(ana_result.status, 'conditional')
         self.assertEqual(self._year_subject(enrollments[0], 'LP').final, 12)
         # Retido não se matricula numa classe acima (art. 25.º).
         with self.assertRaises(UserError):
@@ -186,6 +195,7 @@ class TestEduEvaluation(TransactionCase):
                 self.t2: {ana: (14, 14), bento: (9, 9)},
                 self.t3: {ana: (18, 18), bento: (8, 8)},
             },
+            pg=False,
         )
         self.assertEqual(self._term(enrollments[0], 'LP', self.t1).mt, 10)
         result = self._year_subject(enrollments[0], 'LP')
@@ -567,3 +577,79 @@ class TestEduEvaluation(TransactionCase):
         lower = line.enrollment_id.lower_subject_ids
         self.assertEqual((lower.subject_id, lower.class_id.class_number), (subject, 10))
         self.assertIn('classe anterior', line.reason)
+
+    def test_audit_completeness_and_cfd(self):
+        """Auditoria da fase 5: sem EN (classe de exame) ou sem PG (técnico) não há classificação; a CFD só conta as
+        classes do mesmo nível, uma vez cada (o ano repetido substitui o anterior)."""
+        ana, bento = self.students[:2]
+        # 9.ª com exame nacional a MAT: sem o EN, a disciplina fica por completar e o ano pendente.
+        ninth = self._enroll(self.class9, ana, ['MAT'])
+        self._subject(self.class9, 'MAT').is_national_exam = True
+        self._full_year(self.class9, 'MAT', dict.fromkeys((self.t1, self.t2, self.t3), {ana: (14, 14)}))
+        self.assertFalse(self._year_subject(ninth, 'MAT').complete)
+        self.class9.action_compute_year_results()
+        self.assertEqual(ninth.year_result_id.status, 'pending')
+        self._assess(self.class9, 'MAT', self.t3, 'national_exam', {ana: 12})
+        self.assertTrue(self._year_subject(ninth, 'MAT').complete)
+        # Técnico sem PG: incompleta.
+        tenth = self._enroll(self.class10, bento, ['LP'])
+        self._full_year(self.class10, 'LP', dict.fromkeys((self.t1, self.t2, self.t3), {bento: (12, 12)}), pg=False)
+        self.assertFalse(self._year_subject(tenth, 'LP').complete)
+        # CFD da AFH (10.ª e 11.ª): 10.ª com 4 (retido), 10.ª repetida com 14, 11.ª com 10 → (14 + 10) / 2 = 12.
+        older = self.env['edu.academic.year'].create(
+            {'name': '2024/2025', 'date_start': date(2024, 9, 1), 'date_end': date(2025, 7, 31)}
+        )
+        last = self.env['edu.academic.year'].create(
+            {'name': '2025/2026', 'date_start': date(2025, 9, 1), 'date_end': date(2026, 7, 31)}
+        )
+        (older | last).action_generate_trimesters()
+        carla = self.students[2]
+        first = self._class(self.tec, 10, year=older, name='R')
+        repeat = self._class(self.tec, 10, year=last, name='R')
+        eleventh = self._class(self.tec, 11, name='R')
+        for edu_class, score, state in ((first, 4, 'retained'), (repeat, 14, 'completed'), (eleventh, 10, None)):
+            enrollment = self._enroll(edu_class, carla, ['AFH'])
+            trimesters = edu_class.academic_year_id.trimester_ids.sorted('number')
+            self._full_year(edu_class, 'AFH', dict.fromkeys(trimesters, {carla: (score, score)}))
+            if state:
+                enrollment.state = state
+        result = self._year_subject(enrollment, 'AFH')
+        self.assertEqual((result.final, result.cfd, result.transition_grade), (10, 12, 12))
+
+    def test_audit_decisions_follow_grades(self):
+        """Depois dos exames, de uma reapreciação ou de uma decisão manual, a decisão e a confirmação acompanham."""
+        ana, bento, carla, domingos = self.students
+        # Técnico: 3 negativas → exame; passa em 2 e chumba 1 → transita com 1 em atraso (como «Recalcular»).
+        enrollment = self._enroll(self.class10, ana, ['LP', 'MAT', 'ING', 'FIL'])
+        for code in ('LP', 'MAT', 'ING'):
+            self._full_year(self.class10, code, dict.fromkeys((self.t1, self.t2, self.t3), {ana: (8, 8)}))
+        self._full_year(self.class10, 'FIL', dict.fromkeys((self.t1, self.t2, self.t3), {ana: (14, 14)}))
+        self.class10.action_compute_year_results()
+        result = enrollment.year_result_id
+        self.assertEqual(result.status, 'exam')
+        for requirement, score in zip(result.requirement_ids, (12, 12, 5), strict=True):
+            requirement.score = score
+            requirement.action_record()
+        self.assertEqual(result.status, 'conditional')
+        result.action_recompute()
+        self.assertEqual(result.status, 'conditional')
+        # Reapreciação deferida depois da decisão: a decisão acompanha a nota.
+        seventh = self._enroll(self.class7, bento, ['LP'])
+        self._full_year(self.class7, 'LP', dict.fromkeys((self.t1, self.t2, self.t3), {bento: (14, 14)}))
+        self.class7.action_compute_year_results()
+        self.assertEqual(seventh.year_result_id.status, 'promoted')
+        grades = self.env['edu.grade'].search([('enrollment_id', '=', seventh.id)])
+        for grade in grades:
+            appeal = self.env['edu.grade.appeal'].create({'grade_id': grade.id, 'reason': 'Erro de soma'})
+            appeal.new_score = 2
+            appeal.action_grant()
+        self.assertEqual(seventh.year_result_id.status, 'retained')
+        # Decisão manual depois do fecho: a matrícula e a confirmação seguem-na.
+        seventh._edu_close_year()
+        self.assertEqual(seventh.state, 'retained')
+        seventh.year_result_id.action_manual_promote()
+        self.assertEqual(seventh.state, 'completed')
+        wizard = self.env['edu.enrollment.confirmation'].create(
+            {'source_year_id': self.year.id, 'target_year_id': self.next_year.id, 'create_classes': False}
+        )
+        self.assertIn('8ª classe', wizard._proposal(seventh)['reason'])

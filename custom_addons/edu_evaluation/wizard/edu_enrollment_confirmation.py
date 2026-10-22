@@ -112,7 +112,8 @@ class EduEnrollmentConfirmation(models.TransientModel):
         vals = {'student_id': previous.student_id.id, 'previous_enrollment_id': previous.id}
         year = self.target_year_id
         result = previous.sudo().year_result_id
-        retained = previous.state == 'retained'
+        # A decisão do ano manda (a direcção pode tê-la mudado depois do fecho).
+        retained = result.status == 'retained' if result else previous.state == 'retained'
         number = previous.class_number + (0 if retained else 1)
         rules = [
             (

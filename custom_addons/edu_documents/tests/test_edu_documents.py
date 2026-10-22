@@ -77,6 +77,23 @@ class TestEduDocuments(TransactionCase):
                     assessment.action_fill_students()
                     assessment.grade_ids.score = score
 
+        # Técnico: a prova global da disciplina (sem ela, a disciplina não fica completa).
+        last = self.year.trimester_ids.sorted('number')[-1]
+        for subject in self.subjects:
+            line = self.edu_class.subject_line_ids.filtered(lambda line, s=subject: line.subject_id == s)
+            if self.edu_class.level_id.subsystem == 'technical' and line.has_global_exam:
+                assessment = self.env['edu.assessment'].create(
+                    {
+                        'name': 'PG',
+                        'class_id': self.edu_class.id,
+                        'subject_id': subject.id,
+                        'trimester_id': last.id,
+                        'assessment_type': 'global_exam',
+                    }  # fmt: skip
+                )
+                assessment.action_fill_students()
+                assessment.grade_ids.score = score
+
     def _document(self, kind, **vals):
         document = self.env['edu.document'].create(
             {'document_type': kind, 'student_id': self.student.id, 'enrollment_id': self.enrollment.id, **vals}
