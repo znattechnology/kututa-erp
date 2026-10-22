@@ -86,5 +86,13 @@
 2. **Validações do plano:** classes dentro do nível, as três componentes no técnico, exame nacional só no geral e
    aviso para disciplinas com notas e 0 tempos. As cargas por componente só se validam com os planos oficiais.
 3. **Práticas da 12.ª com 0 tempos** e a 13.ª só com o estágio: confirmar com a escola.
-4. **Regime diurno ou pós-laboral:** a Vovó Eva tem 4 anos (10.ª–13.ª), o ciclo pós-laboral da lei, onde o
-   Projecto Tecnológico e a PAP são na 13.ª; o plano tem o Projecto Tecnológico na 12.ª.
+4. ~~Regime diurno ou pós-laboral~~ **Resolvido (2026-10-22):** a Vovó Eva é pós-laboral. Cada curso tem uma
+   versão nova do plano, «… (desde 2026/2027)», com o Projecto Tecnológico na 13.ª (Despacho 60/08, art. 32.º,
+   n.º 2), e as turmas de 2026/27 passaram para ela. A versão antiga fica arquivada com as turmas de 2025/26, que
+   tiveram o Projecto Tecnológico na 12.ª: as pautas e os históricos não mudam. Nas 12.ª de 2026/27 saíram os 30
+   tempos do horário, as 15 colocações e as 541 inscrições no Projecto Tecnológico; os 518 alunos da 13.ª ficaram
+   inscritos. Voltar a correr a migração do secPed repõe o plano do secPed (Projecto Tecnológico na 12.ª).
+
+## 7. Visualizar e imprimir o plano
+«Visualizar o plano curricular» na página do curso e «Visualizar e imprimir» no plano abrem o documento na
+aplicação (cabeçalho e assinaturas da pauta, a matriz por componentes, uma folha A4), com «Imprimir» para o PDF.

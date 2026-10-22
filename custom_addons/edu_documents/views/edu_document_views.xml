@@ -91,6 +91,31 @@
         </field>
     </record>
 
+    <record id="edu_course_form_documents" model="ir.ui.view">
+        <field name="name">edu.course.form.documents</field>
+        <field name="model">edu.course</field>
+        <field name="inherit_id" ref="edu_core.edu_course_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="action_print_curriculum" type="object" string="Visualizar o plano curricular"
+                        icon="visibility" invisible="not curriculum_id"/>
+            </header>
+        </field>
+    </record>
+
+    <record id="edu_curriculum_form_documents" model="ir.ui.view">
+        <field name="name">edu.curriculum.form.documents</field>
+        <field name="model">edu.curriculum</field>
+        <field name="inherit_id" ref="edu_core.edu_curriculum_form"/>
+        <field name="arch" type="xml">
+            <sheet position="before">
+                <header>
+                    <button name="action_print_curriculum" type="object" string="Visualizar e imprimir" icon="visibility"/>
+                </header>
+            </sheet>
+        </field>
+    </record>
+
     <record id="edu_class_form_documents" model="ir.ui.view">
         <field name="name">edu.class.form.documents</field>
         <field name="model">edu.class</field>

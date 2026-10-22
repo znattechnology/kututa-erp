@@ -92,6 +92,16 @@
         <field name="binding_model_id" ref="edu_core.model_edu_class"/>
         <field name="binding_type">report</field>
     </record>
+    <record id="action_report_curriculum" model="ir.actions.report">
+        <field name="name">Plano curricular</field>
+        <field name="model">edu.curriculum</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_curriculum</field>
+        <field name="print_report_name">object.name</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+        <field name="binding_model_id" ref="edu_core.model_edu_curriculum"/>
+        <field name="binding_type">report</field>
+    </record>
     <record id="action_report_student_card" model="ir.actions.report">
         <field name="name">Cartão de estudante</field>
         <field name="model">edu.student</field>

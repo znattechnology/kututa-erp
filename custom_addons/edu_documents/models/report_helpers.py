@@ -1,5 +1,6 @@
 from odoo import api, fields, models
 from odoo.addons.edu_evaluation.tools import grading
+from odoo.exceptions import UserError
 
 from ..tools import extenso
 
@@ -168,6 +169,7 @@ ReportClassSchedule = _document_report('report_class_schedule', 'edu.class')
 ReportStudentCard = _document_report('report_student_card', 'edu.student')
 ReportPauta = _document_report('report_pauta', 'edu.pauta.print')
 ReportMiniPauta = _document_report('report_mini_pauta', 'edu.pauta.print')
+ReportCurriculum = _document_report('report_curriculum', 'edu.curriculum')
 
 
 class ReportTerm(models.AbstractModel):
@@ -266,6 +268,33 @@ class EduClass(models.Model):
             'target': 'new',
             'context': {'default_class_id': self.id},
         }
+
+
+class EduCurriculum(models.Model):
+    _inherit = 'edu.curriculum'
+
+    def _curriculum_context(self):
+        """A linha por baixo do título do plano: curso, nível e classes."""
+        self.ensure_one()
+        parts = [
+            self.course_id and f'CURSO: {self.course_id.name}',
+            f'NÍVEL: {self.level_id.name}',
+            self.class_from and f'CLASSES: {self.class_from}ª A {self.class_to}ª',
+        ]
+        return '\u2003\u2003'.join(p for p in parts if p)
+
+    def action_print_curriculum(self):
+        return self.env.ref('edu_documents.action_report_curriculum').preview_action(self)
+
+
+class EduCourse(models.Model):
+    _inherit = 'edu.course'
+
+    def action_print_curriculum(self):
+        self.ensure_one()
+        if not self.curriculum_id:
+            raise UserError(self.env._('O curso ainda não tem plano curricular.'))
+        return self.curriculum_id.action_print_curriculum()
 
 
 class IrActionsReport(models.Model):

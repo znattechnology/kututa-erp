@@ -129,6 +129,17 @@ class EduCurriculum(models.Model):
             number += 1
         return name
 
+    def _copy_version(self, name):
+        """Nova versão do plano (anos e disciplinas), para as turmas de um ano lectivo em diante. As turmas antigas
+        ficam na versão em que estudaram: as pautas e os históricos não mudam."""
+        self.ensure_one()
+        version = self.copy({'name': self._unique_name(self.company_id, name)})
+        for year in self.year_ids:
+            new_year = year.copy({'curriculum_id': version.id})
+            for line in year.line_ids:
+                line.copy({'year_id': new_year.id})
+        return version
+
     def _action_open(self):
         self.ensure_one()
         return {

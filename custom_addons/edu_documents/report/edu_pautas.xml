@@ -305,6 +305,30 @@
         </t>
     </template>
 
+    <!-- Plano curricular: a matriz do plano (componentes, disciplinas e tempos por classe) com o cabeçalho e as
+         assinaturas da pauta. -->
+    <template id="report_curriculum">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-call="edu_documents.pauta_styles"/>
+                    <style>
+                        .ep-plan table.o_edu_plan_matrix { font-size: 11px !important; }
+                        .ep-plan table.o_edu_plan_matrix th, .ep-plan table.o_edu_plan_matrix td { padding-top: 2px !important; padding-bottom: 2px !important; }
+                        .ep-plan table.o_edu_plan_matrix tr { page-break-inside: avoid; }
+                    </style>
+                    <div class="page ep">
+                        <t t-call="edu_documents.pauta_head" visto="False" title="'PLANO CURRICULAR'" context="o._curriculum_context()"/>
+                        <div class="ep-plan" t-out="o.plan_matrix"/>
+                        <t t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.pedagogical_title())" left_name="company.edu_pedagogical_director_name" right_role="h.role_case(h.director_title())" right_name="company.edu_director_name"/>
+                        <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
     <!-- Cartão de estudante (CR80, 85,6 × 54 mm) -->
     <template id="report_student_card">
         <t t-call="web.html_container">

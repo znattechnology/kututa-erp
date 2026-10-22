@@ -204,6 +204,11 @@ class TestEduDocuments(TransactionCase):
         for text in ('HORÁRIO DA TURMA', 'REPÚBLICA DE ANGOLA', '>Hora<', '>Segunda<', '>Sexta<', 'ANO LECTIVO:'):
             self.assertIn(text, schedule)
         self.assertNotIn('>Sábado<', schedule)
+        # Plano curricular: a matriz por componentes com o cabeçalho da pauta, a partir do curso.
+        self.assertEqual(self.course.action_print_curriculum()['report_type'], 'qweb-html')
+        plan = self._render('edu_documents.action_report_curriculum', self.course.curriculum_id)
+        for text in ('PLANO CURRICULAR', 'REPÚBLICA DE ANGOLA', 'Sociocultural', 'Tempos por semana', 'CURSO:'):
+            self.assertIn(text, plan)
         self.assertIn(
             'Pessoal e intransmissível', self._render('edu_documents.action_report_student_card', self.student)
         )
