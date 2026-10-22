@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Mini-pauta (acção cliente), como no secPed: ano, turma e trimestre, e o mapa de aproveitamento em A4. -->
+    <record id="action_edu_mini_pauta" model="ir.actions.client">
+        <field name="name">Mini-pauta</field>
+        <field name="tag">edu_documents.mini_pauta</field>
+    </record>
+    <record id="edu_evaluation.menu_edu_term_result" model="ir.ui.menu">
+        <field name="action" ref="action_edu_mini_pauta"/>
+    </record>
+</odoo>

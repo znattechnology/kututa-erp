@@ -32,6 +32,12 @@ do Despacho n.º 60/08.
         'report/edu_report_actions.xml',
         'wizard/edu_pauta_print_views.xml',
         'views/edu_document_views.xml',
+        'views/edu_mini_pauta_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'edu_documents/static/src/mini_pauta/*',
+        ],
+    },
     'license': 'OPL-1',
 }

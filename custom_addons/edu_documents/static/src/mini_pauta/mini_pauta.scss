@@ -1,0 +1,60 @@
+// Mini-pauta: a página do secPed-Express (ano, turma, trimestre e o documento) com as cores do sistema.
+.o_edu_mini_pauta {
+    .o_edu_mp_body {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_mp_lead {
+        max-width: 64ch;
+        color: $text-muted;
+    }
+
+    .o_edu_mp_card {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_mp_fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+
+        @include media-breakpoint-down(sm) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_mp_field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0;
+
+        > span:first-child {
+            font-size: 0.875rem;
+            color: $text-muted;
+        }
+    }
+
+    .o_edu_mp_tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .o_edu_mp_tag {
+        opacity: 0.75;
+    }
+
+    .o_edu_mp_action {
+        padding-top: 20px;
+        border-top: 1px solid $border-color;
+    }
+}

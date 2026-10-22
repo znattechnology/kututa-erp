@@ -384,3 +384,17 @@ class TestEduDocuments(TransactionCase):
         self.assertEqual(preview['report_type'], 'qweb-html')
         self.assertEqual(preview['report_name'], 'edu_documents.report_pauta')
         self.assertEqual(Grid.grid_print(self.edu_class.id, trimester.id, False)['report_type'], 'qweb-pdf')
+
+    def test_mini_pauta_page(self):
+        """Página «Mini-pauta», como no secPed: ano, turma e trimestre; abre a mini-pauta que já existe."""
+        Page = self.env['edu.mini.pauta']
+        options = Page.page_options()
+        self.assertIn(self.edu_class.id, [c['id'] for c in options['classes']])
+        trimester = options['trimesters'][0]['id']
+        action = Page.page_open(self.edu_class.id, trimester, True)
+        self.assertEqual(
+            (action['report_name'], action['report_type']), ('edu_documents.report_mini_pauta', 'qweb-html')
+        )
+        self.assertEqual(Page.page_open(self.edu_class.id, trimester, False)['report_type'], 'qweb-pdf')
+        with self.assertRaises(UserError):
+            Page.page_open(self.edu_class.id, False, True)

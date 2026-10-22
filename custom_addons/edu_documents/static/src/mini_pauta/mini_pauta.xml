@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_documents.MiniPauta">
+        <div class="o_action o_edu_mini_pauta">
+            <Layout display="this.display">
+                <div class="o_edu_mp_body">
+                    <p class="o_edu_mp_lead">
+                        O mapa de aproveitamento da turma num trimestre: a nota de cada aluno por disciplina e as faltas
+                        justificadas e injustificadas, numa folha A4 pronta a imprimir e assinar.
+                    </p>
+
+                    <div class="o_edu_mp_card">
+                        <div class="o_edu_mp_fields">
+                            <label class="o_edu_mp_field">
+                                <span>Ano lectivo</span>
+                                <select class="form-select" t-on-change="(ev) => this.onYearChange(ev)" t-att-disabled="this.state.busy">
+                                    <option t-foreach="this.state.years" t-as="y" t-key="y.id" t-att-value="y.id"
+                                            t-att-selected="y.id === this.state.yearId">
+                                        <t t-out="y.name"/><t t-if="y.is_current"> (em curso)</t>
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="o_edu_mp_field">
+                                <span>Turma</span>
+                                <select class="form-select" t-on-change="(ev) => this.onClassChange(ev)"
+                                        t-att-disabled="this.state.busy or !this.state.classes.length">
+                                    <option value="" t-att-selected="!this.state.classId">
+                                        <t t-out="this.state.classes.length ? 'Escolha a turma' : 'Sem turmas'"/>
+                                    </option>
+                                    <option t-foreach="this.state.classes" t-as="c" t-key="c.id" t-att-value="c.id"
+                                            t-att-selected="c.id === this.state.classId">
+                                        <t t-out="c.name"/><t t-if="c.shift"> · <t t-out="c.shift"/></t>
+                                    </option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="o_edu_mp_field">
+                            <span id="o_edu_mp_trimester_label">Trimestre</span>
+                            <p t-if="!this.state.trimesters.length" class="mb-0">Este ano lectivo ainda não tem trimestres.</p>
+                            <div t-else="" role="tablist" aria-labelledby="o_edu_mp_trimester_label" class="o_edu_mp_tabs">
+                                <button t-foreach="this.state.trimesters" t-as="t" t-key="t.id" type="button" role="tab"
+                                        class="btn" t-att-class="t.id === this.state.trimesterId ? 'btn-primary' : 'btn-secondary'"
+                                        t-att-aria-selected="t.id === this.state.trimesterId ? 'true' : 'false'"
+                                        t-att-disabled="this.state.busy" t-on-click="() => this.selectTrimester(t)">
+                                    <t t-out="t.name"/><span t-if="t.is_current" class="o_edu_mp_tag"> · em curso</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="o_edu_mp_action">
+                            <p t-if="!this.state.classes.length and this.year" class="mb-0">
+                                Não há turmas em <t t-out="this.year.name"/> que possa abrir. Escolha outro ano.
+                            </p>
+                            <p t-elif="!this.selectedClass" class="mb-0 text-muted">Escolha a turma para abrir a mini-pauta.</p>
+                            <t t-else="">
+                                <p class="mb-3">
+                                    <strong t-out="this.selectedClass.name"/><t t-if="this.selectedClass.course">, <t t-out="this.selectedClass.course"/></t><t t-if="this.selectedClass.shift">, <t t-out="this.selectedClass.shift.toLowerCase()"/></t>,
+                                    <t t-out="this.selectedClass.students"/> alunos.
+                                    <t t-if="this.trimester"><t t-out="this.trimester.name"/> de <t t-out="this.year.name"/>.</t>
+                                </p>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-primary" t-att-disabled="!this.ready or this.state.busy"
+                                            t-on-click="() => this.open(true)">
+                                        <i class="oi me-1" data-icon="table_view" aria-hidden="true"/>
+                                        <t t-out="this.state.busy === 'open' ? 'A preparar…' : 'Abrir a mini-pauta'"/>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" t-att-disabled="!this.ready or this.state.busy"
+                                            t-on-click="() => this.open(false)">
+                                        <i class="oi me-1" data-icon="print" aria-hidden="true"/>
+                                        <t t-out="this.state.busy === 'print' ? 'A preparar…' : 'Imprimir em PDF'"/>
+                                    </button>
+                                </div>
+                                <p class="small text-muted mt-3 mb-0">
+                                    A mini-pauta abre em folha A4 na própria aplicação; «Imprimir» gera o PDF e «Voltar» regressa aqui.
+                                </p>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>
