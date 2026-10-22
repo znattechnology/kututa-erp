@@ -60,7 +60,15 @@ COMPONENTS = {
     'ESTAGIO': 'internship',
 }
 COORDINATION_TYPES = {'CURSO': 'course', 'DISCIPLINA': 'subject'}
-ENROLLMENT_STATES = {'ACTIVE': 'active', 'DROPPED': 'dropped', 'TRANSFERRED': 'transferred', 'PENDING': 'draft'}
+ENROLLMENT_STATES = {
+    'ACTIVE': 'active',
+    'DROPPED': 'dropped',
+    'TRANSFERRED': 'transferred',
+    'PENDING': 'draft',
+    'COMPLETED': 'completed',
+    'RETAINED': 'retained',
+    'IRREGULAR': 'irregular',
+}
 FEE_CATEGORIES = {
     'MATRICULA': 'enrollment',
     'PROPINA': 'tuition',
@@ -72,9 +80,14 @@ RECURRENCES = {'ONE_OFF': 'one_off', 'MONTHLY': 'monthly', 'QUARTERLY': 'quarter
 # Decisão assinada (secPed) → decisões do Odoo que lhe correspondem.
 SIGNED_MATCHES = {
     'PROMOTED': ('promoted', 'graduated', 'conditional'),
+    'CONDITIONAL': ('conditional',),
+    'GRADUATED': ('graduated', 'promoted'),
     'RETAINED': ('retained',),
+    'EXPELLED': ('retained',),
     'PENDING': ('pending',),
 }
+# Decisão assinada que o cálculo não deu → a que fica (o expulso fica retido no ano, com aviso no relatório).
+SIGNED_STATUS = {'RETAINED': 'retained', 'EXPELLED': 'retained', 'CONDITIONAL': 'conditional', 'GRADUATED': 'graduated'}
 # Perfis do secPed → grupo da Secretaria Express (edu_roles). As outras contas de serviço (biblioteca, reprografia,
 # RH, contabilidade) ficam para os módulos respectivos.
 USER_GROUPS = {
@@ -311,7 +324,8 @@ class EduMigrationSecped(models.AbstractModel):
                         'date_start': to_date(t['startDate']),
                         'date_end': to_date(t['endDate']),
                         'state': 'closed' if t.get('closedAt') else 'open',
-                        'closed_date': t.get('closedAt') or False,
+                        # A data do fecho no secPed pode ser a da carga dos dados: no máximo, o fim do trimestre.
+                        'closed_date': min(t['closedAt'], t['endDate']) if t.get('closedAt') else False,
                     },
                 )
                 for t in trimesters
@@ -781,6 +795,12 @@ class EduMigrationSecped(models.AbstractModel):
             }
             if not run.ref('users', user['id']):
                 existing = Users.with_context(active_test=False).search([('login', '=', login)], limit=1)
+                if existing and (
+                    run.company not in existing.company_ids or (existing.name or '').casefold() != name.casefold()
+                ):
+                    # O login já é de outra pessoa (ou de outra escola): não se liga nem se mexe nos grupos.
+                    run.issue('contas', f'{login}: já existe uma conta com este login que não é desta pessoa')
+                    continue
                 if existing:
                     run.ids['users'][user['id']] = existing.id
                     self.env['ir.model.data'].create(
@@ -863,7 +883,10 @@ class EduMigrationSecped(models.AbstractModel):
                 'drop_reason': enrollment.get('transferNotes') or False,
             }
             if state in ('dropped', 'transferred') and not vals['drop_date']:
-                vals['drop_date'] = to_date(enrollment.get('updatedAt')) or vals['date']
+                # Sem a data da saída: a da última alteração, mas nunca depois do fim do ano lectivo.
+                year_end = to_date(years[enrollment['academicYearId']]['endDate'])
+                updated = to_date(enrollment.get('updatedAt'))
+                vals['drop_date'] = min(filter(None, [updated, year_end])) if (updated or year_end) else vals['date']
             if state == 'dropped':
                 note = (vals['drop_reason'] or '').lower()
                 vals['drop_reason_code'] = 'withdrawal' if 'desist' in note else 'other'
@@ -1219,8 +1242,13 @@ class EduMigrationSecped(models.AbstractModel):
                         'decisões', f'{result.enrollment_id.display_name}: pendente no secPed, {result.status} no Odoo'
                     )
                     continue
+                if status not in SIGNED_MATCHES:
+                    run.issue('decisões', f'{result.enrollment_id.display_name}: decisão «{status}» desconhecida')
+                    continue
+                if status == 'EXPELLED':
+                    run.issue('decisões', f'{result.enrollment_id.display_name}: expulso no secPed, fica retido')
                 terminal = result._policy()._rules(result.class_id).terminal
-                new_status = 'retained' if status == 'RETAINED' else ('graduated' if terminal else 'promoted')
+                new_status = SIGNED_STATUS.get(status) or ('graduated' if terminal else 'promoted')
                 result.requirement_ids.filtered(lambda r: r.state == 'pending').unlink()
                 result.write({'status': new_status, 'manual': True, 'reason': SIGNED_REASON, 'requires_review': False})
             for result in year_results:
