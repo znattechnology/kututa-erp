@@ -90,6 +90,14 @@
         <field name="binding_model_id" ref="edu_core.model_edu_class"/>
         <field name="binding_type">report</field>
     </record>
+    <record id="action_report_year_term" model="ir.actions.report">
+        <field name="name">Termo do ano</field>
+        <field name="model">edu.year.result</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_year_term</field>
+        <field name="print_report_name">'Termo %s %s' % (object.student_id.name, object.academic_year_id.name)</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
     <record id="action_report_council_acta" model="ir.actions.report">
         <field name="name">Acta do Conselho de Notas</field>
         <field name="model">edu.council.session</field>

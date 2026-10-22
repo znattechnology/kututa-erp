@@ -9,20 +9,66 @@ class EduStudent(models.Model):
     process_number = fields.Char(string='Processo individual n.º', copy=False, tracking=True)
     subject_result_ids = fields.One2many('edu.subject.result', 'student_id', string='Histórico escolar')
     graduation_ids = fields.One2many('edu.graduation', 'student_id', string='Conclusões')
+    year_result_ids = fields.One2many('edu.year.result', 'student_id', string='Anos lectivos')
+    history_summary = fields.Char(string='Percurso', compute='_compute_history_summary')
 
     _process_company_uniq = models.Constraint(
         'UNIQUE(company_id, process_number)', 'Já existe um aluno com este número de processo.'
     )
 
+    @api.depends('year_result_ids.status')
+    def _compute_history_summary(self):
+        """«3 anos lectivos: transitou em 2 e concluiu o curso.», como no secPed."""
+        for student in self:
+            results = student.year_result_ids
+            if not results:
+                student.history_summary = self.env._(
+                    '%s ainda não tem anos no histórico. Cada ano entra quando o conselho de turma fecha.', student.name
+                )
+                continue
+            count = {
+                status: len(results.filtered(lambda r, s=status: r.status == s))
+                for status in set(results.mapped('status'))
+            }
+            parts = []
+            promoted = count.get('promoted', 0) + count.get('conditional', 0)
+            if promoted:
+                parts.append(self.env._('transitou em %s', promoted))
+            if count.get('retained'):
+                parts.append(self.env._('não transitou em %s', count['retained']))
+            if count.get('exam'):
+                parts.append(self.env._('vai a exame em %s', count['exam']))
+            if count.get('pending'):
+                parts.append(self.env._('%s por decidir', count['pending']))
+            if count.get('graduated'):
+                parts.append(self.env._('concluiu o curso'))
+            years = len(results)
+            head = self.env._('1 ano lectivo') if years == 1 else self.env._('%s anos lectivos', years)
+            text = ', '.join(parts[:-1]) + (self.env._(' e ') if len(parts) > 1 else '') + (parts[-1] if parts else '')
+            student.history_summary = f'{head}: {text}.' if text else f'{head}.'
+
     def action_view_history(self):
+        """O histórico do aluno: um ano lectivo por linha, com a média, a assiduidade e o resultado."""
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': self.env._('Histórico escolar de %s', self.name),
+            'name': self.env._('Histórico de %s', self.name),
+            'res_model': 'edu.student',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'views': [(self.env.ref('edu_records.edu_student_history_form').id, 'form')],
+        }
+
+    def action_view_subject_history(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.env._('Classificações de %s', self.name),
             'res_model': 'edu.subject.result',
-            'view_mode': 'list,pivot',
+            'view_mode': 'list',
+            'views': [(self.env.ref('edu_records.edu_subject_result_history_list').id, 'list')],
             'domain': [('student_id', '=', self.id)],
-            'context': {'group_by': ['academic_year_id']},
+            'context': {'group_by': ['academic_year_id'], 'create': False},
         }
 
 

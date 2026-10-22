@@ -291,6 +291,21 @@
 
     <menuitem id="menu_edu_document" action="action_edu_document" parent="edu_records.menu_edu_records" sequence="5"/>
     <menuitem id="menu_edu_pauta_print" action="action_edu_pauta_print" parent="edu_evaluation.menu_edu_evaluation" sequence="35"/>
+    <!-- Histórico do aluno: o termo do curso e o termo de cada ano. -->
+    <record id="edu_student_history_form_print" model="ir.ui.view">
+        <field name="name">edu.student.history.form.print</field>
+        <field name="model">edu.student</field>
+        <field name="inherit_id" ref="edu_records.edu_student_history_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="action_print_course_term" type="object" string="Termo do curso" class="btn-primary"/>
+            </header>
+            <field name="status" position="after">
+                <button name="action_print_year_term" type="object" string="Termo do ano" icon="description"/>
+            </field>
+        </field>
+    </record>
+
     <!-- Diplomas e certificados: imprimir directamente da conclusão, como no secPed. -->
     <record id="edu_graduation_list_print" model="ir.ui.view">
         <field name="name">edu.graduation.list.print</field>

@@ -151,7 +151,11 @@
                     <div class="page edu-doc">
                         <div style="float: right; font-size: 11px;">PROCESSO N.º <t t-out="student.process_number or '____'"/></div>
                         <t t-call="edu_documents.header" official="False"/>
-                        <div class="edu-subtitle">TERMO DE FREQUÊNCIA E APROVEITAMENTO<t t-if="o.enrollment_id.course_id"> · <t t-out="o.enrollment_id.course_id.name.upper()"/></t></div>
+                        <t t-set="course" t-value="o.enrollment_id.course_id"/>
+                        <div class="edu-subtitle">TERMO DE FREQUÊNCIA E APROVEITAMENTO<t t-if="course"> DO CURSO<t t-if="technical"> TÉCNICO</t> DE <t t-out="course.name.upper()"/></t></div>
+                        <p style="font-size: 11px; text-align: center; margin: 0;">
+                            REGIME: <t t-out="h.regime(o.enrollment_id).upper()"/><t t-if="course.training_area"> · ÁREA DE FORMAÇÃO: <t t-out="course.training_area.upper()"/></t>
+                        </p>
                         <p style="font-size: 11px; line-height: 1.4;">
                             NOME: <strong t-out="student.name.upper()"/> · FILHO(A) DE <t t-out="(student.father_name or '—').upper()"/> E DE
                             <t t-out="(student.mother_name or '—').upper()"/> · NASCIDO(A) A <t t-out="h.date(student.birth_date, True)"/> ·
@@ -185,14 +189,83 @@
                                     </t>
                                 </tr>
                                 <tr>
-                                    <td class="edu-name"><strong>RESULTADO</strong></td>
+                                    <td class="edu-name"><strong>SITUAÇÃO NO FIM DO ANO</strong></td>
                                     <td t-foreach="data['enrollments']" t-as="e" t-att-colspan="len(cols)" t-out="h.status(e.year_result_id.status) or e.state == 'transferred' and 'TRANSFERIDO(A)' or e.state == 'dropped' and 'ANULOU A MATRÍCULA' or ''"/>
+                                </tr>
+                                <tr style="height: 18px;">
+                                    <td class="edu-name"><strong>COMPORTAMENTO</strong></td>
+                                    <td t-foreach="data['enrollments']" t-as="e" t-att-colspan="len(cols)"/>
                                 </tr>
                             </tbody>
                         </table>
                         <p style="font-size: 10px; margin-top: 4px;" t-if="technical">CT: Classificação do Trimestre · PG: Prova Global · CA: Classificação Anual = 60% CF + 40% PG · REC: Recurso · CFD: Classificação Final da Disciplina</p>
                         <p style="font-size: 10px; margin-top: 4px;" t-else="">MT: Média do Trimestre = (MAC + NPT)/2 · MFD: Média Final da Disciplina · N.E: Exame Nacional · REC: Recurso · MF: Média Final</p>
-                        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
+                        <t t-set="g" t-value="student.graduation_ids.filtered(lambda x: x.state == 'issued' and x.course_id == course)[:1]"/>
+                        <p t-if="technical" style="font-size: 11px; margin-top: 6px;">
+                            Classificação do plano curricular (PC): <t t-if="g" t-out="h.num(g.plan_average)"/><t t-else=""><t t-set="width" t-value="40"/><t t-call="edu_documents.blank"/></t> (média das CFD) ·
+                            Estágio curricular (EC): <t t-if="g and g.internship_id" t-out="h.num(g.internship_id.grade)"/><t t-else=""><t t-set="width" t-value="40"/><t t-call="edu_documents.blank"/></t> ·
+                            Prova de Aptidão Profissional (PAP): <t t-if="g and g.final_project_id" t-out="h.num(g.final_project_id.grade)"/><t t-else=""><t t-set="width" t-value="40"/><t t-call="edu_documents.blank"/></t>
+                        </p>
+                        <table class="edu-signatures o_ignore_layout_styling">
+                            <tr>
+                                <td><div class="edu-role">O(A) Coordenador(a) de Turma</div><div class="edu-line">&#160;</div></td>
+                                <td><div class="edu-role" t-out="h.pedagogical_title()"/><div class="edu-line" t-out="company.edu_pedagogical_director_name and ('//%s//' % company.edu_pedagogical_director_name.upper()) or ''"/></td>
+                                <td><div class="edu-role" t-out="h.director_title()"/><div class="edu-line" t-out="company.edu_director_name and ('//%s//' % company.edu_director_name.upper()) or ''"/></td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    <!-- Termo do ano (registo académico do ano), como no secPed (termo-document.tsx): sem número. -->
+    <template id="report_year_term">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="y">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="y.company_id"/>
+                    <t t-set="student" t-value="y.student_id"/>
+                    <t t-set="e" t-value="y.enrollment_id"/>
+                    <t t-set="technical" t-value="e.class_id.level_id.subsystem == 'technical'"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title" style="font-size: 18px;" t-out="'TERMO DE FREQUÊNCIA E APROVEITAMENTO' if e.class_number == 9 else 'REGISTO ACADÉMICO DO ANO'"/>
+                        <table class="edu-table o_ignore_layout_styling" style="font-size: 12px;">
+                            <tr><td style="width: 18%;"><strong>Aluno</strong></td><td t-out="student.name"/><td style="width: 12%;"><strong>Nº</strong></td><td style="width: 12%;" t-out="e.order_number"/></tr>
+                            <tr><td><strong>Classe / turma</strong></td><td><t t-out="e.class_number"/>.ª · <t t-out="e.class_id.name"/></td><td><strong>Ano lectivo</strong></td><td t-out="e.academic_year_id.name"/></tr>
+                            <tr><td><strong>Curso</strong></td><td t-out="e.course_id.name or '—'"/><td><strong>Regime</strong></td><td t-out="h.regime(e)"/></tr>
+                            <tr><td><strong>Área de formação</strong></td><td t-out="e.course_id.training_area or '—'"/><td><strong>Assiduidade</strong></td><td><t t-if="y.attendance_rate"><t t-out="round(y.attendance_rate * 100)"/>%</t><t t-else="">—</t></td></tr>
+                        </table>
+                        <table class="edu-table o_ignore_layout_styling">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Disciplina</th>
+                                    <th t-out="'CF' if technical else 'MFD'"/>
+                                    <th t-if="technical">PG</th>
+                                    <th>CFD</th>
+                                    <th>F. J.</th>
+                                    <th>F. I.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="y._year_term_rows()" t-as="row">
+                                    <t t-set="r" t-value="row['result']"/>
+                                    <td t-out="r.subject_id.name"/>
+                                    <t t-set="first" t-value="r.cf if technical else r.final"/>
+                                    <td class="text-center" t-att-class="r.complete and h.color(first, r.pass_grade) or ''" t-out="h.num(first, r.complete)"/>
+                                    <td t-if="technical" class="text-center" t-out="h.num(r.pg, r.has_pg)"/>
+                                    <td class="text-center" t-att-class="r.complete and r.terminal_subject and h.color(r.cfd, r.pass_grade) or ''" t-out="h.num(r.cfd, r.complete and r.terminal_subject) or '→'"/>
+                                    <td class="text-center" t-out="row['excused'] or '·'"/>
+                                    <td class="text-center" t-out="row['absent'] or '·'"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Média final:</strong> <t t-out="h.num(y.average) if y.average else '—'"/> · <strong>Resultado final:</strong> <t t-out="h.status(y.status) or '—'"/></p>
+                        <table class="edu-signatures o_ignore_layout_styling">
+                            <tr><td><div class="edu-role">O(A) Director(a) de Turma</div><div class="edu-line" t-out="e.class_id.director_id.name or '&#160;'"/></td></tr>
+                        </table>
+                        <p class="edu-annex">CF — Classificação de Frequência · PG — Prova Global · CFD — Classificação Final da Disciplina (do ciclo) · F.J./F.I. — Faltas justificadas/injustificadas.</p>
                     </div>
                 </t>
             </t>

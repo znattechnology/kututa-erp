@@ -203,6 +203,24 @@ class EduStudent(models.Model):
     birth_municipality = fields.Char(string='Município de naturalidade')
     document_ids = fields.One2many('edu.document', 'student_id', string='Documentos')
 
+    def action_print_course_term(self):
+        """O termo do curso (todas as classes): o documento do tipo termo da última matrícula, emitido uma vez."""
+        self.ensure_one()
+        enrollment = self.enrollment_ids.filtered(lambda e: e.state != 'draft').sorted(
+            lambda e: e.academic_year_id.date_start
+        )[-1:]
+        if not enrollment:
+            raise UserError(self.env._('%s ainda não tem matrículas.', self.name))
+        document = self.document_ids.filtered(
+            lambda d: d.document_type == 'term' and d.state == 'issued' and d.enrollment_id == enrollment
+        )[:1]
+        if not document:
+            document = self.env['edu.document'].create(
+                {'document_type': 'term', 'student_id': self.id, 'enrollment_id': enrollment.id}
+            )
+            document.action_issue()
+        return document.action_preview()
+
     def action_new_document(self):
         self.ensure_one()
         return {
@@ -292,3 +310,32 @@ class EduGraduation(models.Model):
 
     def action_print_certificate(self):
         return self._graduation_document('certificate').action_preview()
+
+
+class EduYearResult(models.Model):
+    _inherit = 'edu.year.result'
+
+    def action_print_year_term(self):
+        """O termo do ano (registo académico do ano), como no secPed: sem número, para consultar e imprimir."""
+        self.ensure_one()
+        return self.env.ref('edu_documents.action_report_year_term').preview_action(self)
+
+    def _year_term_rows(self):
+        """Por disciplina: a CF (técnico) ou a MFD (geral), a PG, a CFD e as faltas do ano."""
+        self.ensure_one()
+        enrollment = self.enrollment_id
+        results = enrollment.subject_result_ids
+        Summary = self.env['edu.absence.summary'].sudo()
+        rows = []
+        for result in self.env['edu.report.mixin']._ordered(results):
+            summaries = Summary.search(
+                [('enrollment_id', '=', enrollment.id), ('subject_id', '=', result.subject_id.id)]
+            )
+            rows.append(
+                {
+                    'result': result,
+                    'excused': sum(summaries.mapped('excused')),
+                    'absent': sum(summaries.mapped('absent')),
+                }
+            )
+        return rows

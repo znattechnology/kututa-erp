@@ -161,8 +161,24 @@ class TestEduDocuments(TransactionCase):
         self.assertIn('edu-pos', html)
         term = self._document('term')
         html = self._render('edu_documents.action_report_term', term)
-        self.assertIn('TERMO DE FREQUÊNCIA E APROVEITAMENTO', html)
-        self.assertIn('CT1', html)
+        self.assertIn('TERMO DE FREQUÊNCIA E APROVEITAMENTO DO CURSO TÉCNICO DE', html)
+        for text in ('CT1', 'SITUAÇÃO NO FIM DO ANO', 'COMPORTAMENTO', 'Coordenador(a) de Turma', 'REGIME:'):
+            self.assertIn(text, html)
+        # Histórico do aluno, como no secPed: um ano por linha, o resumo, o termo do ano e o termo do curso.
+        result = self.enrollment.year_result_id
+        self.assertEqual(self.student.year_result_ids, result)
+        self.assertIn('1 ano lectivo: concluiu o curso.', self.student.history_summary)
+        self.assertEqual(self.student.action_view_history()['res_model'], 'edu.student')
+        result.action_print_year_term()
+        year_term = (
+            self.env['ir.actions.report']._render_qweb_html('edu_documents.report_year_term', result.ids)[0].decode()
+        )
+        for text in ('REGISTO ACADÉMICO DO ANO', 'Assiduidade', 'F. J.', 'Resultado final', 'Director(a) de Turma'):
+            self.assertIn(text, year_term)
+        self.student.action_print_course_term()
+        self.student.action_print_course_term()
+        # Reaproveita o termo já emitido (não cria outro).
+        self.assertEqual(len(self.student.document_ids.filtered(lambda d: d.document_type == 'term')), 1)
         transfer = self._document('transfer_declaration')
         self.assertIn('15 (Quinze) Valores', self._render('edu_documents.action_report_declaration_transfer', transfer))
 

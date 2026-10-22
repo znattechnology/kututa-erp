@@ -165,6 +165,10 @@ class EduReportMixin(models.AbstractModel):
     def _extra_values(self, docs):
         return {}
 
+    @api.model
+    def _ordered(self, results):
+        return Helpers.ordered(results)
+
 
 def _document_report(template, model='edu.document'):
     return type(
@@ -189,6 +193,7 @@ ReportCertificate = _document_report('report_certificate')
 ReportDiploma = _document_report('report_diploma')
 ReportClassList = _document_report('report_class_list', 'edu.class')
 ReportClassSchedule = _document_report('report_class_schedule', 'edu.class')
+ReportYearTerm = _document_report('report_year_term', 'edu.year.result')
 ReportExamCalendar = _document_report('report_exam_calendar', 'edu.exam.calendar.print')
 ReportCouncilActa = _document_report('report_council_acta', 'edu.council.session')
 ReportCouncilAttendance = _document_report('report_council_attendance', 'edu.council.session')
