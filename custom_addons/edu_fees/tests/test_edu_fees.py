@@ -106,6 +106,28 @@ class TestEduFees(AccountTestInvoicingCommon):
             invoices.filtered(lambda m: m.edu_category == 'tuition').mapped('edu_due_period'), [date(2026, 11, 8)]
         )
         self.assertEqual(len(invoices), 2)
+        # Matriculado a 10/11, depois do vencimento (8/11): não nasce devedor, vence no dia da matrícula.
+        self.assertEqual(set(invoices.mapped('invoice_date_due')), {date(2026, 11, 10)})
+        # Mudar para um plano novo (de turma) não volta a facturar os meses já facturados.
+        class_plan = self.env['edu.fee.plan'].create(
+            {
+                'name': 'Turma A',
+                'academic_year_id': self.year.id,
+                'class_id': self.edu_class.id,
+                'line_ids': [
+                    Command.create(
+                        {'name': 'Matrícula', 'category': 'enrollment', 'recurrence': 'one_off', 'amount': 25_000}
+                    ),
+                    Command.create(
+                        {'name': 'Propina', 'category': 'tuition', 'recurrence': 'monthly', 'amount': 55_000}
+                    ),
+                ],
+            }
+        )
+        again = self._generate(enrollment, date(2026, 12, 1))
+        self.assertEqual(again.mapped('edu_due_period'), [date(2026, 12, 8)])
+        self.assertEqual(again.amount_total, 55_000)
+        class_plan.active = False
         # Escola sem propina: só a matrícula.
         self.company.edu_billing_mode = 'fee_free'
         other = self._enroll(date(2026, 9, 1), self.env['edu.student'].create({'name': 'Carla'}))
@@ -283,3 +305,11 @@ class TestEduFees(AccountTestInvoicingCommon):
             .action_confirm()['res_id']
         )
         self.assertEqual((card_move.amount_untaxed, card_move.amount_total), (3_000, 3_420))
+
+    def test_line_category_drives_tax(self):
+        """O IVA e o artigo seguem a categoria escolhida (o cartão tem IVA de 14%)."""
+        line = self.plan.line_ids.filtered(lambda line: line.category == 'service')
+        self.assertEqual(line.tax_id.l10n_ao_exemption_id.code, 'M21')
+        line.category = 'card'
+        self.assertEqual(line.tax_id.amount, 14)
+        self.assertEqual(line.product_id, self.env.ref('edu_fees.product_card'))

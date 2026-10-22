@@ -23,7 +23,8 @@
         <field name="name">Secretaria</field>
         <field name="sequence">10</field>
         <field name="privilege_id" ref="res_groups_privilege_edu"/>
-        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <!-- Alunos e encarregados herdam de res.partner: criá-los e editá-los exige a gestão de contactos. -->
+        <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('base.group_partner_manager'))]"/>
         <field name="comment">Gere alunos, encarregados, turmas e matrículas; consulta a configuração académica.</field>
     </record>
 

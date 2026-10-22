@@ -151,14 +151,22 @@ class EduFeePlan(models.Model):
         company = enrollment.company_id
         start, end = self._window()
         effective = max(month_start(start), month_start(enrollment.date or start))
-        existing = set(
+        moves = (
             self.env['account.move']
             .sudo()
             .search([('edu_enrollment_id', '=', enrollment.id), ('edu_generation_key', '!=', False)])
-            .mapped('edu_generation_key')
         )
+        # A chave é da matrícula, da categoria e do período (não da linha do plano): mudar de turma ou de plano não
+        # volta a facturar o que já foi facturado. As facturas antigas contam pela categoria e pelo período.
+        existing = set(moves.mapped('edu_generation_key')) | {
+            f'{m.edu_category}-{m.edu_due_period.strftime("%Y%m")}-{enrollment.id}' for m in moves if m.edu_due_period
+        }
         created = self.env['account.move']
+        seen = {}
         for line in self.line_ids.filtered(lambda line: line.mandatory and line.category not in ON_REQUEST):
+            # Duas taxas da mesma categoria no plano distinguem-se pela ordem.
+            index = seen[line.category] = seen.get(line.category, -1) + 1
+            tag = line.category + (f'{index + 1}' if index else '')
             if line.category == 'tuition' and company.edu_billing_mode == 'fee_free':
                 continue
             first = enrollment.enrollment_type in FIRST_ENROLLMENT_TYPES
@@ -169,10 +177,11 @@ class EduFeePlan(models.Model):
                     continue  # nunca se factura um mês futuro
                 if line.recurrence in ('monthly', 'quarterly') and month_start(due) < effective:
                     continue  # quem entra a meio do ano começa no mês da matrícula
-                key = f'{line.id}-{due.strftime("%Y%m")}-{enrollment.id}'
+                key = f'{tag}-{due.strftime("%Y%m")}-{enrollment.id}'
                 if key in existing:
                     continue
-                created |= line._create_invoice(enrollment, due, key)
+                # Quem se matricula depois do vencimento não nasce devedor: vence no dia da matrícula.
+                created |= line._create_invoice(enrollment, due, key, due_date=max(due, enrollment.date or due))
                 existing.add(key)
         return created
 
@@ -226,9 +235,10 @@ class EduFeePlanLine(models.Model):
 
     @api.depends('category', 'company_id')
     def _compute_tax_id(self):
+        """O IVA segue a categoria (pode alterar-se à mão depois de escolher a categoria)."""
         Template = self.env['account.chart.template']
         for line in self:
-            if line.tax_id or not line.company_id:
+            if not line.company_id:
                 continue
             code = 'ao_iva_sale_14' if line.category in ('card', 'other') else 'ao_iva_sale_ise_m21'
             line.tax_id = Template.with_company(line.company_id).ref(code, raise_if_not_found=False)
@@ -236,8 +246,7 @@ class EduFeePlanLine(models.Model):
     @api.depends('category')
     def _compute_product_id(self):
         for line in self:
-            if not line.product_id:
-                line.product_id = self.env.ref(PRODUCTS[line.category], raise_if_not_found=False)
+            line.product_id = self.env.ref(PRODUCTS[line.category], raise_if_not_found=False)
 
     @api.constrains('amount', 'due_day', 'occurrences', 'recurrence')
     def _check_line(self):
@@ -260,7 +269,7 @@ class EduFeePlanLine(models.Model):
             return f'{self.name} — {MONTHS[due.month - 1]} {due.year}'
         return self.name
 
-    def _create_invoice(self, enrollment, due, key, quantity=1.0):
+    def _create_invoice(self, enrollment, due, key, quantity=1.0, due_date=None):
         """Factura da taxa para o aluno (com a bolsa, se a houver), publicada logo: o l10n_ao_edi certifica-a."""
         self.ensure_one()
         student = enrollment.student_id
@@ -292,7 +301,7 @@ class EduFeePlanLine(models.Model):
                     'partner_id': student._edu_billing_partner().id,
                     'journal_id': journal.id,
                     'invoice_date': fields.Date.context_today(self),
-                    'invoice_date_due': due,
+                    'invoice_date_due': due_date or due,
                     'edu_student_id': student.id,
                     'edu_enrollment_id': enrollment.id,
                     'edu_fee_line_id': self.id,

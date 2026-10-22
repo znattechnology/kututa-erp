@@ -1,5 +1,6 @@
 from datetime import date
 
+from odoo import Command
 from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
@@ -89,3 +90,18 @@ class TestEduPeople(TransactionCase):
             {'name': 'Pedro Docente', 'edu_is_teacher': True, 'edu_subject_ids': [(6, 0, subject.ids)]}
         )
         self.assertIn(teacher, self.env['hr.employee'].search([('edu_is_teacher', '=', True)]))
+
+    def test_secretary_manages_students(self):
+        """A secretaria (só group_edu_user) cria e edita alunos e encarregados, que herdam de res.partner."""
+        clerk = self.env['res.users'].create(
+            {
+                'name': 'Secretária',
+                'login': 'secretaria_people',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        student = self.env['edu.student'].with_user(clerk).create({'name': 'Aluno da Secretaria'})
+        student.phone = '+244 923 111 222'
+        guardian = self.env['edu.guardian'].with_user(clerk).create({'name': 'Encarregado da Secretaria'})
+        guardian.vat = '004567891LA041'
+        self.assertEqual(student.partner_id.phone, '+244 923 111 222')
