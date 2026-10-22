@@ -1,1 +1,1 @@
-from . import edu_exam
+from . import edu_exam, edu_exam_planner

@@ -82,6 +82,13 @@
         <field name="binding_model_id" ref="edu_core.model_edu_class"/>
         <field name="binding_type">report</field>
     </record>
+    <record id="action_report_exam_calendar" model="ir.actions.report">
+        <field name="name">Calendário de provas</field>
+        <field name="model">edu.exam.calendar.print</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_exam_calendar</field>
+        <field name="print_report_name">('Calendário de provas %s' % object.class_id.display_name) if object.class_id else ('Vigilâncias %s' % object.teacher_id.name)</field>
+    </record>
     <record id="action_report_class_schedule" model="ir.actions.report">
         <field name="name">Horário da turma</field>
         <field name="model">edu.class</field>

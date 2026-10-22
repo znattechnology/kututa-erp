@@ -139,3 +139,60 @@ class TestEduExam(TransactionCase):
         self.assertEqual((grades[carla].score, grades[ana].score, grades[ana].absent), (14, 0, True))
         period.action_close()
         self.assertEqual(period.state, 'closed')
+
+    def test_exam_planner(self):
+        """Calendário de provas, como no secPed: época do calendário escolar, a mesma prova em várias turmas (cada uma
+        na sua sala), um vigilante por turma sem choques e «Distribuir vigilantes»."""
+        Period = self.env['edu.exam.period']
+        event = self.env['edu.calendar.event'].create(
+            {
+                'name': 'Provas do I Trimestre',
+                'academic_year_id': self.year.id,
+                'event_type': 'exam',
+                'date_start': date(2026, 12, 9),
+                'date_end': date(2026, 12, 18),
+            }
+        )
+        options = Period.planner_options()
+        self.assertIn(event.id, [p['id'] for p in options['proposals']])
+        period = Period.browse(Period.planner_create_from_event(event.id))
+        self.assertEqual((period.kind, period.trimester_id), ('trimester_test', self.trimesters[0]))
+        self.assertNotIn(event.id, [p['id'] for p in Period.planner_options()['proposals']])
+        # Duas turmas da 7.ª, cada uma com a sua sala.
+        self.edu_class.room_id = self.room1
+        other = self.env['edu.class'].create(
+            {
+                'name': 'B',
+                'course_id': self.edu_class.course_id.id,
+                'curriculum_year_id': self.edu_class.curriculum_year_id.id,
+                'room_id': self.room2.id,
+            }
+        )
+        result = period.planner_mark(self.lp.id, '2026-12-09', 8.0, 10.0, (self.edu_class | other).ids)
+        self.assertEqual((result['created'], result['failures']), (2, []))
+        sessions = period.session_ids
+        self.assertEqual(sessions.room_ids.room_id, self.room1 | self.room2)
+        # Marcar outra vez a mesma prova à mesma hora: a sala já está ocupada, a turma fica de fora com o motivo.
+        again = period.planner_mark(self.lp.id, '2026-12-09', 9.0, 11.0, self.edu_class.ids)
+        self.assertEqual(again['created'], 0)
+        self.assertIn('Sala 1', again['failures'][0])
+        # Um vigilante por turma; o mesmo professor não vigia as duas à mesma hora.
+        first, second = sessions.sorted(lambda s: s.class_ids.name)
+        Period.planner_set_supervisor(first.id, self.teacher.id)
+        with self.assertRaises(ValidationError):
+            Period.planner_set_supervisor(second.id, self.teacher.id)
+        # Distribuir: a turma que falta fica com outro professor livre.
+        other_teacher = self.env['hr.employee'].create({'name': 'Outra Vigilante', 'edu_is_teacher': True})
+        done = period.planner_distribute('2026-12-09', 8.0, 10.0)
+        self.assertEqual(done['assigned'], 1)
+        self.assertEqual(second.room_ids.supervisor_ids, other_teacher)
+        self.assertFalse(second.incomplete)
+        data = period.planner_data()
+        self.assertEqual(len(data['sessions']), 2)
+        self.assertEqual({s['class'] for s in data['sessions']}, {'7ª A · SEC1', '7ª B · SEC1'})
+        # Sem sala não há vigilante; remover uma prova sem notas.
+        Period.planner_set_room(second.id, False)
+        with self.assertRaisesRegex(UserError, 'sala'):
+            Period.planner_set_supervisor(second.id, other_teacher.id)
+        Period.planner_remove(second.id)
+        self.assertEqual(period.session_ids, first)

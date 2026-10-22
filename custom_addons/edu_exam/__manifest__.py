@@ -14,6 +14,9 @@ Secretaria Express: organização dos exames.
 * Distribuição pelas salas por ordem alfabética e lotação, com número de lugar
 * Presenças e notas na sessão: nos exames especiais actualizam a pauta e a decisão; nas provas vão para a avaliação
   ligada (falta injustificada vale 0)
+* Calendário de provas, como no secPed-Express: épocas criadas a partir do calendário escolar; a mesma prova marcada
+  em várias turmas de uma vez (cada uma na sua sala); vista por sessão com o vigilante de cada turma e
+  «Distribuir vigilantes»; calendário de cada turma e escala de vigilância de cada professor, para imprimir
     """,
     'author': 'Kututa ERP',
     'countries': ['ao'],
@@ -22,6 +25,12 @@ Secretaria Express: organização dos exames.
     'data': [
         'security/ir.access.csv',
         'views/edu_exam_views.xml',
+        'views/edu_exam_requirement_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'edu_exam/static/src/exam_planner/*',
+        ],
+    },
     'license': 'OPL-1',
 }

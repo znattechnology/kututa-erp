@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Exames extraordinários: os alunos com exame especial por fazer, com a sessão a que foram convocados. -->
+    <record id="edu_exam_requirement_list_session" model="ir.ui.view">
+        <field name="name">edu.exam.requirement.list.session</field>
+        <field name="model">edu.exam.requirement</field>
+        <field name="inherit_id" ref="edu_evaluation.edu_exam_requirement_list"/>
+        <field name="arch" type="xml">
+            <field name="kind" position="after">
+                <field name="session_id" optional="show"/>
+            </field>
+        </field>
+    </record>
+    <record id="edu_exam_requirement_search" model="ir.ui.view">
+        <field name="name">edu.exam.requirement.search</field>
+        <field name="model">edu.exam.requirement</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="student_id"/>
+                <field name="subject_id"/>
+                <field name="class_id"/>
+                <filter name="pending" string="Por realizar" domain="[('state', '=', 'pending')]"/>
+                <filter name="done" string="Realizados" domain="[('state', '=', 'done')]"/>
+                <filter name="unsummoned" string="Sem convocatória" domain="[('state', '=', 'pending'), ('seat_ids', '=', False)]"/>
+                <separator/>
+                <filter name="resit" string="Recurso" domain="[('kind', '=', 'resit')]"/>
+                <filter name="extraordinary" string="Extraordinário" domain="[('kind', '=', 'extraordinary')]"/>
+                <filter name="improvement" string="Melhoria" domain="[('kind', '=', 'improvement')]"/>
+                <separator/>
+                <filter name="current_year" string="Ano em curso" domain="[('year_result_id.academic_year_id.is_current', '=', True)]"/>
+                <group>
+                    <filter name="group_subject" string="Disciplina" context="{'group_by': 'subject_id'}"/>
+                    <filter name="group_kind" string="Exame" context="{'group_by': 'kind'}"/>
+                    <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="edu_evaluation.action_edu_exam_requirement" model="ir.actions.act_window">
+        <field name="domain" eval="False"/>
+        <field name="search_view_id" ref="edu_exam_requirement_search"/>
+        <field name="context">{'search_default_pending': 1, 'search_default_group_subject': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Não há exames especiais por realizar</p>
+            <p>Os alunos com recurso, disciplinas em atraso (extraordinário) ou melhoria de nota. Marque a prova numa
+            época de exames especiais no Calendário de provas e convoque os alunos; as notas lançadas actualizam a pauta
+            e a decisão.</p>
+        </field>
+    </record>
+</odoo>

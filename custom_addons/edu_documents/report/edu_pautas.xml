@@ -305,6 +305,54 @@
         </t>
     </template>
 
+    <!-- Calendário de provas de uma turma ou escala de vigilância de um professor (como no secPed-Express): as provas
+         da época por dia, com a hora, a disciplina, o vigilante (ou a turma) e a sala. -->
+    <template id="report_exam_calendar">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="d" t-value="o._calendar_doc()"/>
+                    <t t-call="edu_documents.pauta_styles"/>
+                    <style>
+                        table.ep-grid.ep-cal { width: 100%; table-layout: fixed; font-size: 11.5px; }
+                        table.ep-grid.ep-cal td, table.ep-grid.ep-cal th { white-space: normal; height: 22px; padding: 3px 6px; text-align: left; }
+                        table.ep-grid.ep-cal td.ep-day { font-weight: bold; padding-top: 8px; border-left: 0; border-right: 0; }
+                        table.ep-grid.ep-cal tr { page-break-inside: avoid; }
+                    </style>
+                    <div class="page ep">
+                        <t t-call="edu_documents.pauta_head" visto="False" title="d['title']" context="d['context']"/>
+                        <p t-if="not d['days']" style="text-align: center; padding: 32px 0;">Sem provas marcadas.</p>
+                        <table t-else="" class="ep-grid ep-cal o_ignore_layout_styling">
+                            <colgroup>
+                                <col style="width: 16%"/>
+                                <col/>
+                                <col style="width: 32%"/>
+                                <col style="width: 16%"/>
+                            </colgroup>
+                            <thead>
+                                <tr><th>Hora</th><th>Disciplina</th><th t-out="d['middle']"/><th>Sala</th></tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="d['days']" t-as="day">
+                                    <tr><td colspan="4" class="ep-day" t-out="day['label']"/></tr>
+                                    <tr t-foreach="day['rows']" t-as="r">
+                                        <td t-out="r['hours']"/>
+                                        <td><strong t-out="r['subject']"/></td>
+                                        <td t-out="r['middle'] or '—'"/>
+                                        <td t-out="r['room']"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <t t-if="d['signatures']" t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.pedagogical_title())" left_name="company.edu_pedagogical_director_name" right_role="h.role_case(h.director_title())" right_name="company.edu_director_name"/>
+                        <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
     <!-- Plano curricular: a matriz do plano (componentes, disciplinas e tempos por classe) com o cabeçalho e as
          assinaturas da pauta. -->
     <template id="report_curriculum">

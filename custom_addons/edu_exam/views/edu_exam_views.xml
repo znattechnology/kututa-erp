@@ -134,25 +134,69 @@
         <field name="name">edu.exam.session.list</field>
         <field name="model">edu.exam.session</field>
         <field name="arch" type="xml">
-            <list string="Sessões de exame">
+            <list string="Sessões de exame" decoration-muted="state == 'cancelled'" decoration-warning="state == 'scheduled' and incomplete">
                 <field name="date"/>
                 <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                <field name="hour_to" widget="float_time" options="{'numeric': True}" optional="hide"/>
                 <field name="subject_id"/>
-                <field name="period_id"/>
                 <field name="class_ids" widget="many2many_tags" optional="show"/>
-                <field name="seat_count"/>
-                <field name="state" widget="badge"/>
+                <field name="room_label" optional="show"/>
+                <field name="supervisor_label" optional="show"/>
+                <field name="period_id" optional="show"/>
+                <field name="seat_count" optional="hide"/>
+                <field name="incomplete" column_invisible="1"/>
+                <field name="state" widget="badge" decoration-info="state == 'scheduled'" decoration-success="state == 'done'"/>
             </list>
+        </field>
+    </record>
+    <record id="edu_exam_session_search" model="ir.ui.view">
+        <field name="name">edu.exam.session.search</field>
+        <field name="model">edu.exam.session</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="subject_id"/>
+                <field name="class_ids"/>
+                <field name="period_id"/>
+                <field name="room_ids" string="Sala" filter_domain="[('room_ids.room_id', 'ilike', self)]"/>
+                <field name="room_ids" string="Vigilante" filter_domain="[('room_ids.supervisor_ids', 'ilike', self)]"/>
+                <filter name="scheduled" string="Marcadas" domain="[('state', '=', 'scheduled')]"/>
+                <filter name="done" string="Realizadas" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="incomplete" string="Sem sala ou vigilante" domain="[('incomplete', '=', True), ('state', '=', 'scheduled')]"/>
+                <filter name="special" string="Exames especiais" domain="[('kind', 'in', ('resit', 'extraordinary', 'improvement', 'completion'))]"/>
+                <separator/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <filter name="date" string="Data" date="date"/>
+                <group>
+                    <filter name="group_period" string="Época" context="{'group_by': 'period_id'}"/>
+                    <filter name="group_date" string="Dia" context="{'group_by': 'date:day'}"/>
+                    <filter name="group_subject" string="Disciplina" context="{'group_by': 'subject_id'}"/>
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
         </field>
     </record>
     <record id="action_edu_exam_session" model="ir.actions.act_window">
         <field name="name">Sessões de exame</field>
         <field name="res_model">edu.exam.session</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="edu_exam_session_search"/>
+        <field name="context">{'search_default_current_year': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ainda não há sessões de exame</p>
+            <p>As provas marcam-se no Calendário de provas (por sessão, em várias turmas de uma vez); aqui estão todas
+            as do ano numa lista, com a sala e os vigilantes.</p>
+        </field>
+    </record>
+
+    <!-- Calendário de provas (acção cliente): épocas, provas por sessão, por turma e vigilâncias por professor. -->
+    <record id="action_edu_exam_planner" model="ir.actions.client">
+        <field name="name">Calendário de provas</field>
+        <field name="tag">edu_exam.exam_planner</field>
     </record>
 
     <menuitem id="menu_edu_exam" name="Exames" parent="edu_core.menu_edu_root" sequence="35">
-        <menuitem id="menu_edu_exam_period" action="action_edu_exam_period" sequence="10"/>
+        <menuitem id="menu_edu_exam_period" action="action_edu_exam_planner" sequence="10"/>
         <menuitem id="menu_edu_exam_session" action="action_edu_exam_session" sequence="20"/>
     </menuitem>
 </odoo>

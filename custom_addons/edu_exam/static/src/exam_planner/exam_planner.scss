@@ -1,0 +1,198 @@
+// Calendário de provas: a estrutura do secPed-Express com as cores do sistema (as do tema, sem paleta própria).
+.o_edu_exam_planner {
+    .o_edu_ep_body {
+        padding: 16px 24px 32px;
+        max-width: 1280px;
+    }
+
+    .o_edu_ep_periods,
+    .o_edu_ep_toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+
+        > .form-select {
+            width: auto;
+            min-width: 240px;
+        }
+    }
+
+    .o_edu_ep_dates {
+        opacity: 0.75;
+    }
+
+    .o_edu_ep_lead {
+        margin-bottom: 12px;
+    }
+
+    .o_edu_ep_h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .o_edu_ep_h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .o_edu_ep_card {
+        padding: 16px 20px;
+        margin-bottom: 16px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_ep_empty {
+        max-width: 720px;
+        color: $text-muted;
+    }
+
+    .o_edu_ep_proposal {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 16px;
+        padding: 8px 0;
+
+        & + .o_edu_ep_proposal {
+            border-top: 1px solid $border-color;
+        }
+    }
+
+    .o_edu_ep_nums {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    // Marcar prova
+    .o_edu_ep_form {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+
+        label > span {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .o_edu_ep_wide {
+            grid-column: span 2;
+        }
+    }
+
+    .o_edu_ep_pick {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 4px 16px;
+        margin: 16px 0 0;
+    }
+
+    .o_edu_ep_pick_row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        cursor: pointer;
+    }
+
+    // Sessões
+    .o_edu_ep_session {
+        margin-bottom: 12px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+        overflow: hidden;
+
+        > header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: $o-gray-100;
+
+            &.o_open {
+                border-bottom: 1px solid $border-color;
+            }
+        }
+    }
+
+    .o_edu_ep_session_toggle {
+        display: flex;
+        flex: 1 1 auto;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 12px;
+        min-height: 36px;
+        padding: 0;
+        border: 0;
+        background: none;
+        text-align: left;
+    }
+
+    .o_edu_ep_row {
+        display: grid;
+        grid-template-columns: minmax(110px, 170px) 1fr minmax(120px, 180px) minmax(220px, 300px) 24px;
+        align-items: center;
+        gap: 4px 16px;
+        padding: 8px 12px;
+
+        & + .o_edu_ep_row {
+            border-top: 1px solid $border-color;
+        }
+
+        @include media-breakpoint-down(md) {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .o_edu_ep_subject {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    // Por turma
+    .o_edu_ep_classes {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 8px;
+        margin: 12px 0 0;
+    }
+
+    .o_edu_ep_class_btn {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+        background: $o-view-background-color;
+        text-align: left;
+
+        &:hover {
+            background: $o-gray-100;
+        }
+    }
+
+    .o_edu_ep_table {
+        background: $o-view-background-color;
+
+        tr.o_edu_ep_newday > td {
+            border-top: 2px solid $border-color;
+        }
+    }
+
+    .o_edu_ep_clickable {
+        cursor: pointer;
+    }
+}

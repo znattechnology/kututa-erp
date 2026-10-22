@@ -296,3 +296,25 @@ class TestEduDocuments(TransactionCase):
         self.assertIn('Instituto Médio de Saúde de Luanda', listing)
         self.assertIn('DIRECÇÃO DO INSTITUTO MÉDIO DE SAÚDE DE LUANDA', html)
         self.assertIn('vai transferida para', html)
+
+    def test_exam_calendar_print(self):
+        """Calendário de provas da turma e escala de vigilância do professor, com o cabeçalho da pauta."""
+        room = self.env['edu.room'].create({'name': 'Sala 7', 'code': 'S7'})
+        teacher = self.env['hr.employee'].create({'name': 'Zeca Vigilante', 'edu_is_teacher': True})
+        period = self.env['edu.exam.period'].create(
+            {'name': 'Provas do I Trimestre', 'date_start': date(2026, 12, 9), 'date_end': date(2026, 12, 18)}
+        )
+        period.planner_mark(self.subjects[0].id, '2026-12-09', 8.0, 10.0, self.edu_class.ids)
+        session = period.session_ids
+        self.env['edu.exam.period'].planner_set_room(session.id, room.id)
+        self.env['edu.exam.period'].planner_set_supervisor(session.id, teacher.id)
+        period.planner_print('class', self.edu_class.id)
+        document = self.env['edu.exam.calendar.print'].search([], order='id desc', limit=1)
+        html = self._render('edu_documents.action_report_exam_calendar', document)
+        for text in ('CALENDÁRIO DE PROVAS', 'Quarta-feira, 9 de Dezembro', '08:00–10:00', 'Zeca Vigilante', 'Sala 7'):
+            self.assertIn(text, html)
+        period.planner_print('teacher', teacher.id)
+        document = self.env['edu.exam.calendar.print'].search([], order='id desc', limit=1)
+        html = self._render('edu_documents.action_report_exam_calendar', document)
+        self.assertIn('ESCALA DE VIGILÂNCIA', html)
+        self.assertIn('13ª A', html)

@@ -3,3 +3,4 @@ access_edu_document_user,access_edu_document_user,edu.document,edu_core.group_ed
 access_edu_pauta_print_user,access_edu_pauta_print_user,edu.pauta.print,edu_core.group_edu_user,crud,
 access_edu_pauta_print_teacher,access_edu_pauta_print_teacher,edu.pauta.print,edu_core.group_edu_teacher,crud,
 edu_document_comp_rule,edu.document multi-empresa,edu.document,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_exam_calendar_print_user,access_edu_exam_calendar_print_user,edu.exam.calendar.print,edu_core.group_edu_user,crud,
