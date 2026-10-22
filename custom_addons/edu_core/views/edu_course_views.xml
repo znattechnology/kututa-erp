@@ -46,7 +46,14 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Planos curriculares" name="curricula">
+                        <page string="Plano curricular" name="curricula">
+                            <div class="d-flex align-items-baseline gap-2 mb-2" invisible="not curriculum_id">
+                                <strong>Plano em vigor:</strong>
+                                <field name="curriculum_id" nolabel="1" readonly="1"/>
+                            </div>
+                            <field name="plan_matrix" nolabel="1" invisible="not curriculum_id"/>
+                            <div class="text-muted" invisible="curriculum_id">O curso ainda não tem plano curricular.</div>
+                            <div class="fw-bold mt-4 mb-1">Planos do curso</div>
                             <field name="curriculum_ids" readonly="1">
                                 <list>
                                     <field name="name"/>

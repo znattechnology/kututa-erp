@@ -82,6 +82,12 @@ class TestEduCore(TransactionCase):
         lp = tenth.line_ids.filtered(lambda line: line.code == 'LP')
         self.assertEqual(lp.subject_id.name, 'Língua Portuguesa')
         self.assertEqual(lp.component, 'socio_cultural')
+        # A matriz do plano: as componentes como títulos, as disciplinas por baixo e o total de cada classe.
+        matrix = self.nursing.plan_matrix
+        for text in ('Sociocultural', 'Científica', 'Língua Portuguesa', 'Tempos por semana', '10ª', '13ª'):
+            self.assertIn(text, matrix)
+        self.assertLess(matrix.index('Sociocultural'), matrix.index('Língua Portuguesa'))
+        self.assertLess(matrix.index('Língua Portuguesa'), matrix.index('Científica'))
         # Gerar outra vez não duplica.
         self.assertEqual(self.nursing._materialize_curriculum(), curriculum)
         # Outro curso reutiliza as disciplinas da escola pelo código.

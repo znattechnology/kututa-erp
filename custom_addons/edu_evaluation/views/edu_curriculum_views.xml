@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A prova global marca-se na linha do plano, onde a escola a faz (Despacho 60/08, art. 18.º). -->
+    <record id="edu_curriculum_form_evaluation" model="ir.ui.view">
+        <field name="name">edu.curriculum.form.evaluation</field>
+        <field name="model">edu.curriculum</field>
+        <field name="inherit_id" ref="edu_core.edu_curriculum_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='years']//field[@name='line_ids']/list/field[@name='is_national_exam']" position="after">
+                <field name="has_global_exam"/>
+            </xpath>
+            <xpath expr="//page[@name='lines']//field[@name='is_national_exam']" position="after">
+                <field name="has_global_exam"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

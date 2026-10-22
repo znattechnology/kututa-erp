@@ -1,7 +1,18 @@
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 from .edu_course import COMPONENTS
+
+# Matriz do plano no estilo da pauta: linhas cinzentas, cabeçalhos a negrito, sem fundos de cor.
+MATRIX_STYLE = 'width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; color: #000;'
+CELL = 'border-right: 1px solid #c8c8c8; border-bottom: 1px solid #c8c8c8; padding: 5px 8px;'
+HEAD = (
+    'border-right: 1px solid #969696; border-bottom: 1px solid #969696; border-top: 1px solid #969696; '
+    'padding: 6px 8px;'
+)
+FIRST = 'border-left: 1px solid #c8c8c8;'
 
 
 class EduCurriculum(models.Model):
@@ -26,6 +37,7 @@ class EduCurriculum(models.Model):
     class_to = fields.Integer(string='À classe', compute='_compute_classes', store=True)
     year_ids = fields.One2many('edu.curriculum.year', 'curriculum_id', string='Anos')
     line_ids = fields.One2many('edu.curriculum.line', 'curriculum_id', string='Disciplinas')
+    plan_matrix = fields.Html(string='Plano', compute='_compute_plan_matrix', sanitize=False)
     active = fields.Boolean(default=True)
 
     _name_company_uniq = models.Constraint('UNIQUE(company_id, name)', 'Já existe um plano com este nome.')
@@ -36,6 +48,77 @@ class EduCurriculum(models.Model):
             classes = curriculum.year_ids.mapped('class_number')
             curriculum.class_from = min(classes) if classes else 0
             curriculum.class_to = max(classes) if classes else 0
+
+    @api.depends(
+        'year_ids.class_number',
+        'line_ids.subject_id',
+        'line_ids.weekly_hours',
+        'line_ids.component',
+        'line_ids.year_id',
+    )
+    def _compute_plan_matrix(self):
+        """O plano como no secPed e nos planos oficiais: as disciplinas agrupadas pela componente de formação, uma
+        coluna por classe com os tempos semanais, os tempos de cada componente e o total da classe."""
+        labels = dict(COMPONENTS)
+        for curriculum in self:
+            years = curriculum.year_ids.sorted('year')
+            if not years:
+                curriculum.plan_matrix = False
+                continue
+            hours, component_of = {}, {}
+            for line in curriculum.line_ids:
+                hours[line.subject_id, line.year_id] = line.weekly_hours
+                component_of.setdefault(line.subject_id, line.component or False)
+            groups = [(code, labels[code]) for code, _label in COMPONENTS]
+            groups.append((False, self.env._('Sem componente')))
+            html = Markup('<table class="o_edu_plan_matrix" style="%s"><thead><tr>') % Markup(MATRIX_STYLE)
+            html += Markup('<th style="%s%s text-align: left;">%s</th>') % (
+                Markup(FIRST.replace('#c8c8c8', '#969696')),
+                Markup(HEAD),
+                self.env._('Disciplina'),
+            )
+            for year in years:
+                html += Markup('<th style="%s text-align: center; width: 5.5rem;">%s</th>') % (
+                    Markup(HEAD),
+                    self.env._('%sª', year.class_number),
+                )
+            html += Markup('</tr></thead><tbody>')
+            for code, label in groups:
+                subjects = sorted((s for s, c in component_of.items() if c == code), key=lambda s: s.name or '')
+                if not subjects:
+                    continue
+                html += Markup('<tr><td style="%s%s font-weight: bold;">%s</td>') % (Markup(FIRST), Markup(CELL), label)
+                for year in years:
+                    total = sum(hours.get((subject, year), 0) for subject in subjects)
+                    html += Markup('<td style="%s text-align: center; font-weight: bold;">%s</td>') % (
+                        Markup(CELL),
+                        total or '',
+                    )
+                html += Markup('</tr>')
+                for subject in subjects:
+                    html += Markup('<tr><td style="%s%s padding-left: 24px;">%s</td>') % (
+                        Markup(FIRST),
+                        Markup(CELL),
+                        subject.name,
+                    )
+                    for year in years:
+                        value = hours.get((subject, year))
+                        html += Markup('<td style="%s text-align: center;">%s</td>') % (
+                            Markup(CELL),
+                            '' if value is None else value,
+                        )
+                    html += Markup('</tr>')
+            html += Markup('<tr><td style="%s%s font-weight: bold;">%s</td>') % (
+                Markup(FIRST),
+                Markup(CELL),
+                self.env._('Tempos por semana'),
+            )
+            for year in years:
+                html += Markup('<td style="%s text-align: center; font-weight: bold;">%s</td>') % (
+                    Markup(CELL),
+                    year.weekly_hours,
+                )
+            curriculum.plan_matrix = html + Markup('</tr></tbody></table>')
 
     @api.model
     def _unique_name(self, company, base):

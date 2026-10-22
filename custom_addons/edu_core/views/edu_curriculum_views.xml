@@ -37,7 +37,10 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Anos" name="years">
+                        <page string="Plano" name="matrix">
+                            <field name="plan_matrix" nolabel="1"/>
+                        </page>
+                        <page string="Editar por classe" name="years">
                             <field name="year_ids">
                                 <list>
                                     <field name="year"/>

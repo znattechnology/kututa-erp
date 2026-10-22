@@ -14,10 +14,11 @@ class EduCurriculumLine(models.Model):
         store=True,
         readonly=False,
         help='Técnico: só disciplinas com 3 ou mais tempos semanais, fora da componente técnica/prática e das práticas '
-        '(Despacho 60/08, art. 18.º).',
+        '(Despacho 60/08, art. 18.º). Proposta ao criar a linha; depois fica como a escola a marcar.',
     )
 
-    @api.depends('weekly_hours', 'component', 'subject_id')
+    # Só a disciplina: a proposta faz-se ao criar a linha; mudar os tempos ou a componente não desfaz a marca da escola.
+    @api.depends('subject_id')
     def _compute_has_global_exam(self):
         for line in self:
             line.has_global_exam = grading.has_global_exam(

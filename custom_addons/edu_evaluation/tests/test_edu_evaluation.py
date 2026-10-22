@@ -220,6 +220,12 @@ class TestEduEvaluation(TransactionCase):
                     'assessment_type': 'global_exam',
                 }  # fmt: skip
             )
+        # A marca da prova global é da escola: mudar os tempos da linha não a apaga nem a cria.
+        lp_line = self.class10.subject_line_ids.filtered(lambda line: line.code == 'LP')
+        lp_line.weekly_hours = 2
+        self.assertTrue(lp_line.has_global_exam)
+        practical.weekly_hours = 5
+        self.assertFalse(practical.has_global_exam)
 
     def test_technical_imported(self):
         """Pauta migrada: médias trimestrais importadas não se recalculam e, com o arredondamento único, a PG entra

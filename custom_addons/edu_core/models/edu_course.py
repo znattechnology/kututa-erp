@@ -67,6 +67,13 @@ class EduCourse(models.Model):
 
     _code_company_uniq = models.Constraint('UNIQUE(company_id, code)', 'Já existe um curso com este código.')
 
+    plan_matrix = fields.Html(string='Plano em vigor (matriz)', compute='_compute_plan_matrix', sanitize=False)
+
+    @api.depends('curriculum_ids')
+    def _compute_plan_matrix(self):
+        for course in self:
+            course.plan_matrix = course.curriculum_id.plan_matrix
+
     @api.depends('curriculum_ids.active')
     def _compute_curriculum_id(self):
         for course in self:

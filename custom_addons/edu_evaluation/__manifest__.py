@@ -31,6 +31,7 @@ Secretaria Express: avaliação das aprendizagens.
         'views/edu_evaluation_policy_views.xml',
         'views/edu_assessment_views.xml',
         'views/edu_result_views.xml',
+        'views/edu_curriculum_views.xml',
         'views/edu_year_result_views.xml',
         'views/edu_council_views.xml',
         'views/edu_grade_appeal_views.xml',

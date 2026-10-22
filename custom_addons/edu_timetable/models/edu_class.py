@@ -59,7 +59,7 @@ class EduClass(models.Model):
                     )
                 )
 
-    @api.depends('schedule_ids.subject_id', 'subject_line_ids.weekly_hours')
+    @api.depends('schedule_ids.subject_id', 'schedule_ids.trimester_id', 'subject_line_ids.weekly_hours')
     def _compute_schedule_check(self):
         """Tempos semanais no horário (todo o ano) face à carga do plano curricular, por disciplina."""
         for edu_class in self:
