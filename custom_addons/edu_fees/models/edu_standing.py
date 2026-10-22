@@ -125,9 +125,10 @@ class EduStudent(models.Model):
             for enrollment in enrollments:
                 in_debt = enrollment.student_id.edu_in_debt
                 if in_debt and enrollment.state == 'active':
-                    enrollment.state = 'irregular'
-                elif not in_debt and enrollment.state == 'irregular':
-                    enrollment.state = 'active'
+                    enrollment.write({'state': 'irregular', 'edu_irregular_debt': True})
+                elif not in_debt and enrollment.state == 'irregular' and enrollment.edu_irregular_debt:
+                    # Só desfaz o que marcou: a marcação manual da secretaria fica.
+                    enrollment.write({'state': 'active', 'edu_irregular_debt': False})
 
     def action_view_invoices(self):
         self.ensure_one()
@@ -160,6 +161,10 @@ class EduStudent(models.Model):
 
 class EduEnrollment(models.Model):
     _inherit = 'edu.enrollment'
+
+    edu_irregular_debt = fields.Boolean(
+        string='Irregular por dívida', readonly=True, copy=False, help='Marcada pela tesouraria automática.'
+    )
 
     def _edu_check_enrollment_allowed(self):
         result = super()._edu_check_enrollment_allowed()

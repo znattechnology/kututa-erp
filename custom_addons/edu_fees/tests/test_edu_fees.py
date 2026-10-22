@@ -194,7 +194,7 @@ class TestEduFees(AccountTestInvoicingCommon):
         )
         with self.assertRaises(UserError):
             scholarship.action_approve()  # quem pediu não aprova
-        scholarship.requested_by_id = self.env.ref('base.user_root')
+        scholarship.sudo().requested_by_id = self.env.ref('base.user_root')
         scholarship.action_approve()
         enrollment = self._enroll(date(2026, 9, 1))
         tuition = self._generate(enrollment, date(2026, 9, 10)).filtered(lambda m: m.edu_category == 'tuition')
@@ -313,3 +313,59 @@ class TestEduFees(AccountTestInvoicingCommon):
         line.category = 'card'
         self.assertEqual(line.tax_id.amount, 14)
         self.assertEqual(line.product_id, self.env.ref('edu_fees.product_card'))
+
+    def test_audit_scholarship_and_irregular(self):
+        """Auditoria da fase 5: quatro olhos nas bolsas alteradas, anuladas não bloqueiam outra do mesmo tipo, e o
+        cron não desfaz a marcação manual de irregular."""
+        self.company.edu_scholarship_approval = True
+        Users = self.env['res.users']
+        group = self.env.ref('edu_core.group_edu_manager')
+        first = Users.create({'name': 'Fin 1', 'login': 'fin_a1', 'group_ids': [Command.set(group.ids)]})
+        second = Users.create({'name': 'Fin 2', 'login': 'fin_a2', 'group_ids': [Command.set(group.ids)]})
+        Scholarship = self.env['edu.scholarship']
+        scholarship = Scholarship.with_user(first).create(
+            {
+                'student_id': self.student.id,
+                'academic_year_id': self.year.id,
+                'scholarship_type': 'partial',
+                'discount_percent': 10,
+                'date_from': date(2026, 9, 1),
+            }
+        )
+        scholarship.with_user(second).action_approve()
+        # Quem aprovou altera para 100%: volta a pedido em seu nome e já não a pode aprovar.
+        scholarship.with_user(second).discount_percent = 100
+        self.assertEqual((scholarship.state, scholarship.requested_by_id), ('draft', second))
+        with self.assertRaises(UserError):
+            scholarship.with_user(second).action_approve()
+        # Escrita em várias: a anulada não ressuscita.
+        scholarship.with_user(first).action_approve()
+        cancelled = Scholarship.create(
+            {
+                'student_id': self.student.id,
+                'academic_year_id': self.year.id,
+                'scholarship_type': 'merit',
+                'discount_percent': 5,
+                'date_from': date(2026, 9, 1),
+            }
+        )
+        cancelled.action_cancel()
+        (scholarship | cancelled).write({'date_to': date(2027, 6, 30)})
+        self.assertEqual(cancelled.state, 'cancelled')
+        # Anulada não impede outra do mesmo tipo.
+        self.env.flush_all()
+        Scholarship.create(
+            {
+                'student_id': self.student.id,
+                'academic_year_id': self.year.id,
+                'scholarship_type': 'merit',
+                'discount_percent': 7,
+                'date_from': date(2026, 9, 1),
+            }
+        )
+        # Irregular marcada à mão, sem dívida: o cron deixa-a.
+        self.company.edu_mark_irregular = True
+        enrollment = self._enroll(date(2026, 9, 1))
+        enrollment.action_mark_irregular()
+        self.env['edu.student']._edu_update_standing()
+        self.assertEqual(enrollment.state, 'irregular')

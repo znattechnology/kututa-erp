@@ -164,6 +164,14 @@ class EduTrimester(models.Model):
                 raise ValidationError(self.env._('Os trimestres de %s sobrepõem-se.', year.name))
 
     def write(self, vals):
+        guarded = {'state', 'closed_date', 'closed_by_id', 'date_start', 'date_end'}
+        if (
+            guarded & set(vals)
+            and not self.env.su
+            and not self.env.user.has_group('edu_core.group_edu_manager')
+            and self.filtered(lambda t: t.state == 'closed')
+        ):
+            raise UserError(self.env._('Só a direcção altera ou reabre um trimestre fechado.'))
         if vals.get('is_current'):
             self.search(
                 [

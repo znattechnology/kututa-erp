@@ -82,6 +82,8 @@ class TestEduCore(TransactionCase):
         )
         with self.assertRaises(UserError):
             first.with_user(clerk).action_reopen()
+        with self.assertRaises(UserError):
+            first.with_user(clerk).write({'state': 'open'})  # nem por escrita directa
         first.action_reopen()
         self.assertEqual(first.state, 'open')
         with self.assertRaises(ValidationError):

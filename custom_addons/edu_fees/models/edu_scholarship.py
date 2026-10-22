@@ -44,9 +44,16 @@ class EduScholarship(models.Model):
     approved_by_id = fields.Many2one('res.users', string='Aprovada por', readonly=True)
     note = fields.Text(string='Fundamento')
 
-    _student_year_type_uniq = models.Constraint(
-        'UNIQUE(student_id, academic_year_id, scholarship_type)', 'O aluno já tem uma bolsa deste tipo no ano.'
+    # As anuladas não contam: depois de anular, pode pedir-se outra do mesmo tipo.
+    _student_year_type_active_uniq = models.UniqueIndex(
+        "(student_id, academic_year_id, scholarship_type) WHERE state != 'cancelled'",
+        'O aluno já tem uma bolsa deste tipo no ano.',
     )
+
+    def init(self):
+        self.env.cr.execute(
+            'ALTER TABLE edu_scholarship DROP CONSTRAINT IF EXISTS edu_scholarship_student_year_type_uniq'
+        )
 
     @api.depends('scholarship_type')
     def _compute_type_label(self):
@@ -66,10 +73,15 @@ class EduScholarship(models.Model):
                 raise ValidationError(self.env._('A bolsa termina antes de começar.'))
 
     def write(self, vals):
+        if 'requested_by_id' in vals and not self.env.su:
+            vals = {k: v for k, v in vals.items() if k != 'requested_by_id'}  # quem pediu não se escolhe
         locked = {'scholarship_type', 'discount_percent', 'discount_amount', 'date_from', 'date_to', 'student_id'}
-        if locked & set(vals) and self.filtered(lambda s: s.state == 'approved'):
-            # Alterar uma bolsa aprovada volta a exigir aprovação (quatro olhos).
-            vals = dict(vals, state='draft', approved_by_id=False)
+        approved = self.filtered(lambda s: s.state == 'approved') if locked & set(vals) else self.browse()
+        if approved:
+            # Alterar uma bolsa aprovada volta a pedido, em nome de quem a alterou (quatro olhos: outro aprova).
+            super(EduScholarship, approved).write(
+                {'state': 'draft', 'approved_by_id': False, 'requested_by_id': self.env.uid}
+            )
         return super().write(vals)
 
     def action_approve(self):

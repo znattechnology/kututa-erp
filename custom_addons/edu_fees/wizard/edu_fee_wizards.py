@@ -100,7 +100,7 @@ class EduFeeService(models.TransientModel):
         string='Serviço',
         required=True,
         domain="[('plan_id.academic_year_id', '=', academic_year_id), "
-        "('category', 'in', ('service', 'card', 'other', 'exam'))]",
+        "('category', 'in', ('service', 'card', 'other', 'exam', 'application', 'transfer'))]",
     )
     academic_year_id = fields.Many2one(related='enrollment_id.academic_year_id')
     quantity = fields.Float(string='Quantidade', default=1.0)
