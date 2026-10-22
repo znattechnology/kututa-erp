@@ -43,7 +43,7 @@ class EduEnrollmentDrop(models.TransientModel):
             lines = []
             for enrollment in wizard.enrollment_ids:
                 deadline = enrollment._drop_deadline()
-                if deadline and wizard.date and wizard.date > deadline and wizard.requested_by != 'school':
+                if wizard._is_late(deadline):
                     lines.append(
                         self.env._(
                             '%(student)s: fora do prazo de anulação (até %(deadline)s). Só a direcção pode anular.',
@@ -54,13 +54,20 @@ class EduEnrollmentDrop(models.TransientModel):
                 lines += [f'{enrollment.student_id.name}: {text}' for text in enrollment._edu_drop_warnings()]
             wizard.warnings = '\n'.join(lines) or False
 
+    def _is_late(self, deadline):
+        """Fora do prazo: conta o dia de hoje (recuar a data não o contorna) e só a anulação oficiosa não tem prazo
+        (pôr «pedida pela escola» num motivo comum também não)."""
+        if not deadline or self.reason_code in OFFICIAL_REASONS:
+            return False
+        today = fields.Date.context_today(self)
+        return max(filter(None, [self.date, today])) > deadline
+
     def action_confirm(self):
         self.ensure_one()
         manager = self.env.user.has_group('edu_core.group_edu_manager')
         for enrollment in self.enrollment_ids:
             deadline = enrollment._drop_deadline()
-            late = deadline and self.date > deadline and self.requested_by != 'school'
-            if late and not manager:
+            if self._is_late(deadline) and not manager:
                 raise UserError(
                     self.env._(
                         'A anulação de %(student)s está fora do prazo (até %(deadline)s): só a direcção a pode fazer.',

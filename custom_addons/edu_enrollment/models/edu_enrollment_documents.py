@@ -20,6 +20,9 @@ class EduEnrollmentDocumentType(models.Model):
     name = fields.Char(string='Documento', required=True, translate=True)
     sequence = fields.Integer(default=10)
     level_ids = fields.Many2many('edu.level', string='Níveis', help='Vazio: todos os níveis.')
+    company_id = fields.Many2one(
+        'res.company', string='Escola', index=True, help='Vazio: todas as escolas (os documentos da lei).'
+    )
     active = fields.Boolean(default=True)
 
 
@@ -81,8 +84,12 @@ class EduEnrollment(models.Model):
         """A lista do que se entrega na primeira matrícula; a confirmação não exige documentos (art. 27.º, n.º 3)."""
         types = self.env['edu.enrollment.document.type'].search([('active', '=', True)])
         for enrollment in self:
-            level = enrollment.class_id.level_id
-            wanted = types.filtered(lambda t, lv=level: not t.level_ids or lv in t.level_ids)
+            level, company = enrollment.class_id.level_id, enrollment.company_id
+            wanted = types.filtered(
+                lambda t, lv=level, c=company: (
+                    (not t.level_ids or lv in t.level_ids) and (not t.company_id or t.company_id == c)
+                )
+            )
             enrollment.document_ids = [fields.Command.create({'type_id': t.id}) for t in wanted]
 
     @api.model

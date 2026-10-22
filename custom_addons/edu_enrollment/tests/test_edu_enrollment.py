@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from freezegun import freeze_time
 
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -558,3 +558,38 @@ class TestEduEnrollment(TransactionCase):
         after = enrollment._drop_deadline()
         self.assertGreater(after, third.date_start + timedelta(days=13))
         self.assertGreater(after, before)
+
+    def test_audit_drop_rules(self):
+        """Anulação fora do prazo: nem «pedida pela escola» num motivo comum nem recuar a data a contornam; a
+        secretaria não mexe nas fases do calendário."""
+        secretary = self.env['res.users'].create(
+            {'name': 'Sec', 'login': 'sec_drop', 'group_ids': [(6, 0, [self.env.ref('edu_core.group_edu_user').id])]}
+        )
+        enrollment = self._enroll(self.students[0], self.class_b)
+        deadline = enrollment._drop_deadline()
+        Drop = self.env['edu.enrollment.drop'].with_user(secretary)
+        with freeze_time(deadline + timedelta(days=10)):
+            for vals in (
+                {'requested_by': 'school', 'reason_code': 'withdrawal'},
+                {'requested_by': 'guardian', 'reason_code': 'withdrawal', 'date': deadline - timedelta(days=1)},
+            ):
+                wizard = Drop.create({'enrollment_ids': [(6, 0, enrollment.ids)], **vals})
+                with self.assertRaisesRegex(UserError, 'fora do prazo'):
+                    wizard.action_confirm()
+            # A anulação oficiosa não tem prazo.
+            Drop.create(
+                {'enrollment_ids': [(6, 0, enrollment.ids)], 'requested_by': 'school', 'reason_code': 'incomplete'}
+            ).action_confirm()
+        self.assertEqual(enrollment.state, 'dropped')
+        Event = self.env['edu.calendar.event'].with_user(secretary)
+        Event.create({'name': 'Reunião de pais', 'academic_year_id': self.year.id, 'date_start': date(2026, 10, 1)})
+        phase = self.env['edu.calendar.event'].create(
+            {
+                'name': 'Matrícula',
+                'academic_year_id': self.year.id,
+                'phase': 'enrollment',
+                'date_start': date(2026, 8, 1),
+            }
+        )
+        with self.assertRaises(AccessError):
+            phase.with_user(secretary).date_end = date(2026, 12, 31)

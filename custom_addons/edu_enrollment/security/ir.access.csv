@@ -18,3 +18,4 @@ access_edu_enrollment_lower_subject_user,access_edu_enrollment_lower_subject_use
 access_edu_enrollment_lower_subject_employee,access_edu_enrollment_lower_subject_employee,edu.enrollment.lower.subject,base.group_user,r,
 edu_enrollment_subject_drop_comp_rule,edu.enrollment.subject.drop multi-empresa,edu.enrollment.subject.drop,,crud,"[('company_id', 'in', company_ids)]"
 edu_enrollment_lower_subject_comp_rule,edu.enrollment.lower.subject multi-empresa,edu.enrollment.lower.subject,,crud,"[('company_id', 'in', company_ids)]"
+edu_enrollment_document_type_comp_rule,edu.enrollment.document.type multi-empresa,edu.enrollment.document.type,,crud,"['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]"

@@ -56,7 +56,8 @@ class EduEnrollmentSubjectDrop(models.Model):
             if drop.enrollment_id.state not in SEAT_STATES:
                 raise UserError(self.env._('A matrícula já não está em curso.'))
             deadline = drop.enrollment_id._drop_deadline()
-            if deadline and drop.date > deadline and not manager:
+            # Conta o dia de hoje: recuar a data não contorna o prazo.
+            if deadline and max(drop.date, fields.Date.context_today(self)) > deadline and not manager:
                 raise UserError(
                     self.env._(
                         'Fora do prazo de anulação por disciplina (até %s, Decreto Executivo n.º 60/08, art. 11.º): '
@@ -118,9 +119,20 @@ class EduEnrollmentLowerSubject(models.Model):
             line.enrollment_id.with_context(edu_enrollment_reseed=True).subject_ids |= line.subject_id
         return lines
 
+    def unlink(self):
+        # A disciplina sai da matrícula se não for do plano da turma do aluno nem tiver notas.
+        pairs = [(line.enrollment_id, line.subject_id) for line in self]
+        result = super().unlink()
+        for enrollment, subject in pairs:
+            own = enrollment.class_id.subject_line_ids.subject_id
+            if subject not in own and subject not in enrollment._edu_locked_subjects():
+                enrollment.with_context(edu_enrollment_reseed=True).subject_ids -= subject
+        return result
+
 
 class EduEnrollment(models.Model):
-    _inherit = 'edu.enrollment'
+    # Separado dos documentos: as disciplinas anuladas e feitas noutra turma são do Decreto Executivo 60/08.
+    _inherit = 'edu.enrollment'  # pylint: disable=consider-merging-classes-inherited
 
     subject_drop_ids = fields.One2many('edu.enrollment.subject.drop', 'enrollment_id', string='Disciplinas anuladas')
     lower_subject_ids = fields.One2many(

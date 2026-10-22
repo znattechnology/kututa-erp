@@ -268,12 +268,16 @@ class EduTransfer(models.Model):
                 fields.Command.set((target.subject_line_ids.subject_id | enrollment._edu_locked_subjects()).ids)
             ]
         enrollment.with_context(edu_enrollment_reseed=True).write(vals)
+        if target.course_id != origin.course_id:
+            # As disciplinas feitas numa turma da classe anterior eram do curso antigo.
+            enrollment.lower_subject_ids.unlink()
 
     def _complete_incoming(self):
         if not self.origin_documents:
             raise UserError(self.env._('Registe a recepção da guia e do processo individual do aluno.'))
         deadline = self._incoming_deadline()
-        if deadline and self.effective_date > deadline and not self.env.user.has_group('edu_core.group_edu_manager'):
+        day = max(filter(None, [self.effective_date, fields.Date.context_today(self)]))
+        if deadline and day > deadline and not self.env.user.has_group('edu_core.group_edu_manager'):
             raise UserError(
                 self.env._(
                     'Fora do prazo de matrícula de transferidos (até %s): só a direcção.',

@@ -172,6 +172,7 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="level_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                <field name="company_id" groups="base.group_multi_company" placeholder="Todas"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -180,6 +181,8 @@
         <field name="name">Documentos da matrícula</field>
         <field name="res_model">edu.enrollment.document.type</field>
         <field name="view_mode">list</field>
+        <!-- Os documentos que a escola acrescenta são só dela; os da lei (sem escola) valem para todas. -->
+        <field name="context">{'default_company_id': allowed_company_ids[0]}</field>
         <field name="help" type="html">
             <p>Os documentos que se entregam na primeira matrícula (DP 162/23, art. 26.º). A confirmação de matrícula
             não exige documentos (art. 27.º, n.º 3).</p>
