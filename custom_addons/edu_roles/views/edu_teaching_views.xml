@@ -41,12 +41,41 @@
         <field name="context">{'create': False}</field>
     </record>
 
-    <menuitem id="menu_edu_teaching" name="A minha docência" parent="edu_core.menu_edu_root" sequence="1"
-              groups="edu_core.group_edu_teacher">
-        <menuitem id="menu_my_lessons" action="action_my_lessons" sequence="10"/>
-        <menuitem id="menu_my_classes" action="action_my_classes" sequence="20"/>
-        <menuitem id="menu_my_assessments" action="action_my_assessments" sequence="30"/>
-        <menuitem id="menu_my_schedule" action="action_my_schedule" sequence="40"/>
-        <menuitem id="menu_my_supervisions" action="action_my_supervisions" sequence="50"/>
-    </menuitem>
+    <!-- Painel do Professor: uma aplicação própria, como a Secretaria Express (o professor não usa os menus da
+         secretaria). O conselho de turma é do director de turma. -->
+    <record id="action_teacher_absences" model="ir.actions.act_window">
+        <field name="name">Justificação de faltas</field>
+        <field name="res_model">edu.lesson.attendance</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('state', 'in', ('absent', 'excused')), ('lesson_state', '=', 'done')]</field>
+        <field name="context">{'search_default_absent': 1, 'search_default_my_direction': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Não há faltas por justificar nas turmas que dirige</p>
+            <p>O director de turma justifica as faltas dos seus alunos, falta a falta ou um período inteiro.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_edu_teacher_root" name="Painel do Professor" sequence="2" groups="edu_core.group_edu_teacher"
+              web_icon="edu_roles,static/description/icon_teacher.png"/>
+    <menuitem id="menu_teacher_lessons" name="Aulas" parent="menu_edu_teacher_root" sequence="10"/>
+    <menuitem id="menu_my_lessons" action="action_my_lessons" parent="menu_teacher_lessons" sequence="10"/>
+    <menuitem id="menu_my_schedule" action="action_my_schedule" parent="menu_teacher_lessons" sequence="20"/>
+    <menuitem id="menu_teacher_classes" name="Turmas e notas" parent="menu_edu_teacher_root" sequence="20"/>
+    <menuitem id="menu_my_classes" action="action_my_classes" parent="menu_teacher_classes" sequence="10"/>
+    <menuitem id="menu_my_assessments" action="action_my_assessments" parent="menu_teacher_classes" sequence="20"/>
+    <menuitem id="menu_teacher_direction" name="Direcção de turma" parent="menu_edu_teacher_root" sequence="30"/>
+    <record id="edu_evaluation.menu_edu_council_session" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_teacher_direction"/>
+        <field name="sequence">10</field>
+    </record>
+    <menuitem id="menu_teacher_absences" name="Justificação de faltas" action="action_teacher_absences"
+              parent="menu_teacher_direction" sequence="20"/>
+    <menuitem id="menu_teacher_absence_summary" name="Mapa de faltas" action="edu_attendance.action_edu_absence_summary"
+              parent="menu_teacher_direction" sequence="30"/>
+    <menuitem id="menu_teacher_rdec" name="RDEC (iniciação)" action="edu_evaluation.action_edu_rdec"
+              parent="menu_teacher_direction" sequence="40"/>
+    <menuitem id="menu_teacher_exams" name="Exames" parent="menu_edu_teacher_root" sequence="40"/>
+    <menuitem id="menu_my_supervisions" action="action_my_supervisions" parent="menu_teacher_exams" sequence="10"/>
+    <!-- O antigo «A minha docência» (dentro da Secretaria Express) dá lugar ao painel. -->
+    <menuitem id="menu_edu_teaching" name="A minha docência" parent="edu_core.menu_edu_root" sequence="1" active="False"/>
 </odoo>

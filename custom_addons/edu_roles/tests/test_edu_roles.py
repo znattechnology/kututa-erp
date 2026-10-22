@@ -84,9 +84,17 @@ class TestEduRoles(TransactionCase):
 
     def test_teacher_menus(self):
         menus = self._menus(self.teacher_user)
-        for xmlid in ('edu_roles.menu_my_lessons', 'edu_roles.menu_my_classes', 'edu_attendance.menu_edu_lesson',
-                      'edu_evaluation.menu_edu_assessment', 'edu_evaluation.menu_edu_subject_result'):  # fmt: skip
+        # O professor tem o seu painel (como a secretaria tem a Secretaria Express), com o conselho de turma, que é do
+        # director de turma; não vê os menus da secretaria.
+        for xmlid in ('edu_roles.menu_edu_teacher_root', 'edu_roles.menu_my_lessons', 'edu_roles.menu_my_classes',
+                      'edu_roles.menu_my_assessments', 'edu_evaluation.menu_edu_council_session',
+                      'edu_roles.menu_teacher_absences'):  # fmt: skip
             self.assertIn(xmlid, menus)
+        self.assertNotIn('edu_core.menu_edu_root', menus)
+        self.assertEqual(
+            self.env.ref('edu_evaluation.menu_edu_council_session').parent_id,
+            self.env.ref('edu_roles.menu_teacher_direction'),
+        )
         for xmlid in ('edu_enrollment.menu_edu_application', 'edu_enrollment.menu_edu_enrollment',
                       'edu_fees.menu_edu_debtors', 'edu_core.menu_edu_config', 'edu_core.menu_edu_academic_year',
                       'edu_exam.menu_edu_exam_period', 'edu_records.menu_edu_graduation', 'hr.menu_hr_root',
@@ -130,9 +138,16 @@ class TestEduRoles(TransactionCase):
     def test_default_app(self):
         # Sem acção inicial, o Odoo abre a primeira aplicação do menu: tem de ser a Secretaria Express, não o chat.
         root = self.env.ref('edu_core.menu_edu_root').id
-        for user in (self.clerk, self.cashier, self.teacher_user, self.director):
+        for user in (self.clerk, self.cashier, self.director):
             menus = self.env['ir.ui.menu'].with_user(user).load_menus(False)
             self.assertEqual(menus['root']['children'][0], root, user.login)
+        # O professor entra no Painel do Professor.
+        menus = self.env['ir.ui.menu'].with_user(self.teacher_user).load_menus(False)
+        self.assertEqual(menus['root']['children'][0], self.env.ref('edu_roles.menu_edu_teacher_root').id)
+        # Sem turmas de iniciação (uma escola técnica), o RDEC não aparece.
+        rdec = self.env.ref('edu_roles.menu_teacher_rdec').id
+        if not self.env['edu.class'].search_count([('level_id.code', '=', 'INICIACAO')]):
+            self.assertNotIn(rdec, menus)
 
     def test_teacher_fields_without_hr(self):
         # Sem acesso ao RH, os funcionários lêem-se pelo perfil público: os campos de professor têm de lá estar.
