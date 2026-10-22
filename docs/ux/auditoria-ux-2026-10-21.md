@@ -259,3 +259,6 @@ Referência: `apps/web/components/academic/mini-pauta-document.tsx` do secPed.
 - **Horário (PDF):** grelha Hora × dias, de segunda a sexta (o sábado só aparece se tiver aulas). Em cada aula: a disciplina a negrito, o professor e a sala. Linhas cinzentas, sem fundos e sem a cor da escola.
 - **Horário (separador da turma):** deixou de imitar o secPed (blocos coloridos por quartos de hora). É a mesma grelha do PDF, com «Sem professor» quando a aula ainda não tem professor.
 - **Mini-pauta:** o timbre da escola e as assinaturas em maiúsculas deram lugar ao cabeçalho e ao rodapé da pauta. A grelha continua numa só folha A4 (41 alunos na 12.ª A AC).
+- **Separador «Horário» da turma (2026-10-22):** por baixo da grelha aparecia a lista editável das aulas (uma linha por tempo, 32 linhas na 10.ª A EST), com as mesmas informações da grelha e as horas repetidas três vezes: «07:00–07:45 (07:00–07:45)», «7h» e «7h 45min». O separador passa a mostrar só a grelha, o aviso dos tempos diferentes do plano e o botão «Editar horário», que abre a lista das aulas da turma.
+  - Os tempos lectivos já não repetem as horas quando o nome já as tem.
+  - As horas de relógio (horários, tempos, turnos, aulas e exames) mostram-se como «07:45» e não como «7h 45min».

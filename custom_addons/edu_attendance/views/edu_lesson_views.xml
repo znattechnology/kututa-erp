@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <list string="Aulas" decoration-muted="state == 'cancelled'" decoration-info="state == 'scheduled'">
                 <field name="date"/>
-                <field name="hour_from" widget="float_time" optional="show"/>
+                <field name="hour_from" widget="float_time" options="{'numeric': True}" optional="show"/>
                 <field name="class_id"/>
                 <field name="subject_id"/>
                 <field name="lesson_number" optional="show"/>
@@ -49,7 +49,7 @@
                             <field name="date"/>
                             <label for="hour_from" string="Hora"/>
                             <div class="o_row">
-                                <field name="hour_from" widget="float_time"/> - <field name="hour_to" widget="float_time"/>
+                                <field name="hour_from" widget="float_time" options="{'numeric': True}"/> - <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
                             </div>
                             <field name="room_id" options="{'no_create': True}"/>
                             <field name="trimester_id"/>

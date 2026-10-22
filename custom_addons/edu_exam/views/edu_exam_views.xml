@@ -42,8 +42,8 @@
                     <field name="session_ids" context="{'default_period_id': id}">
                         <list>
                             <field name="date"/>
-                            <field name="hour_from" widget="float_time"/>
-                            <field name="hour_to" widget="float_time"/>
+                            <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                            <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
                             <field name="subject_id"/>
                             <field name="class_ids" widget="many2many_tags"/>
                             <field name="seat_count"/>
@@ -92,7 +92,7 @@
                         <group>
                             <field name="date"/>
                             <label for="hour_from" string="Hora"/>
-                            <div class="o_row"><field name="hour_from" widget="float_time"/> - <field name="hour_to" widget="float_time"/></div>
+                            <div class="o_row"><field name="hour_from" widget="float_time" options="{'numeric': True}"/> - <field name="hour_to" widget="float_time" options="{'numeric': True}"/></div>
                             <field name="seat_count"/>
                             <field name="capacity"/>
                         </group>
@@ -136,7 +136,7 @@
         <field name="arch" type="xml">
             <list string="Sessões de exame">
                 <field name="date"/>
-                <field name="hour_from" widget="float_time"/>
+                <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
                 <field name="subject_id"/>
                 <field name="period_id"/>
                 <field name="class_ids" widget="many2many_tags" optional="show"/>

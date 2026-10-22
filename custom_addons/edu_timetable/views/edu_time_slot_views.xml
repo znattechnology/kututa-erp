@@ -7,8 +7,8 @@
             <list string="Tempos lectivos" editable="bottom" decoration-muted="is_break">
                 <field name="shift_id"/>
                 <field name="name"/>
-                <field name="hour_from" widget="float_time"/>
-                <field name="hour_to" widget="float_time"/>
+                <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
                 <field name="is_break"/>
                 <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>

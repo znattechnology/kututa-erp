@@ -26,21 +26,11 @@
                         <strong>Tempos do horário diferentes do plano curricular:</strong>
                         <field name="schedule_check" nolabel="1"/>
                     </div>
-                    <field name="schedule_grid" nolabel="1"/>
-                    <field name="schedule_ids" context="{'default_class_id': id}">
-                        <list editable="bottom">
-                            <field name="weekday"/>
-                            <field name="time_slot_id" options="{'no_create': True}"/>
-                            <field name="hour_from" widget="float_time"/>
-                            <field name="hour_to" widget="float_time"/>
-                            <field name="subject_id" options="{'no_create': True}"/>
-                            <field name="teacher_id" options="{'no_create': True}"/>
-                            <field name="room_id" options="{'no_create': True}"/>
-                            <field name="trimester_id" optional="hide" options="{'no_create': True}"/>
-                            <field name="academic_year_id" column_invisible="1"/>
-                            <field name="company_id" column_invisible="1"/>
-                        </list>
-                    </field>
+                    <div class="d-flex justify-content-end mb-2">
+                        <button name="action_view_schedule" type="object" string="Editar horário" icon="edit_calendar" class="btn-secondary"/>
+                    </div>
+                    <field name="schedule_grid" nolabel="1" invisible="not schedule_grid"/>
+                    <div class="text-muted" invisible="schedule_grid">A turma ainda não tem horário. Use «Editar horário» para lançar os tempos.</div>
                 </page>
             </page>
         </field>

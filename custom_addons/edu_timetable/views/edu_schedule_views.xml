@@ -10,8 +10,8 @@
                 <field name="company_id" column_invisible="1"/>
                 <field name="weekday"/>
                 <field name="time_slot_id" options="{'no_create': True}"/>
-                <field name="hour_from" widget="float_time"/>
-                <field name="hour_to" widget="float_time"/>
+                <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
                 <field name="subject_id" options="{'no_create': True}"/>
                 <field name="teacher_id" options="{'no_create': True}"/>
                 <field name="room_id" options="{'no_create': True}"/>
@@ -38,8 +38,8 @@
                         <group>
                             <field name="weekday"/>
                             <field name="time_slot_id" options="{'no_create': True}"/>
-                            <field name="hour_from" widget="float_time"/>
-                            <field name="hour_to" widget="float_time"/>
+                            <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                            <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
                             <field name="trimester_id" options="{'no_create': True}"/>
                         </group>
                     </group>

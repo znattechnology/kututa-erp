@@ -28,7 +28,9 @@ class EduTimeSlot(models.Model):
     @api.depends('name', 'hour_from', 'hour_to')
     def _compute_display_name(self):
         for slot in self:
-            slot.display_name = f'{slot.name} ({format_hour(slot.hour_from)}-{format_hour(slot.hour_to)})'
+            hours = f'{format_hour(slot.hour_from)}–{format_hour(slot.hour_to)}'
+            # A migração do secPed dá aos tempos o nome das horas («07:00–07:45»): não as repetir.
+            slot.display_name = slot.name if slot.name.replace('-', '–') == hours else f'{slot.name} ({hours})'
 
     @api.constrains('hour_from', 'hour_to', 'shift_id')
     def _check_hours(self):

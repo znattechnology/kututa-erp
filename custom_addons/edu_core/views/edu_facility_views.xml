@@ -83,8 +83,8 @@
             <list string="Turnos" editable="bottom">
                 <field name="name"/>
                 <field name="shift_type"/>
-                <field name="hour_from" widget="float_time"/>
-                <field name="hour_to" widget="float_time"/>
+                <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
                 <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
