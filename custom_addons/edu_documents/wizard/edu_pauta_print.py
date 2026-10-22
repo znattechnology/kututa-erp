@@ -37,7 +37,8 @@ VERDICTS = {
     'retained': ('Não transita', 'neg'),
     'pending': ('Pendente', None),
 }
-EXIT_CODES = {'dropped': ('c)', 'Anulada', 'neg'), 'transferred': ('d)', 'Transferido', 'green')}
+# Menções não negativas, a azul (DE 424/25, art. 35.º; Termos do Despacho 60/08): anulação e transferência.
+EXIT_CODES = {'dropped': ('c)', 'Anulou a matrícula', 'pos'), 'transferred': ('d)', 'Transferido', 'pos')}
 
 
 class EduPautaPrint(models.TransientModel):

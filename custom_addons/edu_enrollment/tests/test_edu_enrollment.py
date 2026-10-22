@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
@@ -12,6 +12,7 @@ class TestEduEnrollment(TransactionCase):
         cls.year = cls.env['edu.academic.year'].create(
             {'name': '2026/2027', 'date_start': date(2026, 9, 1), 'date_end': date(2027, 7, 31), 'is_current': True}
         )
+        cls.year.action_generate_trimesters()
         cls.next_year = cls.env['edu.academic.year'].create(
             {'name': '2027/2028', 'date_start': date(2027, 9, 1), 'date_end': date(2028, 7, 31)}
         )
@@ -98,12 +99,21 @@ class TestEduEnrollment(TransactionCase):
         self.class_b.action_renumber_alphabetical()
         self.assertEqual([e.order_number for e in enrollments], [3, 1, 2])
         wizard = self.env['edu.enrollment.drop'].create(
-            {'enrollment_ids': [(6, 0, enrollments[1].ids)], 'reason': 'Mudança de residência'}
+            {
+                'enrollment_ids': [(6, 0, enrollments[1].ids)],
+                'reason_code': 'relocation',
+                'reason': 'Família mudou-se para o Huambo',
+            }
         )
+        self.assertTrue(wizard.justified)  # mudança de residência: motivo justificado (art. 28.º, n.º 4)
         wizard.action_confirm()
         self.assertEqual(enrollments[1].state, 'dropped')
-        self.assertEqual((ana.student_status, ana.current_class_id.id), ('dropped', False))
-        self.assertEqual(enrollments[1].drop_reason, 'Mudança de residência')
+        self.assertEqual(
+            (enrollments[1].drop_reason_code, enrollments[1].drop_requested_by, enrollments[1].drop_justified),
+            ('relocation', 'guardian', True),
+        )
+        self.assertTrue(enrollments[1].drop_exam_right)  # II Ciclo: direito a exames especiais
+        self.assertEqual(enrollments[1].drop_reason, 'Família mudou-se para o Huambo')
         with self.assertRaises(UserError):
             enrollments[1]._drop('outra vez')
         # Quem entra a meio do ano fica no fim, sem renumerar.
@@ -111,6 +121,36 @@ class TestEduEnrollment(TransactionCase):
         self.assertEqual(late.order_number, 4)
         enrollments[1].action_reactivate()
         self.assertEqual(enrollments[1].state, 'active')
+        self.assertFalse(enrollments[1].drop_reason_code)
+        self.assertIn('Saída anterior', enrollments[1].message_ids[:1].body)
+        # Prazo (técnico: 5.º dia útil do III trimestre): depois dele, só a direcção anula a pedido.
+        deadline = enrollments[2]._drop_deadline()
+        self.assertTrue(deadline)
+        secretary = self.env['res.users'].create(
+            {
+                'name': 'Secretaria',
+                'login': 'sec_drop',
+                'group_ids': [(6, 0, [self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        late = (
+            self.env['edu.enrollment.drop']
+            .with_user(secretary)
+            .create(
+                {
+                    'enrollment_ids': [(6, 0, enrollments[2].ids)],
+                    'reason_code': 'withdrawal',
+                    'date': deadline + timedelta(days=1),
+                }
+            )
+        )
+        self.assertIn('fora do prazo', late.warnings)
+        with self.assertRaisesRegex(UserError, 'fora do prazo'):
+            late.action_confirm()
+        # A anulação oficiosa (processo incompleto) não tem prazo e é a escola que anula.
+        late.write({'reason_code': 'incomplete', 'requested_by': 'school'})
+        late.action_confirm()
+        self.assertEqual((enrollments[2].state, enrollments[2].drop_exam_right), ('dropped', False))
         with self.assertRaises(UserError):
             enrollments[1].unlink()
 

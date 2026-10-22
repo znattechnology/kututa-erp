@@ -5,13 +5,28 @@
         <field name="model">edu.enrollment.drop</field>
         <field name="arch" type="xml">
             <form string="Anular a matrícula">
+                <div class="alert alert-warning" role="alert" invisible="not warnings">
+                    <field name="warnings" nolabel="1"/>
+                </div>
                 <group>
-                    <field name="enrollment_ids" widget="many2many_tags" readonly="1"/>
-                    <field name="date"/>
-                    <field name="reason" placeholder="Desistência, mudança de residência…"/>
+                    <group>
+                        <field name="enrollment_ids" widget="many2many_tags" readonly="1"/>
+                        <field name="date"/>
+                        <field name="requested_by"/>
+                    </group>
+                    <group>
+                        <field name="reason_code"/>
+                        <field name="justified"/>
+                    </group>
                 </group>
+                <field name="reason" placeholder="Documentos entregues, pormenores do pedido…"/>
+                <p class="text-muted small mt-2">
+                    A pedido do encarregado (ou do aluno maior), só até ao fim do II trimestre no ensino geral e até ao
+                    5.º dia útil do III trimestre no técnico. A anulação justificada no II Ciclo dá direito a exames
+                    especiais. As notas e as faltas ficam no processo do aluno; na pauta, «Anulou a matrícula».
+                </p>
                 <footer>
-                    <button name="action_confirm" type="object" string="Anular" class="btn-primary"/>
+                    <button name="action_confirm" type="object" string="Anular a matrícula" class="btn-primary"/>
                     <button special="cancel" string="Cancelar"/>
                 </footer>
             </form>

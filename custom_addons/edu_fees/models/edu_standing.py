@@ -173,6 +173,34 @@ class EduEnrollment(models.Model):
         _blocked, message = self.student_id._edu_gate('reenrollment')
         return [*warnings, message] if message else warnings
 
+    def _edu_drop_warnings(self):
+        """As facturas por pagar não se anulam sozinhas (são documentos fiscais): ficam na conta do encarregado e a
+        tesouraria decide se emite nota de crédito. Depois da anulação deixam de se gerar propinas."""
+        warnings = super()._edu_drop_warnings()
+        invoices = (
+            self.env['account.move']
+            .sudo()
+            .search(
+                [
+                    ('edu_enrollment_id', '=', self.id),
+                    ('move_type', '=', 'out_invoice'),
+                    ('state', '=', 'posted'),
+                    ('payment_state', 'not in', ('paid', 'in_payment', 'reversed')),
+                ]
+            )
+        )
+        if invoices:
+            total = sum(invoices.mapped('amount_residual'))
+            warnings.append(
+                self.env._(
+                    '%(count)s factura(s) por pagar (%(total)s Kz): ficam na conta do encarregado; a tesouraria decide '
+                    'se emite nota de crédito. Deixam de se gerar propinas.',
+                    count=len(invoices),
+                    total=f'{total:,.2f}'.replace(',', ' '),
+                )
+            )
+        return warnings
+
     def action_confirm(self):
         result = super().action_confirm()
         if not self.env.context.get('edu_fees_skip_generation'):

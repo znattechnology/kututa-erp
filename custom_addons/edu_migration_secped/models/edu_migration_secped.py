@@ -848,6 +848,9 @@ class EduMigrationSecped(models.AbstractModel):
             }
             if state in ('dropped', 'transferred') and not vals['drop_date']:
                 vals['drop_date'] = to_date(enrollment.get('updatedAt')) or vals['date']
+            if state == 'dropped':
+                note = (vals['drop_reason'] or '').lower()
+                vals['drop_reason_code'] = 'withdrawal' if 'desist' in note else 'other'
             # O estado de um ano fechado (concluída, retido) vem da decisão; uma nova passagem não o reabre.
             existing = run.ref('enrollments', enrollment['id'])
             if existing and state == 'active':

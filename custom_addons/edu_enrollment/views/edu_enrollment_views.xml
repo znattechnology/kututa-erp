@@ -26,9 +26,10 @@
                     <button name="action_confirm" type="object" string="Confirmar a matrícula" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_mark_irregular" type="object" string="Marcar irregular" invisible="state != 'active'"/>
                     <button name="action_mark_regular" type="object" string="Regularizar" invisible="state != 'irregular'"/>
-                    <button name="action_drop" type="object" string="Anular" invisible="state not in ('draft', 'active', 'irregular')"/>
-                    <button name="action_reactivate" type="object" string="Reactivar" invisible="state not in ('dropped', 'transferred')"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,active,completed"/>
+                    <button name="action_drop" type="object" string="Anular a matrícula" invisible="state not in ('draft', 'active', 'irregular')"/>
+                    <button name="action_reactivate" type="object" string="Reactivar" invisible="state not in ('dropped', 'transferred')"
+                            confirm="Reactivar a matrícula? Voltam a aplicar-se as regras da matrícula (vagas, retenções, dívida); a saída anterior fica no histórico."/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,completed,retained"/>
                 </header>
                 <sheet>
                     <div class="alert alert-warning" role="alert" invisible="not warning"><field name="warning" nolabel="1"/></div>
@@ -47,6 +48,10 @@
                             <field name="previous_enrollment_id" invisible="not previous_enrollment_id"/>
                             <field name="application_id" invisible="not application_id"/>
                             <field name="drop_date" invisible="not drop_date"/>
+                            <field name="drop_reason_code" invisible="not drop_reason_code"/>
+                            <field name="drop_requested_by" invisible="not drop_requested_by"/>
+                            <field name="drop_justified" invisible="state != 'dropped'"/>
+                            <field name="drop_exam_right" invisible="not drop_exam_right"/>
                             <field name="drop_reason" invisible="not drop_reason"/>
                             <field name="company_id" invisible="1"/>
                         </group>

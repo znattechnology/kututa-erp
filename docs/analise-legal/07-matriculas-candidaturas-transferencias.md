@@ -293,3 +293,30 @@ Menu Matrículas › Confirmação de matrículas, que substitui a antiga «Rema
   - sem nota, não se aprova.
 - Quem vem transferido não faz prova.
 - A turma escolhida na aprovação tem de ser do curso pretendido.
+
+## 6. Feito (2026-10-22): fase B, anulações
+
+- **Nome único:** «Anulações de matrícula», que é o termo da lei, no menu, no botão («Anular a matrícula») e no estado («Anulada»).
+- **O pedido regista:**
+  - quem pede (encarregado, aluno maior, ou a escola na anulação oficiosa);
+  - o motivo, de uma lista da lei: doença comprovada; mudança de residência; actividades oficiais com mais de 45 dias lectivos; outro motivo fundamentado; desistência; processo incompleto (60 dias); declarações falsas; outro;
+  - se é justificada: proposta pelo motivo (art. 28.º, n.º 4) e corrigível;
+  - as observações.
+- **Prazo a pedido:**
+  - fim do II trimestre no ensino geral (DP 162/23, art. 28.º, n.º 1);
+  - 5.º dia útil do III trimestre no técnico (Despacho 60/08, art. 11.º);
+  - fora do prazo, só a direcção;
+  - a anulação oficiosa não tem prazo e só a escola a faz.
+- **Efeitos:**
+  - deixam de se gerar propinas;
+  - as facturas por pagar aparecem no assistente e ficam na conta do encarregado. Não se anulam sozinhas porque são documentos fiscais: a tesouraria decide a nota de crédito;
+  - anulação justificada no II Ciclo → «Direito a exames especiais» (art. 28.º, n.º 3);
+  - as notas e as faltas ficam no processo.
+- **Pautas:** «Anulou a matrícula» e «Transferido» passam a azul, como menções não negativas (DE 424/25, art. 35.º). Antes, «Anulada» aparecia a vermelho.
+- **Reactivar:**
+  - só no ano lectivo em curso;
+  - volta a passar as regras da matrícula (vagas, retenções, disciplinas em atraso, dívida);
+  - a saída anterior fica no histórico da matrícula;
+  - só para matrículas anuladas ou transferidas (já não aceita concluídas nem retidas).
+- **Vovó Eva:** as 55 anulações migradas («DESISTENTE») ficaram com o motivo «Desistência». A migração do secPed faz o mesmo nas próximas corridas.
+- **Por decidir:** anulação **por disciplina** no técnico (Despacho 60/08, art. 11.º), à espera da confirmação de que o despacho se aplica.

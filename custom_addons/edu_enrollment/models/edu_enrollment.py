@@ -1,9 +1,32 @@
+from datetime import timedelta
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 # Estados que ocupam vaga na turma (o irregular está matriculado, com propinas em atraso).
 SEAT_STATES = ('active', 'irregular')
 CLOSED_STATES = ('dropped', 'transferred')
+
+# Anulação de matrícula (DP 162/23, art. 28.º): os motivos justificados do n.º 4 dão direito a exames especiais no
+# II Ciclo (n.º 3); a anulação oficiosa vem do processo incompleto (art. 24.º, n.º 10) ou de declarações falsas (art.
+# 28.º, n.º 2).
+DROP_REASONS = [
+    ('illness', 'Doença comprovada'),
+    ('relocation', 'Mudança de residência dos pais ou encarregados'),
+    ('official_activity', 'Actividades oficiais culturais ou desportivas (mais de 45 dias lectivos)'),
+    ('justified_other', 'Outro motivo fundamentado'),
+    ('withdrawal', 'Desistência'),
+    ('incomplete', 'Processo de matrícula incompleto (60 dias)'),
+    ('false_statement', 'Declarações falsas no boletim de matrícula'),
+    ('other', 'Outro'),
+]
+JUSTIFIED_REASONS = ('illness', 'relocation', 'official_activity', 'justified_other')
+OFFICIAL_REASONS = ('incomplete', 'false_statement')
+DROP_REQUESTERS = [
+    ('guardian', 'Encarregado de educação'),
+    ('student', 'O próprio aluno (maior de idade)'),
+    ('school', 'A escola (anulação oficiosa)'),
+]
 
 
 class EduEnrollment(models.Model):
@@ -55,8 +78,16 @@ class EduEnrollment(models.Model):
         string='N.º de ordem', readonly=True, copy=False, tracking=True, help='Número na pauta da turma, fixo no ano.'
     )
     date = fields.Date(string='Data', required=True, default=fields.Date.context_today)
-    drop_date = fields.Date(string='Data de saída', readonly=True, copy=False)
-    drop_reason = fields.Text(string='Motivo da saída', readonly=True, copy=False)
+    drop_date = fields.Date(string='Data de saída', readonly=True, copy=False, tracking=True)
+    drop_reason_code = fields.Selection(DROP_REASONS, string='Motivo', readonly=True, copy=False, tracking=True)
+    drop_requested_by = fields.Selection(DROP_REQUESTERS, string='Pedida por', readonly=True, copy=False)
+    drop_justified = fields.Boolean(string='Anulação justificada', readonly=True, copy=False, tracking=True)
+    drop_reason = fields.Text(string='Observações da saída', readonly=True, copy=False, tracking=True)
+    drop_exam_right = fields.Boolean(
+        string='Direito a exames especiais',
+        compute='_compute_drop_exam_right',
+        help='Anulação justificada, dentro do prazo, no II Ciclo (DP 162/23, art. 28.º, n.º 3).',
+    )
     subject_ids = fields.Many2many('edu.subject', string='Disciplinas', check_company=True)
     previous_enrollment_id = fields.Many2one('edu.enrollment', string='Matrícula anterior', copy=False)
     application_id = fields.Many2one('edu.application', string='Candidatura', readonly=True, copy=False)
@@ -174,12 +205,50 @@ class EduEnrollment(models.Model):
             enrollment.write(vals)
         return True
 
-    def _drop(self, reason, state='dropped', day=None):
+    @api.depends('state', 'drop_justified', 'class_number')
+    def _compute_drop_exam_right(self):
+        for enrollment in self:
+            enrollment.drop_exam_right = (
+                enrollment.state == 'dropped' and enrollment.drop_justified and enrollment.class_number >= 10
+            )
+
+    def _drop_deadline(self):
+        """Último dia para anular a pedido: o fim do II trimestre no ensino geral (DP 162/23, art. 28.º, n.º 1); o 5.º
+        dia útil do III trimestre no técnico (Despacho 60/08, art. 11.º). Sem trimestres, não há prazo."""
+        self.ensure_one()
+        trimesters = self.academic_year_id.trimester_ids.sorted('number')
+        if self.course_id.level_id.subsystem == 'technical':
+            third = trimesters.filtered(lambda t: t.number == 3)[:1]
+            if not third:
+                return False
+            day, working = third.date_start, 0
+            while True:
+                if day.weekday() < 5:
+                    working += 1
+                    if working == 5:
+                        return day
+                day += timedelta(days=1)
+        second = trimesters.filtered(lambda t: t.number == 2)[:1]
+        return second.date_end if second else False
+
+    def _edu_drop_warnings(self):
+        """Avisos a mostrar antes de anular (as propinas acrescentam as facturas por pagar)."""
+        self.ensure_one()
+        return []
+
+    def _drop(self, reason, state='dropped', day=None, *, reason_code=False, requested_by=False, justified=False):
         for enrollment in self:
             if enrollment.state in CLOSED_STATES:
                 raise UserError(self.env._('A matrícula de %s já está fechada.', enrollment.student_id.name))
             enrollment.write(
-                {'state': state, 'drop_date': day or fields.Date.context_today(self), 'drop_reason': reason}
+                {
+                    'state': state,
+                    'drop_date': day or fields.Date.context_today(self),
+                    'drop_reason': reason or False,
+                    'drop_reason_code': reason_code,
+                    'drop_requested_by': requested_by,
+                    'drop_justified': justified,
+                }
             )
         return True
 
@@ -194,9 +263,31 @@ class EduEnrollment(models.Model):
         }
 
     def action_reactivate(self):
-        for enrollment in self.filtered(lambda e: e.state in ('dropped', 'transferred', 'completed', 'retained')):
+        """Volta a activar uma matrícula anulada ou transferida no ano em curso, com as regras da matrícula (vagas,
+        retenções, disciplinas em atraso, dívida). A anulação anterior fica no histórico da matrícula."""
+        for enrollment in self.filtered(lambda e: e.state in CLOSED_STATES):
+            if not enrollment.academic_year_id.is_current:
+                raise UserError(self.env._('Só se reactiva uma matrícula do ano lectivo em curso.'))
             enrollment._check_capacity()
-            enrollment.write({'state': 'active', 'drop_date': False, 'drop_reason': False})
+            enrollment._edu_check_enrollment_allowed()
+            labels = dict(DROP_REASONS)
+            enrollment.message_post(
+                body=self.env._(
+                    'Matrícula reactivada. Saída anterior: %(date)s, %(reason)s.',
+                    date=enrollment.drop_date and enrollment.drop_date.strftime('%d/%m/%Y') or '—',
+                    reason=labels.get(enrollment.drop_reason_code) or enrollment.drop_reason or '—',
+                )
+            )
+            enrollment.write(
+                {
+                    'state': 'active',
+                    'drop_date': False,
+                    'drop_reason': False,
+                    'drop_reason_code': False,
+                    'drop_requested_by': False,
+                    'drop_justified': False,
+                }
+            )
             enrollment._check_one_per_year()
         return True
 
