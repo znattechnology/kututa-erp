@@ -220,15 +220,13 @@ class EduClass(models.Model):
         }
 
     def action_open_council(self):
+        """Abre o ecrã do conselho de turma nesta turma."""
         self.ensure_one()
-        session = self.env['edu.council.session'].search([('class_id', '=', self.id)], limit=1) or self.env[
-            'edu.council.session'
-        ].create({'class_id': self.id})
         return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'edu.council.session',
-            'res_id': session.id,
-            'view_mode': 'form',
+            'type': 'ir.actions.client',
+            'tag': 'edu_evaluation.council_board',
+            'name': self.env._('Conselho de turma'),
+            'context': {'default_class_id': self.id},
         }
 
     def action_view_pauta(self):

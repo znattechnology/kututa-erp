@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_evaluation.CouncilBoard">
+        <div class="o_action o_edu_council_board">
+            <Layout display="this.display">
+                <div class="o_edu_cb_body">
+                    <div class="o_edu_cb_toolbar">
+                        <select class="form-select" aria-label="Turma" t-on-change="(ev) => this.onClassChange(ev)">
+                            <option value="">Escolher a turma…</option>
+                            <t t-foreach="this.state.classes" t-as="c" t-key="c.id">
+                                <option t-att-value="c.id" t-att-selected="c.id === this.state.classId">
+                                    <t t-out="c.name"/><t t-if="c.directs"> · dirijo</t>
+                                </option>
+                            </t>
+                        </select>
+                        <t t-if="this.state.data">
+                            <span class="badge" t-att-class="this.session.state === 'realized' ? 'text-bg-success' : (this.session.state === 'open' ? 'text-bg-info' : 'text-bg-secondary')">
+                                <t t-out="this.session.state === 'realized' ? 'Realizado em ' + this.session.realized_date : (this.session.state === 'open' ? 'Em curso' : 'Por iniciar')"/>
+                            </span>
+                            <span class="text-muted">Director(a) de turma: <t t-out="this.session.director || 'por indicar'"/></span>
+                            <span class="flex-grow-1"/>
+                            <t t-if="this.session.state === 'realized' and this.state.data.can_print">
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.print('action_print_acta')">
+                                    <i class="oi me-1" data-icon="description" aria-hidden="true"/>Ver a acta
+                                </button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.print('action_print_attendance')">
+                                    <i class="oi me-1" data-icon="how_to_reg" aria-hidden="true"/>Lista de presença
+                                </button>
+                            </t>
+                        </t>
+                    </div>
+
+                    <div t-if="!this.state.classes.length" class="o_edu_cb_card text-muted">
+                        Não tem turmas neste ano lectivo: o conselho de turma abre-se a partir das turmas que dirige ou onde dá aulas.
+                    </div>
+
+                    <t t-if="this.state.data">
+                        <!-- Por iniciar -->
+                        <div t-if="this.session.state === 'draft'" class="o_edu_cb_card o_edu_cb_wait">
+                            <h2 class="o_edu_cb_h2">Conselho ainda não iniciado</h2>
+                            <t t-if="this.state.data.is_director">
+                                <p>Inicie o conselho para que os professores desta turma possam participar (votações, atribuição de pontos).</p>
+                                <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy" t-on-click="() => this.start()">Iniciar o conselho</button>
+                            </t>
+                            <p t-else="" class="text-muted mb-0">Aguarde que o director de turma inicie o conselho para poder participar.</p>
+                        </div>
+
+                        <t t-else="">
+                            <!-- Votações abertas -->
+                            <section t-if="this.state.data.votes.length" class="o_edu_cb_votes">
+                                <h3 class="o_edu_cb_h3">Votações abertas</h3>
+                                <p t-if="this.session.technical and this.session.quorum" class="small text-muted">
+                                    Regime técnico (Despacho 60/08): a votação só apura com quórum de <t t-out="this.session.quorum"/> de <t t-out="this.session.members"/> professores.
+                                </p>
+                                <div class="o_edu_cb_vote_list">
+                                    <div t-foreach="this.state.data.votes" t-as="v" t-key="v.id" class="o_edu_cb_card o_edu_cb_vote">
+                                        <div><strong t-out="v.student"/></div>
+                                        <div class="small text-muted"><t t-out="v.subject"/> · nota <t t-out="this.fmt(v.base)"/> → <t t-out="this.fmt(v.base + 2)"/></div>
+                                        <div class="small">
+                                            <span class="text-success"><t t-out="v.favor"/> a favor</span> ·
+                                            <span class="text-danger"><t t-out="v.against"/> contra</span>
+                                            <t t-if="v.quorum"> · quórum <t t-out="v.voted"/>/<t t-out="v.quorum"/></t>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-1 mt-2" t-if="this.session.state === 'open'">
+                                            <t t-if="this.state.data.is_member">
+                                                <button type="button" class="btn btn-sm" t-att-disabled="this.state.busy"
+                                                        t-att-class="v.my_ballot === 'favor' ? 'btn-success' : 'btn-secondary'"
+                                                        t-on-click="() => this.vote(v, true)">A favor</button>
+                                                <button type="button" class="btn btn-sm" t-att-disabled="this.state.busy"
+                                                        t-att-class="v.my_ballot === 'against' ? 'btn-danger' : 'btn-secondary'"
+                                                        t-on-click="() => this.vote(v, false)">Contra</button>
+                                            </t>
+                                            <button t-if="this.state.data.is_director" type="button" class="btn btn-sm btn-primary ms-auto"
+                                                    t-att-disabled="this.state.busy" t-on-click="() => this.closeVote(v)">Apurar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Caso limite escolhido -->
+                            <div t-if="this.state.selected" class="o_edu_cb_card o_edu_cb_selected">
+                                <div class="flex-grow-1">
+                                    <strong t-out="this.state.selected.student.name"/> · <t t-out="this.state.selected.subject"/> ·
+                                    nota final <t t-out="this.fmt(this.state.selected.cell.base)"/> → <t t-out="this.fmt(this.state.selected.cell.base + 2)"/>
+                                    <div t-if="!this.selectedActions.length" class="small text-muted">
+                                        <t t-if="this.state.selected.cell.vote_id">Esta nota já está em votação.</t>
+                                        <t t-else="">Só o professor da disciplina sobe a nota, e só o director de turma abre votações.</t>
+                                    </div>
+                                </div>
+                                <t t-foreach="this.selectedActions" t-as="a" t-key="a.key">
+                                    <button type="button" class="btn btn-sm" t-att-class="a.primary ? 'btn-primary' : 'btn-secondary'"
+                                            t-att-disabled="this.state.busy" t-on-click="() => this.runSelected(a.key)" t-out="a.label"/>
+                                </t>
+                                <button type="button" class="btn btn-sm btn-link" t-on-click="() => this.state.selected = null">Fechar</button>
+                            </div>
+
+                            <!-- Grelha -->
+                            <p class="small mb-2">
+                                <span class="text-success"><t t-out="this.counts.positives"/> aprovadas</span> ·
+                                <span class="text-danger"><t t-out="this.counts.negatives"/> negativas</span> ·
+                                <span class="text-warning"><t t-out="this.counts.borderline"/> casos limite</span>
+                            </p>
+                            <div t-if="!this.state.data.subjects.length" class="o_edu_cb_card text-muted">
+                                Não dá nenhuma disciplina nesta turma: o director de turma vê todas, cada professor as suas.
+                            </div>
+                            <div t-else="" class="o_edu_cb_scroll">
+                                <table class="table table-sm o_edu_cb_grid">
+                                    <thead>
+                                        <tr>
+                                            <th class="o_edu_cb_num">Nº</th>
+                                            <th class="o_edu_cb_name">Aluno</th>
+                                            <th t-foreach="this.state.data.subjects" t-as="s" t-key="s.id" class="text-center" t-att-title="s.name" t-out="s.code"/>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="this.state.data.students" t-as="st" t-key="st.id">
+                                            <td class="o_edu_cb_num" t-out="st.number"/>
+                                            <td class="o_edu_cb_name" t-out="st.name"/>
+                                            <td t-foreach="st.cells" t-as="cell" t-key="cell.subject_id" class="text-center">
+                                                <button t-if="cell.borderline and this.session.state === 'open'" type="button"
+                                                        class="btn btn-link p-0" t-att-class="this.cellClass(cell)"
+                                                        t-att-title="'Caso limite: clique para votar ou subir a nota'"
+                                                        t-on-click="() => this.onCell(st, cell)">
+                                                    <t t-out="this.cellText(cell)"/><t t-if="cell.vote_id"> •</t>
+                                                </button>
+                                                <span t-else="" t-att-class="this.cellClass(cell)"><t t-out="this.cellText(cell)"/></span>
+                                                <a t-if="cell.points and this.session.state === 'open' and (cell.can_teach or this.state.data.is_director)"
+                                                   href="#" class="o_edu_cb_points" t-att-title="'Retirar a bonificação'"
+                                                   t-on-click.prevent="() => this.removePoints(st, cell)">+<t t-out="cell.points"/></a>
+                                                <small t-elif="cell.points" class="o_edu_cb_points">+<t t-out="cell.points"/></small>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="small text-muted mt-2">
+                                Verde = aprova · vermelho = negativa · âmbar = caso limite (até 2 valores abaixo da aprovação, votável).
+                                Clique numa nota em âmbar para abrir a votação (director) ou subir +2 (professor da disciplina).
+                                «+N» é a bonificação dada; «•» é uma nota em votação.
+                            </p>
+
+                            <!-- Encerrar -->
+                            <div t-if="this.session.state === 'open' and this.state.data.is_director" class="o_edu_cb_card o_edu_cb_close">
+                                <span class="flex-grow-1">
+                                    <t t-if="this.state.data.votes.length"><t t-out="this.state.data.votes.length"/> votação(ões) por apurar antes de encerrar.</t>
+                                    <t t-else="">Quando terminar a deliberação, encerre o conselho para gerar os documentos.</t>
+                                </span>
+                                <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy or this.state.data.votes.length"
+                                        t-on-click="() => this.realize()">Encerrar o conselho</button>
+                            </div>
+                        </t>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

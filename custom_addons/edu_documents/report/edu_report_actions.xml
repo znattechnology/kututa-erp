@@ -82,6 +82,22 @@
         <field name="binding_model_id" ref="edu_core.model_edu_class"/>
         <field name="binding_type">report</field>
     </record>
+    <record id="action_report_council_acta" model="ir.actions.report">
+        <field name="name">Acta do Conselho de Notas</field>
+        <field name="model">edu.council.session</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_council_acta</field>
+        <field name="print_report_name">'Acta do conselho %s' % object.class_id.display_name</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
+    <record id="action_report_council_attendance" model="ir.actions.report">
+        <field name="name">Lista de Presença — Conselho de Notas</field>
+        <field name="model">edu.council.session</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_council_attendance</field>
+        <field name="print_report_name">'Lista de presença %s' % object.class_id.display_name</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
     <record id="action_report_exam_calendar" model="ir.actions.report">
         <field name="name">Calendário de provas</field>
         <field name="model">edu.exam.calendar.print</field>

@@ -6,7 +6,9 @@
         <field name="arch" type="xml">
             <form string="Conselho de turma">
                 <header>
-                    <button name="action_realize" type="object" string="Realizar o conselho" class="btn-primary" invisible="state != 'open'"
+                    <button name="action_open_board" type="object" string="Abrir o conselho" class="btn-primary"/>
+                    <button name="action_start" type="object" string="Iniciar o conselho" invisible="state != 'draft'"/>
+                    <button name="action_realize" type="object" string="Encerrar o conselho" invisible="state != 'open'"
                             confirm="Realizado o conselho, a pauta fecha e calculam-se as decisões de transição. Continuar?"/>
                     <button name="action_reopen" type="object" string="Reabrir" invisible="state != 'realized'" groups="edu_core.group_edu_manager"/>
                     <field name="state" widget="statusbar"/>
@@ -70,6 +72,12 @@
         <field name="name">Conselhos de turma</field>
         <field name="res_model">edu.council.session</field>
         <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Ecrã do conselho de turma (acção cliente), como no secPed: grelha da turma, votações e encerramento. -->
+    <record id="action_edu_council_board" model="ir.actions.client">
+        <field name="name">Conselho de turma</field>
+        <field name="tag">edu_evaluation.council_board</field>
     </record>
 
     <record id="edu_council_vote_form" model="ir.ui.view">

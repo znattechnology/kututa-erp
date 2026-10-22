@@ -1,6 +1,7 @@
 from . import (
     edu_assessment,
     edu_council,
+    edu_council_board,
     edu_course,
     edu_enrollment,
     edu_evaluation_policy,

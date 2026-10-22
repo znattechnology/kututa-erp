@@ -662,3 +662,91 @@ class TestEduEvaluation(TransactionCase):
             {'source_year_id': self.year.id, 'target_year_id': self.next_year.id, 'create_classes': False}
         )
         self.assertIn('8ª classe', wizard._proposal(seventh)['reason'])
+
+    def test_council_board(self):
+        """Ecrã do conselho, como no secPed: iniciar, várias votações, voto de cada professor, quórum, encerrar."""
+        ana, bento = self.students[:2]
+        self._enroll(self.class10, (ana, bento), ['LP'])
+        lp = self._subject(self.class10, 'LP')
+        director_user = self.env['res.users'].create(
+            {
+                'name': 'Joana Directora',
+                'login': 'joana_dir',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_teacher').id])],
+            }
+        )
+        director = self.env['hr.employee'].create(
+            {'name': 'Joana Directora', 'edu_is_teacher': True, 'user_id': director_user.id}
+        )
+        bio = self._subject(self.class10, 'BIO')
+        self.env['edu.teaching.assignment'].create([
+            {'class_id': self.class10.id, 'subject_id': lp.id, 'teacher_id': self.teacher.id},
+            {'class_id': self.class10.id, 'subject_id': bio.id, 'teacher_id': director.id},
+        ])  # fmt: skip
+        self.class10.director_id = director
+        self._full_year(self.class10, 'LP', dict.fromkeys((self.t1, self.t2, self.t3), {ana: (9, 9), bento: (8, 8)}))
+        Session = self.env['edu.council.session']
+        # O professor só vê as suas disciplinas e espera que o director inicie.
+        data = Session.with_user(self.teacher_user).board_for_class(self.class10.id)
+        self.assertEqual(data['session']['state'], 'draft')
+        self.assertEqual([s['name'] for s in data['subjects']], [lp.name])
+        session = Session.browse(data['session']['id'])
+        with self.assertRaisesRegex(UserError, 'director'):
+            session.with_user(self.teacher_user).board_start()
+        board = session.with_user(director_user)
+        data = board.board_start()
+        self.assertEqual(data['session']['state'], 'open')
+        self.assertTrue(data['is_director'])
+        # Duas votações abertas ao mesmo tempo (uma por nota).
+        results = self.env['edu.subject.result'].search(
+            [('class_id', '=', self.class10.id), ('subject_id', '=', lp.id)]
+        )
+        for result in results:
+            board.board_open_vote(result.id)
+        with self.assertRaisesRegex(UserError, 'aberta para esta nota'):
+            board.board_open_vote(results[0].id)
+        data = board.board_data()
+        self.assertEqual(len(data['votes']), 2)
+        first, second = data['votes']
+        # Técnico: quórum de metade dos 2 professores = 1; ninguém votou ainda.
+        with self.assertRaisesRegex(UserError, 'Quórum não atingido'):
+            board.board_close_vote(first['id'])
+        session.with_user(self.teacher_user).board_cast(first['id'], True)
+        data = board.board_cast(first['id'], True)
+        self.assertEqual(data['votes'][0]['my_ballot'], 'favor')
+        closed = board.board_close_vote(first['id'])
+        self.assertIn('Aprovado (2/2)', closed['message'])
+        board.board_cast(second['id'], False)
+        self.assertIn('Não aprovado', board.board_close_vote(second['id'])['message'])
+        # A secretaria só consulta: não sobe pontos.
+        clerk = self.env['res.users'].create(
+            {
+                'name': 'Secretária',
+                'login': 'sec_board',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        with self.assertRaisesRegex(UserError, 'professor da disciplina'):
+            results.with_user(clerk).action_grant_two()
+        board.board_realize()
+        self.assertEqual(session.state, 'realized')
+        with self.assertRaisesRegex(UserError, 'encerrado'):
+            session.with_user(self.teacher_user).board_cast(first['id'], True)
+        if 'action_print_acta' in dir(session):
+            board.action_print_acta()
+            html = (
+                self.env['ir.actions.report']
+                ._render_qweb_html('edu_documents.report_council_acta', session.ids)[0]
+                .decode()
+            )
+            for text in (
+                'ACTA DO CONSELHO DE NOTAS',
+                'Aproveitamento por disciplina',
+                'Notas votadas pelo conselho',
+                'Aprovado (+2)',
+                'Não aprovado',
+                'Assinaturas',
+            ):
+                self.assertIn(text, html)
+            with self.assertRaisesRegex(UserError, 'director de turma'):
+                session.with_user(self.teacher_user).action_print_acta()

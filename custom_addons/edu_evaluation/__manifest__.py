@@ -39,5 +39,10 @@ Secretaria Express: avaliação das aprendizagens.
         'views/menus.xml',
         'wizard/edu_enrollment_confirmation_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'edu_evaluation/static/src/council_board/*',
+        ],
+    },
     'license': 'OPL-1',
 }

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Acta do Conselho de Notas e Lista de Presença, como no secPed-Express (council-documents.tsx). -->
+    <template id="council_styles">
+        <style>
+            .edu-acta { font-family: Arial, "Liberation Sans", Helvetica, sans-serif; font-size: 12px; color: #000; }
+            .edu-acta .edu-title { font-size: 18px; letter-spacing: 1px; margin: 10px 0 4px 0; }
+            .edu-acta .edu-acta-line { text-align: center; margin: 0; }
+            .edu-acta h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px 0; border-bottom: 1px solid #999; padding-bottom: 2px; }
+            .edu-acta .edu-boxes { width: 100%; border-collapse: separate; border-spacing: 4px; }
+            .edu-acta .edu-boxes td { border: 1px solid #999; text-align: center; padding: 4px; width: 12.5%; }
+            .edu-acta .edu-boxes .edu-n { font-size: 16px; font-weight: bold; }
+            .edu-acta .edu-boxes .edu-l { font-size: 10px; }
+            .edu-acta table.edu-table td.num, .edu-acta table.edu-table th.num { text-align: center; width: 13%; }
+            .edu-acta .edu-sign { width: 100%; border-collapse: separate; border-spacing: 14px 22px; }
+            .edu-acta .edu-sign td { width: 50%; vertical-align: bottom; }
+            .edu-acta .edu-sign .edu-line { border-top: 1px solid #000; padding-top: 2px; }
+            .edu-acta .edu-generated { font-size: 9px; color: #666; margin-top: 20px; }
+        </style>
+    </template>
+
+    <template id="report_council_acta">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="c" t-value="o.class_id"/>
+                    <t t-set="d" t-value="o._acta_data()"/>
+                    <t t-call="edu_documents.styles"/>
+                    <t t-call="edu_documents.council_styles"/>
+                    <div class="page edu-acta">
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title">ACTA DO CONSELHO DE NOTAS</div>
+                        <p class="edu-acta-line">Turma <t t-out="c._editor_label()"/> · <t t-out="c.level_id.name"/> · Ano lectivo <t t-out="c.academic_year_id.name"/></p>
+                        <p class="edu-acta-line">Director de Turma: <t t-out="c.director_id.name or '—'"/> · Realizado em <t t-out="h.date(o.realized_date and o.realized_date.date())"/></p>
+
+                        <h3>Resumo</h3>
+                        <table class="edu-boxes o_ignore_layout_styling">
+                            <tr>
+                                <td><div class="edu-n" t-out="d['total']"/><div class="edu-l">Alunos</div></td>
+                                <td t-foreach="d['summary']" t-as="item"><div class="edu-n" t-out="item[1]"/><div class="edu-l" t-out="item[0]"/></td>
+                            </tr>
+                        </table>
+
+                        <h3>Aproveitamento por disciplina</h3>
+                        <table class="edu-table o_ignore_layout_styling">
+                            <thead><tr><th style="text-align: left;">Disciplina</th><th style="text-align: left;">Professor</th><th class="num">Alunos</th><th class="num">Aprovados</th><th class="num">% Aprov.</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="d['subjects']" t-as="s">
+                                    <td t-out="s['name']"/>
+                                    <td t-out="s['teacher'] or '—'"/>
+                                    <td class="num" t-out="s['students']"/>
+                                    <td class="num" t-out="s['approved']"/>
+                                    <td class="num"><t t-out="s['percent']"/>%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <t t-if="d['votes']">
+                            <h3>Notas votadas pelo conselho</h3>
+                            <table class="edu-table o_ignore_layout_styling">
+                                <thead><tr><th style="text-align: left;">Aluno</th><th style="text-align: left;">Disciplina</th><th class="num">Nota</th><th class="num">A favor</th><th class="num">Contra</th><th>Resultado</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="d['votes']" t-as="v">
+                                        <td t-out="v['student']"/>
+                                        <td t-out="v['subject']"/>
+                                        <td class="num" t-out="v['grade']"/>
+                                        <td class="num" t-out="v['favor']"/>
+                                        <td class="num" t-out="v['against']"/>
+                                        <td t-out="v['result']"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <h3>Assinaturas</h3>
+                        <table class="edu-sign o_ignore_layout_styling">
+                            <t t-foreach="range(0, len(d['subjects']), 2)" t-as="i">
+                                <tr>
+                                    <td t-foreach="d['subjects'][i:i + 2]" t-as="s">
+                                        <div class="edu-line"><strong t-out="s['teacher'] or '&#160;'"/></div>
+                                        <div style="font-size: 10px;"><t t-out="s['name']"/> · <t t-out="s['percent']"/>% aprovados</div>
+                                    </td>
+                                </tr>
+                            </t>
+                        </table>
+                        <div class="edu-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_council_attendance">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="c" t-value="o.class_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <t t-call="edu_documents.council_styles"/>
+                    <div class="page edu-acta">
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title">LISTA DE PRESENÇA — CONSELHO DE NOTAS</div>
+                        <p class="edu-acta-line">Turma <t t-out="c._editor_label()"/> · <t t-out="c.level_id.name"/> · Ano lectivo <t t-out="c.academic_year_id.name"/></p>
+                        <p class="edu-acta-line">Director de Turma: <t t-out="c.director_id.name or '—'"/> · Realizado em <t t-out="h.date(o.realized_date and o.realized_date.date())"/></p>
+                        <table class="edu-table o_ignore_layout_styling" style="margin-top: 16px;">
+                            <thead><tr><th style="width: 6%;">#</th><th style="text-align: left;">Professor</th><th style="text-align: left;">Disciplina</th><th style="width: 34%;">Assinatura</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o._teachers_by_subject()" t-as="row" style="height: 30px;">
+                                    <td style="text-align: center;" t-out="row_index + 1"/>
+                                    <td t-out="row['teacher'] or '—'"/>
+                                    <td t-out="row['subject'].name"/>
+                                    <td/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="edu-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

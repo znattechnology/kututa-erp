@@ -430,23 +430,28 @@ class EduSubjectResult(models.Model):
     def action_grant_two(self):
         self._grant_by_teacher(2)
 
+    def _teaches(self):
+        """O utilizador é professor desta disciplina na turma."""
+        self.ensure_one()
+        employee = self.env.user.employee_id
+        return bool(employee) and bool(
+            self.env['edu.teaching.assignment']
+            .sudo()
+            .search_count(
+                [
+                    ('class_id', '=', self.class_id.id),
+                    ('subject_id', '=', self.subject_id.id),
+                    ('teacher_id', '=', employee.id),
+                ]
+            )
+        )
+
     def _grant_by_teacher(self, points):
+        """Como no secPed: só o professor da disciplina sobe a nota (a direcção também, como excepção); a
+        secretaria só consulta."""
         for result in self:
-            if not self.env.user.has_group('edu_core.group_edu_user'):
-                employee = self.env.user.employee_id
-                assigned = (
-                    self.env['edu.teaching.assignment']
-                    .sudo()
-                    .search_count(
-                        [
-                            ('class_id', '=', result.class_id.id),
-                            ('subject_id', '=', result.subject_id.id),
-                            ('teacher_id', '=', employee.id),
-                        ]
-                    )
-                )
-                if not assigned:
-                    raise UserError(self.env._('Só o professor da disciplina bonifica a sua nota.'))
+            if not (self.env.su or self.env.user.has_group('edu_core.group_edu_manager') or result._teaches()):
+                raise UserError(self.env._('Só o professor da disciplina pode subir os pontos directamente.'))
             result._set_points(points, 'teacher')
         return True
 
@@ -456,6 +461,8 @@ class EduSubjectResult(models.Model):
         session = self.env['edu.council.session'].search([('class_id', '=', self.class_id.id)], limit=1)
         if not session:
             session = self.env['edu.council.session'].create({'class_id': self.class_id.id})
+        if session.state == 'draft' and session._is_director():
+            session.action_start()
         vote = session.action_open_vote(self)
         return {
             'type': 'ir.actions.act_window',
@@ -466,6 +473,14 @@ class EduSubjectResult(models.Model):
 
     def action_remove_points(self):
         for result in self:
+            session = self.env['edu.council.session'].sudo().search([('class_id', '=', result.class_id.id)], limit=1)
+            director = session and session.with_env(self.env)._is_director()
+            if not (
+                self.env.su or self.env.user.has_group('edu_core.group_edu_manager') or director or result._teaches()
+            ):
+                raise UserError(
+                    self.env._('Só o director de turma ou o professor da disciplina retiram a bonificação.')
+                )
             result._check_council_open()
             vote = (
                 self.env['edu.council.vote'].sudo().search([('result_id', '=', result.id), ('state', '=', 'applied')])

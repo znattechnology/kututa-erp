@@ -1,0 +1,104 @@
+// Conselho de turma: a estrutura do secPed-Express com as cores do sistema.
+.o_edu_council_board {
+    .o_edu_cb_body {
+        padding: 16px 24px 32px;
+    }
+
+    .o_edu_cb_toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+
+        > .form-select {
+            width: auto;
+            min-width: 240px;
+        }
+    }
+
+    .o_edu_cb_h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_cb_h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .o_edu_cb_card {
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_cb_wait {
+        max-width: 640px;
+    }
+
+    .o_edu_cb_vote_list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 8px;
+    }
+
+    .o_edu_cb_selected,
+    .o_edu_cb_close {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .o_edu_cb_scroll {
+        max-height: calc(100vh - 260px);
+        overflow: auto;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_cb_grid {
+        margin-bottom: 0;
+        font-variant-numeric: tabular-nums;
+
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: $o-gray-100;
+        }
+
+        .o_edu_cb_num {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            width: 40px;
+            background: $o-view-background-color;
+        }
+
+        .o_edu_cb_name {
+            position: sticky;
+            left: 40px;
+            z-index: 1;
+            min-width: 220px;
+            white-space: nowrap;
+            background: $o-view-background-color;
+        }
+
+        thead .o_edu_cb_num,
+        thead .o_edu_cb_name {
+            z-index: 3;
+            background: $o-gray-100;
+        }
+    }
+
+    .o_edu_cb_points {
+        margin-left: 2px;
+        font-size: 0.75em;
+    }
+}
