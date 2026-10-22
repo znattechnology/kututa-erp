@@ -151,6 +151,13 @@ class EduYearResult(models.Model):
                 and prior + 1 > policy.max_retentions,
             }
             result.write(values)
+            # Os exames por realizar que a decisão já não pede saem (os realizados ficam no histórico).
+            wanted = {grading.CONDITIONAL: 'extraordinary', grading.EXAM: 'resit'}.get(decision.status)
+            result.requirement_ids.filtered(
+                lambda r, w=wanted, n=negatives.subject_id: (
+                    r.state == 'pending' and r.kind != 'improvement' and (r.kind != w or r.subject_id not in n)
+                )
+            ).sudo().unlink()
             if decision.status in (grading.CONDITIONAL, grading.EXAM):
                 kind = 'extraordinary' if decision.status == grading.CONDITIONAL else 'resit'
                 for subject_result in negatives:

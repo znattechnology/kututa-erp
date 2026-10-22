@@ -12,6 +12,7 @@ from collections import defaultdict
 from decimal import ROUND_HALF_UP, Decimal
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -195,6 +196,21 @@ class EduMigrationSecped(models.AbstractModel):
     def _run(self, source, company=None, phases=PHASES, commit=None):
         """Corre as fases pedidas e a reconciliação. ``commit`` (opcional) é chamado no fim de cada fase."""
         company = company or self.env.company
+        migrated = (
+            self.env['ir.model.data']
+            .sudo()
+            .search_count([('module', '=', XID_MODULE), ('name', '=like', 'enrollments\\_\\_%')], limit=1)
+        )
+        if migrated and not self.env.context.get('edu_migration_rerun'):
+            # Depois da carga, a escola trabalha no Odoo: voltar a correr repõe o plano, as matrículas, as disciplinas
+            # e as decisões do secPed por cima do que foi feito depois.
+            raise UserError(
+                self.env._(
+                    'A migração do secPed já correu nesta base. Voltar a corrê-la desfaz o que a escola fez depois '
+                    '(planos, matrículas, anulações, decisões). Só numa cópia de ensaio, com o contexto '
+                    '«edu_migration_rerun».'
+                )
+            )
         env = self.env(su=True, context=dict(self.env.context, **IMPORT_CONTEXT, allowed_company_ids=[company.id]))
         run = MigrationRun(env, source, company.with_env(env))
         Migration = env[self._name]
@@ -1173,44 +1189,51 @@ class EduMigrationSecped(models.AbstractModel):
         enrolled = Enrollment.search(
             [('class_id', 'in', classes.ids), ('state', 'in', ('active', 'irregular', 'completed', 'retained'))]
         )
-        classes = enrolled.class_id
         Result = env['edu.year.result']
-        Result.search([('class_id', 'in', classes.ids), ('manual', '=', True), ('reason', '=', SIGNED_REASON)]).write(
-            {'manual': False}
-        )
-        results = Result._compute_for_classes(classes)
+        Result.search(
+            [('class_id', 'in', enrolled.class_id.ids), ('manual', '=', True), ('reason', '=', SIGNED_REASON)]
+        ).write({'manual': False})
         student_user = {v: k for k, v in run.ids['students'].items()}
         agree = 0
         overridden = defaultdict(int)
-        for result in results:
-            user_id = student_user.get(result.student_id.id)
-            status = signed.get((user_id, result.class_id.id))
-            if status is None:
-                run.issue('decisões', f'{result.enrollment_id.display_name}: sem decisão no secPed')
-                continue
-            if result.status in SIGNED_MATCHES.get(status, ()):
-                agree += 1
-                continue
-            overridden[f'{status} ≠ {result.status}'] += 1
-            if status == 'PENDING':
-                run.issue(
-                    'decisões', f'{result.enrollment_id.display_name}: pendente no secPed, {result.status} no Odoo'
-                )
-                continue
-            terminal = result._policy()._rules(result.class_id).terminal
-            new_status = 'retained' if status == 'RETAINED' else ('graduated' if terminal else 'promoted')
-            result.requirement_ids.filtered(lambda r: r.state == 'pending').unlink()
-            result.write({'status': new_status, 'manual': True, 'reason': SIGNED_REASON, 'requires_review': False})
-        for result in results:
-            state = {
-                'promoted': 'completed',
-                'graduated': 'completed',
-                'conditional': 'completed',
-                'retained': 'retained',
-            }
-            target = state.get(result.status)
-            if target and result.enrollment_id.state != target:
-                result.enrollment_id.state = target
+        results = Result
+        # Ano a ano, por ordem: a decisão de um ano conta as negativas e as retenções dos anteriores, por isso as
+        # decisões assinadas de cada ano aplicam-se antes de se calcular o seguinte.
+        for year in enrolled.academic_year_id.sorted('date_start'):
+            year_results = Result._compute_for_classes(
+                enrolled.class_id.filtered(lambda c, y=year: c.academic_year_id == y)
+            )
+            results |= year_results
+            for result in year_results:
+                user_id = student_user.get(result.student_id.id)
+                status = signed.get((user_id, result.class_id.id))
+                if status is None:
+                    run.issue('decisões', f'{result.enrollment_id.display_name}: sem decisão no secPed')
+                    continue
+                if result.status in SIGNED_MATCHES.get(status, ()):
+                    agree += 1
+                    continue
+                overridden[f'{status} ≠ {result.status}'] += 1
+                if status == 'PENDING':
+                    run.issue(
+                        'decisões', f'{result.enrollment_id.display_name}: pendente no secPed, {result.status} no Odoo'
+                    )
+                    continue
+                terminal = result._policy()._rules(result.class_id).terminal
+                new_status = 'retained' if status == 'RETAINED' else ('graduated' if terminal else 'promoted')
+                result.requirement_ids.filtered(lambda r: r.state == 'pending').unlink()
+                result.write({'status': new_status, 'manual': True, 'reason': SIGNED_REASON, 'requires_review': False})
+            for result in year_results:
+                state = {
+                    'promoted': 'completed',
+                    'graduated': 'completed',
+                    'conditional': 'completed',
+                    'retained': 'retained',
+                }
+                target = state.get(result.status)
+                if target and result.enrollment_id.state != target:
+                    result.enrollment_id.state = target
+            env.flush_all()
         run.metrics['decisoes'] = len(results)
         run.metrics['decisoes_automaticas_iguais'] = agree
         run.metrics['decisoes_da_pauta_assinada'] = dict(overridden)

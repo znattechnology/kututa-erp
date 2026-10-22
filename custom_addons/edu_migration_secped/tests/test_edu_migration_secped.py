@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
 from ..models.edu_migration_secped import secped_final
@@ -395,7 +396,13 @@ class TestEduMigrationSecped(TransactionCase):
             }  # fmt: skip
 
         before = counts()
-        report = self.env['edu.migration.secped']._run(self.source, company=self.company)
+        with self.assertRaisesRegex(UserError, 'já correu'):
+            self.env['edu.migration.secped']._run(self.source, company=self.company)
+        report = (
+            self.env['edu.migration.secped']
+            .with_context(edu_migration_rerun=True)
+            ._run(self.source, company=self.company)
+        )
         self.assertEqual(counts(), before)
         self.assertEqual(report['metrics']['pauta']['diferentes'], 0)
         self.assertEqual(self._result('2025-0001', 'LP').final, 14)
