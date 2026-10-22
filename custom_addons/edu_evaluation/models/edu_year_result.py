@@ -94,6 +94,21 @@ class EduYearResult(models.Model):
             # A disciplina anulada (Decreto Executivo 60/08, art. 11.º) não conta para a decisão.
             subjects = enrollment.subject_ids - enrollment._dropped_subjects()
             if policy.regime != 'preschool':
+                # As médias dos trimestres abertos refazem-se com o regime actual (pesos, arredondamento); as dos
+                # trimestres fechados são as da pauta afixada.
+                open_grades = (
+                    self.env['edu.grade']
+                    .sudo()
+                    .search(
+                        [
+                            ('enrollment_id', '=', enrollment.id),
+                            ('trimester_id.state', '=', 'open'),
+                            ('graded', '=', True),
+                        ]
+                    )
+                )
+                if open_grades:
+                    self.env['edu.term.result'].sudo()._recompute_keys(open_grades._result_keys())
                 Subject._recompute_keys({(enrollment.id, subject.id) for subject in subjects})
             subject_results = Subject.search(
                 [('enrollment_id', '=', enrollment.id), ('subject_id', 'in', subjects.ids)]

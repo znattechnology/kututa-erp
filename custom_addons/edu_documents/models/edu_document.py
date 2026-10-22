@@ -191,7 +191,13 @@ class EduTransfer(models.Model):
     def action_print_transfer_declaration(self):
         """Declaração com as notas da última classe concluída (numa saída a meio do ano, a do ano anterior)."""
         self.ensure_one()
-        finished = self.student_id.enrollment_ids.filtered(lambda e: e.subject_result_ids.filtered('complete'))
+        # Só uma classe com a decisão final tomada (pendente ou em exame ainda não se declara).
+        finished = self.student_id.enrollment_ids.filtered(
+            lambda e: (
+                e.subject_result_ids.filtered('complete')
+                and e.sudo().year_result_id.status in ('promoted', 'graduated', 'conditional', 'retained')
+            )
+        )
         enrollment = finished.sorted(lambda e: e.academic_year_id.date_start, reverse=True)[:1]
         if not enrollment:
             raise UserError(self.env._('O aluno ainda não tem nenhuma classe com classificações finais.'))

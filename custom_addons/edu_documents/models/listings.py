@@ -1,3 +1,5 @@
+from datetime import date
+
 from odoo import api, models
 
 EM = '  '
@@ -176,7 +178,9 @@ class EduTransfer(models.Model):
 
         groups = []
         for kind, label in self._fields['transfer_type']._description_selection(self.env):
-            rows = self.filtered(lambda t, k=kind: t.transfer_type == k).sorted(lambda t: t.effective_date or t.id)
+            rows = self.filtered(lambda t, k=kind: t.transfer_type == k).sorted(
+                lambda t: (not t.effective_date, t.effective_date or date.min, t.id)
+            )
             if rows:
                 groups.append(
                     {

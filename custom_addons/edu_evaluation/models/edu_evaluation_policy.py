@@ -165,7 +165,10 @@ class EduEvaluationPolicy(models.Model):
         return Rules(
             pass_grade=self.pass_grade,
             floor=self.floor or None,
-            conditional_max=self.conditional_max if number in int_list(self.conditional_classes) else 0,
+            # Na classe terminal não há transição com disciplinas em atraso: conclui ou não conclui.
+            conditional_max=self.conditional_max
+            if number in int_list(self.conditional_classes) and not terminal
+            else 0,
             forbidden_pairs=self._pairs(edu_class.course_id),
             exam_max=self.exam_max if (exam_class or self.regime == TECHNICAL or terminal) else 0,
             exam_floor=self.exam_floor or None,

@@ -44,6 +44,8 @@
                     <t t-set="e" t-value="o.enrollment_id"/>
                     <t t-set="results" t-value="h.ordered(e.subject_result_ids.filtered('complete'))"/>
                     <t t-set="year_result" t-value="e.year_result_id"/>
+                    <t t-set="passed" t-value="year_result.status in ('promoted', 'graduated', 'conditional')"/>
+                    <t t-set="decided" t-value="passed or year_result.status == 'retained'"/>
                     <t t-call="edu_documents.styles"/>
                     <div class="page edu-doc">
                         <t t-call="edu_documents.header" official="False"/>
@@ -51,10 +53,10 @@
                         <p><strong><t t-out="(company.edu_director_name or '').upper()"/>, <t t-out="h.director_title()[2:]"/> DO <t t-out="company.name.upper()"/></strong></p>
                         <p>Declara que: <t t-call="edu_documents.identity"/>.</p>
                         <p>
-                            Concluiu neste estabelecimento de ensino a <t t-out="h.klass(e.class_number)"/> no ano lectivo de
+                            <t t-out="'Concluiu' if passed else 'Frequentou'"/> neste estabelecimento de ensino a <t t-out="h.klass(e.class_number)"/> no ano lectivo de
                             <t t-out="e.academic_year_id.name"/><t t-if="e.course_id">, Curso de <t t-out="e.course_id.name"/></t>,
-                            Turma <t t-out="e.class_id.name"/>, número <t t-out="e.order_number"/><t t-if="year_result">, com o resultado
-                            final <strong t-out="h.by_gender(student.gender, 'Apto', 'Apta') if year_result.status in ('promoted', 'graduated', 'conditional') else h.by_gender(student.gender, 'Não apto', 'Não apta')"/></t>,
+                            Turma <t t-out="e.class_id.name"/>, número <t t-out="e.order_number"/><t t-if="decided">, com o resultado
+                            final <strong t-out="h.by_gender(student.gender, 'Apto', 'Apta') if passed else h.by_gender(student.gender, 'Não apto', 'Não apta')"/></t>,
                             com as seguintes classificações:
                         </p>
                         <table class="edu-table o_ignore_layout_styling">

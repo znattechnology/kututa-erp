@@ -131,6 +131,11 @@ class TestEduDocuments(TransactionCase):
         with self.assertRaises(UserError):
             self._document('grades')  # ainda sem classificações finais
         self._grades(15)
+        # Sem a decisão do ano, a declaração diz «Frequentou», sem resultado final.
+        pending = self._render('edu_documents.action_report_declaration_grades', self._document('grades'))
+        self.assertIn('Frequentou', pending)
+        self.assertNotIn('Não apt', pending)
+        self.edu_class.action_compute_year_results()
         document = self._document('grades')
         html = self._render('edu_documents.action_report_declaration_grades', document)
         self.assertIn('15 (QUINZE) VALORES', html)
@@ -174,8 +179,10 @@ class TestEduDocuments(TransactionCase):
         self.assertIn('MAPA DE APROVEITAMENTO DO IIIº TRIMESTRE', html)
         self.assertIn('REPÚBLICA DE ANGOLA', html)
         self.assertIn('Visto', html)
-        for label in ('>NPP<', '>NPT<', '>CT<', '>FJ<', '>FI<', '>CF<', '>PG<', '>CA<', 'Neg.', 'Resultado'):
+        for label in ('>NPP<', '>NPT<', '>CT<', '>FJ<', '>FI<', '>CF<', '>PG<', '>CA<', '>CFD<', 'Neg.', 'Resultado'):
             self.assertIn(label, html)
+        # Todas as disciplinas do plano aparecem, mesmo as que o aluno não tem (sem notas).
+        self.assertEqual(wizard._subjects(), wizard._subjects() | self.edu_class.subject_line_ids.subject_id)
         self.assertIn('ep-neg', html)
         self.assertIn('NPP - Nota do Professor', html)
         self.assertIn('aprovação mínima 10 valores', html)

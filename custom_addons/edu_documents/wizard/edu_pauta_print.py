@@ -17,7 +17,8 @@ TAIL_WIDTH = 120
 LEGEND_TECHNICAL = (
     'NPP - Nota do Professor; NPT - Nota da Prova Trimestral; CT1/CT2/CT3 - Classificação do Trimestre: '
     'CT = (NPP+NPT)/2; CF - Classificação de Frequência (média das CT, atribuída pelo Conselho de Turma); '
-    'PG - Prova Global; CA - Classificação Anual: CA = 60%CF + 40%PG'
+    'PG - Prova Global; CA - Classificação Anual: CA = 60%CF + 40%PG; CFD - Classificação Final da Disciplina '
+    '(no ano terminal: média das CA dos anos em que é leccionada)'
 )
 LEGEND_GENERAL = (
     'MAC - Média das Avaliações Contínuas; NPT - Nota da Prova Trimestral; MT - Média do Trimestre: '
@@ -101,8 +102,14 @@ class EduPautaPrint(models.TransientModel):
         return self.class_id.enrollment_ids.filtered(lambda e: e.state != 'draft').sorted('order_number')
 
     def _subjects(self):
+        """As disciplinas do plano da turma e as que têm resultados (mesmo as que ainda não têm notas aparecem)."""
         results = self.env['edu.subject.result'].search([('class_id', '=', self.class_id.id)])
-        return Helpers.ordered(results).subject_id or self.class_id.subject_line_ids.subject_id
+        return Helpers.ordered(results).subject_id | self.class_id.subject_line_ids.subject_id
+
+    def _national_subjects(self):
+        """Disciplinas com exame nacional na turma: a marca da linha do plano ou a da disciplina."""
+        lines = self.class_id.subject_line_ids
+        return lines.filtered(lambda line: line.is_national_exam or line.subject_id.is_national_exam).subject_id
 
     def _results(self):
         Result = self.env['edu.subject.result']
@@ -175,16 +182,18 @@ class EduPautaPrint(models.TransientModel):
         # Disciplinas por ordem alfabética, como na pauta do secPed.
         subjects = self._subjects().sorted(lambda s: unicodedata.normalize('NFKD', s.name or '').casefold())
         results = self._results()
+        national_subjects = self._national_subjects()
         national = (
-            final
-            and not technical
-            and policy._is_exam_class(self.class_id.class_number)
-            and any(subjects.mapped('is_national_exam'))
+            final and not technical and policy._is_exam_class(self.class_id.class_number) and bool(national_subjects)
         )
         base = ['NPP', 'NPT', 'CT', 'FJ', 'FI'] if technical else ['MAC', 'NPT', 'MT', 'FJ', 'FI']
         tail = []
         if final:
-            tail = ['CF', 'PG', 'CA'] if technical else (['MFD', 'CFD', 'EN', 'MFED'] if national else ['MFD', 'CFD'])
+            tail = (
+                ['CF', 'PG', 'CA', 'CFD']
+                if technical
+                else (['MFD', 'CFD', 'EN', 'MFED'] if national else ['MFD', 'CFD'])
+            )
         labels = base + tail
         pass_grade = policy.pass_grade
         terms = self._terms(trimester)
@@ -235,14 +244,17 @@ class EduPautaPrint(models.TransientModel):
                             grade(result.cf, 0, complete) if result else ('', None),
                             grade(result.pg, 0, bool(result and result.has_pg)) if result else ('', None),
                             grade(result.final, 0, complete) if result else ('', None),
+                            # CFD no ano terminal da disciplina (a que conta nas negativas e no certificado).
+                            grade(result.cfd, 0, complete and result.terminal_subject) if result else ('', None),
                         ]
                     else:
                         values += [
-                            grade(result.cf, 0, complete) if result else ('', None),
+                            # MFD: a classificação final do ano (com a bonificação do conselho ou o exame).
+                            grade(result.final, 0, complete) if result else ('', None),
                             grade(result.cfd, 0, complete and result.terminal_subject) if result else ('', None),
                         ]
                         if national:
-                            has_exam = bool(result and result.has_national and subject.is_national_exam)
+                            has_exam = bool(result and result.has_national and subject in national_subjects)
                             values += [
                                 grade(result.national, 0, has_exam) if result else ('', None),
                                 grade(result.annual, 0, has_exam and complete) if result else ('', None),
@@ -333,9 +345,9 @@ class EduPautaPrint(models.TransientModel):
         subjects = self._subjects().sorted(lambda s: unicodedata.normalize('NFKD', s.name or '').casefold())
         label = 'CF' if final else (f'CT{number}' if technical else 'MT')
         if final:
-            description = 'classificação de frequência do ano'
+            description = 'classificação de frequência do ano' if technical else 'classificação final do ano'
         else:
-            description = 'classificação do trimestre (cumulativa)' if technical else 'média do trimestre'
+            description = 'classificação do trimestre' if technical else 'média do trimestre'
         results = self._results()
         terms = self._terms(trimester)
         absences = self._trimester_absences(trimester)
@@ -352,7 +364,8 @@ class EduPautaPrint(models.TransientModel):
                     continue
                 if final:
                     result = results.get(key)
-                    value = result.cf if result and result.complete else None
+                    # Técnico: a CF; geral: a classificação final (com a bonificação ou o exame).
+                    value = (result.cf if technical else result.final) if result and result.complete else None
                 else:
                     term = terms.get(key)
                     value = term.mt if term and term.has_mt else None
