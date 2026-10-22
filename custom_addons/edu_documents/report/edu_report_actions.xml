@@ -182,6 +182,14 @@
         <field name="print_report_name">'Comprovativo de candidatura %s' % object.name</field>
         <field name="paperformat_id" ref="paperformat_a4_portrait"/>
     </record>
+    <record id="action_report_listing_calendar" model="ir.actions.report">
+        <field name="name">Calendário escolar</field>
+        <field name="model">edu.calendar.event</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_listing_calendar</field>
+        <field name="print_report_name">'Calendário escolar'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
     <record id="action_report_student_card" model="ir.actions.report">
         <field name="name">Cartão de estudante</field>
         <field name="model">edu.student</field>

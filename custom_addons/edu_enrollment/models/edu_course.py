@@ -14,6 +14,10 @@ class EduCourse(models.Model):
         help='A candidatura exige a nota da prova de acesso; abaixo do mínimo é rejeitada.',
     )
     admission_min_score = fields.Float(string='Nota mínima de acesso', default=10.0, digits=(4, 1))
+    admission_vacancies = fields.Integer(
+        string='Vagas para novos alunos',
+        help='Na classe de entrada, por ano. 0 = sem limite (escolas privadas, DP 167/23, art. 48.º, n.º 3).',
+    )
 
     @api.depends('level_id')
     def _compute_admission_test_required(self):

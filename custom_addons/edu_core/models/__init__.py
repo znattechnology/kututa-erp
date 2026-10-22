@@ -1,5 +1,6 @@
 from . import (
     edu_academic_year,
+    edu_calendar,
     edu_class,
     edu_course,
     edu_curriculum,

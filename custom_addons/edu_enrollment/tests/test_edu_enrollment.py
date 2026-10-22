@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 
+from freezegun import freeze_time
+
 from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
@@ -165,6 +167,7 @@ class TestEduEnrollment(TransactionCase):
                 'guardian_relationship': 'mother',
                 'desired_course_id': self.nursing.id,
                 'desired_class_number': 10,
+                'completed_class': 9,
             }
         )
         with self.assertRaises(UserError):
@@ -313,3 +316,107 @@ class TestEduEnrollment(TransactionCase):
             {'source_class_id': self.class_b.id, 'target_class_id': eleventh.id}
         ).action_confirm()
         self.assertEqual(len(eleventh.enrollment_ids), 2)
+
+    def test_admission_and_documents(self):
+        """Fase D: idade mínima, habilitação de acesso, seriação com vagas, prazos do calendário, documentos da
+        primeira matrícula e o aviso dos 60 dias à direcção e à secretaria."""
+        Application = self.env['edu.application']
+        self.nursing.admission_vacancies = 1
+        apps = Application.create(
+            [
+                {
+                    'name': name,
+                    'desired_course_id': self.nursing.id,
+                    'desired_class_number': 10,
+                    'completed_class': completed,
+                    'birth_date': date(2010, 3, 1),
+                }
+                for name, completed in (('Primeira', 9), ('Segunda', 9), ('Sem habilitação', 8))
+            ]
+        )
+        apps.action_submit()
+        apps[0].write({'has_admission_score': True, 'admission_score': 14, 'previous_average': 12})
+        apps[1].write({'has_admission_score': True, 'admission_score': 14, 'previous_average': 15})
+        apps[2].write({'has_admission_score': True, 'admission_score': 16})
+        Application.action_rank()
+        # Mesma nota: desempata a média do nível anterior; 1 vaga, os outros suplentes.
+        self.assertEqual((apps[1].admission_rank, apps[1].admission_result), (2, 'waitlist'))
+        self.assertEqual(apps[2].admission_result, 'admitted')
+        apps[0].class_id = self.class_b
+        with self.assertRaisesRegex(UserError, 'seriação'):
+            apps[0].action_approve()
+        apps[2].class_id = self.class_b
+        with self.assertRaisesRegex(UserError, 'Habilitação de acesso'):
+            apps[2].action_approve()
+        # Idade mínima: 15 anos no ano da matrícula para o técnico.
+        young = self.env['edu.student'].create({'name': 'Novinho', 'birth_date': date(2013, 5, 1)})
+        with self.assertRaisesRegex(UserError, 'idade mínima'):
+            self._enroll(young, self.class_b)
+        # Fora da idade regular: só aviso.
+        older = self._enroll(
+            self.env['edu.student'].create({'name': 'Adulto', 'birth_date': date(2000, 1, 1)}), self.class_b
+        )
+        self.assertIn('Fora da idade regular', older.warning)
+        # Documentos da primeira matrícula (técnico: certificado, boletim, BI, 4 fotografias).
+        self.assertEqual(len(older.document_ids), 4)
+        self.assertFalse(older.documents_complete)
+        # 60 dias depois do início do ano: aviso à direcção e à secretaria, sem anular.
+        manager = self.env['res.users'].create(
+            {
+                'name': 'Directora',
+                'login': 'dir_d',
+                'group_ids': [(6, 0, [self.env.ref('edu_core.group_edu_manager').id])],
+            }
+        )
+        Enrollment = self.env['edu.enrollment']
+        with freeze_time(older.documents_deadline + timedelta(days=1)):
+            Enrollment._cron_alerts()
+        self.assertTrue(older.documents_overdue)
+        self.assertEqual(older.state, 'active')
+        message = self.year.message_ids[:1]
+        self.assertIn('Processos de matrícula incompletos', message.body)
+        self.assertIn(manager.partner_id, message.partner_ids)
+        older.document_ids.write({'delivered': True})
+        self.assertTrue(older.documents_complete)
+        # A confirmação (rematrícula) não cria lista de documentos.
+        renewal = Enrollment.create(
+            {'student_id': self.students[0].id, 'class_id': self.class_b.id, 'enrollment_type': 'renewal'}
+        )
+        self.assertFalse(renewal.document_ids)
+
+    def test_calendar_windows(self):
+        """Prazos do calendário: candidaturas só no período de inscrição; matrícula de novos alunos fora do período só
+        com motivo e até ao fim do 1.º mês do II trimestre."""
+        Event = self.env['edu.calendar.event']
+        Event.create(
+            [
+                {
+                    'name': 'Inscrição',
+                    'academic_year_id': self.year.id,
+                    'phase': 'application',
+                    'date_start': date(2026, 7, 23),
+                    'date_end': date(2026, 8, 6),
+                },
+                {
+                    'name': 'Matrícula de novos alunos',
+                    'academic_year_id': self.year.id,
+                    'phase': 'enrollment',
+                    'date_start': date(2026, 8, 16),
+                    'date_end': date(2026, 8, 20),
+                },
+            ]
+        )
+        secretary = self.env['res.users'].create(
+            {'name': 'Sec', 'login': 'sec_cal', 'group_ids': [(6, 0, [self.env.ref('edu_core.group_edu_user').id])]}
+        )
+        application = self.env['edu.application'].create({'name': 'Tardia', 'desired_course_id': self.nursing.id})
+        with freeze_time('2026-09-10'):
+            with self.assertRaisesRegex(UserError, 'período de inscrição'):
+                application.with_user(secretary).action_submit()
+            student = self.env['edu.student'].create({'name': 'Atrasado', 'birth_date': date(2010, 1, 1)})
+            late = self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': self.class_b.id})
+            with self.assertRaisesRegex(UserError, 'motivo do atraso'):
+                late.action_confirm()
+            late.late_reason = 'Transferência de outra província'
+            late.action_confirm()
+            self.assertEqual(late.state, 'active')

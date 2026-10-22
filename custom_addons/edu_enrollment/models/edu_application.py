@@ -90,6 +90,25 @@ class EduApplication(models.Model):
     admission_min_score = fields.Float(string='Nota mínima', compute='_compute_admission_test')
     admission_score = fields.Float(string='Nota da prova de acesso', digits=(4, 1), tracking=True)
     has_admission_score = fields.Boolean(string='Prova realizada', tracking=True)
+    completed_class = fields.Integer(
+        string='Última classe concluída',
+        help='Habilitação de acesso: para a 7.ª, o primário (6.ª); para a 10.ª, o I Ciclo (9.ª) — '
+        'DP 162/23, art. 21.º.',
+    )
+    previous_average = fields.Float(
+        string='Média do nível anterior', digits=(4, 1), help='Critério de desempate (DP 167/23, art. 49.º, n.º 4).'
+    )
+    admission_rank = fields.Integer(string='Posição', readonly=True, copy=False)
+    admission_result = fields.Selection(
+        [('admitted', 'Admitido(a)'), ('waitlist', 'Suplente (sem vaga)')],
+        string='Resultado da seriação',
+        readonly=True,
+        copy=False,
+        tracking=True,
+    )
+    late_reason = fields.Char(
+        string='Motivo da matrícula fora de prazo', help='Passa para a matrícula (DP 162/23, art. 25.º, n.º 2).'
+    )
     # Decisão
     class_id = fields.Many2one(
         'edu.class',
@@ -154,9 +173,22 @@ class EduApplication(models.Model):
         return result
 
     def action_submit(self):
+        manager = self.env.user.has_group('edu_core.group_edu_manager')
         for application in self:
             if application.state != 'draft':
                 raise UserError(self.env._('Só um rascunho se submete.'))
+            start, end = self.env['edu.calendar.event']._phase_window(
+                'application', level=application.desired_course_id.level_id, company=application.company_id
+            )
+            today = fields.Date.context_today(self)
+            if end and not start <= today <= end and not manager:
+                raise UserError(
+                    self.env._(
+                        'Fora do período de inscrição do calendário escolar (%(start)s a %(end)s): só a direcção.',
+                        start=start.strftime('%d/%m/%Y'),
+                        end=end.strftime('%d/%m/%Y'),
+                    )
+                )
             application.write({'state': 'submitted', 'submitted_date': fields.Datetime.now()})
         return True
 
@@ -197,6 +229,38 @@ class EduApplication(models.Model):
             course = application.desired_course_id
             if course and application.class_id.course_id != course:
                 raise UserError(self.env._('A turma não é do curso pretendido (%s).', course.name))
+            if (
+                application.desired_class_number
+                and not application.transfer_in
+                and application.completed_class < application.desired_class_number - 1
+            ):
+                raise UserError(
+                    self.env._(
+                        'Habilitação de acesso: para a %(want)sª classe é preciso ter concluído a %(need)sª '
+                        '(DP 162/23, art. 21.º).',
+                        want=application.desired_class_number,
+                        need=application.desired_class_number - 1,
+                    )
+                )
+            age_level = application.class_id.level_id
+            if application.birth_date and age_level.min_age:
+                age = application.academic_year_id.date_start.year - application.birth_date.year
+                if age < age_level.min_age:
+                    raise UserError(
+                        self.env._(
+                            '%(name)s tem %(age)s anos no ano da matrícula; a idade mínima é %(min)s.',
+                            name=application.name,
+                            age=age,
+                            min=age_level.min_age,
+                        )
+                    )
+            if course.admission_vacancies and application.admission_result != 'admitted':
+                raise UserError(
+                    self.env._(
+                        'O curso tem %s vagas: aprove só os admitidos na seriação («Seriar candidaturas»).',
+                        course.admission_vacancies,
+                    )
+                )
             if application.admission_test_required and not application.transfer_in:
                 if not application.has_admission_score:
                     raise UserError(self.env._('Lance a nota da prova de acesso antes de aprovar.'))
@@ -215,6 +279,7 @@ class EduApplication(models.Model):
                     'class_id': application.class_id.id,
                     'enrollment_type': 'transfer_in' if application.transfer_in else 'new',
                     'application_id': application.id,
+                    'late_reason': application.late_reason or False,
                 }
             )
             enrollment.action_confirm()
@@ -227,6 +292,27 @@ class EduApplication(models.Model):
                     'reviewed_date': fields.Datetime.now(),
                 }
             )
+        return True
+
+    @api.model
+    def action_rank(self, *args):
+        """Seriação (DP 167/23, arts. 49.º e 52.º): por curso e ano, os candidatos com a nota mínima, por ordem
+        decrescente da nota da prova (desempate pela média do nível anterior), até esgotar as vagas; os seguintes
+        ficam suplentes. Os que não têm a nota mínima já foram rejeitados."""
+        domain = [('state', 'in', REVIEWABLE), ('company_id', '=', self.env.company.id)]
+        candidates = self.search(domain)
+        for course, year in {(a.desired_course_id, a.academic_year_id) for a in candidates if a.desired_course_id}:
+            group = candidates.filtered(
+                lambda a, c=course, y=year: a.desired_course_id == c and a.academic_year_id == y
+            )
+            ranked = group.filtered(lambda a: not a.admission_test_required or a.has_admission_score).sorted(
+                lambda a: (-a.admission_score, -a.previous_average, a.name or '')
+            )
+            for position, application in enumerate(ranked, start=1):
+                within = not course.admission_vacancies or position <= course.admission_vacancies
+                application.write(
+                    {'admission_rank': position, 'admission_result': 'admitted' if within else 'waitlist'}
+                )
         return True
 
     def _find_or_create_student(self):

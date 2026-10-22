@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
@@ -78,6 +80,10 @@ class EduEnrollment(models.Model):
         string='N.º de ordem', readonly=True, copy=False, tracking=True, help='Número na pauta da turma, fixo no ano.'
     )
     date = fields.Date(string='Data', required=True, default=fields.Date.context_today)
+    late_reason = fields.Char(
+        string='Motivo da matrícula fora de prazo',
+        help='Transferência, doença grave… (DP 162/23, art. 25.º, n.º 2). Exigido fora do período de matrícula.',
+    )
     drop_date = fields.Date(string='Data de saída', readonly=True, copy=False, tracking=True)
     drop_reason_code = fields.Selection(DROP_REASONS, string='Motivo', readonly=True, copy=False, tracking=True)
     drop_requested_by = fields.Selection(DROP_REQUESTERS, string='Pedida por', readonly=True, copy=False)
@@ -157,13 +163,73 @@ class EduEnrollment(models.Model):
     # Pontos de extensão (avaliação, propinas)
     # ------------------------------------------------------------------
     def _edu_check_enrollment_allowed(self):
-        """Bloqueios da matrícula: levanta UserError. A avaliação acrescenta retenções e disciplinas em atraso."""
+        """Bloqueios da matrícula: levanta UserError. Na primeira matrícula, a idade mínima e o prazo do calendário; a
+        avaliação acrescenta retenções e disciplinas em atraso."""
         self.ensure_one()
+        if self.env.context.get('edu_matricula_import') or self.enrollment_type not in ('new', 'transfer_in'):
+            return
+        age, level = self._edu_age(), self.class_id.level_id
+        if age is not None and level.min_age and age < level.min_age:
+            raise UserError(
+                self.env._(
+                    '%(student)s tem %(age)s anos no ano da matrícula; a idade mínima para %(level)s é %(min)s '
+                    '(DP 162/23, art. 21.º; DP 167/23, art. 23.º).',
+                    student=self.student_id.name,
+                    age=age,
+                    level=level.name,
+                    min=level.min_age,
+                )
+            )
+        self._edu_check_enrollment_window()
+
+    def _edu_age(self):
+        """Idade completa no ano da matrícula (a lei conta os anos feitos até 31 de Dezembro desse ano)."""
+        birth = self.student_id.birth_date
+        return self.academic_year_id.date_start.year - birth.year if birth and self.academic_year_id else None
+
+    def _edu_check_enrollment_window(self):
+        """Fora do período de matrícula do calendário: só com motivo (transferência, doença…) e até ao fim do 1.º mês
+        do II trimestre (DP 162/23, art. 25.º, n.º 2); depois disso, só a direcção."""
+        today = fields.Date.context_today(self)
+        start, end = self.env['edu.calendar.event']._phase_window(
+            'enrollment', level=self.class_id.level_id, company=self.company_id, around=today
+        )
+        if not end or today <= end:
+            return
+        second = self.academic_year_id.trimester_ids.filtered(lambda t: t.number == 2)[:1]
+        limit = second.date_start + relativedelta(months=1, days=-1) if second else False
+        if limit and today > limit and not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise UserError(
+                self.env._(
+                    'Matrícula fora do prazo excepcional (até %s, DP 162/23, art. 25.º, n.º 2): só a direcção.',
+                    limit.strftime('%d/%m/%Y'),
+                )
+            )
+        if not self.late_reason:
+            raise UserError(
+                self.env._(
+                    'Matrícula fora do período de matrícula (%(start)s a %(end)s): indique o motivo do atraso '
+                    '(transferência, doença grave…) — DP 162/23, art. 25.º, n.º 2.',
+                    start=start.strftime('%d/%m/%Y'),
+                    end=end.strftime('%d/%m/%Y'),
+                )
+            )
 
     def _edu_enrollment_warnings(self):
-        """Avisos que não bloqueiam (por exemplo, propinas em atraso, no módulo das propinas)."""
+        """Avisos que não bloqueiam: fora da idade regular (as propinas acrescentam a dívida)."""
         self.ensure_one()
-        return []
+        warnings = []
+        age, level = self._edu_age(), self.class_id.level_id
+        if age is not None and level.regular_age_max and age > level.regular_age_max:
+            warnings.append(
+                self.env._(
+                    'Fora da idade regular (%(age)s anos; até %(max)s): apoio pedagógico específico ou educação de '
+                    'adultos (DP 162/23, art. 23.º).',
+                    age=age,
+                    max=level.regular_age_max,
+                )
+            )
+        return warnings
 
     def _edu_locked_subjects(self):
         """Disciplinas que já não se retiram da matrícula (com notas lançadas, no módulo da avaliação)."""

@@ -54,3 +54,6 @@ edu_curriculum_comp_rule,edu.curriculum multi-empresa,edu.curriculum,,crud,"[('c
 edu_curriculum_year_comp_rule,edu.curriculum.year multi-empresa,edu.curriculum.year,,crud,"[('company_id', 'in', company_ids)]"
 edu_curriculum_line_comp_rule,edu.curriculum.line multi-empresa,edu.curriculum.line,,crud,"[('company_id', 'in', company_ids)]"
 edu_class_comp_rule,edu.class multi-empresa,edu.class,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_calendar_event_user,access_edu_calendar_event_user,edu.calendar.event,edu_core.group_edu_user,crud,
+access_edu_calendar_event_employee,access_edu_calendar_event_employee,edu.calendar.event,base.group_user,r,
+edu_calendar_event_comp_rule,edu.calendar.event multi-empresa,edu.calendar.event,,crud,"[('company_id', 'in', company_ids)]"

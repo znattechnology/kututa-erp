@@ -18,6 +18,10 @@ class EduLevel(models.Model):
     subsystem = fields.Selection(SUBSYSTEMS, string='Subsistema', required=True, default='general')
     class_from = fields.Integer(string='Da classe', help='0 = iniciação.')
     class_to = fields.Integer(string='À classe')
+    # Idades completas no ano da matrícula (DP 162/23, arts. 21.º e 22.º; DP 167/23, art. 23.º): abaixo da mínima
+    # não se matricula; acima da regular, aviso (apoio pedagógico ou educação de adultos, art. 23.º).
+    min_age = fields.Integer(string='Idade mínima de ingresso')
+    regular_age_max = fields.Integer(string='Idade regular até')
     active = fields.Boolean(default=True)
 
     _code_uniq = models.Constraint('UNIQUE(code)', 'Já existe um nível com este código.')

@@ -137,6 +137,8 @@
         <field name="arch" type="xml">
             <xpath expr="//list/field[@name='name']" position="before">
                 <header>
+                    <button name="action_rank" type="object" string="Seriar candidaturas" icon="leaderboard" display="always"
+                            confirm="Ordenar as candidaturas por curso, pela nota da prova de acesso, e marcar admitidos e suplentes conforme as vagas?"/>
                     <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
                 </header>
             </xpath>
@@ -200,6 +202,19 @@
         <field name="arch" type="xml">
             <xpath expr="//header/field[@name='state']" position="before">
                 <button name="action_print_listing" type="object" string="Imprimir" icon="print" invisible="state == 'draft'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_calendar_event_list_print" model="ir.ui.view">
+        <field name="name">edu.calendar.event.list.print</field>
+        <field name="model">edu.calendar.event</field>
+        <field name="inherit_id" ref="edu_core.edu_calendar_event_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='date_start']" position="before">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
             </xpath>
         </field>
     </record>

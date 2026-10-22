@@ -50,8 +50,9 @@ class EduApplication(models.Model):
                 (self.env._('Candidato(a)'), 0, 'l'),
                 (self.env._('BI'), 16, 'l'),
                 (self.env._('Classe'), 8, 'c'),
-                (self.env._('Prova de acesso'), 11, 'c'),
-                (self.env._('Estado'), 14, 'l'),
+                (self.env._('Prova de acesso'), 10, 'c'),
+                (self.env._('Resultado'), 13, 'l'),
+                (self.env._('Estado'), 11, 'l'),
             ],
             'groups': [
                 {
@@ -63,9 +64,12 @@ class EduApplication(models.Model):
                             a.id_number or '',
                             a.desired_class_number and f'{a.desired_class_number}ª' or '',
                             f'{a.admission_score:g}' if a.has_admission_score else '',
+                            _label(a, 'admission_result'),
                             _label(a, 'state'),
                         ]
-                        for index, a in enumerate(rows.sorted(lambda a: (-a.admission_score, a.name or '')))
+                        for index, a in enumerate(
+                            rows.sorted(lambda a: (a.admission_rank or 10**6, -a.admission_score, a.name or ''))
+                        )
                     ],
                 }
                 for label, rows in groups
@@ -244,4 +248,45 @@ class EduStudent(models.Model):
                 (self.env._('Último ano'), 12, 'c'),
             ],
             'groups': groups,
+        }
+
+
+MONTHS = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro',
+    'Dezembro',
+]  # fmt: skip
+
+
+class EduCalendarEvent(models.Model):
+    _name = 'edu.calendar.event'
+    _inherit = ['edu.calendar.event', 'edu.listing.mixin']
+    _listing_report = 'edu_documents.action_report_listing_calendar'
+
+    def _listing_data(self):
+        groups = {}
+        for event in self.sorted('date_start'):
+            key = (event.date_start.year, event.date_start.month)
+            groups.setdefault(key, []).append(event)
+
+        def when(event):
+            end = event.date_end
+            if end and end != event.date_start:
+                return f'{event.date_start.strftime("%d/%m")} a {end.strftime("%d/%m")}'
+            return event.date_start.strftime('%d/%m')
+
+        return {
+            'title': self.env._('CALENDÁRIO ESCOLAR'),
+            'context': EM.join([f'ANO LECTIVO: {self._listing_year()}', self.env._('%s EVENTOS', len(self))]),
+            'columns': [
+                (self.env._('Data'), 15, 'c'),
+                (self.env._('Evento'), 0, 'l'),
+                (self.env._('Níveis'), 22, 'l'),
+            ],
+            'groups': [
+                {
+                    'label': f'{MONTHS[month - 1]} {year}',
+                    'rows': [[when(e), e.name, ', '.join(e.level_ids.mapped('name')) or 'Todos'] for e in events],
+                }
+                for (year, month), events in groups.items()
+            ],
         }

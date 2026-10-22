@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Documentos da primeira matrícula (DP 162/23, art. 26.º). -->
+    <data noupdate="1">
+        <record id="doc_boletim" model="edu.enrollment.document.type">
+            <field name="name">Boletim de matrícula preenchido</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="doc_birth_primary" model="edu.enrollment.document.type">
+            <field name="name">Certidão de nascimento, cópia do BI ou cédula pessoal</field>
+            <field name="sequence">20</field>
+            <field name="level_ids" eval="[(6, 0, [ref('edu_core.level_iniciacao'), ref('edu_core.level_primario')])]"/>
+        </record>
+        <record id="doc_photos_primary" model="edu.enrollment.document.type">
+            <field name="name">2 fotografias</field>
+            <field name="sequence">30</field>
+            <field name="level_ids" eval="[(6, 0, [ref('edu_core.level_iniciacao'), ref('edu_core.level_primario')])]"/>
+        </record>
+        <record id="doc_certificate" model="edu.enrollment.document.type">
+            <field name="name">Certificado de habilitações da classe ou ciclo anterior</field>
+            <field name="sequence">15</field>
+            <field name="level_ids" eval="[(6, 0, [ref('edu_core.level_sec1'), ref('edu_core.level_sec2'), ref('edu_core.level_tecnico'), ref('edu_core.level_magisterio')])]"/>
+        </record>
+        <record id="doc_id_secondary" model="edu.enrollment.document.type">
+            <field name="name">Cópia do Bilhete de Identidade</field>
+            <field name="sequence">20</field>
+            <field name="level_ids" eval="[(6, 0, [ref('edu_core.level_sec1'), ref('edu_core.level_sec2'), ref('edu_core.level_tecnico'), ref('edu_core.level_magisterio')])]"/>
+        </record>
+        <record id="doc_photos_secondary" model="edu.enrollment.document.type">
+            <field name="name">4 fotografias</field>
+            <field name="sequence">30</field>
+            <field name="level_ids" eval="[(6, 0, [ref('edu_core.level_sec1'), ref('edu_core.level_sec2'), ref('edu_core.level_tecnico'), ref('edu_core.level_magisterio')])]"/>
+        </record>
+    </data>
+
+    <record id="ir_cron_edu_enrollment_alerts" model="ir.cron">
+        <field name="name">Matrículas: avisos à direcção e à secretaria (processos incompletos, matrículas condicionais)</field>
+        <field name="model_id" ref="model_edu_enrollment"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_alerts()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

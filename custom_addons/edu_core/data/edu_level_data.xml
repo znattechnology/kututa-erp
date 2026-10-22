@@ -8,6 +8,8 @@
         <field name="subsystem">general</field>
         <field name="class_from">0</field>
         <field name="class_to">0</field>
+        <field name="min_age">5</field>
+        <field name="regular_age_max">6</field>
     </record>
     <record id="level_primario" model="edu.level">
         <field name="name">Ensino primário</field>
@@ -16,6 +18,8 @@
         <field name="subsystem">general</field>
         <field name="class_from">1</field>
         <field name="class_to">6</field>
+        <field name="min_age">6</field>
+        <field name="regular_age_max">11</field>
     </record>
     <record id="level_sec1" model="edu.level">
         <field name="name">Ensino secundário, I ciclo</field>
@@ -24,6 +28,8 @@
         <field name="subsystem">general</field>
         <field name="class_from">7</field>
         <field name="class_to">9</field>
+        <field name="min_age">12</field>
+        <field name="regular_age_max">14</field>
     </record>
     <record id="level_sec2" model="edu.level">
         <field name="name">Ensino secundário, II ciclo</field>
@@ -32,6 +38,8 @@
         <field name="subsystem">general</field>
         <field name="class_from">10</field>
         <field name="class_to">12</field>
+        <field name="min_age">15</field>
+        <field name="regular_age_max">17</field>
     </record>
     <record id="level_tecnico" model="edu.level">
         <field name="name">Ensino técnico-profissional</field>
@@ -40,6 +48,8 @@
         <field name="subsystem">technical</field>
         <field name="class_from">10</field>
         <field name="class_to">13</field>
+        <field name="min_age">15</field>
+        <field name="regular_age_max">17</field>
     </record>
     <record id="level_magisterio" model="edu.level">
         <field name="name">Formação de professores (magistério)</field>
@@ -48,5 +58,7 @@
         <field name="subsystem">teacher_training</field>
         <field name="class_from">10</field>
         <field name="class_to">13</field>
+        <field name="min_age">15</field>
+        <field name="regular_age_max">17</field>
     </record>
 </odoo>

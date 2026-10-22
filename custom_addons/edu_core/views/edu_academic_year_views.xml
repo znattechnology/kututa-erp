@@ -23,12 +23,16 @@
                 <header>
                     <button name="action_generate_trimesters" type="object" string="Criar os trimestres" class="btn-primary" invisible="trimester_ids"/>
                     <button name="action_set_current" type="object" string="Marcar como em curso" invisible="is_current"/>
+                    <button name="action_load_national_calendar" type="object" string="Carregar o calendário nacional"
+                            confirm="Carregar (ou actualizar) o Calendário Escolar Nacional deste ano? Os eventos que a escola alterou ficam como estão."/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_classes" type="object" class="oe_stat_button" icon="group">
                             <field name="class_count" widget="statinfo" string="Turmas"/>
                         </button>
+                        <button name="action_view_calendar" type="object" class="oe_stat_button" icon="calendar_month"
+                                string="Calendário"/>
                     </div>
                     <widget name="web_ribbon" title="Em curso" invisible="not is_current"/>
                     <div class="oe_title"><h1><field name="name" placeholder="2026/2027"/></h1></div>

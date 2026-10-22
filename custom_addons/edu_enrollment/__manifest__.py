@@ -1,6 +1,6 @@
 {
     'name': 'Secretaria Express - Matrículas',
-    'version': '20.0.1.1.0',
+    'version': '20.0.1.2.0',
     'summary': 'Candidaturas, matrículas com número de ordem, disciplinas, anulações, transferências e rematrícula',
     'description': """
 Secretaria Express: o percurso administrativo do aluno.
@@ -20,6 +20,7 @@ Secretaria Express: o percurso administrativo do aluno.
     'depends': ['edu_people'],
     'data': [
         'security/ir.access.csv',
+        'data/edu_enrollment_data.xml',
         'wizard/edu_enrollment_drop_views.xml',
         'wizard/edu_enrollment_renewal_views.xml',
         'views/edu_enrollment_views.xml',

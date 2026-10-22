@@ -24,6 +24,25 @@ class TestEduCore(TransactionCase):
             }
         )
 
+    def test_national_calendar(self):
+        """Calendário Escolar Nacional 2026/2027 (DE n.º 8212/2026) carregado na escola, que o pode editar."""
+        self.year.action_load_national_calendar()
+        events = self.year.calendar_event_ids
+        self.assertGreater(len(events), 100)
+        phases = set(events.mapped('phase'))
+        self.assertLessEqual({'application', 'selection_test', 'enrollment', 'confirmation'}, phases)
+        test = events.filtered(lambda e: e.phase == 'selection_test')
+        self.assertIn(self.technical, test.level_ids)
+        # A escola altera um evento; ao carregar de novo, a alteração fica.
+        enrollment = events.filtered(lambda e: e.phase == 'enrollment')[:1]
+        enrollment.date_end = enrollment.date_end.replace(day=27)
+        self.assertTrue(enrollment.edited)
+        self.year.action_load_national_calendar()
+        self.assertEqual(enrollment.date_end.day, 27)
+        self.assertEqual(len(self.year.calendar_event_ids), len(events))
+        start, end = self.env['edu.calendar.event']._phase_window('enrollment', around=enrollment.date_start)
+        self.assertEqual((start, end), (enrollment.date_start, enrollment.date_end))
+
     def test_academic_year(self):
         self.year.action_generate_trimesters()
         trimesters = self.year.trimester_ids.sorted('number')

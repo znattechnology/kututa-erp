@@ -140,12 +140,16 @@ class TestEduEvaluation(TransactionCase):
         self.assertEqual(ana_result.negative_subject_ids.code, 'LP')
         requirement = ana_result.requirement_ids
         self.assertEqual((requirement.kind, requirement.subject_id.code), ('extraordinary', 'LP'))
+        # Matrícula condicional na 8.ª com a LP em atraso (DE 424/25, art. 25.º); sem prazo fora da 9.ª e da 12.ª.
+        eighth = self._class(self.sec1, 8, year=self.next_year)
+        conditional = self._enroll(eighth, ana, ['LP'])
+        self.assertIn('Matrícula condicional: 1 disciplina(s) em atraso (Língua Portuguesa)', conditional.warning)
+        self.assertFalse(conditional._edu_conditional_deadline())
         requirement.score = 12
         requirement.action_record()
         self.assertEqual(ana_result.status, 'promoted')
         self.assertEqual(self._year_subject(enrollments[0], 'LP').final, 12)
         # Retido não se matricula numa classe acima (art. 25.º).
-        eighth = self._class(self.sec1, 8, year=self.next_year)
         with self.assertRaises(UserError):
             self._enroll(eighth, bento, ['LP'])
         # As disciplinas com notas não se retiram e a turma já não se renumera.

@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -7,6 +7,7 @@ class EduEnrollment(models.Model):
 
     subject_result_ids = fields.One2many('edu.subject.result', 'enrollment_id', string='Pauta')
     year_result_id = fields.Many2one('edu.year.result', string='Resultado do ano', compute='_compute_year_result_id')
+    conditional_alerted = fields.Boolean(readonly=True, copy=False)
 
     def _compute_year_result_id(self):
         Result = self.env['edu.year.result'].sudo()
@@ -44,9 +45,9 @@ class EduEnrollment(models.Model):
                 )
             pending = previous.requirement_ids.filtered(lambda r: r.state == 'pending' or not r.passed)
             if pending and self.class_number > previous.class_id.class_number:
-                policy = previous._policy()
-                terminal = policy._is_exam_class(self.class_number)
-                if terminal or len(pending) > 2:
+                # Matrícula condicional com até 2 disciplinas em atraso; na 9.ª e na 12.ª só fica efectiva com a
+                # aprovação no exame extraordinário até ao fim do I trimestre (DE 424/25, art. 25.º, n.os 4–6, 12–14).
+                if len(pending) > 2:
                     raise UserError(
                         self.env._(
                             '%(student)s tem %(count)s disciplina(s) por aprovar da classe anterior: %(subjects)s.',
@@ -60,6 +61,75 @@ class EduEnrollment(models.Model):
                     self.env._('%s excede o número de retenções no nível: decide a direcção.', self.student_id.name)
                 )
         return result
+
+    def _edu_pending_requirements(self):
+        """Disciplinas em atraso da classe anterior ainda por aprovar (a matrícula é condicional enquanto as houver)."""
+        self.ensure_one()
+        before = self.student_id.enrollment_ids.filtered(
+            lambda e: (
+                e.academic_year_id.date_start < self.academic_year_id.date_start
+                and e.state not in ('draft', 'dropped', 'transferred')
+            )
+        ).sorted(lambda e: e.academic_year_id.date_start, reverse=True)[:1]
+        result = before.sudo().year_result_id
+        if not result or self.class_number <= before.class_number:
+            return self.env['edu.exam.requirement']
+        return result.requirement_ids.filtered(lambda r: r.state == 'pending' or not r.passed)
+
+    def _edu_conditional_deadline(self):
+        """Na 9.ª e na 12.ª, o fim do I trimestre; nas outras classes não há prazo para efectivar."""
+        self.ensure_one()
+        policy = self.env['edu.evaluation.policy']._get(self.company_id, self.class_id.level_id)
+        if not policy._is_exam_class(self.class_number):
+            return False
+        first = self.academic_year_id.trimester_ids.filtered(lambda t: t.number == 1)[:1]
+        return first.date_end if first else False
+
+    def _edu_enrollment_warnings(self):
+        warnings = super()._edu_enrollment_warnings()
+        pending = self._edu_pending_requirements()
+        if pending:
+            deadline = self._edu_conditional_deadline()
+            warnings.append(
+                self.env._(
+                    'Matrícula condicional: %(count)s disciplina(s) em atraso (%(subjects)s)%(deadline)s.',
+                    count=len(pending),
+                    subjects=', '.join(pending.subject_id.mapped('name')),
+                    deadline=self.env._(
+                        '; só fica efectiva com a aprovação no exame extraordinário até %s',
+                        deadline.strftime('%d/%m/%Y'),
+                    )
+                    if deadline
+                    else '',
+                )
+            )
+        return warnings
+
+    @api.model
+    def _edu_alerts(self, today):
+        alerts = super()._edu_alerts(today)
+        late = self.browse()
+        for enrollment in self.search(
+            [
+                ('state', 'in', ('active', 'irregular')),
+                ('academic_year_id.is_current', '=', True),
+                ('conditional_alerted', '=', False),
+            ]
+        ):
+            deadline = enrollment._edu_conditional_deadline()
+            if deadline and deadline < today and enrollment._edu_pending_requirements():
+                late |= enrollment
+        late.write({'conditional_alerted': True})
+        alerts.append(
+            (
+                self.env._(
+                    'Matrículas condicionais por efectivar: o I trimestre terminou e há disciplinas em atraso sem '
+                    'aprovação no exame extraordinário (DE 424/25, art. 25.º).'
+                ),
+                late,
+            )
+        )
+        return alerts
 
     def _edu_is_terminal(self):
         """A última classe do plano do curso."""

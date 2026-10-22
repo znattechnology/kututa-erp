@@ -45,6 +45,8 @@
                         <group>
                             <field name="enrollment_type" readonly="state != 'draft'"/>
                             <field name="date" readonly="state != 'draft'"/>
+                            <field name="late_reason" invisible="enrollment_type not in ('new', 'transfer_in')"
+                                   readonly="state != 'draft'"/>
                             <field name="previous_enrollment_id" invisible="not previous_enrollment_id"/>
                             <field name="application_id" invisible="not application_id"/>
                             <field name="drop_date" invisible="not drop_date"/>
@@ -56,7 +58,27 @@
                             <field name="company_id" invisible="1"/>
                         </group>
                     </group>
+                    <div class="alert alert-danger" role="alert" invisible="not documents_overdue or documents_complete">
+                        Processo de matrícula incompleto há mais de 60 dias (DP 162/23, art. 24.º, n.º 10): falta
+                        <field name="documents_missing" class="d-inline"/>. A direcção pode anular a matrícula (anulação
+                        oficiosa por processo incompleto).
+                    </div>
                     <notebook>
+                        <page string="Documentos" name="documents" invisible="not document_ids">
+                            <field name="document_ids">
+                                <list editable="bottom" create="false" delete="false" decoration-muted="delivered">
+                                    <field name="type_id" readonly="1"/>
+                                    <field name="delivered"/>
+                                    <field name="delivered_date"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                            <group>
+                                <field name="documents_complete"/>
+                                <field name="documents_deadline" invisible="documents_complete"/>
+                                <field name="documents_overdue" invisible="1"/>
+                            </group>
+                        </page>
                         <page string="Disciplinas" name="subjects">
                             <field name="subject_ids" readonly="state not in ('draft', 'active', 'irregular')">
                                 <list>
@@ -88,6 +110,10 @@
                 <filter name="irregular" string="Irregulares" domain="[('state', '=', 'irregular')]"/>
                 <filter name="left" string="Anulados e transferidos" domain="[('state', 'in', ('dropped', 'transferred'))]"/>
                 <separator/>
+                <filter name="incomplete" string="Processo incompleto"
+                        domain="[('enrollment_type', 'in', ('new', 'transfer_in')), ('documents_complete', '=', False), ('state', 'in', ('active', 'irregular'))]"/>
+                <filter name="overdue" string="Processo incompleto há mais de 60 dias" domain="[('documents_overdue', '=', True), ('documents_complete', '=', False)]"/>
+                <separator/>
                 <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
                 <group>
                     <filter name="group_class" string="Turma" context="{'group_by': 'class_id'}"/>
@@ -108,4 +134,28 @@
 
     <menuitem id="menu_edu_enrollment" action="action_edu_enrollment" parent="edu_core.menu_edu_students" sequence="5"/>
     <menuitem id="menu_edu_enrollment_renewal" action="action_edu_enrollment_renewal" parent="edu_core.menu_edu_students" sequence="40"/>
+
+    <record id="edu_enrollment_document_type_list" model="ir.ui.view">
+        <field name="name">edu.enrollment.document.type.list</field>
+        <field name="model">edu.enrollment.document.type</field>
+        <field name="arch" type="xml">
+            <list string="Documentos da matrícula" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="level_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_edu_enrollment_document_type" model="ir.actions.act_window">
+        <field name="name">Documentos da matrícula</field>
+        <field name="res_model">edu.enrollment.document.type</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p>Os documentos que se entregam na primeira matrícula (DP 162/23, art. 26.º). A confirmação de matrícula
+            não exige documentos (art. 27.º, n.º 3).</p>
+        </field>
+    </record>
+    <menuitem id="menu_edu_enrollment_document_type" action="action_edu_enrollment_document_type"
+              parent="edu_core.menu_edu_config" sequence="40"/>
 </odoo>

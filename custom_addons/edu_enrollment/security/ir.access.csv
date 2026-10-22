@@ -7,3 +7,8 @@ access_edu_enrollment_renewal_user,access_edu_enrollment_renewal_user,edu.enroll
 edu_enrollment_comp_rule,edu.enrollment multi-empresa,edu.enrollment,,crud,"[('company_id', 'in', company_ids)]"
 edu_application_comp_rule,edu.application multi-empresa,edu.application,,crud,"[('company_id', 'in', company_ids)]"
 edu_transfer_comp_rule,edu.transfer multi-empresa,edu.transfer,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_enrollment_document_type_user,access_edu_enrollment_document_type_user,edu.enrollment.document.type,edu_core.group_edu_user,crud,
+access_edu_enrollment_document_type_employee,access_edu_enrollment_document_type_employee,edu.enrollment.document.type,base.group_user,r,
+access_edu_enrollment_document_user,access_edu_enrollment_document_user,edu.enrollment.document,edu_core.group_edu_user,crud,
+access_edu_enrollment_document_employee,access_edu_enrollment_document_employee,edu.enrollment.document,base.group_user,r,
+edu_enrollment_document_comp_rule,edu.enrollment.document multi-empresa,edu.enrollment.document,,crud,"[('company_id', 'in', company_ids)]"

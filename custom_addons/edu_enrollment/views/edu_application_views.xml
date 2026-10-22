@@ -10,6 +10,9 @@
                 <field name="desired_course_id" optional="show"/>
                 <field name="desired_class_number" optional="show"/>
                 <field name="admission_score" optional="show" invisible="not has_admission_score"/>
+                <field name="admission_rank" optional="show" invisible="not admission_rank"/>
+                <field name="admission_result" optional="show" widget="badge"
+                       decoration-success="admission_result == 'admitted'" decoration-warning="admission_result == 'waitlist'"/>
                 <field name="has_admission_score" column_invisible="1"/>
                 <field name="guardian_name" optional="show"/>
                 <field name="guardian_phone" optional="hide"/>
@@ -62,7 +65,10 @@
                             <field name="desired_course_id" options="{'no_create': True}"/>
                             <field name="desired_class_number"/>
                             <field name="previous_school"/>
+                            <field name="completed_class"/>
+                            <field name="previous_average"/>
                             <field name="transfer_in"/>
+                            <field name="late_reason"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         </group>
                         <group string="Prova de acesso" invisible="not admission_test_required">
@@ -71,6 +77,8 @@
                             <field name="admission_score" invisible="not has_admission_score"
                                    readonly="state not in ('draft', 'submitted', 'review')"/>
                             <field name="admission_min_score" readonly="1"/>
+                            <field name="admission_rank" invisible="not admission_rank"/>
+                            <field name="admission_result" invisible="not admission_result"/>
                             <div colspan="2" class="text-muted small">
                                 Abaixo da nota mínima, a candidatura é rejeitada, mesmo que sobrem vagas
                                 (DP 167/23, art. 52.º). Quem vem transferido não faz prova.
@@ -125,6 +133,7 @@
             <field name="has_special_exam" position="after">
                 <field name="admission_test_required"/>
                 <field name="admission_min_score" invisible="not admission_test_required"/>
+                <field name="admission_vacancies"/>
             </field>
         </field>
     </record>

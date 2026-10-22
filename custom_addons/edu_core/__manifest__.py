@@ -25,6 +25,7 @@ Secretaria Express: núcleo da gestão escolar angolana.
         'views/edu_menus.xml',
         'views/res_company_views.xml',
         'views/edu_academic_year_views.xml',
+        'views/edu_calendar_views.xml',
         'views/edu_facility_views.xml',
         'views/edu_course_views.xml',
         'views/edu_curriculum_views.xml',

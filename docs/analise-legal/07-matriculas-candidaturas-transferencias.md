@@ -354,3 +354,42 @@ Todas as impressões levam o cabeçalho e as assinaturas da pauta. Nas listas, s
 | Transferências | «Transferências» por tipo: de, para e estado |
 | Alunos e Falta confirmar | «Lista de alunos» por situação |
 | Confirmação de matrículas | o resultado: confirmados, pendentes e fora da confirmação, com o motivo |
+
+## 8. Feito (2026-10-22): fase D, candidatura e matrícula
+
+### Calendário escolar
+- Novo menu Configuração académica › Calendário escolar, com lista, vista de calendário e impressão.
+- O Calendário Escolar Nacional de cada ano (2026/2027: Decreto Executivo n.º 8212/2026, os 149 eventos do secPed) carrega-se em «Anos lectivos › Carregar o calendário nacional».
+- Cada escola edita os seus eventos e acrescenta outros. As alterações da escola não se perdem quando se carrega de novo.
+- Os eventos por nível (por exemplo, o teste de selecção do técnico, do II Ciclo e do magistério) só valem para esses níveis.
+- **Fases das matrículas reconhecidas:** inscrição de candidatos, teste de selecção, matrícula de novos alunos e confirmação. Na Vovó Eva: inscrição de 23/07 a 06/08/2027, teste a 10–11/08, matrícula de 16 a 20/08 e reconfirmação de 05 a 23/07.
+
+### Candidaturas
+- **Submissão:** só no período de inscrição do calendário; fora dele, só a direcção.
+- **Habilitação de acesso:** a «última classe concluída» tem de ser a anterior à pretendida (7.ª → primário; 10.ª → I Ciclo; DP 162/23, art. 21.º). Quem vem transferido fica de fora desta regra.
+- **Idade mínima no ano da matrícula:** iniciação 5, 1.ª classe 6, 7.ª classe 12, 10.ª e técnico 15 (DP 162/23, art. 21.º; DP 167/23, art. 23.º).
+- **Vagas do curso para novos alunos** (0 = sem limite, como nas privadas).
+- **«Seriar candidaturas»:** por curso e ano, pela nota da prova de acesso, com desempate pela média do nível anterior (DP 167/23, arts. 49.º e 52.º).
+  - Até esgotar as vagas, «Admitido(a)»; depois, «Suplente (sem vaga)».
+  - Com vagas definidas, só se aprovam os admitidos.
+  - A lista impressa mostra a posição e o resultado.
+- **Motivo da matrícula fora de prazo:** passa da candidatura para a matrícula.
+
+### Matrícula
+- **Idade mínima:** na primeira matrícula (nova ou transferido) bloqueia; acima da idade regular, aviso de apoio pedagógico ou educação de adultos (art. 23.º).
+- **Fora do período de matrícula:** exige o motivo do atraso; até ao fim do 1.º mês do II trimestre; depois, só a direcção (art. 25.º, n.º 2).
+- **Documentos da primeira matrícula** (art. 26.º), com lista configurável em Configuração académica › Documentos da matrícula:
+  - primário: boletim, certidão/BI/cédula e 2 fotografias;
+  - secundário e técnico: certificado de habilitações, boletim, BI e 4 fotografias;
+  - na matrícula, o separador «Documentos» marca o que foi entregue;
+  - filtros «Processo incompleto» e «Processo incompleto há mais de 60 dias»;
+  - a confirmação de matrícula não pede documentos (art. 27.º, n.º 3).
+- **Aviso diário à direcção e à secretaria** (nunca anula):
+  - processos incompletos 60 dias depois do início do ano (art. 24.º, n.º 10);
+  - matrículas condicionais por efectivar depois do I trimestre;
+  - o aviso chega como mensagem no ano lectivo, com a lista dos alunos e o que falta;
+  - a direcção decide se anula (anulação oficiosa por processo incompleto).
+- **Matrícula condicional** (DE 424/25, art. 25.º):
+  - até 2 disciplinas em atraso da classe anterior; com mais, bloqueia;
+  - na 9.ª e na 12.ª deixa de bloquear e passa a condicional, que só fica efectiva com a aprovação no exame extraordinário até ao fim do I trimestre;
+  - o aviso da matrícula diz quais são as disciplinas e o prazo.

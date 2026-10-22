@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_calendar_event_list" model="ir.ui.view">
+        <field name="name">edu.calendar.event.list</field>
+        <field name="model">edu.calendar.event</field>
+        <field name="arch" type="xml">
+            <list string="Calendário escolar" editable="bottom" decoration-bf="phase" decoration-info="event_type == 'holiday'">
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="name"/>
+                <field name="event_type"/>
+                <field name="phase" optional="show"/>
+                <field name="level_ids" widget="many2many_tags" optional="show" options="{'no_create': True}"/>
+                <field name="academic_year_id" optional="hide" options="{'no_create': True}"/>
+                <field name="is_national" optional="show"/>
+                <field name="edited" optional="hide"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_calendar_event_calendar" model="ir.ui.view">
+        <field name="name">edu.calendar.event.calendar</field>
+        <field name="model">edu.calendar.event</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendário escolar" date_start="date_start" date_stop="date_end" color="event_type"
+                      mode="month" quick_create="0">
+                <field name="name"/>
+                <field name="phase"/>
+                <field name="level_ids" widget="many2many_tags"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="edu_calendar_event_form" model="ir.ui.view">
+        <field name="name">edu.calendar.event.form</field>
+        <field name="model">edu.calendar.event</field>
+        <field name="arch" type="xml">
+            <form string="Evento do calendário">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="academic_year_id" options="{'no_create': True}"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                        <group>
+                            <field name="event_type"/>
+                            <field name="phase"/>
+                            <field name="level_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="is_national"/>
+                            <field name="edited" invisible="not is_national"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Descrição"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_calendar_event_search" model="ir.ui.view">
+        <field name="name">edu.calendar.event.search</field>
+        <field name="model">edu.calendar.event</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="level_ids"/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <filter name="phases" string="Fases das matrículas" domain="[('phase', '!=', False)]"/>
+                <filter name="holidays" string="Feriados e pausas" domain="[('event_type', '=', 'holiday')]"/>
+                <filter name="exams" string="Provas e exames" domain="[('event_type', '=', 'exam')]"/>
+                <filter name="school" string="Da escola" domain="[('is_national', '=', False)]"/>
+                <group>
+                    <filter name="group_type" string="Tipo" context="{'group_by': 'event_type'}"/>
+                    <filter name="group_month" string="Mês" context="{'group_by': 'date_start:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_calendar_event" model="ir.actions.act_window">
+        <field name="name">Calendário escolar</field>
+        <field name="res_model">edu.calendar.event</field>
+        <field name="view_mode">list,calendar,form</field>
+        <field name="context">{'search_default_current_year': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">O calendário do ano ainda não foi carregado.</p>
+            <p>Em Anos lectivos, abra o ano e use «Carregar o calendário nacional»; depois edite os eventos da escola.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_edu_calendar_event" action="action_edu_calendar_event" parent="menu_edu_config" sequence="12"/>
+</odoo>

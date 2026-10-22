@@ -180,6 +180,7 @@ ReportListingTransfer = _document_report('report_listing_transfer', 'edu.transfe
 ReportListingStudent = _document_report('report_listing_student', 'edu.student')
 ReportListingConfirmation = _document_report('report_listing_confirmation', 'edu.enrollment.confirmation')
 ReportApplicationReceipt = _document_report('report_application_receipt', 'edu.application')
+ReportListingCalendar = _document_report('report_listing_calendar', 'edu.calendar.event')
 
 
 class ReportTerm(models.AbstractModel):

@@ -1,0 +1,969 @@
+{
+  "anoLectivo": "2026-2027",
+  "fonte": "Decreto Executivo n.º 8212/2026, de 13 de Agosto (MED) — Orientações Metodológicas e Calendário Escolar Nacional 2026/2027, de aplicação obrigatória (art. 2.º). Lido das fotografias em ~/Downloads/Calendario-2026-2027 (IMG_2158–IMG_2185).",
+  "regras": [
+    "Onde o texto normativo e as folhas de anexo divergem, vale o texto normativo (secções 2–5).",
+    "Os eventos com 'niveis' só aparecem às escolas desses níveis (o decreto tem um calendário por subsistema). Sem 'niveis' = todas.",
+    "Trimestres NÃO entram aqui: cada escola tem os seus (tabela de trimestres), que geram os eventos de início e fim.",
+    "Ficam de fora os períodos de meses inteiros sem datas próprias (Jogos intra/inter-turmas de Setembro a Janeiro, Jogos Municipais de Janeiro a Fevereiro, estágios, concursos só com o mês): enchiam todas as células do calendário durante meses.",
+    "EXAM = épocas com vigilância (provas trimestrais, Prova Global, exames, recurso, extraordinários, especial). A prova do professor (avaliação contínua) é ACTIVITY: sem interrupção de aulas."
+  ],
+  "divergencias": [
+    "Férias dos professores: texto (4.2) 22 Jul–20 Ago; anexos 21 Jul–19 Ago. Usado o texto.",
+    "Seminários de Agosto: texto (4.2) 24–27 Ago; anexos 23–27 Ago. Usado o texto.",
+    "Certificados e diplomas: texto 12–30 Jul; anexo Geral 'a partir de 19 de Julho'; anexo Técnico 12–29 Jul. Usado o texto.",
+    "Inscrição e selecção de candidatos: texto 23 Jul–6 Ago; anexo Geral 26 Jul–11 Ago; anexo Técnico 23 Jul–3 Ago. Usado o texto.",
+    "Teste de selecção: texto 10–11 Ago; anexo Técnico 9–10 Ago. Usado o texto.",
+    "Publicação das turmas e horários: texto 25–28 Ago; anexos 26–27 Ago. Usado o texto.",
+    "Dia da Independência: as folhas de feriados dizem 11 Nov 2027; o texto fala do 51.º aniversário = 11 Nov 2026. Usado 2026.",
+    "Exame prático supervisionado da saúde de 1 a 31 de Março: o texto (3.1 j) diz 12.ª classe; o anexo do Técnico diz 13.ª. Usado o anexo (13.ª), que é o específico.",
+    "Páscoa: a tabela de feriados diz '28 de Março (Sexta-feira Santa)'; a Sexta-feira Santa de 2027 é 26 de Março, como dizem o texto (secção 2) e os anexos. Usado 26.",
+    "Datas comemorativas 'móveis': Estilos de Vida Saudáveis na SADC (última sexta de Fevereiro = 26 Fev; a tabela diz 28), Meninas e as TIC (última quarta de Abril = 28 Abr; a tabela diz 29), Aves Migratórias (segundo sábado de Maio = 8 Mai; a tabela diz 9), Dia Mundial do Surdo (último domingo de Setembro = 27 Set; a tabela diz 28). Usada a regra descrita na própria tabela."
+  ],
+  "eventos": [
+    {
+      "tipo": "OTHER",
+      "titulo": "Abertura oficial do ano lectivo 2026/2027",
+      "inicio": "2026-08-31"
+    },
+    { "tipo": "OTHER", "titulo": "Início das actividades lectivas", "inicio": "2026-09-01" },
+    { "tipo": "OTHER", "titulo": "Encerramento do ano lectivo 2026/2027", "inicio": "2027-07-31" },
+    {
+      "tipo": "OTHER",
+      "titulo": "Abertura oficial do ano lectivo 2027/2028",
+      "inicio": "2027-08-31"
+    },
+
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Dia do Herói Nacional",
+      "inicio": "2026-09-17",
+      "fim": "2026-09-18",
+      "descricao": "Feriado (17) e ponte (18). Não há aulas."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Dia dos Finados",
+      "inicio": "2026-11-02",
+      "descricao": "Feriado. Não há aulas."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Dia da Independência Nacional",
+      "inicio": "2026-11-11",
+      "descricao": "51.º aniversário. Feriado. Não há aulas."
+    },
+    { "tipo": "HOLIDAY", "titulo": "Natal", "inicio": "2026-12-25", "descricao": "Feriado." },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Dia do Ano Novo",
+      "inicio": "2027-01-01",
+      "descricao": "Feriado."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Dia do Início da Luta Armada de Libertação Nacional",
+      "inicio": "2027-02-04",
+      "fim": "2027-02-05",
+      "descricao": "Feriado (4) e ponte (5). Não há aulas."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Carnaval",
+      "inicio": "2027-02-08",
+      "fim": "2027-02-09",
+      "descricao": "Ponte (8) e feriado (9). Não há aulas."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Dia Internacional da Mulher",
+      "inicio": "2027-03-08",
+      "descricao": "Feriado. Não há aulas."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Dia da Libertação da África Austral",
+      "inicio": "2027-03-22",
+      "fim": "2027-03-23",
+      "descricao": "Ponte (22) e feriado (23). Não há aulas."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Sexta-Feira Santa",
+      "inicio": "2027-03-26",
+      "descricao": "Feriado. Não há aulas."
+    },
+    { "tipo": "HOLIDAY", "titulo": "Dia da Paz", "inicio": "2027-04-04", "descricao": "Feriado." },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Dia Internacional do Trabalhador",
+      "inicio": "2027-05-01",
+      "descricao": "Feriado."
+    },
+
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Pausa pedagógica do I Trimestre",
+      "inicio": "2026-12-21",
+      "fim": "2026-12-31",
+      "descricao": "Sem aulas para os alunos. Coincide com a classificação das provas e os Jogos Provinciais Escolares."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Pausa pedagógica do II Trimestre",
+      "inicio": "2027-04-12",
+      "fim": "2027-04-23",
+      "descricao": "Sem aulas para os alunos. Coincide com a classificação das provas e os Jogos Zonais Escolares."
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Férias dos alunos",
+      "inicio": "2027-06-18",
+      "descricao": "A partir de 18 de Junho, à medida que cada aluno termina as avaliações do III Trimestre.",
+      "audiencias": ["STUDENTS", "GUARDIANS"]
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Férias dos professores",
+      "inicio": "2027-07-22",
+      "fim": "2027-08-20",
+      "audiencias": ["TEACHERS"]
+    },
+
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Seminários e jornadas pedagógicas — I Trimestre",
+      "inicio": "2026-12-29",
+      "fim": "2026-12-31",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO", "INICIACAO"],
+      "audiencias": ["TEACHERS", "STAFF"]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Seminários e jornadas pedagógicas — I Trimestre",
+      "inicio": "2026-12-28",
+      "fim": "2026-12-31",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "audiencias": ["TEACHERS", "STAFF"]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Seminários e jornadas pedagógicas — II Trimestre",
+      "inicio": "2027-04-19",
+      "fim": "2027-04-23",
+      "audiencias": ["TEACHERS", "STAFF"]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Seminários e jornadas pedagógicas",
+      "inicio": "2027-08-24",
+      "fim": "2027-08-27",
+      "audiencias": ["TEACHERS", "STAFF"]
+    },
+
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Fim dos Jogos Escolares Provinciais",
+      "inicio": "2027-03-16",
+      "descricao": "Os Jogos Provinciais Escolares realizam-se até 16 de Março."
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Jogos Zonais Escolares (Norte, Centro, Leste e Sul)",
+      "inicio": "2027-04-12",
+      "fim": "2027-04-23"
+    },
+    { "tipo": "ACTIVITY", "titulo": "Festival de Ginástica", "inicio": "2027-08-15" },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Final dos Jogos Nacionais Escolares",
+      "inicio": "2027-08-15",
+      "fim": "2027-08-27"
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "XIV Concurso Nacional de Olimpíadas de Matemática",
+      "inicio": "2027-04-14",
+      "fim": "2027-04-23"
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "I Concurso Nacional de Literacia Financeira",
+      "inicio": "2027-04-14",
+      "fim": "2027-04-23",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Concurso de Olimpíadas de Física",
+      "inicio": "2027-08-11",
+      "fim": "2027-08-13"
+    },
+    {
+      "tipo": "MEETING",
+      "titulo": "Encontro Nacional da Educação de Adultos",
+      "inicio": "2027-02-10",
+      "fim": "2027-02-12",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"]
+    },
+    {
+      "tipo": "MEETING",
+      "titulo": "Encontro Nacional do Ensino Especial",
+      "inicio": "2027-03-24",
+      "fim": "2027-03-25",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"]
+    },
+    {
+      "tipo": "MEETING",
+      "titulo": "Encontro Nacional da Educação Pré-Escolar e Ensino Primário",
+      "inicio": "2027-04-19",
+      "fim": "2027-04-20",
+      "niveis": ["INICIACAO", "PRIMARIO"]
+    },
+    {
+      "tipo": "MEETING",
+      "titulo": "Encontro Nacional do Ensino Secundário Geral",
+      "inicio": "2027-04-22",
+      "fim": "2027-04-23",
+      "niveis": ["SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"]
+    },
+
+    {
+      "tipo": "OTHER",
+      "titulo": "Reconfirmação automática de matrículas",
+      "inicio": "2027-07-05",
+      "fim": "2027-07-23"
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Emissão e entrega de atestados",
+      "inicio": "2027-06-25",
+      "descricao": "A partir de 25 de Junho."
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Emissão e entrega de certificados e diplomas",
+      "inicio": "2027-07-12",
+      "fim": "2027-07-30"
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Inscrição, selecção e publicação das listas de candidatos",
+      "inicio": "2027-07-23",
+      "fim": "2027-08-06"
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Teste de selecção",
+      "inicio": "2027-08-10",
+      "fim": "2027-08-11",
+      "niveis": ["TECNICO", "MAGISTERIO", "SECUNDARIO_II_CICLO"]
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Matrícula de novos alunos",
+      "inicio": "2027-08-16",
+      "fim": "2027-08-20"
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Publicação das listas das turmas e distribuição de horários",
+      "inicio": "2027-08-25",
+      "fim": "2027-08-28"
+    },
+
+    {
+      "tipo": "EXAM",
+      "titulo": "Provas do I Trimestre",
+      "inicio": "2026-12-09",
+      "fim": "2026-12-18",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO", "TECNICO", "MAGISTERIO"],
+      "descricao": "Provas trimestrais. Com vigilância."
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Provas do II Trimestre",
+      "inicio": "2027-03-31",
+      "fim": "2027-04-09",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO", "TECNICO", "MAGISTERIO"],
+      "descricao": "Provas trimestrais. Com vigilância."
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Provas do III Trimestre",
+      "inicio": "2027-06-09",
+      "fim": "2027-06-18",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO", "MAGISTERIO"],
+      "descricao": "Provas trimestrais. Com vigilância."
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Provas do III Trimestre e Prova Global",
+      "inicio": "2027-06-21",
+      "fim": "2027-06-30",
+      "niveis": ["TECNICO"],
+      "descricao": "Prova trimestral, exame escrito (saúde) e Prova Global — um só período na grelha do Técnico-Profissional. Com vigilância."
+    },
+
+    {
+      "tipo": "EXAM",
+      "titulo": "Exames orais — Língua Portuguesa e Língua Estrangeira",
+      "inicio": "2027-06-21",
+      "fim": "2027-06-22",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"]
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Exames escritos — 1.ª chamada",
+      "inicio": "2027-06-21",
+      "fim": "2027-07-02",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"],
+      "descricao": "Com vigilância."
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Exames escritos — 2.ª chamada",
+      "inicio": "2027-07-05",
+      "fim": "2027-07-09",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"],
+      "descricao": "Com vigilância."
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Classificação, conselho de notas e afixação de pautas",
+      "inicio": "2027-07-12",
+      "fim": "2027-07-16",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"],
+      "audiencias": ["TEACHERS", "STAFF"]
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Exames de recurso",
+      "inicio": "2027-07-21",
+      "fim": "2027-07-23",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"],
+      "descricao": "Com vigilância."
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Exames extraordinários",
+      "inicio": "2027-07-26",
+      "fim": "2027-07-28",
+      "niveis": ["PRIMARIO", "SECUNDARIO_I_CICLO", "SECUNDARIO_II_CICLO"],
+      "descricao": "Para militares, atletas de alta competição, alunos vindos do estrangeiro e quem, com razão fundamentada, faltou à época de exame ou tem disciplinas em atraso. Com vigilância."
+    },
+
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Provas do professor (avaliação contínua)",
+      "inicio": "2026-10-22",
+      "fim": "2026-10-23",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "descricao": "Sem interrupção de aulas."
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Provas do professor (avaliação contínua)",
+      "inicio": "2026-10-26",
+      "fim": "2026-10-30",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "descricao": "Sem interrupção de aulas."
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Provas do professor (avaliação contínua)",
+      "inicio": "2027-02-11",
+      "fim": "2027-02-12",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "descricao": "Sem interrupção de aulas."
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Provas do professor (avaliação contínua)",
+      "inicio": "2027-02-15",
+      "fim": "2027-02-19",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "descricao": "Sem interrupção de aulas."
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Provas do professor (avaliação contínua)",
+      "inicio": "2027-05-20",
+      "fim": "2027-05-21",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "descricao": "Sem interrupção de aulas."
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Provas do professor (avaliação contínua)",
+      "inicio": "2027-05-24",
+      "fim": "2027-05-28",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "descricao": "Sem interrupção de aulas."
+    },
+
+    {
+      "tipo": "EXAM",
+      "titulo": "Exames escritos da 12.ª classe",
+      "inicio": "2027-06-23",
+      "fim": "2027-07-02",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "classes": [12],
+      "descricao": "Com vigilância."
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Exames orais — cursos de Língua Portuguesa, Francesa e Inglesa/EMC (12.ª classe)",
+      "inicio": "2027-06-21",
+      "fim": "2027-06-22",
+      "niveis": ["MAGISTERIO"],
+      "classes": [12]
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Classificação, conselho de notas e afixação das pautas do exame",
+      "inicio": "2027-07-09",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "audiencias": ["TEACHERS", "STAFF"]
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Exames de recurso",
+      "inicio": "2027-07-14",
+      "fim": "2027-07-16",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "descricao": "Com vigilância."
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Classificação, conselho de notas e afixação das pautas do exame de recurso",
+      "inicio": "2027-07-19",
+      "niveis": ["TECNICO", "MAGISTERIO"],
+      "audiencias": ["TEACHERS", "STAFF"]
+    },
+    {
+      "tipo": "EXAM",
+      "titulo": "Exame especial",
+      "inicio": "2027-08-23",
+      "fim": "2027-08-25",
+      "niveis": ["TECNICO"],
+      "descricao": "Exame especial do Ensino Secundário Técnico-Profissional. Com vigilância."
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Classificação, conselho de notas e afixação das pautas do exame especial",
+      "inicio": "2027-08-26",
+      "fim": "2027-08-27",
+      "niveis": ["TECNICO"],
+      "audiencias": ["TEACHERS", "STAFF"]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Exame prático supervisionado da 13.ª classe (saúde)",
+      "inicio": "2027-03-01",
+      "fim": "2027-03-31",
+      "niveis": ["TECNICO"],
+      "classes": [13]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Exame prático da 12.ª classe (saúde)",
+      "inicio": "2027-06-09",
+      "fim": "2027-06-11",
+      "niveis": ["TECNICO"],
+      "classes": [12]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Exame prático supervisionado da 12.ª classe (saúde)",
+      "inicio": "2027-06-21",
+      "fim": "2027-06-22",
+      "niveis": ["TECNICO"],
+      "classes": [12]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Prova de Aptidão Profissional (13.ª classe)",
+      "inicio": "2027-05-03",
+      "fim": "2027-07-15",
+      "niveis": ["TECNICO"],
+      "classes": [13]
+    },
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Avaliação final de aptidão para a docência (13.ª classe)",
+      "inicio": "2027-05-03",
+      "fim": "2027-07-14",
+      "niveis": ["MAGISTERIO"],
+      "classes": [13]
+    },
+
+    {
+      "tipo": "ACTIVITY",
+      "titulo": "Jornada da Criança",
+      "inicio": "2027-06-01",
+      "fim": "2027-06-30",
+      "niveis": ["INICIACAO"]
+    },
+    {
+      "tipo": "OTHER",
+      "titulo": "Cerimónia de entrega dos atestados",
+      "inicio": "2027-07-16",
+      "niveis": ["INICIACAO"]
+    },
+    {
+      "tipo": "HOLIDAY",
+      "titulo": "Férias colectivas",
+      "inicio": "2027-07-21",
+      "fim": "2027-08-20",
+      "niveis": ["INICIACAO"]
+    },
+
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Alfabetização",
+      "inicio": "2026-09-08"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional do Jornalista",
+      "inicio": "2026-09-08"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Imprensa Nacional",
+      "inicio": "2026-09-13"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Preservação da Camada do Ozono",
+      "inicio": "2026-09-16"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Jornada Internacional pela Paz",
+      "inicio": "2026-09-17"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Paz e Segurança em África",
+      "inicio": "2026-09-21"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Turismo",
+      "inicio": "2026-09-27"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Surdo",
+      "inicio": "2026-09-27",
+      "descricao": "Último domingo de Setembro."
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Nascimento do Poeta António Jacinto",
+      "inicio": "2026-09-28"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial das Pessoas Idosas",
+      "inicio": "2026-10-01"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Animal",
+      "inicio": "2026-10-04"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Professor",
+      "inicio": "2026-10-05"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Rádio Nacional de Angola",
+      "inicio": "2026-10-05"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Habitat",
+      "inicio": "2026-10-05",
+      "descricao": "Primeira segunda-feira de Outubro."
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional da Bengala Branca",
+      "inicio": "2026-10-15"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional da Lavagem das Mãos",
+      "inicio": "2026-10-15"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Alimentação",
+      "inicio": "2026-10-16"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Pobreza",
+      "inicio": "2026-10-17"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Televisão Pública de Angola",
+      "inicio": "2026-10-18"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Estatística",
+      "inicio": "2026-10-20"
+    },
+    { "tipo": "OTHER", "comemorativa": true, "titulo": "Dia da ONU", "inicio": "2026-10-24" },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Nacional da Estatística da Educação",
+      "inicio": "2026-10-25"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia do Educador Nacional",
+      "inicio": "2026-11-22"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Luta contra a SIDA",
+      "inicio": "2026-12-01"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial das Pessoas com Deficiência",
+      "inicio": "2026-12-03"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional dos Direitos Humanos",
+      "inicio": "2026-12-10"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia dos Mártires da Repressão Colonial",
+      "inicio": "2027-01-04"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Braille",
+      "inicio": "2027-01-04"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Cultura Nacional",
+      "inicio": "2027-01-08"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia do Antigo Combatente e Veterano da Pátria",
+      "inicio": "2027-01-15"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional da Educação",
+      "inicio": "2027-01-24"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional do Aposentado",
+      "inicio": "2027-01-24"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Providência Social",
+      "inicio": "2027-01-24"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Nacional do Ambiente",
+      "inicio": "2027-01-31"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional da Mulher e Menina na Ciência",
+      "inicio": "2027-02-11"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional da Língua Materna",
+      "inicio": "2027-02-21"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia de Estilos de Vida Saudáveis na SADC",
+      "inicio": "2027-02-26",
+      "descricao": "Última sexta-feira de Fevereiro."
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Africano de Alimentação Escolar",
+      "inicio": "2027-03-01"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Mulher Angolana",
+      "inicio": "2027-03-02"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Expansão da Luta Armada de Libertação Nacional",
+      "inicio": "2027-03-15"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Direito do Consumidor",
+      "inicio": "2027-03-15"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Poesia",
+      "inicio": "2027-03-21"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Floresta",
+      "inicio": "2027-03-21"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Água",
+      "inicio": "2027-03-22"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Meteorologia",
+      "inicio": "2027-03-23"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional do Teatro",
+      "inicio": "2027-03-27"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Literatura Infantil",
+      "inicio": "2027-04-02"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Saúde",
+      "inicio": "2027-04-07"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Conservação dos Solos",
+      "inicio": "2027-04-15"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional dos Monumentos e Sítios",
+      "inicio": "2027-04-18"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Terra",
+      "inicio": "2027-04-22"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Livro e do Direito do Autor",
+      "inicio": "2027-04-23"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional das Meninas e as TIC",
+      "inicio": "2027-04-28",
+      "descricao": "Última quarta-feira de Abril."
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional da Dança",
+      "inicio": "2027-04-29"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Língua Portuguesa e da Cultura nos Países da CPLP",
+      "inicio": "2027-05-05"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia do Armistício",
+      "inicio": "2027-05-08"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial das Aves Migratórias",
+      "inicio": "2027-05-08",
+      "descricao": "Segundo sábado de Maio."
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional da Família",
+      "inicio": "2027-05-15"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial das Telecomunicações e da Sociedade de Informação",
+      "inicio": "2027-05-17"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional dos Museus",
+      "inicio": "2027-05-18"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Desenvolvimento Cultural",
+      "inicio": "2027-05-21"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Diversidade Biológica",
+      "inicio": "2027-05-22"
+    },
+    { "tipo": "OTHER", "comemorativa": true, "titulo": "Dia de África", "inicio": "2027-05-25" },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial sem Tabaco",
+      "inicio": "2027-05-31"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional da Criança",
+      "inicio": "2027-06-01"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial do Ambiente",
+      "inicio": "2027-06-05"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Criança Africana",
+      "inicio": "2027-06-16"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia do Combate à Desertificação e à Seca",
+      "inicio": "2027-06-17"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da Luta contra o Uso Indevido e Tráfico Ilícito de Drogas",
+      "inicio": "2027-06-26"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Internacional Sem Sacos de Plástico",
+      "inicio": "2027-07-03"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia Mundial da População",
+      "inicio": "2027-07-11"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Constituição da Comunidade dos Países de Língua Portuguesa (CPLP)",
+      "inicio": "2027-07-17"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Mulher Africana",
+      "inicio": "2027-07-31"
+    },
+    { "tipo": "OTHER", "comemorativa": true, "titulo": "Dia da SADC", "inicio": "2027-08-17" },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Nascimento do Escritor Óscar Ribas",
+      "inicio": "2027-08-17"
+    },
+    {
+      "tipo": "OTHER",
+      "comemorativa": true,
+      "titulo": "Dia da Abolição da Escravatura",
+      "inicio": "2027-08-23"
+    }
+  ]
+}
