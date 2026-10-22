@@ -38,6 +38,7 @@ IMPORT_CONTEXT = {
     'edu_no_materialize': True,
     'edu_matricula_import': True,
     'edu_schedule_import': True,
+    'edu_global_exam_import': True,
     'edu_enrollment_reseed': True,
     'edu_defer_results': True,
 }
@@ -1078,10 +1079,11 @@ class EduMigrationSecped(models.AbstractModel):
         run.counts['subject_results']['created'] += len(new_results)
         run.counts['subject_results']['updated'] += len(pairs) - len(new_results)
 
-        # c) A escola faz prova global em disciplinas que a regra do plano não prevê: o plano fica como a escola o
-        #    pratica, senão a PG lançada não entrava na CA (no secPed, uma PG lançada conta sempre).
+        # c) A PG que a escola lançou entra como está (uma PG lançada conta sempre na CA, como no secPed), mesmo nas
+        #    disciplinas sem prova global pela lei (art. 18.º); o plano fica como a lei manda e as excepções vão para o
+        #    relatório.
         Enrollment = env['edu.enrollment']
-        lines_marked = env['edu.curriculum.line']
+        lines_outside = env['edu.curriculum.line']
         by_class = defaultdict(dict)
         for (enrollment_id, subject_id), score in global_exam.items():
             enrollment = Enrollment.browse(enrollment_id)
@@ -1090,10 +1092,13 @@ class EduMigrationSecped(models.AbstractModel):
                 run.issue('notas', f'PG de {enrollment.display_name}: a disciplina não está no plano da turma')
                 continue
             if not line.has_global_exam:
-                lines_marked |= line
+                lines_outside |= line
             by_class[(enrollment.class_id.id, subject_id)][enrollment_id] = score
-        lines_marked.write({'has_global_exam': True})
-        run.metrics['linhas_com_pg_marcadas'] = len(lines_marked)
+        for line in lines_outside:
+            run.issue(
+                'notas', f'PG lançada em {line.subject_id.name} ({line.year_id.display_name}) sem prova global pela lei'
+            )
+        run.metrics['linhas_com_pg_fora_da_lei'] = len(lines_outside)
 
         # d) Prova global: uma avaliação por turma e disciplina no último trimestre, com as notas.
         Assessment = env['edu.assessment']

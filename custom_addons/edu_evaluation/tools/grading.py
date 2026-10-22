@@ -22,11 +22,14 @@ PENDING = 'pending'
 GLOBAL_EXAM_CF_WEIGHT = 0.6
 TECHNICAL_TERMINAL_MIN = 7  # Despacho 60/08, art. 28.º, n.º 2: mínimo no ano terminal da disciplina plurianual
 GLOBAL_EXAM_MIN_HOURS = 3
-# Sem prova global: componente técnica/prática e estágio, e as disciplinas práticas (Despacho 60/08, art. 18.º).
-NO_GLOBAL_EXAM_WORDS = (
-    'educacao fisica', 'ed fisica', 'ed. fisica', 'informatica', 'desenho', 'pratica', 'laborator', 'oficina',
+# Despacho 60/08, art. 18.º: prova global em todas as disciplinas com 3 ou mais tempos semanais, menos as da formação
+# técnica só com componente prática listadas no Anexo I (projecto tecnológico, práticas oficinais, laboratórios,
+# desenho, informática aplicada, trabalho de campo). O estágio não tem tempos lectivos nem prova global.
+NO_GLOBAL_EXAM_TECHNICAL = (
+    'projecto tecnologico', 'projeto tecnologico', 'pratica oficinal', 'praticas oficinais', 'laboratorio',
+    'desenho', 'informatica aplicada', 'trabalho de campo',
 )  # fmt: skip
-NO_GLOBAL_EXAM_COMPONENTS = ('technical', 'internship')
+NO_GLOBAL_EXAM_COMPONENTS = ('internship',)
 
 
 def round_units(value):
@@ -145,11 +148,13 @@ def _plain(text):
 
 
 def has_global_exam(weekly_hours, component, name, code=''):
-    """Prova global só com 3 ou mais tempos semanais, fora da componente técnica/prática e das disciplinas práticas."""
+    """Prova global com 3 ou mais tempos semanais, menos as disciplinas técnicas do Anexo I e o estágio."""
     if (weekly_hours or 0) < GLOBAL_EXAM_MIN_HOURS or component in NO_GLOBAL_EXAM_COMPONENTS:
         return False
-    plain = _plain(f'{name} {code}')
-    return not any(word in plain for word in NO_GLOBAL_EXAM_WORDS)
+    if component == 'technical':
+        plain = _plain(name)
+        return not any(word in plain for word in NO_GLOBAL_EXAM_TECHNICAL)
+    return True
 
 
 def with_adjustment(base, points, scale_max=20):

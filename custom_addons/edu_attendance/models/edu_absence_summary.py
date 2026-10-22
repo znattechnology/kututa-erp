@@ -81,7 +81,7 @@ class EduAbsenceSummary(models.Model):
             summary.weekly_hours = hours
             summary.limit = limit or 0
             summary.counted = counted
-            summary.status = absence_status(counted, limit)
+            summary.status = absence_status(counted, limit, regime)
 
     def _search_status(self, operator, value):
         if operator not in ('=', '!=', 'in', 'not in'):

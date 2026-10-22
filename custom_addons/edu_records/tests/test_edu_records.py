@@ -82,6 +82,32 @@ class TestEduRecords(TransactionCase):
         with mute_logger('odoo.sql_db'), self.assertRaises(IntegrityError), self.cr.savepoint():
             self.env['edu.student'].create({'name': 'Outro', 'process_number': '1520'})
 
+    def test_graduation_internship_subject(self):
+        """O estágio é uma disciplina do curso: entra no PC com (2 × PC + PAP) / 3 e só como EC com a fórmula do INP."""
+        line = self.edu_class.subject_line_ids.filtered(lambda line: line.subject_id == self.subjects[1])
+        line.component = 'internship'
+        self._grades([14, 17])
+        self.edu_class.action_compute_year_results()
+        result = self.enrollment.year_result_id
+        project = self.env['edu.final.project'].create(
+            {
+                'name': 'PAP',
+                'student_id': self.student.id,
+                'enrollment_id': self.enrollment.id,
+                'defense_date': date(2027, 7, 10),
+                'grade': 18,
+            }
+        )
+        project.action_evaluate()
+        graduation = self.env['edu.graduation'].browse(result.action_register_graduation()['res_id'])
+        graduation.final_project_id = project
+        graduation.action_compute()
+        self.assertEqual((graduation.plan_average, graduation.final_grade), (16, 17))
+        # (4 × PC + EC + PAP) / 6 com PC = 14 e EC = 17 (a nota da disciplina de estágio): 91 / 6 = 15,2 → 15.
+        result._policy().course_formula = 'internship'
+        graduation.action_compute()
+        self.assertEqual((graduation.plan_average, graduation.final_grade), (14, 15))
+
     def test_not_graduated(self):
         self._grades([8, 9])
         self.edu_class.action_compute_year_results()

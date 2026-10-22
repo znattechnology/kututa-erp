@@ -118,7 +118,10 @@ class EduEvaluationPolicy(models.Model):
     )
     max_retentions = fields.Integer(string='Retenções permitidas no nível', default=2)
     course_formula = fields.Selection(
-        [('dec90', '(2 × PC + PAP) / 3 (Decreto n.º 90/04)'), ('internship', '(4 × PC + EC + PAP) / 6')],
+        [
+            ('dec90', '(2 × PC + PAP) / 3 (Despacho n.º 60/08, arts. 43.º e 44.º)'),
+            ('internship', '(4 × PC + EC + PAP) / 6 (Resumo do INP)'),
+        ],
         string='Classificação final do curso',
         default='dec90',
     )

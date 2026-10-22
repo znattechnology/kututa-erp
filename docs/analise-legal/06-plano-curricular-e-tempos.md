@@ -59,24 +59,32 @@
 - **Prova global:** a marca é proposta ao criar a linha e, depois, é da escola. Mudar os tempos ou a componente não a desfaz. A coluna «Prova global» aparece no plano.
 - **Horário × plano:** o aviso passa a reagir quando uma aula muda de trimestre.
 
-## 5. Decisões em aberto
-1. **Exclusão por faltas no técnico:**
-   - o Despacho (art. 12.º, n.º 1) diz que «produz efeitos só nessa disciplina»;
-   - o Resumo do INP e o secPed excluem de todas;
-   - hoje o Odoo retém o ano todo.
-2. **Limite de faltas:** «o número máximo anual de faltas injustificadas é o triplo» (art. 12.º, n.º 2). Ao atingir o limite fica-se já excluído, ou só ao passá-lo? Hoje fica-se excluído ao atingi-lo.
-3. **Estágio e classificação final:**
-   - a política usa (2·PC + PAP)/3, mas a escola tem a 13.ª com estágio, a que corresponde (4·PC + EC + PAP)/6;
-   - o estágio deve ser uma disciplina do plano ou um registo de estágio, não as duas coisas. Se for as duas, conta duas vezes.
-4. **Prova global na componente técnica:**
-   - a regra automática exclui a componente técnica inteira; a lei só exclui as disciplinas do Anexo I;
-   - com a marca agora editável, a escola decide linha a linha;
-   - falta decidir se a regra automática deve passar a seguir a lei à letra.
-5. **Planos sem versão por ano lectivo:** mudar os tempos de uma linha muda retroactivamente os limites de faltas dos anos passados.
-6. **Validações do plano:**
-   - classes dentro do nível;
-   - as três componentes no técnico;
-   - exame nacional só no geral;
-   - aviso para disciplinas com notas e 0 tempos.
+## 5. Decisões tomadas (2026-10-22): seguir a lei, com uma regra da escola
+1. **Exclusão por faltas no técnico:** quem é excluído por excesso de faltas numa disciplina reprova em todas
+   (decisão da escola, como no Resumo do INP, VI.1). O Despacho 60/08, art. 12.º, n.º 1, limita o efeito a essa
+   disciplina; fica registada a divergência.
+2. **Limite de faltas no técnico:** o triplo dos tempos semanais é o máximo permitido (art. 12.º, n.º 2); o aluno
+   reprova com o triplo mais uma. No ensino geral, a retenção dá-se ao acumular 3, 4 ou 5 faltas no trimestre
+   (DE 424/25, art. 25.º, n.os 8 e 16).
+3. **Estágio:** é uma disciplina do curso (linha do plano). Com a fórmula da lei, (2 × PC + PAP) / 3 (Despacho
+   60/08, arts. 43.º e 44.º; política da Vovó Eva), entra no PC como as outras. Com a fórmula do INP,
+   (4 × PC + EC + PAP) / 6, conta só como EC e sai do PC, para não contar duas vezes.
+4. **Prova global pela lei (art. 18.º):** 3 ou mais tempos semanais em qualquer componente, menos as disciplinas
+   técnicas só práticas do Anexo I (projecto tecnológico, práticas oficinais, laboratórios, desenho, informática
+   aplicada, trabalho de campo) e o estágio. Deixou de se aplicar a toda a componente técnica e às palavras do
+   art. 4.º, n.º 5 (que é da 9.ª classe).
+   - Vovó Eva: as marcas do plano foram recalculadas pela lei (74 linhas passam a ter PG, 29 deixam de ter; 198 no
+     total).
+   - As notas fechadas não mudam: uma PG já lançada conta sempre na CA. Recalculados os 20 464 resultados, 0
+     diferenças.
+   - A migração já não marca o plano para a PG da escola entrar: lança-a como está e regista no relatório as
+     disciplinas em que foi feita sem prova global pela lei.
 
-   Só faz sentido validar cargas por componente com os planos curriculares oficiais, que não estão no repositório.
+## 6. Ainda em aberto
+1. **Planos sem versão por ano lectivo:** mudar os tempos de uma linha muda retroactivamente os limites de faltas
+   dos anos passados.
+2. **Validações do plano:** classes dentro do nível, as três componentes no técnico, exame nacional só no geral e
+   aviso para disciplinas com notas e 0 tempos. As cargas por componente só se validam com os planos oficiais.
+3. **Práticas da 12.ª com 0 tempos** e a 13.ª só com o estágio: confirmar com a escola.
+4. **Regime diurno ou pós-laboral:** a Vovó Eva tem 4 anos (10.ª–13.ª), o ciclo pós-laboral da lei, onde o
+   Projecto Tecnológico e a PAP são na 13.ª; o plano tem o Projecto Tecnológico na 12.ª.

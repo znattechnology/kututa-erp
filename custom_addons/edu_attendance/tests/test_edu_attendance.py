@@ -131,8 +131,12 @@ class TestEduAttendance(TransactionCase):
         for day in (t2.date_start, t2.date_start.replace(day=t2.date_start.day + 1)):
             self._lesson(self.class_tec, subject, day, absent=self.students[0])
         summary = self._summary(enrollments, subject, t2)
-        self.assertEqual((summary.limit, summary.year_absent, summary.status), (6, 5, 'at_risk'))
+        self.assertEqual((summary.limit, summary.year_absent, summary.status), (6, 5, 'ok'))
+        # O máximo anual é o triplo dos tempos (6): com 6 fica em risco, com 7 reprova.
         self._lesson(self.class_tec, subject, t2.date_start.replace(day=t2.date_start.day + 2), absent=self.students[0])
+        self.assertEqual(self._summary(enrollments, subject, t2).status, 'at_risk')
+        self.assertFalse(self.class_tec._edu_absence_exclusions())
+        self._lesson(self.class_tec, subject, t2.date_start.replace(day=t2.date_start.day + 3), absent=self.students[0])
         self.assertEqual(self._summary(enrollments, subject, t2).status, 'failed')
         self.assertEqual(self.class_tec._edu_absence_exclusions(), enrollments)
 

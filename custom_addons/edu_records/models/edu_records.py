@@ -217,18 +217,27 @@ class EduGraduation(models.Model):
         return results.browse([result.id for result in latest.values()])
 
     def action_compute(self):
-        """PC = média das classificações finais das disciplinas (CFD); classificação final pela fórmula da escola."""
+        """PC = média das classificações finais das disciplinas (CFD), o estágio incluído, que é uma disciplina do
+        curso; classificação final pela fórmula da escola. Na fórmula (4 × PC + EC + PAP) / 6 o estágio conta só como
+        EC, para não entrar duas vezes."""
         for graduation in self:
             if graduation.state != 'draft':
                 raise UserError(self.env._('A conclusão já foi emitida.'))
             results = graduation._final_results()
+            policy = graduation.year_result_id._policy()
+            internship = graduation.internship_id.grade if graduation.internship_id else None
+            if policy.course_formula == 'internship':
+                internship_results = results.filtered(lambda r: r._component() == 'internship')
+                results -= internship_results
+                if internship is None and internship_results:
+                    last = internship_results[-1]
+                    internship = last.cfd or last.final
             finals = [r.cfd if r.cfd else r.final for r in results]
             pc = grading.round_units(grading.mean(finals)) if finals else None
-            policy = graduation.year_result_id._policy()
             final = grading.course_final(
                 pc,
                 pap=graduation.final_project_id.grade if graduation.final_project_id else None,
-                internship=graduation.internship_id.grade if graduation.internship_id else None,
+                internship=internship,
                 formula=policy.course_formula,
             )
             graduation.write({'plan_average': pc or 0.0, 'final_grade': final or 0.0})

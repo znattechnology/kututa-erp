@@ -24,3 +24,7 @@ class TestAbsenceRules(BaseCase):
         self.assertEqual(absence_status(3, 4), AT_RISK)
         self.assertEqual(absence_status(4, 4), FAILED)
         self.assertEqual(absence_status(9, None), OK)
+        # Técnico: o triplo dos tempos é o máximo permitido; reprova com o triplo mais uma (art. 12.º, n.º 2).
+        self.assertEqual(absence_status(5, 6, TECHNICAL), OK)
+        self.assertEqual(absence_status(6, 6, TECHNICAL), AT_RISK)
+        self.assertEqual(absence_status(7, 6, TECHNICAL), FAILED)

@@ -102,7 +102,10 @@ class EduAssessment(models.Model):
                 line = assessment.class_id.subject_line_ids.filtered(
                     lambda line, subject=assessment.subject_id: line.subject_id == subject
                 )
-                if policy.regime != 'technical' or not line[:1].has_global_exam:
+                # Migração: a PG que a escola lançou entra mesmo fora da regra (fica no relatório).
+                if policy.regime != 'technical' or (
+                    not line[:1].has_global_exam and not self.env.context.get('edu_global_exam_import')
+                ):
                     raise ValidationError(self.env._('%s não tem prova global.', assessment.subject_id.name))
             if assessment.assessment_type == 'national_exam':
                 if not policy._is_exam_class(assessment.class_id.class_number):

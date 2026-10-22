@@ -75,16 +75,16 @@ class TestGrading(BaseCase):
         self.assertFalse(has_global_exam(2, 'scientific', 'Matemática'))
         self.assertFalse(has_global_exam(None, 'scientific', 'Matemática'))
         self.assertTrue(has_global_exam(3, 'scientific', 'Matemática'))
-        self.assertFalse(has_global_exam(5, 'technical', 'Redes'))
+        # Técnica: só não têm PG as disciplinas só práticas do Anexo I (Despacho 60/08, art. 18.º, n.º 3).
+        self.assertTrue(has_global_exam(5, 'technical', 'Redes'))
+        self.assertTrue(has_global_exam(4, 'technical', 'Anatomia da Cabeça e Pescoço'))
+        self.assertFalse(has_global_exam(4, 'technical', 'Projecto Tecnológico'))
+        self.assertFalse(has_global_exam(4, 'technical', 'Práticas Oficinais'))
+        self.assertFalse(has_global_exam(3, 'technical', 'Informática Aplicada'))
         self.assertFalse(has_global_exam(5, 'internship', 'Estágio'))
-        for name in (
-            'Educação Física',
-            'Informática',
-            'Desenho Técnico',
-            'Prática Laboratorial',
-            'Oficina de Montagem',
-        ):
-            self.assertFalse(has_global_exam(4, 'scientific', name), name)
+        # Fora da componente técnica, todas as disciplinas com 3 ou mais tempos têm PG (art. 18.º, n.º 1).
+        for name in ('Educação Física', 'Informática'):
+            self.assertTrue(has_global_exam(3, 'socio_cultural', name), name)
         self.assertTrue(has_global_exam(3, 'scientific', 'Física'))
         self.assertTrue(has_global_exam(3, 'scientific', 'Físico-Química'))
         self.assertTrue(has_global_exam(5, 'socio_cultural', 'Língua Portuguesa'))

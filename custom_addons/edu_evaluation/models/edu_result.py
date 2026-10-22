@@ -13,8 +13,8 @@ class EduCurriculumLine(models.Model):
         compute='_compute_has_global_exam',
         store=True,
         readonly=False,
-        help='Técnico: só disciplinas com 3 ou mais tempos semanais, fora da componente técnica/prática e das práticas '
-        '(Despacho 60/08, art. 18.º). Proposta ao criar a linha; depois fica como a escola a marcar.',
+        help='Técnico (Despacho 60/08, art. 18.º): disciplinas com 3 ou mais tempos semanais, menos as técnicas só '
+        'práticas do Anexo I e o estágio. Proposta ao criar a linha; a escola pode corrigi-la.',
     )
 
     # Só a disciplina: a proposta faz-se ao criar a linha; mudar os tempos ou a componente não desfaz a marca da escola.
@@ -238,6 +238,12 @@ class EduSubjectResult(models.Model):
                 result = self.sudo().create({'enrollment_id': enrollment_id, 'subject_id': subject_id})
             result._recompute()
 
+    def _component(self):
+        """Componente de formação da disciplina no plano da turma (a da disciplina, se o plano não a tiver)."""
+        self.ensure_one()
+        line = self.enrollment_id.class_id.subject_line_ids.filtered(lambda line: line.subject_id == self.subject_id)
+        return line[:1].component or self.subject_id.component
+
     def _recompute(self):
         Term = self.env['edu.term.result'].sudo()
         Grade = self.env['edu.grade'].sudo()
@@ -261,7 +267,6 @@ class EduSubjectResult(models.Model):
                 'mt2': mts[1] or 0.0 if len(mts) > 1 else 0.0,
                 'mt3': mts[2] or 0.0 if len(mts) > 2 else 0.0,
                 'trimesters_graded': graded,
-                'has_global_exam': bool(line.has_global_exam) and policy.regime == TECHNICAL,
             }
             last = trimesters[-1:]
             final_grades = Grade.search(
@@ -274,6 +279,8 @@ class EduSubjectResult(models.Model):
                 ]
             )
             pg = final_grades.filtered(lambda g: g.assessment_type == 'global_exam')[:1]
+            # Uma PG já lançada conta sempre (as notas fechadas não mudam se a marca do plano mudar depois).
+            vals['has_global_exam'] = policy.regime == TECHNICAL and bool(line.has_global_exam or pg)
             national = final_grades.filtered(lambda g: g.assessment_type == 'national_exam')[:1]
             # Com o arredondamento único (técnico), a PG entra na CA sem ser arredondada antes.
             precise_pg = policy.regime == TECHNICAL and policy.technical_ca_precise
