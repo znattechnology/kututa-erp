@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_roles.TeacherHome">
+        <div class="o_action o_edu_teacher_home">
+            <Layout display="this.display">
+                <div class="o_edu_th_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header class="o_edu_th_head">
+                        <h1 class="o_edu_th_title" t-out="this.greeting"/>
+                        <p class="mb-0 text-muted">
+                            <t t-out="d.today"/>.
+                            <t t-if="d.has_employee"> <t t-out="this.headline"/></t>
+                        </p>
+                    </header>
+
+                    <div t-if="!d.has_employee" class="o_edu_th_card">
+                        O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
+                    </div>
+
+                    <div t-else="" class="o_edu_th_grid">
+                        <div class="o_edu_th_main">
+                            <!-- O dia -->
+                            <section class="o_edu_th_card">
+                                <h2 class="o_edu_th_h2">
+                                    <t t-if="d.lessons_day">Próximas aulas: <t t-out="d.lessons_day"/></t>
+                                    <t t-else="">Aulas de hoje</t>
+                                </h2>
+                                <p t-if="!d.lessons.length" class="mb-0 text-muted">
+                                    Não tem aulas no horário nas próximas duas semanas.
+                                </p>
+                                <ul t-else="" class="o_edu_th_list">
+                                    <li t-foreach="d.lessons" t-as="l" t-key="l.schedule_id + '-' + l.date">
+                                        <span class="o_edu_th_time" t-out="l.hours"/>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold" t-out="l.subject"/>
+                                            <div class="small text-muted"><t t-out="l.class"/><t t-if="l.room">, sala <t t-out="l.room"/></t></div>
+                                        </div>
+                                        <span class="badge" t-att-class="this.stateClass(l)" t-out="this.stateLabel(l)"/>
+                                        <button type="button" class="btn btn-sm" t-att-class="l.state === 'scheduled' and l.today ? 'btn-primary' : 'btn-secondary'"
+                                                t-att-disabled="this.state.busy" t-on-click="() => this.openLesson(l)">
+                                            <t t-out="l.state === 'scheduled' ? 'Chamada e sumário' : 'Ver a aula'"/>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </section>
+
+                            <!-- As turmas -->
+                            <section class="o_edu_th_card">
+                                <h2 class="o_edu_th_h2">As minhas turmas</h2>
+                                <p t-if="!d.classes.length" class="mb-0 text-muted">
+                                    Não tem turmas atribuídas este ano lectivo. As turmas aparecem quando a secretaria lhe atribui disciplinas
+                                    ou a direcção de uma turma.
+                                </p>
+                                <ul t-else="" class="o_edu_th_list">
+                                    <li t-foreach="d.classes" t-as="c" t-key="c.id">
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold"><t t-out="c.name"/>
+                                                <span t-if="c.directs" class="badge text-bg-info ms-1">Director(a) de turma</span>
+                                            </div>
+                                            <div class="small text-muted"><t t-out="c.course"/>, <t t-out="c.students"/> alunos</div>
+                                        </div>
+                                        <button t-if="c.mine.length" type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openGrades(c)">Notas</button>
+                                        <button t-if="c.directs" type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openCouncil(c)">Conselho de turma</button>
+                                    </li>
+                                </ul>
+                            </section>
+                        </div>
+
+                        <aside class="o_edu_th_side">
+                            <section class="o_edu_th_card">
+                                <h2 class="o_edu_th_h2">Vigilâncias</h2>
+                                <p t-if="!d.supervisions.length" class="mb-0 text-muted">Não tem vigilâncias marcadas.</p>
+                                <ul t-else="" class="o_edu_th_plain">
+                                    <li t-foreach="d.supervisions" t-as="s" t-key="s_index">
+                                        <div class="fw-semibold" t-out="s.subject"/>
+                                        <div class="small text-muted"><t t-out="s.date"/>, <t t-out="s.hours"/><t t-if="s.rooms">, <t t-out="s.rooms"/></t></div>
+                                    </li>
+                                </ul>
+                            </section>
+                            <section class="o_edu_th_card">
+                                <h2 class="o_edu_th_h2">Atalhos</h2>
+                                <div class="o_edu_th_links">
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_my_schedule')">
+                                        <i class="oi me-2" data-icon="calendar_month" aria-hidden="true"/>O meu horário
+                                    </button>
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_attendance.action_edu_absence_summary')">
+                                        <i class="oi me-2" data-icon="fact_check" aria-hidden="true"/>Relatório de faltas
+                                    </button>
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('mail.action_discuss')">
+                                        <i class="oi me-2" data-icon="forum" aria-hidden="true"/>Mensagens
+                                    </button>
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.openMethod('action_my_profile')">
+                                        <i class="oi me-2" data-icon="person" aria-hidden="true"/>O meu perfil
+                                    </button>
+                                </div>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,94 @@
+// Painel do Professor: o dia e as turmas, como o painel do secPed-Express.
+.o_edu_teacher_home {
+    .o_edu_th_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_th_title {
+        margin: 0 0 4px;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_th_grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+        gap: 16px;
+        align-items: start;
+
+        @include media-breakpoint-down(lg) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_th_main,
+    .o_edu_th_side {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .o_edu_th_card {
+        padding: 16px 20px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_th_h2 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_th_list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-top: 1px solid $border-color;
+
+            &:first-child {
+                border-top: 0;
+                padding-top: 0;
+            }
+        }
+    }
+
+    .o_edu_th_time {
+        min-width: 7.5em;
+        font-variant-numeric: tabular-nums;
+        color: $text-muted;
+    }
+
+    .o_edu_th_plain {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li + li {
+            margin-top: 10px;
+        }
+    }
+
+    .o_edu_th_links {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+
+        > .btn {
+            padding-left: 0;
+        }
+    }
+}

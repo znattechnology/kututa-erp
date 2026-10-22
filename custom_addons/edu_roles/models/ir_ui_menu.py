@@ -4,6 +4,13 @@ from odoo import api, models
 PRESCHOOL_MENUS = ('edu_evaluation.menu_edu_rdec', 'edu_roles.menu_teacher_rdec')
 # A MAC é do ensino geral: sem turmas fora do técnico, o menu das avaliações contínuas não aparece.
 GENERAL_MENUS = ('edu_roles.menu_my_assessments',)
+# Os estágios e as PAP são do ensino técnico.
+TECHNICAL_MENUS = ('edu_roles.menu_teacher_training',)
+# A conta mostra os recibos e as férias só com os módulos de RH instalados.
+OPTIONAL_MENUS = {
+    'edu_roles.menu_teacher_payslips': 'l10n_ao_payroll.payslip',
+    'edu_roles.menu_teacher_time_off': 'hr.leave',
+}
 
 
 class IrUiMenu(models.Model):
@@ -25,7 +32,17 @@ class IrUiMenu(models.Model):
             .sudo()
             .search_count([('company_id', '=', company.id), ('level_id.subsystem', '!=', 'technical')], limit=1)
         )
-        xmlids = (PRESCHOOL_MENUS if not preschool else ()) + (GENERAL_MENUS if not general else ())
+        technical = (
+            self.env['edu.class']
+            .sudo()
+            .search_count([('company_id', '=', company.id), ('level_id.subsystem', '=', 'technical')], limit=1)
+        )
+        xmlids = (
+            (PRESCHOOL_MENUS if not preschool else ())
+            + (GENERAL_MENUS if not general else ())
+            + (TECHNICAL_MENUS if not technical else ())
+            + tuple(xmlid for xmlid, model in OPTIONAL_MENUS.items() if model not in self.env)
+        )
         for xmlid in xmlids:
             menu = self.env.ref(xmlid, raise_if_not_found=False)
             if menu:

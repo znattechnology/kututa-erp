@@ -1,9 +1,9 @@
-from datetime import date
+from datetime import date, timedelta
 
 from lxml import etree
 
-from odoo import Command
-from odoo.exceptions import AccessError
+from odoo import Command, fields
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -258,3 +258,44 @@ class TestEduRoles(TransactionCase):
         self.assertEqual(len(Clerk.grid_classes()['classes']), 2)
         data = Clerk.grid_data(self.class_a.id, self.lp.id)
         self.assertEqual((data['can_edit'], data['can_print']), (False, True))
+
+    def test_teacher_home(self):
+        """Painel do Professor, como no secPed: as aulas do dia pelo horário (a chamada a um toque cria a aula), as
+        turmas com a direcção assinalada e os atalhos da conta."""
+        self.year.action_generate_trimesters()
+        today = fields.Date.context_today(self.env['edu.lesson'])
+        weekday = today.weekday()
+        if weekday > 4:
+            today += timedelta(days=7 - weekday)
+        schedule = self.env['edu.schedule'].create(
+            {
+                'class_id': self.class_a.id,
+                'subject_id': self.lp.id,
+                'weekday': str(today.weekday()),
+                'hour_from': 8.0,
+                'hour_to': 9.0,
+            }
+        )
+        self.class_b.director_id = self.teacher
+        Home = self.env['edu.teacher.home'].with_user(self.teacher_user)
+        data = Home.home_data()
+        classes = [(c['id'], c['directs']) for c in data['classes']]
+        self.assertEqual(classes, [(self.class_a.id, False), (self.class_b.id, True)])
+        self.assertEqual([lesson['schedule_id'] for lesson in data['lessons']], schedule.ids)
+        self.assertFalse(data['lessons'][0]['lesson_id'])
+        action = Home.open_lesson(schedule.id, fields.Date.to_string(today))
+        lesson = self.env['edu.lesson'].browse(action['res_id'])
+        self.assertEqual((lesson.schedule_id, lesson.date, lesson.teacher_id), (schedule, today, self.teacher))
+        self.assertEqual(Home.open_lesson(schedule.id, fields.Date.to_string(today))['res_id'], lesson.id)
+        self.assertEqual(Home.home_data()['lessons'][0]['lesson_id'], lesson.id)
+        self.assertEqual(Home.action_my_profile()['res_id'], self.teacher.id)
+        if 'l10n_ao_payroll.payslip' in self.env:
+            self.assertEqual(Home.action_my_payslips()['res_model'], 'l10n_ao_payroll.payslip')
+        else:
+            with self.assertRaises(UserError):
+                Home.action_my_payslips()
+        # Um tempo de outro professor não se abre.
+        other = self.env['hr.employee'].create({'name': 'Outro', 'edu_is_teacher': True})
+        schedule.teacher_id = other
+        with self.assertRaises(UserError):
+            Home.open_lesson(schedule.id, fields.Date.to_string(today))

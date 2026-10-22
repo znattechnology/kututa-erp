@@ -56,29 +56,91 @@
         </field>
     </record>
 
+    <!-- O Painel (o dia e as turmas), as orientações e a conta, como no secPed. -->
+    <record id="action_teacher_home" model="ir.actions.client">
+        <field name="name">Painel</field>
+        <field name="tag">edu_roles.teacher_home</field>
+    </record>
+    <record id="action_teacher_calendar" model="ir.actions.act_window">
+        <field name="name">Calendário académico</field>
+        <field name="res_model">edu.calendar.event</field>
+        <field name="view_mode">calendar,list,form</field>
+        <field name="context">{'search_default_current_year': 1, 'create': False, 'edit': False, 'delete': False}</field>
+    </record>
+    <record id="action_my_internships" model="ir.actions.act_window">
+        <field name="name">Estágios que acompanho</field>
+        <field name="res_model">edu.internship</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('tutor_id.user_id', '=', uid)]</field>
+        <field name="context">{'create': False}</field>
+    </record>
+    <record id="action_my_final_projects" model="ir.actions.act_window">
+        <field name="name">Trabalhos de fim de curso</field>
+        <field name="res_model">edu.final.project</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">['|', ('advisor_id.user_id', '=', uid), ('jury_ids.user_id', '=', uid)]</field>
+        <field name="context">{'create': False}</field>
+    </record>
+    <record id="action_teacher_profile" model="ir.actions.server">
+        <field name="name">O meu perfil</field>
+        <field name="model_id" ref="model_edu_teacher_home"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_my_profile()</field>
+    </record>
+    <record id="action_teacher_payslips" model="ir.actions.server">
+        <field name="name">Os meus recibos</field>
+        <field name="model_id" ref="model_edu_teacher_home"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_my_payslips()</field>
+    </record>
+    <record id="action_teacher_time_off" model="ir.actions.server">
+        <field name="name">Férias e ausências</field>
+        <field name="model_id" ref="model_edu_teacher_home"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_my_time_off()</field>
+    </record>
+
     <menuitem id="menu_edu_teacher_root" name="Painel do Professor" sequence="2" groups="edu_core.group_edu_teacher"
-              web_icon="edu_roles,static/description/icon_teacher.png"/>
-    <menuitem id="menu_teacher_lessons" name="Aulas" parent="menu_edu_teacher_root" sequence="10"/>
-    <menuitem id="menu_my_lessons" action="action_my_lessons" parent="menu_teacher_lessons" sequence="10"/>
-    <menuitem id="menu_my_schedule" action="action_my_schedule" parent="menu_teacher_lessons" sequence="20"/>
-    <menuitem id="menu_teacher_classes" name="Turmas e notas" parent="menu_edu_teacher_root" sequence="20"/>
-    <menuitem id="menu_teacher_grade_grid" name="Notas da turma" action="edu_evaluation.action_edu_grade_grid"
-              parent="menu_teacher_classes" sequence="5"/>
-    <menuitem id="menu_my_classes" action="action_my_classes" parent="menu_teacher_classes" sequence="10"/>
-    <menuitem id="menu_my_assessments" action="action_my_assessments" parent="menu_teacher_classes" sequence="20"/>
-    <menuitem id="menu_teacher_direction" name="Direcção de turma" parent="menu_edu_teacher_root" sequence="30"/>
+              action="action_teacher_home" web_icon="edu_roles,static/description/icon_teacher.png"/>
+    <menuitem id="menu_teacher_home" name="Painel" action="action_teacher_home" parent="menu_edu_teacher_root" sequence="1"/>
+    <!-- Ensino -->
+    <menuitem id="menu_teacher_classes" name="Ensino" parent="menu_edu_teacher_root" sequence="10"/>
+    <menuitem id="menu_teacher_grade_grid" name="Turmas e notas" action="edu_evaluation.action_edu_grade_grid"
+              parent="menu_teacher_classes" sequence="10"/>
+    <menuitem id="menu_my_classes" action="action_my_classes" parent="menu_teacher_classes" sequence="20"/>
+    <menuitem id="menu_my_assessments" action="action_my_assessments" parent="menu_teacher_classes" sequence="30"/>
+    <menuitem id="menu_my_schedule" name="O meu horário" action="action_my_schedule" parent="menu_teacher_classes" sequence="40"/>
+    <menuitem id="menu_my_supervisions" name="Vigilâncias" action="action_my_supervisions" parent="menu_teacher_classes" sequence="50"/>
+    <menuitem id="menu_teacher_calendar" action="action_teacher_calendar" parent="menu_teacher_classes" sequence="60"/>
+    <menuitem id="menu_my_lessons" name="Presenças e sumários" action="action_my_lessons" parent="menu_teacher_classes" sequence="70"/>
+    <menuitem id="menu_teacher_absence_summary" name="Relatório de faltas" action="edu_attendance.action_edu_absence_summary"
+              parent="menu_teacher_classes" sequence="80"/>
+    <!-- Direcção de turma -->
+    <menuitem id="menu_teacher_direction" name="Direcção de turma" parent="menu_edu_teacher_root" sequence="20"/>
     <record id="edu_evaluation.menu_edu_council_session" model="ir.ui.menu">
         <field name="parent_id" ref="menu_teacher_direction"/>
         <field name="sequence">10</field>
     </record>
     <menuitem id="menu_teacher_absences" name="Justificação de faltas" action="action_teacher_absences"
               parent="menu_teacher_direction" sequence="20"/>
-    <menuitem id="menu_teacher_absence_summary" name="Mapa de faltas" action="edu_attendance.action_edu_absence_summary"
-              parent="menu_teacher_direction" sequence="30"/>
     <menuitem id="menu_teacher_rdec" name="RDEC (iniciação)" action="edu_evaluation.action_edu_rdec"
               parent="menu_teacher_direction" sequence="40"/>
-    <menuitem id="menu_teacher_exams" name="Exames" parent="menu_edu_teacher_root" sequence="40"/>
-    <menuitem id="menu_my_supervisions" action="action_my_supervisions" parent="menu_teacher_exams" sequence="10"/>
+    <!-- Formação técnica (só numa escola com o ensino técnico) -->
+    <menuitem id="menu_teacher_training" name="Formação técnica" parent="menu_edu_teacher_root" sequence="30"/>
+    <menuitem id="menu_my_internships" name="Estágios" action="action_my_internships" parent="menu_teacher_training" sequence="10"/>
+    <menuitem id="menu_my_final_projects" name="Trabalhos de fim de curso" action="action_my_final_projects"
+              parent="menu_teacher_training" sequence="20"/>
+    <!-- Comunicação -->
+    <menuitem id="menu_teacher_communication" name="Comunicação" parent="menu_edu_teacher_root" sequence="40"/>
+    <menuitem id="menu_teacher_messages" name="Mensagens" action="mail.action_discuss" parent="menu_teacher_communication" sequence="10"/>
+    <!-- Conta -->
+    <menuitem id="menu_teacher_account" name="Conta" parent="menu_edu_teacher_root" sequence="50"/>
+    <menuitem id="menu_teacher_profile" action="action_teacher_profile" parent="menu_teacher_account" sequence="10"/>
+    <menuitem id="menu_teacher_payslips" action="action_teacher_payslips" parent="menu_teacher_account" sequence="20"/>
+    <menuitem id="menu_teacher_time_off" action="action_teacher_time_off" parent="menu_teacher_account" sequence="30"/>
+    <!-- Os grupos antigos («Aulas», «Exames») juntam-se em «Ensino», como no secPed. -->
+    <menuitem id="menu_teacher_lessons" name="Aulas" parent="menu_edu_teacher_root" sequence="90" active="False"/>
+    <menuitem id="menu_teacher_exams" name="Exames" parent="menu_edu_teacher_root" sequence="91" active="False"/>
     <!-- O antigo «A minha docência» (dentro da Secretaria Express) dá lugar ao painel. -->
     <menuitem id="menu_edu_teaching" name="A minha docência" parent="edu_core.menu_edu_root" sequence="1" active="False"/>
 </odoo>

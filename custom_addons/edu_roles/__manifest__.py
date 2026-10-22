@@ -23,6 +23,11 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
         'data/menu_groups.xml',
         'views/edu_secretaria_menu.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'edu_roles/static/src/teacher_home/*',
+        ],
+    },
     'auto_install': True,
     'license': 'OPL-1',
 }
