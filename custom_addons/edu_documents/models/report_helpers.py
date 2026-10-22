@@ -170,6 +170,10 @@ ReportStudentCard = _document_report('report_student_card', 'edu.student')
 ReportPauta = _document_report('report_pauta', 'edu.pauta.print')
 ReportMiniPauta = _document_report('report_mini_pauta', 'edu.pauta.print')
 ReportCurriculum = _document_report('report_curriculum', 'edu.curriculum')
+ReportTeachers = _document_report('report_teachers', 'hr.employee.public')
+ReportTeacherSchedule = _document_report('report_teacher_schedule', 'hr.employee.public')
+ReportAssignments = _document_report('report_assignments', 'edu.teaching.assignment')
+ReportClassDirectors = _document_report('report_class_directors', 'edu.class')
 
 
 class ReportTerm(models.AbstractModel):
@@ -251,6 +255,20 @@ class EduClass(models.Model):
             'day_width': (100 - 8) / len(days),
         }
 
+    def action_print_directors(self):
+        """As turmas escolhidas ou, sem escolha, as do ano lectivo em curso."""
+        records = self or self.search([('academic_year_id.is_current', '=', True)])
+        return self.env.ref('edu_documents.action_report_class_directors').preview_action(records)
+
+    def _directors_context(self):
+        with_director = len(self.filtered('director_id'))
+        return '\u2003\u2003'.join(
+            [
+                f'ANO LECTIVO: {_current_year_name(self.env)}',
+                self.env._('%(with)s DE %(total)s TURMAS COM DIRECTOR', total=len(self), **{'with': with_director}),
+            ]
+        )
+
     def action_print_class_list(self):
         # Abre a pré-visualização; o visualizador de PDF imprime e descarrega.
         return self.env.ref('edu_documents.action_report_class_list').preview_action(self)
@@ -295,6 +313,72 @@ class EduCourse(models.Model):
         if not self.curriculum_id:
             raise UserError(self.env._('O curso ainda não tem plano curricular.'))
         return self.curriculum_id.action_print_curriculum()
+
+
+def _current_year_name(env):
+    return env.company.edu_current_year_id.name or ''
+
+
+class HrEmployeePublic(models.Model):
+    _inherit = 'hr.employee.public'
+
+    def _edu_teachers(self):
+        """Os professores escolhidos na lista ou, sem escolha, todos os da escola."""
+        return self or self.search([('edu_is_teacher', '=', True), ('company_id', '=', self.env.company.id)])
+
+    def action_print_teachers(self):
+        return self.env.ref('edu_documents.action_report_teachers').preview_action(self._edu_teachers())
+
+    def action_print_teacher_schedule(self):
+        return self.env.ref('edu_documents.action_report_teacher_schedule').preview_action(self)
+
+    def _teachers_context(self):
+        directors = len(self.filtered('edu_directed_class'))
+        return '\u2003\u2003'.join(
+            [
+                f'ANO LECTIVO: {_current_year_name(self.env)}',
+                self.env._('%s DOCENTES', len(self)),
+                self.env._('%s DIRECTORES DE TURMA', directors),
+            ]
+        )
+
+    def _teacher_schedule_context(self):
+        self.ensure_one()
+        parts = [
+            f'PROFESSOR(A): {self.name}',
+            f'ANO LECTIVO: {_current_year_name(self.env)}',
+            self.edu_load_label and self.env._('TEMPOS SEMANAIS: %s', self.edu_load_label),
+        ]
+        return '\u2003\u2003'.join(p for p in parts if p)
+
+
+class EduTeachingAssignment(models.Model):
+    _inherit = 'edu.teaching.assignment'
+
+    def action_print_assignments(self):
+        """As colocações escolhidas ou, sem escolha, as do ano lectivo em curso."""
+        records = self or self.search([('academic_year_id.is_current', '=', True)])
+        return self.env.ref('edu_documents.action_report_assignments').preview_action(records)
+
+    def _assignment_groups(self):
+        """Por turma (com a sigla do curso): as colocações e as disciplinas do plano ainda sem professor."""
+        groups = []
+        classes = self.class_id
+        # Impressas todas as colocações do ano: entram também as turmas ainda sem nenhum professor.
+        years = self.academic_year_id
+        if len(years) == 1 and len(self) == self.search_count([('academic_year_id', '=', years.id)]):
+            classes |= (
+                self.env['edu.class'].search([('academic_year_id', '=', years.id)]).filtered('missing_teacher_subjects')
+            )
+        for edu_class in classes.sorted(lambda c: (c.class_number, c.course_id.code or '', c.name)):
+            rows = self.filtered(lambda a, c=edu_class: a.class_id == c).sorted(lambda a: a.subject_id.name or '')
+            groups.append({'class': edu_class, 'rows': rows, 'missing': edu_class.missing_teacher_subjects})
+        return groups
+
+    def _assignments_context(self):
+        return '\u2003\u2003'.join(
+            [f'ANO LECTIVO: {_current_year_name(self.env)}', self.env._('%s PROFESSORES', len(self.teacher_id))]
+        )
 
 
 class IrActionsReport(models.Model):

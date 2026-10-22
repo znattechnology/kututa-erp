@@ -204,6 +204,25 @@ class TestEduDocuments(TransactionCase):
         for text in ('HORÁRIO DA TURMA', 'REPÚBLICA DE ANGOLA', '>Hora<', '>Segunda<', '>Sexta<', 'ANO LECTIVO:'):
             self.assertIn(text, schedule)
         self.assertNotIn('>Sábado<', schedule)
+        # Docentes: corpo docente, horário do professor, atribuições e directores de turma.
+        teacher = self.env['hr.employee'].create({'name': 'Rita Docente', 'edu_is_teacher': True})
+        subject = self.edu_class.subject_line_ids.subject_id[:1]
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': self.edu_class.id, 'subject_id': subject.id, 'teacher_id': teacher.id}
+        )
+        public = self.env['hr.employee.public'].browse(teacher.id)
+        self.assertEqual(public.action_print_teachers()['report_type'], 'qweb-html')
+        html = self._render('edu_documents.action_report_teachers', public)
+        for text in ('CORPO DOCENTE', 'Rita Docente', subject.name, 'Tempos/semana'):
+            self.assertIn(text, html)
+        self.assertIn('HORÁRIO DO PROFESSOR', self._render('edu_documents.action_report_teacher_schedule', public))
+        assignments = self.env['edu.teaching.assignment'].search([('class_id', '=', self.edu_class.id)])
+        html = self._render('edu_documents.action_report_assignments', assignments)
+        for text in ('ATRIBUIÇÕES DE DISCIPLINAS', 'Rita Docente', 'Sem professor', 'Ano todo'):
+            self.assertIn(text, html)
+        html = self._render('edu_documents.action_report_class_directors', self.edu_class)
+        for text in ('DIRECTORES DE TURMA', 'Sem director', '0 DE 1 TURMAS COM DIRECTOR'):
+            self.assertIn(text, html)
         # Plano curricular: a matriz por componentes com o cabeçalho da pauta, a partir do curso.
         self.assertEqual(self.course.action_print_curriculum()['report_type'], 'qweb-html')
         plan = self._render('edu_documents.action_report_curriculum', self.course.curriculum_id)

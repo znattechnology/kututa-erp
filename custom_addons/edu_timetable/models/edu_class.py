@@ -18,9 +18,51 @@ HEAD_STYLE = (
 HOUR_STYLE = 'font-weight: bold; text-align: center; white-space: nowrap; padding: 4px;'
 LESSON_STYLE = 'text-align: center; vertical-align: middle; padding: 4px 6px; line-height: 1.3;'
 
-MAX_WEEKLY_LOAD = 24
-COORDINATOR_REDUCTION = 4
-DIRECTOR_REDUCTION = 2
+
+def schedule_grid(env, schedules, detail):
+    """Grelha semanal no estilo da pauta (tempos × dias). ``detail(aula)`` dá as linhas por baixo da disciplina:
+    o professor e a sala no horário da turma, a turma e a sala no horário do professor."""
+    if not schedules:
+        return False
+    days = [
+        (code, name) for code, name in WEEKDAYS if code < '5' or schedules.filtered(lambda s, c=code: s.weekday == c)
+    ]
+    rows = sorted({(s.hour_from, s.hour_to) for s in schedules})
+    cells = {(s.weekday, s.hour_from, s.hour_to): s for s in schedules}
+    first = Markup('border-left: 1px solid #c8c8c8; ')
+    html = Markup('<table class="o_edu_schedule_grid" style="%s"><colgroup><col style="width: 9rem;"/>') % Markup(
+        GRID_STYLE
+    )
+    html += Markup('<col/>') * len(days)
+    html += Markup('</colgroup><thead><tr><th style="%s%s">%s</th>') % (
+        Markup('border-left: 1px solid #969696; '),
+        Markup(HEAD_STYLE),
+        env._('Hora'),
+    )
+    for _code, name in days:
+        html += Markup('<th style="%s">%s</th>') % (Markup(HEAD_STYLE), name)
+    html += Markup('</tr></thead><tbody>')
+    for hour_from, hour_to in rows:
+        html += Markup('<tr><td style="%s%s%s">%s – %s</td>') % (
+            first,
+            Markup(CELL_BORDER),
+            Markup(HOUR_STYLE),
+            format_hour(hour_from),
+            format_hour(hour_to),
+        )
+        for code, _name in days:
+            schedule = cells.get((code, hour_from, hour_to))
+            if schedule:
+                html += Markup('<td style="%s%s"><strong>%s</strong><br/>%s</td>') % (
+                    Markup(CELL_BORDER),
+                    Markup(LESSON_STYLE),
+                    schedule.subject_id.name,
+                    ', '.join(p for p in detail(schedule) if p),
+                )
+            else:
+                html += Markup('<td style="%s"></td>') % Markup(CELL_BORDER)
+        html += Markup('</tr>')
+    return html + Markup('</tbody></table>')
 
 
 class EduClass(models.Model):
@@ -95,48 +137,11 @@ class EduClass(models.Model):
             if not schedules:
                 edu_class.schedule_grid = False
                 continue
-            days = [
-                (code, name)
-                for code, name in WEEKDAYS
-                if code < '5' or schedules.filtered(lambda s, c=code: s.weekday == c)
-            ]
-            rows = sorted({(s.hour_from, s.hour_to) for s in schedules})
-            cells = {(s.weekday, s.hour_from, s.hour_to): s for s in schedules}
-            first = Markup('border-left: 1px solid #c8c8c8; ')
-            html = Markup(
-                '<table class="o_edu_schedule_grid" style="%s"><colgroup><col style="width: 9rem;"/>'
-            ) % Markup(GRID_STYLE)
-            html += Markup('<col/>') * len(days)
-            html += Markup('</colgroup><thead><tr><th style="%s%s">%s</th>') % (
-                Markup('border-left: 1px solid #969696; '),
-                Markup(HEAD_STYLE),
-                self.env._('Hora'),
+            edu_class.schedule_grid = schedule_grid(
+                self.env,
+                schedules,
+                lambda s: [s.teacher_id.name or self.env._('Sem professor'), s.room_id.name],
             )
-            for _code, name in days:
-                html += Markup('<th style="%s">%s</th>') % (Markup(HEAD_STYLE), name)
-            html += Markup('</tr></thead><tbody>')
-            for hour_from, hour_to in rows:
-                html += Markup('<tr><td style="%s%s%s">%s – %s</td>') % (
-                    first,
-                    Markup(CELL_BORDER),
-                    Markup(HOUR_STYLE),
-                    format_hour(hour_from),
-                    format_hour(hour_to),
-                )
-                for code, _name in days:
-                    schedule = cells.get((code, hour_from, hour_to))
-                    if schedule:
-                        teacher = schedule.teacher_id.name or self.env._('Sem professor')
-                        html += Markup('<td style="%s%s"><strong>%s</strong><br/>%s</td>') % (
-                            Markup(CELL_BORDER),
-                            Markup(LESSON_STYLE),
-                            schedule.subject_id.name,
-                            ', '.join(p for p in [teacher, schedule.room_id.name] if p),
-                        )
-                    else:
-                        html += Markup('<td style="%s"></td>') % Markup(CELL_BORDER)
-                html += Markup('</tr>')
-            edu_class.schedule_grid = html + Markup('</tbody></table>')
 
     def _editor_label(self):
         """«10ª A · EST»: a turma sem o ano lectivo, que o editor de horários já mostra no topo."""
@@ -150,35 +155,42 @@ class EduClass(models.Model):
         action['context'] = {'default_class_id': self.id}
         return action
 
-
-class HrEmployee(models.Model):
-    _inherit = 'hr.employee'
-
-    edu_weekly_load = fields.Integer(
-        string='Tempos semanais', compute='_compute_edu_weekly_load', groups='hr.group_hr_user,edu_core.group_edu_user'
+    teacher_summary = fields.Char(string='Professores', compute='_compute_teacher_summary')
+    missing_teacher_subjects = fields.Char(
+        string='Sem professor', compute='_compute_teacher_summary', search='_search_missing_teacher_subjects'
     )
-    edu_weekly_load_max = fields.Integer(
-        string='Máximo de tempos semanais',
-        compute='_compute_edu_weekly_load',
-        groups='hr.group_hr_user,edu_core.group_edu_user',
-        help='24 tempos; menos 4 a quem coordena um curso e menos 2 ao director de turma (regra do secPed-Express).',
-    )
+    director_teaches = fields.Boolean(string='Lecciona na turma', compute='_compute_teacher_summary')
 
-    def _compute_edu_weekly_load(self):
-        Schedule = self.env['edu.schedule'].sudo()
-        Class = self.env['edu.class'].sudo()
-        Coordination = self.env['edu.coordination'].sudo()
-        for employee in self:
-            current = [
-                ('academic_year_id.is_current', '=', True),
-                ('academic_year_id.company_id', '=', employee.company_id.id),
-            ]
-            employee.edu_weekly_load = Schedule.search_count(
-                [('teacher_id', '=', employee.id), ('trimester_id', '=', False), *current]
+    @api.depends('assignment_ids.teacher_id', 'subject_line_ids', 'director_id')
+    def _compute_teacher_summary(self):
+        for edu_class in self:
+            planned = edu_class.subject_line_ids.filtered('weekly_hours').subject_id
+            covered = edu_class.assignment_ids.filtered(lambda a: not a.trimester_id).subject_id
+            missing = (planned - covered).sorted('name')
+            edu_class.teacher_summary = (
+                self.env._('%(covered)s de %(total)s com professor', covered=len(planned & covered), total=len(planned))
+                if planned
+                else False
             )
-            maximum = MAX_WEEKLY_LOAD
-            if Coordination.search_count([('head_id', '=', employee.id), ('coordination_type', '=', 'course')]):
-                maximum -= COORDINATOR_REDUCTION
-            if Class.search_count([('director_id', '=', employee.id), *current]):
-                maximum -= DIRECTOR_REDUCTION
-            employee.edu_weekly_load_max = maximum
+            edu_class.missing_teacher_subjects = ', '.join(missing.mapped('name')) or False
+            edu_class.director_teaches = edu_class.director_id in edu_class.assignment_ids.teacher_id
+
+    def _search_missing_teacher_subjects(self, operator, value):
+        if operator not in ('!=', '=') or value is not False:
+            return NotImplemented
+        classes = self.search([('academic_year_id.is_current', '=', True)]).filtered('missing_teacher_subjects')
+        return [('id', 'in' if operator == '!=' else 'not in', classes.ids)]
+
+    @api.onchange('director_id')
+    def _onchange_director_warning(self):
+        if self.director_id and self.director_id not in self.assignment_ids.teacher_id:
+            return {
+                'warning': {
+                    'title': self.env._('Atenção'),
+                    'message': self.env._(
+                        '%s não dá aulas nesta turma. O director de turma costuma ser um dos professores da turma.',
+                        self.director_id.name,
+                    ),
+                }
+            }
+        return None

@@ -26,6 +26,7 @@ do Despacho n.º 60/08.
         'report/edu_declarations.xml',
         'report/edu_certificates.xml',
         'report/edu_pautas.xml',
+        'report/edu_teachers.xml',
         'report/edu_report_actions.xml',
         'wizard/edu_pauta_print_views.xml',
         'views/edu_document_views.xml',

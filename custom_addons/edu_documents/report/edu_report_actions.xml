@@ -102,6 +102,38 @@
         <field name="binding_model_id" ref="edu_core.model_edu_curriculum"/>
         <field name="binding_type">report</field>
     </record>
+    <record id="action_report_teachers" model="ir.actions.report">
+        <field name="name">Corpo docente</field>
+        <field name="model">hr.employee.public</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_teachers</field>
+        <field name="print_report_name">'Corpo docente'</field>
+        <field name="paperformat_id" ref="paperformat_a4_landscape"/>
+    </record>
+    <record id="action_report_teacher_schedule" model="ir.actions.report">
+        <field name="name">Horário do professor</field>
+        <field name="model">hr.employee.public</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_teacher_schedule</field>
+        <field name="print_report_name">'Horário %s' % object.name</field>
+        <field name="paperformat_id" ref="paperformat_a4_landscape"/>
+    </record>
+    <record id="action_report_assignments" model="ir.actions.report">
+        <field name="name">Atribuições de disciplinas</field>
+        <field name="model">edu.teaching.assignment</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_assignments</field>
+        <field name="print_report_name">'Atribuições de disciplinas'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
+    <record id="action_report_class_directors" model="ir.actions.report">
+        <field name="name">Directores de turma</field>
+        <field name="model">edu.class</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_class_directors</field>
+        <field name="print_report_name">'Directores de turma'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
     <record id="action_report_student_card" model="ir.actions.report">
         <field name="name">Cartão de estudante</field>
         <field name="model">edu.student</field>

@@ -205,3 +205,44 @@ class TestEduTimetable(TransactionCase):
         teacher = Schedule.editor_teacher_data(self.teacher.id)
         self.assertEqual(sorted(lesson['class'] for lesson in teacher['lessons']), ['10ª A · ENF', '10ª B · ENF'])
         self.assertEqual(self.class_a.action_edit_schedule()['context'], {'default_class_id': self.class_a.id})
+
+    def test_teachers_pages(self):
+        """Docentes: a troca de professor passa para o horário, os avisos antes de gravar, a ficha e os candidatos a
+        director de turma (primeiro quem dá aulas na turma)."""
+        Assignment = self.env['edu.teaching.assignment']
+        Schedule = self.env['edu.schedule']
+        assignment = Assignment.create(
+            {'class_id': self.class_a.id, 'subject_id': self.lp.id, 'teacher_id': self.teacher.id}
+        )
+        lesson = Schedule.create(
+            {'class_id': self.class_a.id, 'subject_id': self.lp.id, 'weekday': '0', 'hour_from': 7.5, 'hour_to': 8.25}
+        )
+        self.assertEqual(lesson.teacher_id, self.teacher)
+        assignment.teacher_id = self.teacher2
+        self.assertEqual(lesson.teacher_id, self.teacher2)
+        # Professor inactivo não se coloca.
+        retired = self.env['hr.employee'].create({'name': 'Reformado', 'edu_is_teacher': True, 'active': False})
+        with self.assertRaises(ValidationError):
+            Assignment.create({'class_id': self.class_b.id, 'subject_id': self.lp.id, 'teacher_id': retired.id})
+        # Aviso antes de gravar: a disciplina já tem professor nesta turma.
+        draft = Assignment.new({'class_id': self.class_a.id, 'subject_id': self.lp.id, 'teacher_id': self.teacher.id})
+        self.assertIn('já é dada por Rita Professora', draft._onchange_teacher_warning()['warning']['message'])
+        # Ficha do professor (perfil público): disciplinas, turmas, carga e horário.
+        public = self.env['hr.employee.public'].browse(self.teacher2.id)
+        self.assertEqual((public.edu_subjects_label, public.edu_class_count), ('Língua Portuguesa', 1))
+        self.assertEqual(public.edu_load_label, '1 de 24')
+        self.assertIn('10ª A · ENF', public.edu_teaching_html)
+        self.assertIn('10ª A · ENF', public.edu_schedule_html)
+        # Director de turma: quem dá aulas na turma aparece primeiro e diz o que dá.
+        Employee = self.env['hr.employee'].with_context(edu_director_class_id=self.class_a.id)
+        found = Employee.name_search('', [('edu_is_teacher', '=', True)])
+        self.assertEqual(found[0], (self.teacher2.id, 'Rita Professora · dá Língua Portuguesa'))
+        self.class_a.director_id = self.teacher2
+        self.assertTrue(self.class_a.director_teaches)
+        public.invalidate_recordset()
+        self.env['hr.employee'].invalidate_model(['edu_weekly_load_max'])
+        self.assertEqual(public.edu_directed_class, '10ª A · ENF')
+        self.assertEqual(public.edu_load_max, 22)
+        self.assertIn('menos 2 por ser director(a) de turma da 10ª A · ENF', public.edu_load_notes)
+        self.assertIn('Matemática', self.class_a.missing_teacher_subjects)
+        self.assertIn(self.class_a, self.env['edu.class'].search([('missing_teacher_subjects', '!=', False)]))

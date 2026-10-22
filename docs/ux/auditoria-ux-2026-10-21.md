@@ -276,3 +276,32 @@ Referência: `apps/web/app/admin-servicos-academicos/horarios/editor/page.tsx` d
 - **Por professor:** as aulas do professor em todas as turmas, com a carga «8 de 24 tempos semanais». Clicar numa aula abre o horário dessa turma.
 - **Menu:** a lista «Por turma» passou a «Tempos por turma» (a lista de linhas, para correcções em massa).
 - **Código:** acção cliente `edu_timetable.schedule_editor` (`static/src/schedule_editor/`) e os métodos `editor_*` de `edu.schedule` (`models/edu_schedule_editor.py`).
+
+## 15. Docentes: lista, ficha, professores por disciplina e directores de turma (2026-10-22)
+Referência: `apps/web/app/admin-servicos-academicos/docentes/` do secPed (corpo docente, atribuições, directores e ficha do professor).
+
+- **Lista de docentes** (perfil público, a secretaria não lê o RH):
+  - colunas: professor, disciplinas («X, Y e mais N»), turmas, tempos por semana «N de L» (a vermelho acima do limite), director(a) de turma (com a sigla do curso) e coordenação;
+  - todos os professores da escola, mesmo os que ainda não têm turmas (no secPed só apareciam os que tinham atribuições);
+  - saiu o painel «Empresa»;
+  - «Imprimir»: documento «Corpo docente» com o cabeçalho e as assinaturas da pauta.
+- **Ficha do professor:** deixou de ser a ficha de RH (organograma, «Office»).
+  - Mostra a carga «13 de 24 tempos por semana» e o motivo das reduções («menos 2 por ser director(a) de turma da 10ª A · EST»).
+  - Separadores: disciplinas → turmas (com «só o 1.º trimestre» quando não é o ano todo), o horário da semana e as habilitações.
+  - Botão «Horário do professor» para visualizar e imprimir.
+- **Carga horária:** conta as aulas do ano inteiro e as do trimestre em curso (antes só as do ano). O limite 24 − 4 − 2 é regra do secPed, não da lei.
+- **Professores por disciplina:**
+  - agrupada por turma, com o período («Ano todo» quando vazio), os tempos, os tempos do professor «N de L» e a habilitação;
+  - avisos antes de gravar: quem já dá a disciplina na turma, falta de habilitação registada, carga acima do limite;
+  - recusa professores inactivos;
+  - trocar o professor passa para as aulas do horário dessa turma e disciplina (no secPed as aulas ficavam com o antigo), com a verificação de choques do horário;
+  - «Disciplinas sem professor»: as turmas do ano com disciplinas do plano ainda sem professor (na Vovó Eva, 17 turmas: Epidemiologia nas 12.ª de AC e o Projecto Tecnológico nas 13.ª);
+  - «Imprimir»: «Atribuições de disciplinas» por turma, com as linhas «Sem professor».
+- **Directores de turma:**
+  - colunas: turma, turno, alunos, director(a) e «dá aulas na turma»;
+  - filtros «Sem director» e «Com director»;
+  - ao escolher, aparecem primeiro os professores da turma, com o que dão («António Abel · dá Língua Portuguesa»);
+  - aviso se o escolhido não dá aulas na turma;
+  - continua a regra de um professor dirigir no máximo uma turma por ano;
+  - «Imprimir»: «Directores de turma» com «X de N turmas com director».
+- **Dados da Vovó Eva:** o secPed não tem directores de turma nem especialidades dos professores desta escola (os 18 directores e as 48 especialidades são de outras escolas). A escola tem de os lançar.

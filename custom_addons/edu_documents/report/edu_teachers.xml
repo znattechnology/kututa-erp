@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Documentos dos docentes, com o cabeçalho e as assinaturas da pauta: corpo docente, horário do professor,
+         atribuições de disciplinas e directores de turma. -->
+    <template id="teacher_doc_styles">
+        <style>
+            table.ep-list { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 11px; }
+            table.ep-list th, table.ep-list td { border-right: 1px solid #c8c8c8; border-bottom: 1px solid #c8c8c8; padding: 4px 6px; vertical-align: middle; }
+            table.ep-list tr > :first-child { border-left: 1px solid #c8c8c8; }
+            table.ep-list thead th { border-top: 1px solid #969696; border-color: #969696; font-weight: bold; text-align: left; }
+            table.ep-list thead { display: table-header-group; }
+            table.ep-list tr { page-break-inside: avoid; }
+            table.ep-list .ep-c { text-align: center; }
+            table.ep-list .ep-group td { font-weight: bold; }
+            table.ep-list .ep-muted { color: #6e6e6e; }
+        </style>
+    </template>
+
+    <template id="report_teachers">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-set="company" t-value="docs[:1].company_id or res_company"/>
+                <t t-call="edu_documents.pauta_styles"/>
+                <t t-call="edu_documents.teacher_doc_styles"/>
+                <div class="page ep">
+                    <t t-call="edu_documents.pauta_head" visto="False" title="'CORPO DOCENTE'" context="docs._teachers_context()"/>
+                    <table class="ep-list o_ignore_layout_styling">
+                        <thead>
+                            <tr>
+                                <th class="ep-c" style="width: 4%">Nº</th>
+                                <th style="width: 22%">Docente</th>
+                                <th>Disciplinas</th>
+                                <th class="ep-c" style="width: 7%">Turmas</th>
+                                <th class="ep-c" style="width: 10%">Tempos/semana</th>
+                                <th style="width: 14%">Director(a) de turma</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="docs.sorted('name')" t-as="t">
+                                <td class="ep-c" t-out="t_index + 1"/>
+                                <td><t t-out="t.name"/><div t-if="t.edu_specialization" class="ep-muted" t-out="t.edu_specialization"/></td>
+                                <td t-out="t.edu_subjects_full or '—'"/>
+                                <td class="ep-c" t-out="t.edu_class_count or '—'"/>
+                                <td class="ep-c" t-out="t.edu_load_label"/>
+                                <td t-out="t.edu_directed_class or '—'"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <t t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.pedagogical_title())" left_name="company.edu_pedagogical_director_name" right_role="h.role_case(h.director_title())" right_name="company.edu_director_name"/>
+                    <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_teacher_schedule">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="t">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="t.company_id"/>
+                    <t t-call="edu_documents.pauta_styles"/>
+                    <style>
+                        .ep-week table.o_edu_schedule_grid { font-size: 10.5px !important; }
+                        .ep-week table.o_edu_schedule_grid td { height: 40px; }
+                    </style>
+                    <div class="page ep">
+                        <t t-call="edu_documents.pauta_head" visto="False" title="'HORÁRIO DO PROFESSOR'" context="t._teacher_schedule_context()"/>
+                        <div class="ep-week" t-if="t.edu_schedule_html" t-out="t.edu_schedule_html"/>
+                        <p t-else="">Sem aulas no horário do ano lectivo em curso.</p>
+                        <t t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.pedagogical_title())" left_name="company.edu_pedagogical_director_name" right_role="h.role_case(h.director_title())" right_name="company.edu_director_name"/>
+                        <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_assignments">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-set="company" t-value="docs[:1].company_id or res_company"/>
+                <t t-call="edu_documents.pauta_styles"/>
+                <t t-call="edu_documents.teacher_doc_styles"/>
+                <div class="page ep">
+                    <t t-call="edu_documents.pauta_head" visto="False" title="'ATRIBUIÇÕES DE DISCIPLINAS'" context="docs._assignments_context()"/>
+                    <table class="ep-list o_ignore_layout_styling">
+                        <thead>
+                            <tr>
+                                <th>Disciplina</th>
+                                <th style="width: 32%">Professor(a)</th>
+                                <th style="width: 16%">Período</th>
+                                <th class="ep-c" style="width: 9%">Tempos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs._assignment_groups()" t-as="g">
+                                <tr class="ep-group">
+                                    <td colspan="4"><t t-out="g['class']._editor_label()"/> · <t t-out="g['class'].course_id.name"/></td>
+                                </tr>
+                                <tr t-foreach="g['rows']" t-as="a">
+                                    <td style="padding-left: 18px;" t-out="a.subject_id.name"/>
+                                    <td t-out="a.teacher_id.name"/>
+                                    <td t-out="a.trimester_id.name and ('Só o %s' % a.trimester_id.name) or 'Ano todo'"/>
+                                    <td class="ep-c" t-out="a.weekly_hours"/>
+                                </tr>
+                                <tr t-if="g['missing']">
+                                    <td style="padding-left: 18px;" class="ep-muted" t-out="g['missing']"/>
+                                    <td class="ep-muted">Sem professor</td>
+                                    <td/>
+                                    <td/>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <t t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.pedagogical_title())" left_name="company.edu_pedagogical_director_name" right_role="h.role_case(h.director_title())" right_name="company.edu_director_name"/>
+                    <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_class_directors">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-set="company" t-value="docs[:1].company_id or res_company"/>
+                <t t-call="edu_documents.pauta_styles"/>
+                <t t-call="edu_documents.teacher_doc_styles"/>
+                <div class="page ep">
+                    <t t-call="edu_documents.pauta_head" visto="False" title="'DIRECTORES DE TURMA'" context="docs._directors_context()"/>
+                    <table class="ep-list o_ignore_layout_styling">
+                        <thead>
+                            <tr>
+                                <th style="width: 16%">Turma</th>
+                                <th>Curso</th>
+                                <th style="width: 12%">Turno</th>
+                                <th class="ep-c" style="width: 8%">Alunos</th>
+                                <th style="width: 30%">Director(a) de turma</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="docs.sorted(lambda c: (c.class_number, c.course_id.code or '', c.name))" t-as="c">
+                                <td t-out="c._editor_label()"/>
+                                <td t-out="c.course_id.name"/>
+                                <td t-out="c.shift_id.name or ''"/>
+                                <td class="ep-c" t-out="c.student_count"/>
+                                <td t-att-class="None if c.director_id else 'ep-muted'" t-out="c.director_id.name or 'Sem director'"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <t t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.pedagogical_title())" left_name="company.edu_pedagogical_director_name" right_role="h.role_case(h.director_title())" right_name="company.edu_director_name"/>
+                    <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
