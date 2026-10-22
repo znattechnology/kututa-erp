@@ -305,3 +305,19 @@ Referência: `apps/web/app/admin-servicos-academicos/docentes/` do secPed (corpo
   - continua a regra de um professor dirigir no máximo uma turma por ano;
   - «Imprimir»: «Directores de turma» com «X de N turmas com director».
 - **Dados da Vovó Eva:** o secPed não tem directores de turma nem especialidades dos professores desta escola (os 18 directores e as 48 especialidades são de outras escolas). A escola tem de os lançar.
+
+## 16. Lista de alunos (2026-10-22)
+- **Problema:** a lista mostrava os 1 697 alunos de todos os anos misturados (actuais, antigos, transferidos, anulados), sem forma de filtrar pela turma, porque a «turma actual» não estava gravada.
+- **Desempenho:** não era o problema. O Odoo pesquisa no servidor e mostra 80 linhas por página, por isso uma escola com dezenas de milhares de alunos responde da mesma forma. O problema era de orientação.
+- **Opção escolhida:** uma única página de alunos.
+  - Abre nos **matriculados no ano em curso**.
+  - Painel à esquerda: **Curso › Turma**, com contadores; as turmas aparecem quando se escolhe o curso, e marcam-se uma ou mais.
+  - Os antigos ficam a um filtro de distância.
+  - Não foi preciso separar por turma em páginas diferentes: a secretaria precisa de encontrar qualquer aluno (documentos, histórico), e a página da turma e a «Lista de matrículas» já servem o trabalho por turma e por ano.
+  - O secPed não tem lista geral de alunos; chega-se a eles pelas matrículas e pelas turmas.
+- **Situação do aluno**, pela última matrícula: matriculado, matrícula pendente, não matriculado este ano, concluiu o curso, transferido, matrícula anulada, sem matrícula. Mostra-se em selo; os que não estão matriculados aparecem a cinzento.
+  - Vovó Eva: 1 498 matriculados (igual ao número de matrículas activas de 2026/27), 145 não matriculados este ano, 48 anulados e 6 transferidos.
+- **Filtros:** as situações e a qualidade dos dados (sem BI, sem data de nascimento, sem encarregado, sem n.º de matrícula).
+- **Agrupar:** por turma actual, curso, situação, sexo e ano da 1.ª matrícula.
+- **Pesquisa:** nome, n.º de matrícula ou BI, turma e encarregado.
+- **Código:** `current_enrollment_id`, `current_class_id`, `current_course_id`, `current_class_number` e `student_status` passam a gravados em `edu.student` (`edu_enrollment`); a situação recalcula quando muda a matrícula ou o ano lectivo em curso.

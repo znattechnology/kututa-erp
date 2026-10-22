@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <field name="primary_guardian_id" position="before">
                 <field name="current_class_id"/>
+                <field name="student_status" widget="badge"/>
             </field>
             <page name="guardians" position="before">
                 <page string="Matrículas" name="enrollments">
@@ -29,9 +30,58 @@
         <field name="model">edu.student</field>
         <field name="inherit_id" ref="edu_people.edu_student_list"/>
         <field name="arch" type="xml">
+            <list position="attributes">
+                <attribute name="decoration-muted">student_status in ('former', 'graduated', 'transferred', 'dropped', 'none')</attribute>
+            </list>
+            <field name="birth_date" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </field>
             <field name="primary_guardian_id" position="before">
                 <field name="current_class_id" optional="show"/>
+                <field name="student_status" widget="badge" optional="show"
+                       decoration-success="student_status == 'enrolled'" decoration-warning="student_status == 'pending'"
+                       decoration-info="student_status == 'graduated'"/>
             </field>
         </field>
+    </record>
+
+    <!-- Pesquisa dos alunos: abre nos matriculados do ano em curso, com o painel Curso › Turma à esquerda. Com
+         milhares de alunos, procura-se pela turma ou pelo nome, n.º de matrícula ou BI; os antigos estão a um filtro. -->
+    <record id="edu_student_search_enrollment" model="ir.ui.view">
+        <field name="name">edu.student.search.enrollment</field>
+        <field name="model">edu.student</field>
+        <field name="inherit_id" ref="edu_people.edu_student_search"/>
+        <field name="arch" type="xml">
+            <field name="primary_guardian_id" position="before">
+                <field name="current_class_id"/>
+            </field>
+            <filter name="no_matricula" position="before">
+                <filter name="enrolled" string="Matriculados este ano" domain="[('student_status', '=', 'enrolled')]"/>
+                <filter name="pending" string="Matrícula pendente" domain="[('student_status', '=', 'pending')]"/>
+                <filter name="former" string="Não matriculados este ano" domain="[('student_status', '=', 'former')]"/>
+                <filter name="graduated" string="Concluíram o curso" domain="[('student_status', '=', 'graduated')]"/>
+                <filter name="left" string="Transferidos ou anulados"
+                        domain="[('student_status', 'in', ('transferred', 'dropped'))]"/>
+                <separator/>
+                <filter name="no_id" string="Sem BI" domain="[('id_number', '=', False)]"/>
+                <filter name="no_birth" string="Sem data de nascimento" domain="[('birth_date', '=', False)]"/>
+            </filter>
+            <filter name="group_year" position="before">
+                <filter name="group_class" string="Turma actual" context="{'group_by': 'current_class_id'}"/>
+                <filter name="group_course" string="Curso" context="{'group_by': 'current_course_id'}"/>
+                <filter name="group_status" string="Situação" context="{'group_by': 'student_status'}"/>
+            </filter>
+            <search position="inside">
+                <searchpanel>
+                    <field name="current_course_id" string="Curso" select="one" icon="school" enable_counters="1"/>
+                    <field name="current_class_id" string="Turma" select="multi" icon="groups" enable_counters="1"
+                           domain="[('course_id', '=', current_course_id), ('academic_year_id.is_current', '=', True)]"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="edu_people.action_edu_student" model="ir.actions.act_window">
+        <field name="context">{'search_default_enrolled': 1}</field>
     </record>
 </odoo>

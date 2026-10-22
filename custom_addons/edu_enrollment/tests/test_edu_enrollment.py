@@ -65,6 +65,12 @@ class TestEduEnrollment(TransactionCase):
         self.assertEqual(first.order_number, 1)
         self.assertEqual(carla.matricula_number, '2026-0001')
         self.assertEqual(carla.current_class_id, self.class_a)
+        self.assertEqual((carla.student_status, carla.current_course_id), ('enrolled', self.class_a.course_id))
+        self.assertEqual(bento.student_status, 'none')
+        # A lista de alunos procura pela turma e pela situação (campos gravados).
+        Student = self.env['edu.student']
+        self.assertEqual(Student.search([('current_class_id', '=', self.class_a.id)]), carla)
+        self.assertIn(carla, Student.search([('student_status', '=', 'enrolled')]))
         self.assertIn('TENF', first.subject_ids.mapped('code'))
         second = self._enroll(ana, self.class_a)
         self.assertEqual(second.order_number, 2)
@@ -96,6 +102,7 @@ class TestEduEnrollment(TransactionCase):
         )
         wizard.action_confirm()
         self.assertEqual(enrollments[1].state, 'dropped')
+        self.assertEqual((ana.student_status, ana.current_class_id.id), ('dropped', False))
         self.assertEqual(enrollments[1].drop_reason, 'Mudança de residência')
         with self.assertRaises(UserError):
             enrollments[1]._drop('outra vez')
