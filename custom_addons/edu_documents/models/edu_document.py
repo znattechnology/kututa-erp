@@ -4,6 +4,7 @@ from odoo.exceptions import UserError
 DOCUMENT_TYPES = [
     ('frequency', 'Declaração de frequência'),
     ('grades', 'Declaração com notas'),
+    ('enrollment', 'Declaração de matrícula'),
     ('transfer_declaration', 'Declaração para transferência'),
     ('transfer_guide', 'Guia de transferência'),
     ('term', 'Termo de frequência e aproveitamento'),
@@ -13,6 +14,7 @@ DOCUMENT_TYPES = [
 PREFIXES = {
     'frequency': 'DSN',
     'grades': 'DCN',
+    'enrollment': 'DM',
     'transfer_declaration': 'DTR',
     'transfer_guide': 'GT',
     'term': 'TFA',
@@ -22,12 +24,28 @@ PREFIXES = {
 REPORTS = {
     'frequency': 'edu_documents.action_report_declaration_frequency',
     'grades': 'edu_documents.action_report_declaration_grades',
+    'enrollment': 'edu_documents.action_report_declaration_enrollment',
     'transfer_declaration': 'edu_documents.action_report_declaration_transfer',
     'transfer_guide': 'edu_documents.action_report_transfer_guide',
     'term': 'edu_documents.action_report_term',
     'certificate': 'edu_documents.action_report_certificate',
     'diploma': 'edu_documents.action_report_diploma',
 }
+
+DECLARATIONS = ('frequency', 'grades', 'enrollment', 'transfer_declaration')
+# Dados de identificação do aluno que as declarações, o certificado e o diploma escrevem (como no secPed, completam-se
+# no próprio documento e ficam na ficha do aluno; o que faltar sai como uma linha para preencher à mão).
+IDENTITY_FIELDS = [
+    ('father_name', 'nome do pai'),
+    ('mother_name', 'nome da mãe'),
+    ('birth_date', 'data de nascimento'),
+    ('birthplace', 'naturalidade'),
+    ('birth_state_id', 'província'),
+    ('id_number', 'n.º do BI'),
+    ('id_issuer', 'arquivo de identificação'),
+    ('id_issue_date', 'data de emissão do BI'),
+    ('process_number', 'n.º de processo'),
+]
 
 
 class EduDocument(models.Model):
@@ -55,7 +73,19 @@ class EduDocument(models.Model):
     graduation_id = fields.Many2one(
         'edu.graduation', string='Conclusão', check_company=True, domain="[('student_id', '=', student_id)]"
     )
-    purpose = fields.Char(string='Destina-se a', default='todos os efeitos legais')
+    purpose = fields.Char(string='Destina-se a', help='Vazio: sai uma linha para preencher à mão.')
+    # Dados de identificação (da ficha do aluno, editáveis aqui).
+    student_father_name = fields.Char(related='student_id.father_name', readonly=False)
+    student_mother_name = fields.Char(related='student_id.mother_name', readonly=False)
+    student_birth_date = fields.Date(related='student_id.birth_date', readonly=False)
+    student_birthplace = fields.Char(related='student_id.birthplace', readonly=False)
+    student_birth_state_id = fields.Many2one(related='student_id.birth_state_id', readonly=False)
+    student_id_number = fields.Char(related='student_id.id_number', readonly=False)
+    student_id_issuer = fields.Char(related='student_id.id_issuer', readonly=False)
+    student_id_issue_date = fields.Date(related='student_id.id_issue_date', readonly=False)
+    student_process_number = fields.Char(related='student_id.process_number', readonly=False)
+    identity_status = fields.Char(string='Dados de identificação', compute='_compute_identity_status')
+    identity_complete = fields.Boolean(compute='_compute_identity_status')
     date = fields.Date(string='Data', required=True, default=fields.Date.context_today)
     state = fields.Selection(
         [('draft', 'Rascunho'), ('issued', 'Emitido'), ('cancelled', 'Anulado')],
@@ -68,16 +98,45 @@ class EduDocument(models.Model):
     print_count = fields.Integer(string='Impressões', readonly=True)
     note = fields.Text(string='Observações')
 
+    @api.depends(*[f'student_id.{name}' for name, _label in IDENTITY_FIELDS])
+    def _compute_identity_status(self):
+        for document in self:
+            missing = [label for name, label in IDENTITY_FIELDS if not document.student_id[name]]
+            document.identity_complete = not missing
+            document.identity_status = (
+                self.env._('Estão todos preenchidos.')
+                if not missing
+                else self.env._(
+                    'Faltam %(n)s dados (%(list)s): no documento saem como linha para preencher à mão.',
+                    n=len(missing),
+                    list=', '.join(missing),
+                )
+            )
+
     def _check_requirements(self):
         self.ensure_one()
         kind = self.document_type
-        if kind in ('frequency', 'grades', 'transfer_declaration', 'term') and not self.enrollment_id:
+        if kind in (*DECLARATIONS, 'term') and not self.enrollment_id:
             raise UserError(self.env._('Escolha a matrícula do aluno.'))
-        if kind == 'frequency' and self.enrollment_id.state not in ('active', 'irregular'):
-            raise UserError(self.env._('A declaração de frequência exige a matrícula em curso.'))
+        state = self.enrollment_id.state
+        # Frequência: também de um ano que já passou («Frequentou»); não de uma matrícula anulada ou transferida.
+        if kind == 'frequency' and state in ('draft', 'dropped', 'transferred'):
+            raise UserError(
+                self.env._(
+                    'Este aluno não tem matrícula válida neste ano lectivo: não se emite a declaração de frequência.'
+                )
+            )
+        if kind == 'enrollment' and state not in ('active', 'irregular'):
+            raise UserError(self.env._('A declaração de matrícula exige a matrícula em curso.'))
         if kind in ('grades', 'transfer_declaration'):
             if not self.enrollment_id.subject_result_ids.filtered('complete'):
                 raise UserError(self.env._('A matrícula ainda não tem classificações finais.'))
+        if kind == 'grades' and self.enrollment_id.sudo().year_result_id.status in (False, 'pending'):
+            raise UserError(
+                self.env._(
+                    'Este aluno ainda não tem classificação final neste ano — feche o conselho de classe primeiro.'
+                )
+            )
         if kind == 'transfer_guide' and (not self.transfer_id or self.transfer_id.transfer_type != 'external'):
             raise UserError(self.env._('A guia de transferência exige uma transferência para outra escola.'))
         if kind == 'transfer_guide' and self.transfer_id.state != 'completed':

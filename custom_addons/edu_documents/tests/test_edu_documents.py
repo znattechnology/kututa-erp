@@ -110,10 +110,30 @@ class TestEduDocuments(TransactionCase):
                      'efeitos de bolsa de estudo', 'A SUBDIRECTORA PEDAGÓGICA', '//MARIANO HUNGULO//',
                      'DSN/Nº01/2026-2027', 'Província de Cuanza Sul'):  # fmt: skip
             self.assertIn(text, html)
+        # Como no secPed: título com o tipo, cabeçalho de Estado, «Está a frequentar» no ano em curso, o regime e o
+        # rodapé do Anexo V; o que falta na ficha (o processo n.º, o emissor do BI) sai como linha a preencher.
+        for text in ('DECLARAÇÃO DE FREQUÊNCIA', 'Ministério da Educação', 'Está a frequentar', 'em regime',
+                     'Anexo V · Despacho n.º 60/08', 'processo n.º', 'edu-blank'):  # fmt: skip
+            self.assertIn(text, html)
         action = document.action_print()
         # Os documentos escolares não passam pelo assistente do layout das facturas.
         self.assertEqual(action['type'], 'ir.actions.report')
         self.assertEqual(document.print_count, 1)
+        self.assertNotIn('2.ª VIA', self._render('edu_documents.action_report_declaration_frequency', document))
+        document.action_print()
+        self.assertIn('2.ª VIA', self._render('edu_documents.action_report_declaration_frequency', document))
+        # Os dados que faltam completam-se no documento e ficam na ficha do aluno.
+        self.assertFalse(document.identity_complete)
+        draft = self.env['edu.document'].create(
+            {'document_type': 'enrollment', 'student_id': self.student.id, 'enrollment_id': self.enrollment.id}
+        )
+        draft.student_process_number = '1520-A'
+        self.assertEqual(self.student.process_number, '1520-A')
+        draft.action_issue()
+        self.assertTrue(draft.name.startswith('DM/'))
+        html = self._render('edu_documents.action_report_declaration_enrollment', draft)
+        self.assertIn('DECLARAÇÃO DE MATRÍCULA', html)
+        self.assertIn('se encontra regularmente matriculada', html)
 
     def test_preview(self):
         # Visualizar mostra o documento na própria aplicação (HTML), sem o emitir nem contar como impressão.
@@ -131,10 +151,9 @@ class TestEduDocuments(TransactionCase):
         with self.assertRaises(UserError):
             self._document('grades')  # ainda sem classificações finais
         self._grades(15)
-        # Sem a decisão do ano, a declaração diz «Frequentou», sem resultado final.
-        pending = self._render('edu_documents.action_report_declaration_grades', self._document('grades'))
-        self.assertIn('Frequentou', pending)
-        self.assertNotIn('Não apt', pending)
+        # Sem a decisão do ano (conselho por fechar), a declaração com notas não sai (como no secPed).
+        with self.assertRaisesRegex(UserError, 'feche o conselho'):
+            self._document('grades')
         self.edu_class.action_compute_year_results()
         document = self._document('grades')
         html = self._render('edu_documents.action_report_declaration_grades', document)

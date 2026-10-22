@@ -25,7 +25,7 @@
                 <header>
                     <button name="action_issue" type="object" string="Emitir" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_print" type="object" string="Imprimir" class="btn-primary" invisible="state != 'issued'"/>
-                    <button name="action_preview" type="object" string="Visualizar" invisible="state == 'cancelled'"/>
+                    <button name="action_preview" type="object" string="Ver o documento" invisible="state == 'cancelled'"/>
                     <button name="action_cancel" type="object" string="Anular" invisible="state != 'issued'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
@@ -50,6 +50,28 @@
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         </group>
                     </group>
+                    <group string="Dados de identificação" name="identity"
+                           invisible="document_type not in ('frequency', 'grades', 'transfer_declaration', 'certificate', 'diploma')">
+                        <div colspan="2">
+                            <span invisible="identity_complete" class="text-warning"><field name="identity_status" class="d-inline"/></span>
+                            <span invisible="not identity_complete" class="text-success">Estão todos preenchidos.</span>
+                            <div class="text-muted small">Os dados que faltam completam-se aqui e ficam guardados na ficha do aluno.</div>
+                        </div>
+                        <group>
+                            <field name="student_father_name" string="Nome do pai" readonly="state != 'draft'"/>
+                            <field name="student_mother_name" string="Nome da mãe" readonly="state != 'draft'"/>
+                            <field name="student_birth_date" string="Data de nascimento" readonly="state != 'draft'"/>
+                            <field name="student_birthplace" string="Naturalidade" readonly="state != 'draft'"/>
+                            <field name="student_birth_state_id" string="Província" readonly="state != 'draft'" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="student_id_number" string="N.º do BI" readonly="state != 'draft'"/>
+                            <field name="student_id_issuer" string="Arquivo de identificação" readonly="state != 'draft'"/>
+                            <field name="student_id_issue_date" string="Data de emissão do BI" readonly="state != 'draft'"/>
+                            <field name="student_process_number" string="Processo n.º" readonly="state != 'draft'"/>
+                            <field name="identity_complete" invisible="1"/>
+                        </group>
+                    </group>
                     <field name="note" placeholder="Observações"/>
                 </sheet>
                 <chatter/>
@@ -64,17 +86,31 @@
                 <field name="name"/>
                 <field name="student_id"/>
                 <filter name="issued" string="Emitidos" domain="[('state', '=', 'issued')]"/>
+                <filter name="draft" string="Rascunhos" domain="[('state', '=', 'draft')]"/>
+                <filter name="cancelled" string="Anulados" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
                 <group>
                     <filter name="group_type" string="Documento" context="{'group_by': 'document_type'}"/>
                     <filter name="group_month" string="Mês" context="{'group_by': 'date:month'}"/>
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
                 </group>
             </search>
         </field>
     </record>
     <record id="action_edu_document" model="ir.actions.act_window">
-        <field name="name">Documentos emitidos</field>
+        <field name="name">Declarações</field>
         <field name="res_model">edu.document</field>
         <field name="view_mode">list,form</field>
+        <!-- Só as declarações: o certificado e o diploma estão em Diplomas e certificados, o termo no histórico do
+             aluno e a guia nas transferências. -->
+        <field name="domain">[('document_type', 'in', ('frequency', 'grades', 'enrollment', 'transfer_declaration'))]</field>
+        <field name="context">{'default_document_type': 'frequency'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ainda não há declarações</p>
+            <p>Declaração de frequência, com notas (aproveitamento) ou de matrícula, pronta a imprimir e assinar. Os dados
+            de identificação que faltarem completam-se no documento e ficam guardados na ficha do aluno.</p>
+        </field>
     </record>
 
     <record id="edu_student_form_documents" model="ir.ui.view">

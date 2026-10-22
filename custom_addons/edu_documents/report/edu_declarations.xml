@@ -1,6 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Declaração de frequência / sem notas -->
+    <!-- Declarações de frequência, com notas e de matrícula, como no secPed-Express (declaracao-documents.tsx):
+         cabeçalho de Estado, título com o tipo, os dados em falta como linha para preencher à mão, o regime, o
+         rodapé do Anexo V/VI do Despacho n.º 60/08 e, a partir da segunda impressão, «2.ª VIA». -->
+    <template id="declaration_purpose">
+        <p><strong>OBS:</strong> A presente declaração destina-se a <t t-if="o.purpose" t-out="o.purpose"/><t t-else=""><t t-set="width" t-value="260"/><t t-call="edu_documents.blank"/></t>.</p>
+    </template>
+
+    <template id="declaration_closing">
+        <p>
+            Por ser verdade e me ter sido solicitado, e assim constar nos documentos que ficam arquivados na Secretaria
+            desta Instituição, mandei passar a presente declaração, que vai por mim assinada e autenticada com o carimbo a
+            óleo em uso nesta Instituição.
+        </p>
+        <p class="edu-date"><t t-out="company.name.upper()"/> EM <t t-out="h.city().upper()"/>, A <t t-out="h.date(o.date, True)"/>.</p>
+        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
+    </template>
+
+    <template id="declaration_footer">
+        <div class="edu-annex" t-if="annex" t-out="annex"/>
+        <div class="edu-ref">
+            <t t-out="o.name if o.state != 'draft' else 'RASCUNHO: o número é atribuído ao emitir'"/>
+            <span t-if="o.print_count &gt; 1" class="edu-copy">2.ª VIA</span>
+        </div>
+    </template>
+
     <template id="report_declaration_frequency">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
@@ -10,31 +34,25 @@
                     <t t-set="e" t-value="o.enrollment_id"/>
                     <t t-call="edu_documents.styles"/>
                     <div class="page edu-doc">
-                        <t t-call="edu_documents.header" official="False"/>
-                        <div class="edu-title">DECLARAÇÃO</div>
-                        <p><strong><t t-out="(company.edu_director_name or '').upper()"/>, <t t-out="h.director_title()[2:]"/> DO <t t-out="company.name.upper()"/></strong></p>
-                        <p>Declara que: <t t-call="edu_documents.identity"/>.</p>
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title">DECLARAÇÃO DE FREQUÊNCIA</div>
+                        <p><strong><t t-out="(company.edu_director_name or '').upper()"/>, <t t-out="h.director_title()[2:]"/> DO <t t-out="company.name.upper()"/>.</strong></p>
+                        <p><strong>Declara que:</strong> <t t-set="with_process" t-value="True"/><t t-call="edu_documents.identity"/>.</p>
                         <p>
-                            Está a frequentar, neste estabelecimento de ensino, a <t t-out="h.klass(e.class_number)"/>,
-                            Ano Lectivo <t t-out="e.academic_year_id.name"/><t t-if="e.course_id">, Curso de <t t-out="e.course_id.name"/></t>,
-                            Turma: <t t-out="e.class_id.name"/>, Número <t t-out="e.order_number"/>.
+                            <strong t-out="'Está a frequentar' if e.academic_year_id.is_current else 'Frequentou'"/>, neste estabelecimento, a
+                            <strong t-out="h.klass(e.class_number)"/>, Ano Lectivo <strong t-out="e.academic_year_id.name"/><t t-if="e.course_id">,
+                            Curso de <t t-out="e.course_id.name"/></t>, Turma <strong t-out="e.class_id.name"/>, número <t t-out="e.order_number"/>,
+                            em regime <strong t-out="h.regime(e)"/>.
                         </p>
-                        <p><strong>OBS: A presente declaração destina-se para <t t-out="o.purpose"/>.</strong></p>
-                        <p>
-                            Por ser verdade e me ter sido solicitado e assim constar, nos documentos que ficam arquivados na
-                            Secretaria-geral desta Instituição, mandei passar a presente declaração que vai por mim assinada e
-                            autenticada com o carimbo a óleo em uso nesta Instituição.
-                        </p>
-                        <p class="edu-date"><t t-out="company.name.upper()"/> EM <t t-out="h.city().upper()"/>, A <t t-out="h.date(o.date, True)"/>.</p>
-                        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
-                        <div class="edu-ref" t-out="o.name if o.state != 'draft' else 'RASCUNHO: o número é atribuído ao emitir'"/>
+                        <t t-call="edu_documents.declaration_purpose"/>
+                        <t t-call="edu_documents.declaration_closing"/>
+                        <t t-set="annex" t-value="'Anexo V · Despacho n.º 60/08, de 30 de Abril · Válida enquanto durar a matrícula a que se refere.'"/><t t-call="edu_documents.declaration_footer"/>
                     </div>
                 </t>
             </t>
         </t>
     </template>
 
-    <!-- Declaração com notas discriminadas -->
     <template id="report_declaration_grades">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
@@ -45,38 +63,65 @@
                     <t t-set="results" t-value="h.ordered(e.subject_result_ids.filtered('complete'))"/>
                     <t t-set="year_result" t-value="e.year_result_id"/>
                     <t t-set="passed" t-value="year_result.status in ('promoted', 'graduated', 'conditional')"/>
-                    <t t-set="decided" t-value="passed or year_result.status == 'retained'"/>
                     <t t-call="edu_documents.styles"/>
                     <div class="page edu-doc">
-                        <t t-call="edu_documents.header" official="False"/>
-                        <div class="edu-title">DECLARAÇÃO</div>
-                        <p><strong><t t-out="(company.edu_director_name or '').upper()"/>, <t t-out="h.director_title()[2:]"/> DO <t t-out="company.name.upper()"/></strong></p>
-                        <p>Declara que: <t t-call="edu_documents.identity"/>.</p>
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title">DECLARAÇÃO DE APROVEITAMENTO</div>
+                        <p><strong><t t-out="(company.edu_director_name or '').upper()"/>, <t t-out="h.director_title()[2:]"/> DO <t t-out="company.name.upper()"/>.</strong></p>
+                        <p><strong>Declara que:</strong> <t t-set="with_process" t-value="True"/><t t-call="edu_documents.identity"/>.</p>
                         <p>
-                            <t t-out="'Concluiu' if passed else 'Frequentou'"/> neste estabelecimento de ensino a <t t-out="h.klass(e.class_number)"/> no ano lectivo de
-                            <t t-out="e.academic_year_id.name"/><t t-if="e.course_id">, Curso de <t t-out="e.course_id.name"/></t>,
-                            Turma <t t-out="e.class_id.name"/>, número <t t-out="e.order_number"/><t t-if="decided">, com o resultado
-                            final <strong t-out="h.by_gender(student.gender, 'Apto', 'Apta') if passed else h.by_gender(student.gender, 'Não apto', 'Não apta')"/></t>,
-                            com as seguintes classificações:
+                            <strong t-out="'Concluiu' if passed else 'Frequentou'"/> neste estabelecimento a <t t-out="h.klass(e.class_number)"/> no Ano
+                            Lectivo <t t-out="e.academic_year_id.name"/><t t-if="e.course_id">, Curso de <t t-out="e.course_id.name"/></t>,
+                            Turma <t t-out="e.class_id.name"/>, número <t t-out="e.order_number"/>, em regime <t t-out="h.regime(e)"/>, com o
+                            resultado final obtido <strong t-out="h.result_label(year_result.status, student.gender)"/><t t-if="year_result.average">
+                            e a média de <strong t-out="h.grade(year_result.average)"/></t>, com as seguintes classificações:
                         </p>
                         <table class="edu-table o_ignore_layout_styling">
                             <thead><tr><th>DISCIPLINAS</th><th>NOTAS</th></tr></thead>
                             <tbody>
                                 <tr t-foreach="results" t-as="r">
+                                    <t t-set="value" t-value="r.cfd if r.terminal_subject and r.cfd else r.final"/>
                                     <td t-out="r.subject_id.name"/>
-                                    <td t-att-class="h.color(r.final, r.pass_grade)" t-out="h.grade(r.final)"/>
+                                    <td t-att-class="h.color(value, r.pass_grade)" t-out="h.grade(value)"/>
                                 </tr>
                             </tbody>
                         </table>
-                        <p><strong>OBS: A presente declaração destina-se para <t t-out="o.purpose"/>.</strong></p>
+                        <t t-call="edu_documents.declaration_purpose"/>
+                        <t t-call="edu_documents.declaration_closing"/>
+                        <t t-set="annex" t-value="'Anexo VI · Despacho n.º 60/08, de 30 de Abril · Classificações na escala de 0 a 20 valores, arredondadas às unidades.'"/><t t-call="edu_documents.declaration_footer"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_declaration_enrollment">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="student" t-value="o.student_id"/>
+                    <t t-set="e" t-value="o.enrollment_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <div class="page edu-doc">
+                        <t t-call="edu_documents.header" official="True"/>
+                        <div class="edu-title">DECLARAÇÃO DE MATRÍCULA</div>
                         <p>
-                            Por ser verdade e me ter sido solicitado e assim constar nos documentos que ficam arquivados na
-                            Secretaria-geral desta Instituição, mandei passar a presente declaração que vai por mim assinada e
-                            autenticada com o carimbo a óleo em uso nesta Instituição.
+                            Para os devidos efeitos, declara-se que <t t-out="h.by_gender(student.gender, 'o aluno', 'a aluna')"/>
+                            <strong t-out="student.name"/>, <t t-out="h.by_gender(student.gender, 'portador', 'portadora')"/> da matrícula n.º
+                            <strong t-out="student.matricula_number or '—'"/>, se encontra regularmente <t t-out="h.by_gender(student.gender, 'matriculado', 'matriculada')"/>
+                            e a frequentar esta instituição de ensino no ano lectivo <strong t-out="e.academic_year_id.name"/>, na
+                            <t t-out="h.klass(e.class_number)"/>, turma <strong t-out="e.class_id.name"/><t t-if="e.course_id">, do curso de
+                            <strong t-out="e.course_id.name"/></t>, em regime <t t-out="h.regime(e)"/>.
+                        </p>
+                        <p t-if="o.purpose">A presente declaração destina-se a: <t t-out="o.purpose"/>.</p>
+                        <p>
+                            Por ser verdade e me ter sido solicitada, mandei passar a presente declaração, que assino e autentico
+                            com o carimbo em uso nesta instituição.
                         </p>
                         <p class="edu-date"><t t-out="company.name.upper()"/> EM <t t-out="h.city().upper()"/>, A <t t-out="h.date(o.date, True)"/>.</p>
-                        <t t-call="edu_documents.signatures" left_role="False" right_role="h.director_title()" right_name="company.edu_director_name"/>
-                        <div class="edu-ref" t-out="o.name if o.state != 'draft' else 'RASCUNHO: o número é atribuído ao emitir'"/>
+                        <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
+                        <t t-set="annex" t-value="False"/><t t-call="edu_documents.declaration_footer"/>
                     </div>
                 </t>
             </t>

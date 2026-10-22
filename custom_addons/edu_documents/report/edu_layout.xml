@@ -64,6 +64,9 @@
             .edu-ref { font-weight: bold; font-size: 11px; margin-top: 24px; }
             .edu-date { margin-top: 18px; }
             .edu-dots { border-bottom: 1px dotted #000; }
+            .edu-blank { display: inline-block; border-bottom: 1px solid #000; height: 1em; vertical-align: baseline; }
+            .edu-annex { font-size: 10px; color: #444; margin-top: 18px; }
+            .edu-copy { float: right; font-weight: bold; border: 1px solid #000; padding: 1px 6px; }
         </style>
     </template>
 
@@ -75,6 +78,12 @@
                 <div class="edu-state">República de Angola<br/>Ministério da Educação</div>
                 <div class="edu-state" t-if="company.edu_official_line" t-out="company.edu_official_line"/>
                 <div class="edu-school mt-2" t-out="company.name"/>
+                <div t-if="company.edu_letterhead_subtitle" t-out="company.edu_letterhead_subtitle"/>
+                <div class="edu-small">
+                    <t t-out="', '.join(p for p in [company.street, h.city()] if p)"/>
+                    <t t-if="company.email"> · E-mail: <t t-out="company.email"/></t>
+                    <t t-if="company.phone"> · Telefone: <t t-out="company.phone"/></t>
+                </div>
             </t>
             <t t-else="">
                 <div class="edu-school" t-out="company.name"/>
@@ -88,14 +97,22 @@
         </div>
     </template>
 
-    <!-- Identificação do aluno, comum às declarações -->
+    <!-- Linha para preencher à mão (um dado em falta na ficha, como no secPed) -->
+    <template id="blank"><span class="edu-blank" t-att-style="'min-width: %spx;' % (width or 120)">&#160;</span></template>
+
+    <!-- Identificação do aluno, comum às declarações (o que falta sai como linha para preencher à mão) -->
     <template id="identity">
         <t t-set="g" t-value="student.gender"/>
         <strong t-out="student.name"/>,
-        <t t-out="h.by_gender(g, 'filho', 'filha')"/> de <t t-out="student.father_name or '—'"/> e de <t t-out="student.mother_name or '—'"/>,
-        <t t-out="h.by_gender(g, 'nascido', 'nascida')"/> a <t t-out="h.date(student.birth_date)"/>,
-        natural de <t t-out="student.birthplace or '—'"/><t t-if="student.birth_municipality">, Município de <t t-out="student.birth_municipality"/></t><t t-if="student.birth_state_id">, Província de <t t-out="student.birth_state_id.name"/></t>,
-        <t t-out="h.by_gender(g, 'portador', 'portadora')"/> do B.I. nº <t t-out="student.id_number or '—'"/><t t-if="student.id_issuer">, emitido pelo <t t-out="student.id_issuer"/></t><t t-if="student.id_issue_date"> a <t t-out="h.date(student.id_issue_date)"/></t>
+        <t t-out="h.by_gender(g, 'filho', 'filha')"/> de <t t-if="student.father_name" t-out="student.father_name"/><t t-else=""><t t-set="width" t-value="200"/><t t-call="edu_documents.blank"/></t>
+        e de <t t-if="student.mother_name" t-out="student.mother_name"/><t t-else=""><t t-set="width" t-value="200"/><t t-call="edu_documents.blank"/></t>,
+        <t t-out="h.by_gender(g, 'nascido', 'nascida')"/> a <t t-if="student.birth_date" t-out="h.date(student.birth_date)"/><t t-else=""><t t-set="width" t-value="140"/><t t-call="edu_documents.blank"/></t>,
+        natural de <t t-if="student.birthplace" t-out="student.birthplace"/><t t-else=""><t t-set="width" t-value="120"/><t t-call="edu_documents.blank"/></t><t t-if="student.birth_municipality">, Município de <t t-out="student.birth_municipality"/></t>,
+        Província de <t t-if="student.birth_state_id" t-out="student.birth_state_id.name"/><t t-else=""><t t-set="width" t-value="120"/><t t-call="edu_documents.blank"/></t>,
+        <t t-out="h.by_gender(g, 'portador', 'portadora')"/> do B.I. n.º <t t-if="student.id_number" t-out="student.id_number"/><t t-else=""><t t-set="width" t-value="140"/><t t-call="edu_documents.blank"/></t>,
+        emitido pelo Arquivo de Identificação <t t-if="student.id_issuer" t-out="student.id_issuer"/><t t-else=""><t t-set="width" t-value="120"/><t t-call="edu_documents.blank"/></t>
+        a <t t-if="student.id_issue_date" t-out="h.date(student.id_issue_date)"/><t t-else=""><t t-set="width" t-value="140"/><t t-call="edu_documents.blank"/></t><t t-if="with_process">,
+        processo n.º <t t-if="student.process_number" t-out="student.process_number"/><t t-else=""><t t-set="width" t-value="60"/><t t-call="edu_documents.blank"/></t></t>
     </template>
 
     <template id="signatures">

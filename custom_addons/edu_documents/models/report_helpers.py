@@ -99,6 +99,28 @@ class Helpers:
         return STATUS_LABELS.get(code, '')
 
     @staticmethod
+    def regime(enrollment):
+        """«diurno» ou «pós-laboral» (Despacho 60/08: o ciclo pós-laboral do técnico vai da 10.ª à 13.ª; no turno da
+        noite também)."""
+        edu_class = enrollment.class_id
+        curriculum = edu_class.curriculum_id
+        evening = edu_class.shift_id.shift_type == 'evening'
+        four_years = edu_class.level_id.subsystem == 'technical' and (curriculum.class_to or 0) >= 13
+        return 'pós-laboral' if evening or four_years else 'diurno'
+
+    @staticmethod
+    def result_label(status, gender):
+        """O resultado final na declaração com notas, como no secPed."""
+        female = gender in {'female', 'f'}
+        if status in ('promoted', 'graduated', 'conditional'):
+            return 'Apta' if female else 'Apto'
+        if status == 'exam':
+            return 'Admitida a exame' if female else 'Admitido a exame'
+        if status == 'retained':
+            return 'Não apta' if female else 'Não apto'
+        return 'Pendente'
+
+    @staticmethod
     def ordered(results):
         """Ordem das disciplinas nos documentos: Língua Portuguesa, depois por componente e nome."""
         return results.sorted(
@@ -160,6 +182,7 @@ def _document_report(template, model='edu.document'):
 
 ReportDeclarationFrequency = _document_report('report_declaration_frequency')
 ReportDeclarationGrades = _document_report('report_declaration_grades')
+ReportDeclarationEnrollment = _document_report('report_declaration_enrollment')
 ReportDeclarationTransfer = _document_report('report_declaration_transfer')
 ReportTransferGuide = _document_report('report_transfer_guide')
 ReportCertificate = _document_report('report_certificate')
