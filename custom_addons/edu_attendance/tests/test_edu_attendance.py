@@ -342,3 +342,65 @@ class TestEduAttendance(TransactionCase):
         self.assertEqual(lines.mapped('state'), ['excused', 'excused', 'absent'])
         self.assertEqual(lines[0].justified_by_id, self.teacher_user)
         self.assertEqual(lines[0].justification, 'Doença')
+
+    @freeze_time('2026-10-01')
+    def test_audit_teacher_rights_and_moves(self):
+        """Auditoria da fase 5: o professor só gere as suas aulas e chamadas; mover um tempo refaz as aulas futuras."""
+        self._enroll(self.class_sec)
+        lp = self._subject_with_hours(self.class_sec, 2)
+        mat = self._subject_with_hours(self.class_sec, 3)
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': self.class_sec.id, 'subject_id': lp.id, 'teacher_id': self.teacher.id}
+        )
+        Lesson = self.env['edu.lesson'].with_user(self.teacher_user)
+        # Pôr-se como professor de uma aula de outra disciplina não dá acesso.
+        with self.assertRaises(AccessError):
+            Lesson.create(
+                {
+                    'class_id': self.class_sec.id,
+                    'subject_id': mat.id,
+                    'date': date(2026, 9, 7),
+                    'teacher_id': self.teacher.id,
+                }
+            )
+        other = self.env['edu.lesson'].create(
+            {'class_id': self.class_sec.id, 'subject_id': mat.id, 'date': date(2026, 9, 8)}
+        )
+        with self.assertRaises(AccessError):
+            other.with_user(self.teacher_user).action_open_roll_call()
+        other.action_open_roll_call()
+        with self.assertRaises(AccessError):
+            other.attendance_ids[0].with_user(self.teacher_user).unlink()
+        empty = self.env['edu.lesson'].create(
+            {'class_id': self.class_sec.id, 'subject_id': mat.id, 'date': date(2026, 9, 9)}
+        )
+        with self.assertRaises(AccessError):
+            self.env['edu.lesson.attendance'].with_user(self.teacher_user).create(
+                {'lesson_id': empty.id, 'enrollment_id': other.attendance_ids[0].enrollment_id.id, 'state': 'absent'}
+            )
+        # Trimestre fechado: nem a secretaria apaga faltas.
+        other.summary = 'Dada'
+        other.action_done()
+        self.t1.action_close()
+        with self.assertRaisesRegex(UserError, 'fechado'):
+            other.attendance_ids.unlink()
+        self.t1.action_reopen()
+        # Mover um tempo: as aulas futuras sem chamada saem e voltam a gerar-se no dia novo.
+        schedule = self.env['edu.schedule'].create(
+            {'class_id': self.class_sec.id, 'subject_id': lp.id, 'weekday': '0', 'hour_from': 7.5, 'hour_to': 8.25}
+        )
+        self.env['edu.lesson']._generate(self.class_sec, date(2026, 10, 1), date(2026, 10, 31))
+        self.assertEqual(
+            self.env['edu.lesson'].search([('schedule_id', '=', schedule.id)]).mapped('date'),
+            [date(2026, 10, 26), date(2026, 10, 19), date(2026, 10, 12), date(2026, 10, 5)],
+        )
+        schedule.weekday = '1'
+        self.env['edu.lesson']._generate(self.class_sec, date(2026, 10, 1), date(2026, 10, 31))
+        dates = self.env['edu.lesson'].search([('schedule_id', '=', schedule.id)]).mapped('date')
+        self.assertTrue(all(day.weekday() == 1 for day in dates))
+        self.assertEqual(len(dates), 4)
+        # Trocar o professor: as aulas futuras acompanham.
+        substitute = self.env['hr.employee'].create({'name': 'Novo Professor', 'edu_is_teacher': True})
+        schedule.teacher_id = substitute
+        lessons = self.env['edu.lesson'].search([('schedule_id', '=', schedule.id)])
+        self.assertEqual(lessons.teacher_id, substitute)

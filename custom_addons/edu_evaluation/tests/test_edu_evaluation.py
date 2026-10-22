@@ -545,6 +545,15 @@ class TestEduEvaluation(TransactionCase):
         )
         lesson.action_open_roll_call()
         self.assertIn(bento_enrollment, lesson.attendance_ids.enrollment_id)
+        # O director da turma do Bento (11.ª) justifica-lhe a falta na aula da 10.ª; o director da 10.ª não.
+        bento_line = lesson.attendance_ids.filtered(lambda line: line.enrollment_id == bento_enrollment)
+        bento_line.state = 'absent'
+        other_director = self.env['hr.employee'].create({'name': 'Director da 10.ª', 'edu_is_teacher': True})
+        self.class10.director_id = other_director
+        class11.director_id = self.teacher
+        bento_line.with_user(self.teacher_user).write({'state': 'excused', 'justification': 'Doença'})
+        self.assertEqual(bento_line.state, 'excused')
+        bento_line.with_user(self.teacher_user).invalidate_recordset(['can_justify'])
         # Pautas (edu_documents): na 10.ª, o Bento só nessa disciplina; na 11.ª, «e)» e a disciplina anulada «c)».
         if 'edu.pauta.print' not in self.env:
             return

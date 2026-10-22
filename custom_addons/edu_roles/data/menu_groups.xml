@@ -53,7 +53,8 @@
         <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
     </record>
     <record id="edu_attendance.menu_edu_lesson_attendance" model="ir.ui.menu">
-        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+        <!-- O director de turma justifica as faltas dos seus alunos. -->
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
     </record>
     <record id="edu_attendance.menu_edu_absence_summary" model="ir.ui.menu">
         <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>

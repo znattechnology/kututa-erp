@@ -206,24 +206,21 @@ class EduScheduleReplacement(models.Model):
 
     date = fields.Date(string='Data', required=True, default=fields.Date.context_today)
     weekday = fields.Char(compute='_compute_weekday')
-    class_id = fields.Many2one(
-        'edu.class',
-        string='Turma',
-        compute='_compute_from_schedule',
-        store=True,
-        readonly=False,
-        precompute=True,
-        index=True,
-        help='Para escolher a aula: a turma, o professor que falta, ou os dois.',
-    )
+    # Gravados a partir do tempo (nunca diferentes dele): a lista, a pesquisa e a carga lectiva paga lêem-nos.
+    class_id = fields.Many2one(related='schedule_id.class_id', string='Turma', store=True, index=True)
     original_teacher_id = fields.Many2one(
+        related='schedule_id.teacher_id', string='Professor(a) que falta', store=True, index=True
+    )
+    # Só para escolher a aula no formulário: a turma, o professor que falta, ou os dois.
+    filter_class_id = fields.Many2one(
+        'edu.class', string='Turma ', compute='_compute_filters', readonly=False, store=False
+    )
+    filter_teacher_id = fields.Many2one(
         'hr.employee',
-        string='Professor(a) que falta',
-        compute='_compute_from_schedule',
-        store=True,
+        string='Professor(a) que falta ',
+        compute='_compute_filters',
         readonly=False,
-        precompute=True,
-        index=True,
+        store=False,
         domain="[('edu_is_teacher', '=', True)]",
     )
     schedule_id = fields.Many2one(
@@ -232,8 +229,9 @@ class EduScheduleReplacement(models.Model):
         required=True,
         ondelete='cascade',
         index=True,
-        domain="[('weekday', '=', weekday), ('class_id', '=?', class_id), ('teacher_id', '=?', original_teacher_id), "
-        "('academic_year_id.date_start', '<=', date), ('academic_year_id.date_end', '>=', date)]",
+        domain="[('weekday', '=', weekday), ('class_id', '=?', filter_class_id), "
+        "('teacher_id', '=?', filter_teacher_id), ('academic_year_id.date_start', '<=', date), "
+        "('academic_year_id.date_end', '>=', date)]",
     )
     company_id = fields.Many2one(related='schedule_id.company_id', store=True)
     replacement_teacher_id = fields.Many2one(
@@ -253,11 +251,10 @@ class EduScheduleReplacement(models.Model):
             replacement.weekday = str(replacement.date.weekday()) if replacement.date else False
 
     @api.depends('schedule_id')
-    def _compute_from_schedule(self):
+    def _compute_filters(self):
         for replacement in self:
-            if replacement.schedule_id:
-                replacement.class_id = replacement.schedule_id.class_id
-                replacement.original_teacher_id = replacement.schedule_id.teacher_id
+            replacement.filter_class_id = replacement.schedule_id.class_id
+            replacement.filter_teacher_id = replacement.schedule_id.teacher_id
 
     @api.depends('schedule_id', 'date')
     def _compute_display_name(self):

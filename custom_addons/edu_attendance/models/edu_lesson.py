@@ -177,7 +177,19 @@ class EduLesson(models.Model):
                 )
             )
             director = lesson.class_id.sudo().director_id == employee
-            substitute = lesson.teacher_id == employee
+            # Substituto só com a substituição registada para esse tempo e data (pôr-se como professor não basta).
+            substitute = bool(
+                lesson.schedule_id
+                and self.env['edu.schedule.replacement']
+                .sudo()
+                .search_count(
+                    [
+                        ('schedule_id', '=', lesson.schedule_id.id),
+                        ('date', '=', lesson.date),
+                        ('replacement_teacher_id', '=', employee.id),
+                    ]
+                )
+            )
             if not (employee and (assigned or director or substitute)):
                 raise AccessError(self.env._('Só o professor da disciplina ou o director de turma gere esta aula.'))
 
@@ -215,6 +227,8 @@ class EduLesson(models.Model):
 
     def action_open_roll_call(self):
         """Abre a chamada: uma linha por aluno matriculado na disciplina, todos presentes por omissão."""
+        self._check_can_manage()
+        self._check_open_trimester()
         for lesson in self:
             if lesson.state == 'cancelled':
                 raise UserError(self.env._('A aula não se realizou.'))
@@ -333,8 +347,7 @@ class EduLessonAttendance(models.Model):
         if self.env.su or self.env.user.has_group('edu_core.group_edu_user'):
             return True
         employee = self.env.user.employee_id
-        directors = (self.lesson_id.class_id | self.enrollment_id.class_id).sudo().director_id
-        return bool(employee) and employee in directors
+        return bool(employee) and employee == self.enrollment_id.class_id.sudo().director_id
 
     def _check_can_justify(self):
         for line in self:
@@ -347,15 +360,30 @@ class EduLessonAttendance(models.Model):
                     )
                 )
 
+    def _check_can_manage(self):
+        """Quem gere a aula gere a chamada; o director de turma do aluno também, nas linhas dos seus alunos (as
+        disciplinas que faz numa turma da classe anterior)."""
+        if self.env.su or self.env.user.has_group('edu_core.group_edu_user'):
+            return
+        employee = self.env.user.employee_id
+        mine = self.filtered(lambda line: employee and line.enrollment_id.class_id.sudo().director_id == employee)
+        (self - mine).lesson_id._check_can_manage()
+
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
+        lines._check_can_manage()
         lines.lesson_id._check_open_trimester()
         lines.filtered(lambda line: line.state == 'excused')._check_can_justify()
         return lines
 
+    @api.ondelete(at_uninstall=False)
+    def _unlink_check(self):
+        self._check_can_manage()
+        self.lesson_id._check_open_trimester()
+
     def write(self, vals):
-        self.lesson_id._check_can_manage()
+        self._check_can_manage()
         self.lesson_id._check_open_trimester()
         if {'state', 'justification'} & set(vals):
             if vals.get('state') == 'excused':

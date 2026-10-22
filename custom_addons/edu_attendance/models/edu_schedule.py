@@ -1,4 +1,43 @@
-from odoo import api, models
+from odoo import api, fields, models
+
+
+class EduSchedule(models.Model):
+    _inherit = 'edu.schedule'
+
+    def write(self, vals):
+        result = super().write(vals)
+        moved = {'weekday', 'hour_from', 'hour_to', 'time_slot_id', 'trimester_id', 'subject_id', 'class_id'}
+        if moved & set(vals):
+            self._edu_drop_future_lessons()
+        elif {'teacher_id', 'room_id'} & set(vals):
+            self._edu_sync_future_lessons()
+        return result
+
+    def _edu_future_lessons(self):
+        """As aulas ainda por dar, sem chamada, de hoje em diante: as que o horário pode refazer."""
+        return (
+            self.env['edu.lesson']
+            .sudo()
+            .search(
+                [
+                    ('schedule_id', 'in', self.ids),
+                    ('state', '=', 'scheduled'),
+                    ('date', '>=', fields.Date.context_today(self)),
+                ]
+            )
+            .filtered(lambda lesson: not lesson.attendance_ids)
+        )
+
+    def _edu_drop_future_lessons(self):
+        """O tempo mudou de dia, de hora ou de disciplina: as aulas futuras geradas saem (voltam a gerar-se no sítio
+        novo); as que já têm chamada ficam como estão."""
+        self._edu_future_lessons().unlink()
+
+    def _edu_sync_future_lessons(self):
+        """Outro professor ou outra sala: as aulas futuras acompanham (com substituição, fica o substituto)."""
+        for lesson in self._edu_future_lessons().with_context(edu_lesson_system=True):
+            schedule = lesson.schedule_id
+            lesson.write({'teacher_id': schedule._teacher_on(lesson.date).id, 'room_id': schedule.room_id.id})
 
 
 class EduScheduleReplacement(models.Model):

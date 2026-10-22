@@ -118,8 +118,9 @@
                     <group>
                         <group string="Aula">
                             <field name="date"/>
-                            <field name="class_id" options="{'no_create': True}" placeholder="Todas"/>
-                            <field name="original_teacher_id" options="{'no_create': True}" placeholder="Todos"/>
+                            <field name="filter_class_id" string="Turma" options="{'no_create': True}" placeholder="Todas"/>
+                            <field name="filter_teacher_id" string="Professor(a) que falta" options="{'no_create': True}"
+                                   placeholder="Todos"/>
                             <field name="weekday" invisible="1"/>
                             <field name="schedule_id" options="{'no_create': True, 'no_open': True}"
                                    context="{'edu_schedule_show_class': True}"/>
