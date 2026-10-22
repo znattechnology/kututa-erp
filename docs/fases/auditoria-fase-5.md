@@ -143,3 +143,34 @@ Confirmado que está bem:
 | 5.14 | baixo | As 8 datas de saída das transferências. | Técnica: fim do ano |
 | 5.15 | baixo | 82 turmas sem director nem sala (o secPed também não tinha). | **Escola** |
 | 5.16 | baixo | 24 tempos da segunda grelha da tarde fora do turno (já conhecido). | **Escola** |
+
+## Correcções (2026-10-22)
+
+Corrigido nos commits `7955f19` a `6ed020e`, cada área com testes. Bateria completa: 304 testes, sem falhas
+depois da última correcção.
+
+**Código.** Todos os achados críticos, altos, médios e baixos estão corrigidos, com estas excepções:
+- **1.7:** a taxa de candidatura cobra-se pelo assistente «Cobrar serviço», que passou a aceitar as taxas de inscrição
+  e de transferência. Não é automática, porque o candidato ainda não é aluno.
+- **4.16:** sem alteração. A ficha pública do professor já expõe a carga (`edu_load` e `edu_load_max`).
+- **5.3:** as notas NACIONAL, FINAL, MAC e COMPONENT do secPed continuam por importar. A Vovó Eva não as tem.
+
+Encontrado na bateria completa: com o `stock` instalado, a secretaria não conseguia criar alunos, porque mudar a escola
+do contacto pesquisa lotes. Essa escrita passou a ser feita em sudo.
+
+Decisões tomadas ao corrigir:
+- **Exame extraordinário e melhoria:** não mudam a decisão do ano em que o aluno transitou (DE 424/25, art. 25.º).
+- **Exame no ano terminal de uma disciplina plurianual:** a nota do exame é a CFD (Despacho 60/08, art. 36.º). Nos
+  outros anos, o exame substitui a CA (Resumo, V.2).
+- **Período de matrícula:** uma escola com calendário mas sem o período desse ano fica fora de prazo depois do início
+  das aulas. Uma escola sem calendário nenhum não tem prazo aplicado.
+- **Calendário escolar:** a secretaria edita os eventos, mas não as fases das matrículas.
+
+**Dados da Vovó Eva** (ensaio com rollback primeiro, depois gravado):
+- **Decisões:** a fase das decisões voltou a correr pela ordem dos anos. Mudaram 74 decisões automáticas, todas entre
+  «transita» e «transita com disciplinas em atraso». Nenhuma ficou contra a pauta assinada.
+- **Classificações finais:** nenhuma mudou. A marca da prova global foi actualizada em 626 resultados.
+- **Exames por realizar:** apagados os 338 de 2023/24 e 2024/25. Ficam os 92 de 2025/26, os atrasos deste ano.
+- **Datas de saída:** as 8 transferências passaram a ter como data de saída o fim do ano lectivo.
+- **Verificação:** um «Recalcular» em todos os anos fechados não muda nenhuma decisão.
+- **Por decidir pela escola:** 5.9, 5.10, 5.13, 5.15 e 5.16.
