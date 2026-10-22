@@ -375,3 +375,12 @@ class TestEduDocuments(TransactionCase):
         html = self._render('edu_documents.action_report_exam_calendar', document)
         self.assertIn('ESCALA DE VIGILÂNCIA', html)
         self.assertIn('13ª A', html)
+
+    def test_grade_grid_print(self):
+        """Na grelha «Notas da turma», a secretaria visualiza e imprime a pauta da turma do trimestre."""
+        trimester = self.edu_class.academic_year_id.trimester_ids.sorted('number')[:1]
+        Grid = self.env['edu.grade.grid']
+        preview = Grid.grid_print(self.edu_class.id, trimester.id, True)
+        self.assertEqual(preview['report_type'], 'qweb-html')
+        self.assertEqual(preview['report_name'], 'edu_documents.report_pauta')
+        self.assertEqual(Grid.grid_print(self.edu_class.id, trimester.id, False)['report_type'], 'qweb-pdf')

@@ -1,0 +1,255 @@
+// Notas da turma: a pauta por disciplina do secPed-Express com as cores do sistema.
+.o_edu_grade_grid {
+    .o_edu_gg_body {
+        padding: 16px 24px 32px;
+    }
+
+    .o_edu_gg_toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+
+        > .form-select {
+            width: auto;
+            min-width: 280px;
+        }
+
+        > .o_edu_gg_year {
+            min-width: 180px;
+        }
+    }
+
+    .o_edu_gg_empty {
+        max-width: 640px;
+        padding: 12px 16px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_gg_main {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+
+        &.o_edu_gg_collapsed {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        @include media-breakpoint-down(md) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_gg_subjects {
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        max-height: calc(100vh - 160px);
+        overflow-y: auto;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+
+        @include media-breakpoint-down(md) {
+            flex-direction: row;
+            position: static;
+            overflow-x: auto;
+        }
+    }
+
+    .o_edu_gg_subject {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border: 0;
+        border-left: 3px solid transparent;
+        background: transparent;
+        text-align: left;
+        white-space: nowrap;
+
+        &:hover {
+            background: $o-gray-100;
+        }
+
+        &.active {
+            border-left-color: $o-action;
+            background: $o-gray-100;
+            font-weight: 600;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $o-action;
+            outline-offset: -2px;
+        }
+    }
+
+    .o_edu_gg_subject_name {
+        flex-grow: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .o_edu_gg_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .o_edu_gg_print {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+
+        > .form-select {
+            width: auto;
+        }
+    }
+
+    .o_edu_gg_title {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 600;
+    }
+
+    .o_edu_gg_notices {
+        margin: 0 0 8px;
+        padding: 8px 12px 8px 28px;
+        border-left: 3px solid $info;
+        background: rgba($info, 0.08);
+        font-size: 0.875rem;
+
+        &:is(p) {
+            padding-left: 12px;
+        }
+    }
+
+    .o_edu_gg_scroll {
+        max-height: calc(100vh - 300px);
+        overflow: auto;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_gg_grid {
+        margin-bottom: 0;
+        font-variant-numeric: tabular-nums;
+
+        th,
+        td {
+            vertical-align: middle;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        thead th {
+            background: $o-gray-100;
+        }
+
+        thead tr:nth-child(2) th {
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        .o_edu_gg_term_head {
+            border-left: 2px solid $border-color;
+        }
+
+        .o_edu_gg_current {
+            color: $o-action;
+        }
+
+        .o_edu_gg_sep {
+            border-left: 2px solid $border-color;
+        }
+
+        .o_edu_gg_num {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            width: 40px;
+            min-width: 40px;
+            max-width: 40px;
+            background: $o-view-background-color;
+        }
+
+        .o_edu_gg_name {
+            position: sticky;
+            left: 40px;
+            z-index: 1;
+            min-width: 220px;
+            white-space: nowrap;
+            background: $o-view-background-color;
+        }
+
+        thead .o_edu_gg_num,
+        thead .o_edu_gg_name {
+            z-index: 3;
+        }
+
+        .o_edu_gg_gone td {
+            color: $text-muted;
+        }
+
+        .o_edu_gg_cell {
+            min-width: 52px;
+            padding: 2px;
+        }
+
+        .o_edu_gg_input {
+            width: 48px;
+            padding: 2px 4px;
+            border: 1px solid $border-color;
+            border-radius: $border-radius-sm;
+            background: $o-view-background-color;
+            text-align: center;
+
+            &:focus {
+                outline: 2px solid $o-action;
+                outline-offset: -1px;
+            }
+        }
+
+        .o_edu_gg_dirty .o_edu_gg_input {
+            border-color: $warning;
+            background: rgba($warning, 0.12);
+        }
+
+        .o_edu_gg_invalid .o_edu_gg_input {
+            border-color: $danger;
+            background: rgba($danger, 0.1);
+        }
+
+        .o_edu_gg_preview {
+            background: rgba($warning, 0.08);
+        }
+    }
+
+    .o_edu_gg_savebar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        position: sticky;
+        bottom: 0;
+        margin-top: 8px;
+        padding: 10px 16px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+    }
+}

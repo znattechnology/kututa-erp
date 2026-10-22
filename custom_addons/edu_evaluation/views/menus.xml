@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Notas da turma (acção cliente), como a pauta por disciplina do secPed: a grelha que se edita no lugar. -->
+    <record id="action_edu_grade_grid" model="ir.actions.client">
+        <field name="name">Notas da turma</field>
+        <field name="tag">edu_evaluation.grade_grid</field>
+    </record>
+
     <menuitem id="menu_edu_evaluation" name="Avaliação" parent="edu_core.menu_edu_root" sequence="30">
+        <menuitem id="menu_edu_grade_grid" action="action_edu_grade_grid" sequence="5"/>
         <menuitem id="menu_edu_assessment" action="action_edu_assessment" sequence="10"/>
         <menuitem id="menu_edu_term_result" action="action_edu_term_result" sequence="20"/>
         <menuitem id="menu_edu_subject_result" action="action_edu_subject_result" sequence="30"/>

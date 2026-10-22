@@ -63,6 +63,9 @@
     <record id="edu_evaluation.menu_edu_evaluation" model="ir.ui.menu">
         <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
     </record>
+    <record id="edu_evaluation.menu_edu_grade_grid" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user')])]"/>
+    </record>
     <record id="edu_evaluation.menu_edu_assessment" model="ir.ui.menu">
         <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
     </record>

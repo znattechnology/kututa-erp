@@ -783,3 +783,85 @@ class TestEduEvaluation(TransactionCase):
         result = self.env['edu.year.result'].create({'enrollment_id': enrollment.id})
         result.action_manual_promote()
         self.assertEqual(result.status, 'graduated')
+
+    def test_grade_grid(self):
+        """Notas da turma, como a pauta por disciplina do secPed: o professor vê as suas turmas e disciplinas, lança a
+        NPT no lugar (tudo ou nada) e só no trimestre que pode lançar; no técnico, a NPP escreve-se na grelha."""
+        ana, bento = self.students[:2]
+        enrollments = self._enroll(self.class7, (ana, bento), ['LP', 'MAT'])
+        lp = self._subject(self.class7, 'LP')
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': self.class7.id, 'subject_id': lp.id, 'teacher_id': self.teacher.id}
+        )
+        self._assess(self.class7, 'LP', self.t1, 'continuous', {ana: 12, bento: 8})
+        Grid = self.env['edu.grade.grid'].with_user(self.teacher_user)
+        self.assertEqual([c['id'] for c in Grid.grid_classes()['classes']], [self.class7.id])
+        # Outro ano lectivo: as suas turmas desse ano (aqui, nenhuma).
+        other = Grid.grid_classes(self.next_year.id)
+        self.assertEqual((other['year_id'], other['classes']), (self.next_year.id, []))
+        self.assertIn(self.year.id, [y['id'] for y in other['years']])
+        self.assertEqual([s['id'] for s in Grid.grid_subjects(self.class7.id)], [lp.id])
+        mat = self._subject(self.class7, 'MAT')
+        with self.assertRaises(AccessError):
+            Grid.grid_data(self.class7.id, mat.id)
+
+        data = Grid.grid_data(self.class7.id, lp.id)
+        t1, t2 = data['trimesters'][:2]
+        self.assertTrue(t1['editable'])
+        self.assertFalse(t2['editable'])
+        self.assertEqual([s['enrollment_id'] for s in data['students']], enrollments.ids)
+        self.assertEqual(data['students'][0]['terms'][str(self.t1.id)]['mac'], 12)
+
+        # Uma nota fora da escala anula todo o lote.
+        ana_e, bento_e = enrollments
+        result = Grid.grid_save(self.class7.id, lp.id, [
+            {'enrollment_id': ana_e.id, 'trimester_id': self.t1.id, 'column': 'npt', 'value': 16},
+            {'enrollment_id': bento_e.id, 'trimester_id': self.t1.id, 'column': 'npt', 'value': 25},
+        ])  # fmt: skip
+        self.assertFalse(result['ok'])
+        self.assertEqual([e['enrollment_id'] for e in result['errors']], [bento_e.id])
+        self.assertFalse(self._term(ana_e, 'LP', self.t1).has_npt)
+
+        result = Grid.grid_save(self.class7.id, lp.id, [
+            {'enrollment_id': ana_e.id, 'trimester_id': self.t1.id, 'column': 'npt', 'value': 16},
+            {'enrollment_id': bento_e.id, 'trimester_id': self.t1.id, 'column': 'npt', 'absent': True},
+        ])  # fmt: skip
+        self.assertTrue(result['ok'])
+        self.assertEqual(self._term(ana_e, 'LP', self.t1).mt, 14)
+        row = result['data']['students'][1]['terms'][str(self.t1.id)]
+        self.assertTrue(row['npt_absent'])
+        self.assertEqual(
+            self.env['edu.assessment'].search_count(
+                [('class_id', '=', self.class7.id), ('assessment_type', '=', 'trimester_test')]
+            ),
+            1,
+        )
+        # Apagar a nota; noutro trimestre, sem autorização, nada se grava.
+        Grid.grid_save(self.class7.id, lp.id, [
+            {'enrollment_id': ana_e.id, 'trimester_id': self.t1.id, 'column': 'npt', 'value': None},
+        ])  # fmt: skip
+        self.assertFalse(self._term(ana_e, 'LP', self.t1).has_npt)
+        result = Grid.grid_save(self.class7.id, lp.id, [
+            {'enrollment_id': ana_e.id, 'trimester_id': self.t2.id, 'column': 'npt', 'value': 15},
+        ])  # fmt: skip
+        self.assertFalse(result['ok'])
+
+        # A secretaria consulta mas não edita a pauta.
+        data = self.env['edu.grade.grid'].grid_data(self.class7.id, lp.id)
+        self.assertFalse(data['can_edit'])
+        with self.assertRaises(AccessError):
+            self.env['edu.grade.grid'].grid_save(self.class7.id, lp.id, [])
+
+        # Técnico: a NPP e a NPT dão a CT (a média das duas).
+        enrollment = self._enroll(self.class10, self.students[2], ['LP'])
+        lp10 = self._subject(self.class10, 'LP')
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': self.class10.id, 'subject_id': lp10.id, 'teacher_id': self.teacher.id}
+        )
+        result = Grid.grid_save(self.class10.id, lp10.id, [
+            {'enrollment_id': enrollment.id, 'trimester_id': self.t1.id, 'column': 'npp', 'value': 8},
+            {'enrollment_id': enrollment.id, 'trimester_id': self.t1.id, 'column': 'npt', 'value': 12},
+        ])  # fmt: skip
+        self.assertTrue(result['ok'], result['errors'])
+        self.assertEqual(self._term(enrollment, 'LP', self.t1).mt, 10)
+        self.assertTrue(result['data']['trimesters'][0]['npp_editable'])

@@ -61,6 +61,8 @@
     <menuitem id="menu_my_lessons" action="action_my_lessons" parent="menu_teacher_lessons" sequence="10"/>
     <menuitem id="menu_my_schedule" action="action_my_schedule" parent="menu_teacher_lessons" sequence="20"/>
     <menuitem id="menu_teacher_classes" name="Turmas e notas" parent="menu_edu_teacher_root" sequence="20"/>
+    <menuitem id="menu_teacher_grade_grid" name="Notas da turma" action="edu_evaluation.action_edu_grade_grid"
+              parent="menu_teacher_classes" sequence="5"/>
     <menuitem id="menu_my_classes" action="action_my_classes" parent="menu_teacher_classes" sequence="10"/>
     <menuitem id="menu_my_assessments" action="action_my_assessments" parent="menu_teacher_classes" sequence="20"/>
     <menuitem id="menu_teacher_direction" name="Direcção de turma" parent="menu_edu_teacher_root" sequence="30"/>

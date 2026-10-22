@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Uma célula de nota que se lança: input na edição, valor gravado fora dela. -->
+    <t t-name="edu_evaluation.GradeGrid.Cell">
+        <td class="text-center o_edu_gg_cell" t-att-class="{'o_edu_gg_sep': sep, 'o_edu_gg_dirty': this.state.edits[this.key(st, tid, column)], 'o_edu_gg_invalid': this.cellError(st, tid, column)}">
+            <input t-if="editable" type="text" inputmode="decimal" class="o_edu_gg_input"
+                   t-att-value="this.inputValue(st, tid, column)"
+                   t-att-title="this.cellError(st, tid, column)"
+                   t-att-aria-label="label + ' · ' + st.name"
+                   t-att-data-key="this.key(st, tid, column)" t-att-data-row="st_index" t-att-data-col="tid + '-' + column"
+                   t-on-input="(ev) => this.onInput(st, tid, column, ev)"
+                   t-on-keydown="(ev) => this.onKeydown(ev)"
+                   t-on-focus="(ev) => ev.target.select()"/>
+            <span t-elif="absent" class="text-danger fw-bold" title="Faltou à prova">F</span>
+            <span t-else="" t-att-class="this.gradeClass(shown, false)" t-out="this.fmtDecimal(shown)"/>
+        </td>
+    </t>
+
+    <t t-name="edu_evaluation.GradeGrid">
+        <div class="o_action o_edu_grade_grid">
+            <Layout display="this.display">
+                <div class="o_edu_gg_body">
+                    <div class="o_edu_gg_toolbar">
+                        <select t-if="this.state.years.length" class="form-select o_edu_gg_year" aria-label="Ano lectivo" t-on-change="(ev) => this.onYearChange(ev)">
+                            <t t-foreach="this.state.years" t-as="y" t-key="y.id">
+                                <option t-att-value="y.id" t-att-selected="y.id === this.state.yearId">
+                                    <t t-out="y.name"/><t t-if="y.is_current"> (em curso)</t>
+                                </option>
+                            </t>
+                        </select>
+                        <select class="form-select" aria-label="Turma" t-on-change="(ev) => this.onClassChange(ev)">
+                            <option t-if="!this.state.classId" value="">Escolher a turma…</option>
+                            <t t-foreach="this.state.classes" t-as="c" t-key="c.id">
+                                <option t-att-value="c.id" t-att-selected="c.id === this.state.classId">
+                                    <t t-out="c.name"/> (<t t-out="c.students"/> alunos)<t t-if="c.directs"> · dirijo</t>
+                                </option>
+                            </t>
+                        </select>
+                        <span t-if="this.pastYear" class="badge text-bg-secondary">Ano passado: só consulta</span>
+                    </div>
+
+                    <div t-if="!this.state.classes.length" class="o_edu_gg_empty text-muted">
+                        Não tem turmas neste ano lectivo. As notas lançam-se nas turmas onde dá aulas; a secretaria consulta todas.
+                    </div>
+
+                    <div t-elif="this.state.classId" class="o_edu_gg_main" t-att-class="{'o_edu_gg_collapsed': this.state.collapsed}">
+                        <nav t-if="!this.state.collapsed" class="o_edu_gg_subjects" aria-label="Disciplinas">
+                            <p t-if="!this.state.subjects.length" class="text-muted small p-2 mb-0">Esta turma ainda não tem disciplinas com tempos lectivos.</p>
+                            <button t-foreach="this.state.subjects" t-as="s" t-key="s.id" type="button"
+                                    class="o_edu_gg_subject" t-att-class="{'active': s.id === this.state.subjectId}"
+                                    t-att-aria-current="s.id === this.state.subjectId ? 'true' : 'false'"
+                                    t-on-click="() => this.openSubject(s.id)">
+                                <span class="o_edu_gg_subject_name" t-out="s.name"/>
+                                <i t-if="!s.editable" class="oi text-muted" data-icon="visibility" title="Só consulta" aria-label="Só consulta"/>
+                            </button>
+                        </nav>
+
+                        <section class="o_edu_gg_sheet" t-if="this.state.data">
+                            <t t-set="data" t-value="this.state.data"/>
+                            <header class="o_edu_gg_head">
+                                <button type="button" class="btn btn-light o_edu_gg_toggle" t-on-click="() => this.toggleSubjects()"
+                                        t-att-title="this.state.collapsed ? 'Mostrar as disciplinas' : 'Recolher as disciplinas'"
+                                        t-att-aria-expanded="this.state.collapsed ? 'false' : 'true'">
+                                    <i class="oi" t-att-data-icon="this.state.collapsed ? 'left_panel_open' : 'left_panel_close'" aria-hidden="true"/>
+                                    <span t-if="this.state.collapsed" class="ms-1">Disciplinas</span>
+                                </button>
+                                <div class="flex-grow-1">
+                                    <h2 class="o_edu_gg_title"><t t-out="data.subject.name"/></h2>
+                                    <div class="small text-muted">
+                                        <t t-out="data.class.name"/>,
+                                        <t t-out="data.technical ? 'ensino técnico (Despacho 60/08)' : 'ensino geral (Decreto 424/25)'"/>.
+                                        Aprova com <t t-out="data.policy.pass_grade"/> em <t t-out="data.policy.scale_max"/>.
+                                    </div>
+                                </div>
+                                <div t-if="data.can_print" class="o_edu_gg_print">
+                                    <select class="form-select" aria-label="Trimestre da pauta" t-on-change="(ev) => this.onPrintTrimesterChange(ev)">
+                                        <option t-foreach="data.trimesters" t-as="t" t-key="t.id" t-att-value="t.id"
+                                                t-att-selected="t.id === this.state.printTrimesterId" t-out="t.name"/>
+                                    </select>
+                                    <button type="button" class="btn btn-secondary" t-on-click="() => this.printPauta(true)"
+                                            title="Ver a pauta da turma na aplicação">
+                                        <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>Visualizar pauta
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" t-on-click="() => this.printPauta(false)"
+                                            title="Pauta da turma em PDF (A3)">
+                                        <i class="oi me-1" data-icon="print" aria-hidden="true"/>Imprimir pauta
+                                    </button>
+                                </div>
+                                <t t-if="data.can_edit">
+                                    <t t-foreach="this.editableTrimesters" t-as="t" t-key="t.id">
+                                        <button t-if="!data.technical or !t.npp_editable" type="button" class="btn btn-secondary"
+                                                t-on-click="() => this.openContinuous(t)">
+                                            <i class="oi me-1" data-icon="playlist_add" aria-hidden="true"/>Lançar MAC do <t t-out="t.name"/>
+                                        </button>
+                                    </t>
+                                    <button type="button" class="btn" t-att-class="this.state.editing ? 'btn-secondary' : 'btn-primary'"
+                                            t-on-click="() => this.toggleEditing()">
+                                        <i class="oi me-1" t-att-data-icon="this.state.editing ? 'close' : 'edit'" aria-hidden="true"/>
+                                        <t t-out="this.state.editing ? 'Terminar edição' : 'Editar notas'"/>
+                                    </button>
+                                </t>
+                            </header>
+
+                            <ul t-if="this.notices.length and data.can_edit" class="o_edu_gg_notices">
+                                <li t-foreach="this.notices" t-as="n" t-key="n_index" t-out="n"/>
+                            </ul>
+                            <p t-elif="!data.can_edit" class="o_edu_gg_notices">
+                                <t t-out="(data.trimesters.find((t) => t.reason) || {}).reason || 'Esta pauta está só para consulta.'"/>
+                            </p>
+
+                            <p t-if="this.state.editing" class="small text-muted mb-2">
+                                Escreva a nota e carregue em Enter para passar ao aluno seguinte; as setas sobem e descem, «F» marca a falta à prova e Esc desfaz a célula.
+                            </p>
+
+                            <div class="o_edu_gg_scroll" t-ref="this.table">
+                                <table class="table table-sm o_edu_gg_grid" t-key="this.state.version">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2" class="o_edu_gg_num">Nº</th>
+                                            <th rowspan="2" class="o_edu_gg_name">Aluno</th>
+                                            <th t-foreach="data.trimesters" t-as="t" t-key="t.id" colspan="5" class="text-center o_edu_gg_term_head"
+                                                t-att-class="{'o_edu_gg_current': t.is_current}">
+                                                <t t-out="t.name"/>
+                                                <i t-if="t.closed" class="oi ms-1" data-icon="lock" title="Encerrado" aria-label="Encerrado"/>
+                                                <i t-elif="t.editable" class="oi ms-1" data-icon="edit" title="Pode lançar" aria-label="Pode lançar"/>
+                                            </th>
+                                            <th t-att-colspan="this.yearColumns.length" class="text-center o_edu_gg_term_head">Classificação do ano</th>
+                                        </tr>
+                                        <tr>
+                                            <t t-foreach="data.trimesters" t-as="t" t-key="t.id">
+                                                <th t-foreach="this.headers(t)" t-as="h" t-key="h" class="text-center" t-att-class="{'o_edu_gg_sep': h_first}" t-out="h"/>
+                                            </t>
+                                            <th t-foreach="this.yearColumns" t-as="yc" t-key="yc.key" class="text-center" t-att-class="{'o_edu_gg_sep': yc_first}"
+                                                t-att-title="yc.title" t-out="yc.label"/>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="data.students" t-as="st" t-key="st.enrollment_id" t-att-class="{'o_edu_gg_gone': st.exit}">
+                                            <td class="o_edu_gg_num" t-out="st.number"/>
+                                            <td class="o_edu_gg_name">
+                                                <t t-out="st.name"/>
+                                                <small t-if="st.exit" class="text-muted ms-1" t-out="st.exit === 'c)' ? '(desistiu)' : '(transferido)'"/>
+                                                <small t-if="st.visiting" class="text-muted ms-1">(<t t-out="st.visiting"/>)</small>
+                                            </td>
+                                            <t t-foreach="data.trimesters" t-as="t" t-key="t.id">
+                                                <t t-set="term" t-value="this.term(st, t)"/>
+                                                <t t-set="tid" t-value="t.id"/>
+                                                <!-- MAC / NPP -->
+                                                <t t-if="this.canEdit(st, t, 'npp')">
+                                                    <t t-set="column" t-value="'npp'"/>
+                                                    <t t-set="sep" t-value="true"/>
+                                                    <t t-set="editable" t-value="true"/>
+                                                    <t t-set="label" t-value="'NPP do ' + t.name"/>
+                                                    <t t-call="edu_evaluation.GradeGrid.Cell"/>
+                                                </t>
+                                                <td t-else="" class="text-center o_edu_gg_sep">
+                                                    <span t-att-class="this.gradeClass(term.mac, false)" t-out="this.fmtDecimal(term.mac)"/>
+                                                </td>
+                                                <!-- NPT -->
+                                                <td t-if="!t.has_npt" class="text-center text-muted" title="Sem prova trimestral: há exame no fim do ano">—</td>
+                                                <t t-else="">
+                                                    <t t-set="column" t-value="'npt'"/>
+                                                    <t t-set="sep" t-value="false"/>
+                                                    <t t-set="editable" t-value="this.canEdit(st, t, 'npt')"/>
+                                                    <t t-set="label" t-value="'NPT do ' + t.name"/>
+                                                    <t t-set="absent" t-value="term.npt_absent"/>
+                                                    <t t-set="shown" t-value="term.npt"/>
+                                                    <t t-call="edu_evaluation.GradeGrid.Cell"/>
+                                                </t>
+                                                <!-- MT / CT -->
+                                                <t t-set="avg" t-value="this.termAverage(st, t)"/>
+                                                <td class="text-center fw-bold" t-att-class="{'o_edu_gg_preview': avg.preview}"
+                                                    t-att-title="avg.preview ? 'Média com as notas por guardar' : ''">
+                                                    <span t-att-class="this.gradeClass(avg.value)" t-out="term.imported and !avg.preview ? this.fmtDecimal(avg.value) : this.fmtInt(avg.value)"
+                                                          t-att-title="term.imported ? 'Importada do secPed' : ''"/>
+                                                </td>
+                                                <td class="text-center text-muted" t-out="term.fj or ''"/>
+                                                <td class="text-center" t-att-class="term.fi ? 'text-danger' : 'text-muted'" t-out="term.fi or ''"/>
+                                            </t>
+                                            <!-- Classificação do ano -->
+                                            <t t-foreach="this.yearColumns" t-as="yc" t-key="yc.key">
+                                                <t t-if="yc.editable">
+                                                    <t t-set="tid" t-value="0"/>
+                                                    <t t-set="column" t-value="yc.key"/>
+                                                    <t t-set="sep" t-value="yc_first"/>
+                                                    <t t-set="editable" t-value="this.canEdit(st, {}, yc.key)"/>
+                                                    <t t-set="label" t-value="yc.title"/>
+                                                    <t t-set="absent" t-value="st[yc.key + '_absent']"/>
+                                                    <t t-set="shown" t-value="st[yc.key]"/>
+                                                    <t t-call="edu_evaluation.GradeGrid.Cell"/>
+                                                </t>
+                                                <td t-else="" class="text-center" t-att-class="{'o_edu_gg_sep': yc_first, 'fw-bold': yc.strong}">
+                                                    <span t-att-class="this.gradeClass(st[yc.key], yc.integer)"
+                                                          t-out="yc.integer ? this.fmtInt(st[yc.key]) : this.fmtDecimal(st[yc.key])"/>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <p class="small mt-2 mb-0">
+                                <span class="text-primary"><t t-out="data.summary.positives"/> com positiva</span>,
+                                <span class="text-danger"><t t-out="data.summary.negatives"/> com negativa</span>,
+                                <span class="text-muted"><t t-out="data.summary.without_final"/> sem classificação</span>.
+                                <t t-if="data.summary.average !== null">Média da turma: <t t-out="this.fmtDecimal(data.summary.average)"/>.</t>
+                            </p>
+                            <p class="small text-muted">
+                                <t t-out="this.legend"/>
+                                FJ e FI são as faltas justificadas e injustificadas do trimestre; c) desistiu, d) transferido.
+                            </p>
+
+                            <div t-if="this.state.editing and this.dirtyCount" class="o_edu_gg_savebar" role="status">
+                                <span class="flex-grow-1">
+                                    <t t-out="this.dirtyCount"/> <t t-out="this.dirtyCount === 1 ? 'alteração' : 'alterações'"/> por guardar<t t-if="this.errorCount">,
+                                    <span class="text-danger fw-bold"><t t-out="this.errorCount"/> com erro</span></t>.
+                                </span>
+                                <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy" t-on-click="() => this.discard()">Descartar</button>
+                                <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy or this.errorCount" t-on-click="() => this.save()">Guardar notas</button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>
