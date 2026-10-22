@@ -7,3 +7,4 @@ access_edu_final_project_teacher,access_edu_final_project_teacher,edu.final.proj
 edu_internship_comp_rule,edu.internship multi-empresa,edu.internship,,crud,"[('company_id', 'in', company_ids)]"
 edu_final_project_comp_rule,edu.final.project multi-empresa,edu.final.project,,crud,"[('company_id', 'in', company_ids)]"
 edu_graduation_comp_rule,edu.graduation multi-empresa,edu.graduation,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_graduation_register_user,access_edu_graduation_register_user,edu.graduation.register,edu_core.group_edu_user,crud,

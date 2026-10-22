@@ -1,5 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="edu_graduation_register_form" model="ir.ui.view">
+        <field name="name">edu.graduation.register.form</field>
+        <field name="model">edu.graduation.register</field>
+        <field name="arch" type="xml">
+            <form string="Registar conclusões">
+                <group>
+                    <group>
+                        <field name="academic_year_id" options="{'no_create': True}"/>
+                        <field name="class_id" options="{'no_create': True}"/>
+                        <field name="final_class_ids" invisible="1"/>
+                    </group>
+                </group>
+                <div class="text-muted" invisible="not message"><field name="message" nolabel="1"/></div>
+                <field name="result_ids" invisible="not class_id or not result_ids" readonly="1">
+                    <list>
+                        <field name="order_number"/>
+                        <field name="student_id"/>
+                        <field name="average" string="Média final"/>
+                        <field name="status"/>
+                        <field name="graduation_id" string="Registado"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_register_all" type="object" string="Registar os que faltam" class="btn-primary"
+                            invisible="not result_ids"/>
+                    <button special="cancel" string="Fechar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_graduation_register" model="ir.actions.act_window">
+        <field name="name">Registar conclusões</field>
+        <field name="res_model">edu.graduation.register</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
     <record id="edu_internship_list" model="ir.ui.view">
         <field name="name">edu.internship.list</field>
         <field name="model">edu.internship</field>
@@ -112,15 +148,21 @@
         <field name="name">edu.graduation.list</field>
         <field name="model">edu.graduation</field>
         <field name="arch" type="xml">
-            <list string="Conclusões">
-                <field name="diploma_number"/>
+            <list string="Diplomas e certificados" decoration-muted="state == 'cancelled'">
+                <header>
+                    <button name="%(action_edu_graduation_register)d" type="action" string="Registar conclusões"
+                            class="btn-primary" display="always"/>
+                </header>
                 <field name="student_id"/>
+                <field name="diploma_number" string="Diploma n.º" optional="show"/>
                 <field name="course_id"/>
                 <field name="academic_year_id"/>
-                <field name="plan_average"/>
-                <field name="final_grade"/>
-                <field name="date"/>
-                <field name="state" widget="badge" decoration-success="state == 'issued'"/>
+                <field name="final_grade" string="Média final"/>
+                <field name="date" string="Concluiu"/>
+                <field name="diploma_state" widget="badge" decoration-success="diploma_state == 'signed'"
+                       decoration-warning="diploma_state == 'to_verify'" decoration-info="diploma_state == 'to_sign'"
+                       invisible="state != 'issued'"/>
+                <field name="state" widget="badge" decoration-success="state == 'issued'" optional="hide"/>
             </list>
         </field>
     </record>
@@ -133,6 +175,10 @@
                     <button name="action_compute" type="object" string="Calcular" invisible="state != 'draft'"/>
                     <button name="action_issue" type="object" string="Emitir" class="btn-primary" invisible="state != 'draft'"
                             confirm="Atribui o número de diploma. Continuar?"/>
+                    <button name="action_mark_verified" type="object" string="Marcar como verificado"
+                            invisible="state != 'issued' or verified_by_id"/>
+                    <button name="action_mark_signed" type="object" string="Marcar como assinado"
+                            invisible="state != 'issued' or not verified_by_id or signed_by_id" groups="edu_core.group_edu_manager"/>
                     <button name="action_cancel" type="object" string="Anular" invisible="state != 'issued'" groups="edu_core.group_edu_manager"/>
                     <field name="state" widget="statusbar"/>
                 </header>
@@ -158,6 +204,18 @@
                             <field name="page_number"/>
                         </group>
                     </group>
+                    <group string="Validação do diploma" invisible="state != 'issued'">
+                        <group>
+                            <field name="diploma_state"/>
+                            <field name="verified_by_id" invisible="not verified_by_id"/>
+                            <field name="verified_date" invisible="not verified_date"/>
+                        </group>
+                        <group>
+                            <field name="signed_by_id" invisible="not signed_by_id"/>
+                            <field name="signed_date" invisible="not signed_date"/>
+                        </group>
+                        <div colspan="2" class="text-muted small">Quem marca fica registado como quem verificou ou assinou.</div>
+                    </group>
                     <field name="final_result_ids">
                         <list>
                             <field name="subject_id"/>
@@ -171,10 +229,49 @@
             </form>
         </field>
     </record>
+    <record id="edu_graduation_search" model="ir.ui.view">
+        <field name="name">edu.graduation.search</field>
+        <field name="model">edu.graduation</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="student_id"/>
+                <field name="diploma_number"/>
+                <field name="course_id"/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <separator/>
+                <filter name="to_verify" string="Por verificar" domain="[('state', '=', 'issued'), ('diploma_state', '=', 'to_verify')]"/>
+                <filter name="to_sign" string="Falta assinar" domain="[('state', '=', 'issued'), ('diploma_state', '=', 'to_sign')]"/>
+                <filter name="signed" string="Assinados" domain="[('diploma_state', '=', 'signed')]"/>
+                <filter name="draft" string="Rascunhos" domain="[('state', '=', 'draft')]"/>
+                <group>
+                    <filter name="group_year" string="Ano lectivo" context="{'group_by': 'academic_year_id'}"/>
+                    <filter name="group_course" string="Curso" context="{'group_by': 'course_id'}"/>
+                    <filter name="group_diploma" string="Diploma" context="{'group_by': 'diploma_state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
     <record id="action_edu_graduation" model="ir.actions.act_window">
-        <field name="name">Conclusões e diplomas</field>
+        <field name="name">Diplomas e certificados</field>
         <field name="res_model">edu.graduation</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="edu_graduation_search"/>
+        <field name="context">{'search_default_current_year': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ainda não há conclusões neste ano</p>
+            <p>Os alunos que concluíram o curso. Daqui imprime-se o diploma e o certificado de habilitações;
+            «Registar conclusões» traz os alunos da turma da classe final que o conselho de turma deu como tendo concluído.</p>
+        </field>
+    </record>
+    <record id="edu_course_form_training_area" model="ir.ui.view">
+        <field name="name">edu.course.form.training.area</field>
+        <field name="model">edu.course</field>
+        <field name="inherit_id" ref="edu_core.edu_course_form"/>
+        <field name="arch" type="xml">
+            <field name="level_id" position="after">
+                <field name="training_area"/>
+            </field>
+        </field>
     </record>
 
     <record id="edu_year_result_form_records" model="ir.ui.view">

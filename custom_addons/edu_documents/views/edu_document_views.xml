@@ -291,4 +291,27 @@
 
     <menuitem id="menu_edu_document" action="action_edu_document" parent="edu_records.menu_edu_records" sequence="5"/>
     <menuitem id="menu_edu_pauta_print" action="action_edu_pauta_print" parent="edu_evaluation.menu_edu_evaluation" sequence="35"/>
+    <!-- Diplomas e certificados: imprimir directamente da conclusão, como no secPed. -->
+    <record id="edu_graduation_list_print" model="ir.ui.view">
+        <field name="name">edu.graduation.list.print</field>
+        <field name="model">edu.graduation</field>
+        <field name="inherit_id" ref="edu_records.edu_graduation_list"/>
+        <field name="arch" type="xml">
+            <field name="diploma_state" position="after">
+                <button name="action_print_diploma" type="object" string="Diploma" icon="workspace_premium" invisible="state != 'issued'"/>
+                <button name="action_print_certificate" type="object" string="Certificado" icon="description" invisible="state != 'issued'"/>
+            </field>
+        </field>
+    </record>
+    <record id="edu_graduation_form_print" model="ir.ui.view">
+        <field name="name">edu.graduation.form.print</field>
+        <field name="model">edu.graduation</field>
+        <field name="inherit_id" ref="edu_records.edu_graduation_form"/>
+        <field name="arch" type="xml">
+            <button name="action_cancel" position="before">
+                <button name="action_print_diploma" type="object" string="Diploma" class="btn-primary" invisible="state != 'issued'"/>
+                <button name="action_print_certificate" type="object" string="Certificado" invisible="state != 'issued'"/>
+            </button>
+        </field>
+    </record>
 </odoo>

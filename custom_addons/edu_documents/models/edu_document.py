@@ -261,3 +261,34 @@ class EduTransfer(models.Model):
         if not enrollment:
             raise UserError(self.env._('O aluno ainda não tem nenhuma classe com classificações finais.'))
         return self._exit_document('transfer_declaration', enrollment)
+
+
+class EduGraduation(models.Model):
+    _inherit = 'edu.graduation'
+
+    document_ids = fields.One2many('edu.document', 'graduation_id', string='Documentos')
+
+    def _graduation_document(self, kind):
+        """O diploma ou o certificado desta conclusão: o emitido, ou um novo emitido agora."""
+        self.ensure_one()
+        if self.state != 'issued':
+            raise UserError(self.env._('Emita a conclusão antes de imprimir o diploma ou o certificado.'))
+        document = self.document_ids.filtered(lambda d: d.document_type == kind and d.state == 'issued')[:1]
+        if not document:
+            document = self.env['edu.document'].create(
+                {
+                    'document_type': kind,
+                    'student_id': self.student_id.id,
+                    'enrollment_id': self.enrollment_id.id,
+                    'graduation_id': self.id,
+                    'company_id': self.company_id.id,
+                }
+            )
+            document.action_issue()
+        return document
+
+    def action_print_diploma(self):
+        return self._graduation_document('diploma').action_preview()
+
+    def action_print_certificate(self):
+        return self._graduation_document('certificate').action_preview()

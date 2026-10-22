@@ -177,6 +177,17 @@ class EduGraduation(models.Model):
     final_result_ids = fields.Many2many(
         'edu.subject.result', string='Classificações finais das disciplinas', compute='_compute_final_result_ids'
     )
+    # Validação do diploma, como no secPed: quem verificou e quem assinou ficam registados (não se desfaz).
+    verified_by_id = fields.Many2one('res.users', string='Verificado por', readonly=True, copy=False, tracking=True)
+    verified_date = fields.Datetime(string='Verificado em', readonly=True, copy=False)
+    signed_by_id = fields.Many2one('res.users', string='Assinado por', readonly=True, copy=False, tracking=True)
+    signed_date = fields.Datetime(string='Assinado em', readonly=True, copy=False)
+    diploma_state = fields.Selection(
+        [('to_verify', 'Por verificar'), ('to_sign', 'Verificado, falta assinar'), ('signed', 'Assinado')],
+        string='Diploma',
+        compute='_compute_diploma_state',
+        store=True,
+    )
 
     _year_result_uniq = models.Constraint('UNIQUE(year_result_id)', 'A conclusão deste ano já está registada.')
 
@@ -192,6 +203,31 @@ class EduGraduation(models.Model):
                 raise ValidationError(
                     self.env._('%s não concluiu o curso neste ano lectivo.', graduation.student_id.name)
                 )
+
+    @api.depends('verified_by_id', 'signed_by_id')
+    def _compute_diploma_state(self):
+        for graduation in self:
+            graduation.diploma_state = (
+                'signed' if graduation.signed_by_id else 'to_sign' if graduation.verified_by_id else 'to_verify'
+            )
+
+    def action_mark_verified(self):
+        for graduation in self:
+            if graduation.state != 'issued':
+                raise UserError(self.env._('Emita a conclusão antes de verificar o diploma.'))
+            if not graduation.verified_by_id:
+                graduation.write({'verified_by_id': self.env.uid, 'verified_date': fields.Datetime.now()})
+        return True
+
+    def action_mark_signed(self):
+        if not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise UserError(self.env._('Só a direcção marca o diploma como assinado.'))
+        for graduation in self:
+            if not graduation.verified_by_id:
+                raise UserError(self.env._('O diploma tem de ser verificado antes de ser assinado.'))
+            if not graduation.signed_by_id:
+                graduation.write({'signed_by_id': self.env.uid, 'signed_date': fields.Datetime.now()})
+        return True
 
     def _compute_final_result_ids(self):
         for graduation in self:
@@ -296,6 +332,29 @@ class EduYearResult(models.Model):
         for result in self:
             result.graduation_id = Graduation.search([('year_result_id', '=', result.id)], limit=1)
 
+    def _register_graduation(self):
+        """Regista (ou reaproveita) a conclusão do curso deste resultado, com o estágio e a PAP aprovados."""
+        self.ensure_one()
+        graduation = self.graduation_id or self.env['edu.graduation'].create(
+            {'student_id': self.student_id.id, 'year_result_id': self.id}
+        )
+        student = self.student_id
+        if graduation.state == 'draft':
+            internship = self.env['edu.internship'].search(
+                [('student_id', '=', student.id), ('state', '=', 'passed')], limit=1
+            )
+            project = self.env['edu.final.project'].search(
+                [('student_id', '=', student.id), ('state', '=', 'passed')], limit=1
+            )
+            graduation.write(
+                {
+                    'internship_id': graduation.internship_id.id or internship.id,
+                    'final_project_id': graduation.final_project_id.id or project.id,
+                }
+            )
+            graduation.action_compute()
+        return graduation
+
     def action_register_graduation(self):
         self.ensure_one()
         graduation = self.graduation_id or self.env['edu.graduation'].create(
@@ -322,3 +381,11 @@ class EduYearResult(models.Model):
             'res_id': graduation.id,
             'view_mode': 'form',
         }
+
+
+class EduCourse(models.Model):
+    _inherit = 'edu.course'
+
+    training_area = fields.Char(
+        string='Área de formação', help='Escreve-se no diploma e no certificado (por exemplo «Saúde» ou «Informática»).'
+    )

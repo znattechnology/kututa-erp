@@ -20,10 +20,12 @@
                                 <t t-out="company.edu_director_name"/>, e <t t-out="h.by_gender(company.edu_pedagogical_director_gender, 'o Subdirector Pedagógico', 'a Subdirectora Pedagógica')"/>,
                                 <t t-out="company.edu_pedagogical_director_name"/>, certificam de acordo com os artigos 25.º e 27.º do estatuto do
                                 Subsistema do Ensino Técnico Profissional, aprovado pelo Decreto n.º 90/04, de 3 de Dezembro, que
-                                <t t-call="edu_documents.identity"/>, concluiu no ano lectivo <t t-out="g.academic_year_id.name"/> o curso de
-                                <t t-out="g.course_id.name"/>, tendo obtido as seguintes classificações, conforme consta do processo individual
-                                n.º <t t-out="student.process_number or '—'"/> e da folha n.º <t t-out="g.page_number or '—'"/> do Livro de
-                                Termos n.º <t t-out="g.book_number or '—'"/>.
+                                <t t-call="edu_documents.identity"/>, concluiu, em regime <t t-out="h.regime(g.enrollment_id)"/>, no ano
+                                lectivo <t t-out="g.academic_year_id.name"/> o curso de <t t-out="g.course_id.name"/><t t-if="g.course_id.training_area">,
+                                da Área de Formação de <t t-out="g.course_id.training_area"/></t>, tendo obtido as seguintes classificações,
+                                conforme consta do processo individual n.º <t t-if="student.process_number" t-out="student.process_number"/><t t-else=""><t t-set="width" t-value="60"/><t t-call="edu_documents.blank"/></t>
+                                e da folha n.º <t t-if="g.page_number" t-out="g.page_number"/><t t-else=""><t t-set="width" t-value="50"/><t t-call="edu_documents.blank"/></t> do Livro de
+                                Termos n.º <t t-if="g.book_number" t-out="g.book_number"/><t t-else=""><t t-set="width" t-value="50"/><t t-call="edu_documents.blank"/></t>.
                             </p>
                             <t t-foreach="h.components(results)" t-as="group">
                                 <p style="margin: 8px 0 2px 0;"><strong t-out="group[0] + ':'"/></p>
@@ -38,7 +40,8 @@
                                 <tr><td class="edu-dots">Classificação final do Plano Curricular (PC)</td><td style="text-align: right;" t-out="h.grade(g.plan_average, 'title')"/></tr>
                                 <tr t-if="g.internship_id"><td class="edu-dots">Classificação do Estágio Curricular (EC)</td><td style="text-align: right;" t-out="h.grade(g.internship_id.grade, 'title')"/></tr>
                                 <tr t-if="g.final_project_id"><td class="edu-dots">Classificação da Prova de Aptidão Profissional (PAP)</td><td style="text-align: right;" t-out="h.grade(g.final_project_id.grade, 'title')"/></tr>
-                                <tr><td class="edu-dots"><strong>Classificação final do curso</strong></td><td style="text-align: right;"><strong t-out="h.grade(g.final_grade, 'title')"/></td></tr>
+                                <t t-set="formula" t-value="'(4 × PC + EC + PAP) / 6' if g.year_result_id._policy().course_formula == 'internship' else '(2 × PC + PAP) / 3'"/>
+                                <tr><td class="edu-dots"><strong>Classificação final do curso = <t t-out="formula"/></strong></td><td style="text-align: right;"><strong t-out="h.grade(g.final_grade, 'title')"/></td></tr>
                             </table>
                             <p style="margin-top: 12px;">
                                 Pelo que, para efeitos legais e de harmonia com a legislação em vigor, lhe mandámos passar o presente
@@ -109,11 +112,13 @@
                         <p>
                             <t t-out="company.edu_director_name"/> (<t t-out="h.by_gender(company.edu_director_gender, 'Director', 'Directora')"/>) e
                             <t t-out="company.edu_pedagogical_director_name"/> (<t t-out="h.by_gender(company.edu_pedagogical_director_gender, 'Subdirector Pedagógico', 'Subdirectora Pedagógica')"/>)
-                            do <t t-out="company.name"/>, fazem saber que <t t-call="edu_documents.identity"/>, concluiu no ano lectivo
-                            <t t-out="g.academic_year_id.name"/> o curso de <t t-out="g.course_id.name"/>, com a classificação final de
-                            <strong t-out="h.grade(g.final_grade, 'title').replace('Valores', 'valores')"/>, conforme consta do processo individual
-                            n.º <t t-out="student.process_number or '—'"/> e da folha n.º <t t-out="g.page_number or '—'"/> do Livro de Termos
-                            n.º <t t-out="g.book_number or '—'"/>.
+                            do <t t-out="company.name"/>, fazem saber que <t t-call="edu_documents.identity"/>, concluiu, em regime
+                            <t t-out="h.regime(g.enrollment_id)"/>, no ano lectivo <t t-out="g.academic_year_id.name"/> o curso de
+                            <t t-out="g.course_id.name"/><t t-if="g.course_id.training_area">, da Área de Formação <t t-out="g.course_id.training_area"/></t>,
+                            com a classificação final de <strong t-out="h.grade(g.final_grade, 'title').replace('Valores', 'valores')"/>, conforme
+                            consta do processo individual n.º <t t-if="student.process_number" t-out="student.process_number"/><t t-else=""><t t-set="width" t-value="60"/><t t-call="edu_documents.blank"/></t>
+                            e da folha n.º <t t-if="g.page_number" t-out="g.page_number"/><t t-else=""><t t-set="width" t-value="50"/><t t-call="edu_documents.blank"/></t> do Livro de Termos
+                            n.º <t t-if="g.book_number" t-out="g.book_number"/><t t-else=""><t t-set="width" t-value="50"/><t t-call="edu_documents.blank"/></t>.
                         </p>
                         <p t-if="g.level_id.subsystem == 'technical'">
                             Este curso da formação média técnica corresponde ao 2.º ciclo do Ensino Secundário, nos termos da Lei de Bases do
@@ -123,9 +128,9 @@
                             Pelo que, para efeitos legais e de harmonia com a legislação em vigor, lhe mandámos passar o presente Diploma, que
                             vai por nós assinado e autenticado pelo selo branco em uso nesta Escola.
                         </p>
-                        <p class="edu-date"><t t-out="h.city()"/>, <t t-out="h.date(o.date)"/></p>
+                        <p class="edu-date"><t t-out="h.city()"/>, a <t t-out="h.date(g.date)"/></p>
                         <t t-call="edu_documents.signatures" left_role="h.pedagogical_title()" left_name="company.edu_pedagogical_director_name" right_role="h.director_title()" right_name="company.edu_director_name"/>
-                        <div class="edu-ref">Diploma n.º <t t-out="g.diploma_number"/></div>
+                        <div class="edu-ref">Diploma n.º <t t-out="g.diploma_number"/><span t-if="o.print_count &gt; 1" class="edu-copy">2.ª VIA</span></div>
                     </div>
                 </t>
             </t>

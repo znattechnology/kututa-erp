@@ -171,7 +171,16 @@ class TestEduDocuments(TransactionCase):
         self.edu_class.action_compute_year_results()
         result = self.enrollment.year_result_id
         self.assertEqual(result.status, 'graduated')
-        graduation = self.env['edu.graduation'].browse(result.action_register_graduation()['res_id'])
+        # Registar conclusões pela turma da classe final, como no secPed.
+        wizard = self.env['edu.graduation.register'].create({'academic_year_id': self.year.id})
+        self.assertIn(self.edu_class, wizard.final_class_ids)
+        wizard.class_id = self.edu_class
+        self.assertEqual(wizard.result_ids, result)
+        wizard.action_register_all()
+        result.invalidate_recordset(['graduation_id'])
+        graduation = result.graduation_id
+        self.assertTrue(graduation)
+        self.course.training_area = 'Saúde'
         graduation.write({'book_number': '3', 'page_number': '45'})
         with self.assertRaises(UserError):
             self._document('certificate', graduation_id=graduation.id)  # conclusão por emitir
@@ -181,10 +190,23 @@ class TestEduDocuments(TransactionCase):
         for text in ('Decreto n.º 90/04', 'Componente sócio-cultural', '14 (Catorze) Valores',
                      'folha n.º 45', 'selo branco'):  # fmt: skip
             self.assertIn(text, html)
-        diploma = self._document('diploma', graduation_id=graduation.id)
+        for text in ('em regime pós-laboral', 'Área de Formação de Saúde', 'Classificação final do curso = ('):
+            self.assertIn(text, html)
+        # Imprimir o diploma directamente da conclusão: emite o documento uma vez e reaproveita-o.
+        graduation.action_print_diploma()
+        graduation.action_print_diploma()
+        diploma = graduation.document_ids.filtered(lambda d: d.document_type == 'diploma')
+        self.assertEqual(len(diploma), 1)
         html = self._render('edu_documents.action_report_diploma', diploma)
         self.assertIn('Formação Média Técnica', html)
         self.assertIn(graduation.diploma_number, html)
+        # Verificar e assinar (irreversível; quem marca fica registado).
+        self.assertEqual(graduation.diploma_state, 'to_verify')
+        with self.assertRaises(UserError):
+            graduation.action_mark_signed()
+        graduation.action_mark_verified()
+        graduation.action_mark_signed()
+        self.assertEqual((graduation.diploma_state, graduation.signed_by_id), ('signed', self.env.user))
 
     def test_class_documents(self):
         self._grades(9)
