@@ -20,11 +20,12 @@
         </field>
     </record>
     <record id="action_my_assessments" model="ir.actions.act_window">
-        <field name="name">As minhas avaliações</field>
+        <field name="name">Avaliações contínuas (MAC)</field>
         <field name="res_model">edu.assessment</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('class_id.assignment_ids.teacher_id.user_id', '=', uid)]</field>
-        <field name="context">{'search_default_current_year': 1}</field>
+        <!-- Só o ensino geral tem MAC (DE 424/25); no técnico a NPP lança-se na grelha «Notas da turma». -->
+        <field name="domain">[('assessment_type', '=', 'continuous'), ('class_id.level_id.subsystem', '!=', 'technical'), ('class_id.assignment_ids.teacher_id.user_id', '=', uid)]</field>
+        <field name="context">{'search_default_current_year': 1, 'default_assessment_type': 'continuous'}</field>
     </record>
     <record id="action_my_schedule" model="ir.actions.act_window">
         <field name="name">O meu horário</field>

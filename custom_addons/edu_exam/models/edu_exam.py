@@ -343,12 +343,14 @@ class EduExamSeat(models.Model):
             requirement.write({'score': score, 'date': self.session_id.date})
             requirement.action_record()
             return
+        # O resultado da sessão de exame (o júri) entra na nota fora da janela de lançamento do professor.
+        Grade = self.env['edu.grade'].with_context(edu_grade_exam=True)
         for assessment in self.session_id.assessment_ids.filtered(lambda a: a.class_id == self.class_id):
-            grade = assessment.grade_ids.filtered(lambda g: g.enrollment_id == self.enrollment_id)
+            grade = assessment.grade_ids.filtered(lambda g: g.enrollment_id == self.enrollment_id).with_context(
+                edu_grade_exam=True
+            )
             vals = {'score': score, 'absent': not self.attended}
             if grade:
                 grade.write(vals)
             else:
-                self.env['edu.grade'].create(
-                    {'assessment_id': assessment.id, 'enrollment_id': self.enrollment_id.id, **vals}
-                )
+                Grade.create({'assessment_id': assessment.id, 'enrollment_id': self.enrollment_id.id, **vals})

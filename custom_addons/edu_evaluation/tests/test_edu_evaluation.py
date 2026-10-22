@@ -865,3 +865,32 @@ class TestEduEvaluation(TransactionCase):
         self.assertTrue(result['ok'], result['errors'])
         self.assertEqual(self._term(enrollment, 'LP', self.t1).mt, 10)
         self.assertTrue(result['data']['trimesters'][0]['npp_editable'])
+
+    def test_only_teacher_enters_grades(self):
+        """Só o professor da disciplina lança as notas: a secretaria consulta (as notas corrigem-se por reapreciação e
+        os exames entram pela sessão). No técnico não há MAC: uma só NPP por trimestre (Despacho 60/08, art. 13.º)."""
+        ana = self.students[0]
+        self._enroll(self.class7, ana, ['LP'])
+        clerk = self.env['res.users'].create(
+            {
+                'name': 'Secretaria',
+                'login': 'secretaria_notas',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        with self.assertRaises(AccessError):
+            self._assess(self.class7, 'LP', self.t1, 'continuous', {ana: 12}, user=clerk)
+        assessment = self._assess(self.class7, 'LP', self.t1, 'continuous', {ana: 12})
+        with self.assertRaises(AccessError):
+            assessment.grade_ids.with_user(clerk).score = 18
+        # A reapreciação deferida entra por fora da janela.
+        assessment.grade_ids.with_user(clerk).with_context(edu_grade_appeal=True).score = 13
+        self.assertEqual(assessment.grade_ids.score, 13)
+
+        # Técnico: a segunda avaliação contínua do mesmo trimestre é recusada; no geral há várias (a MAC).
+        self._enroll(self.class10, self.students[1], ['LP'])
+        self._assess(self.class10, 'LP', self.t1, 'continuous', {})
+        with self.assertRaisesRegex(ValidationError, 'não há MAC'):
+            self._assess(self.class10, 'LP', self.t1, 'continuous', {})
+        self._assess(self.class10, 'LP', self.t2, 'continuous', {})
+        self._assess(self.class7, 'LP', self.t1, 'continuous', {ana: 14})

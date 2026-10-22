@@ -89,7 +89,7 @@
                                 </div>
                                 <t t-if="data.can_edit">
                                     <t t-foreach="this.editableTrimesters" t-as="t" t-key="t.id">
-                                        <button t-if="!data.technical or !t.npp_editable" type="button" class="btn btn-secondary"
+                                        <button t-if="!data.technical" type="button" class="btn btn-secondary"
                                                 t-on-click="() => this.openContinuous(t)">
                                             <i class="oi me-1" data-icon="playlist_add" aria-hidden="true"/>Lançar MAC do <t t-out="t.name"/>
                                         </button>

@@ -134,7 +134,15 @@ class TestEduExam(TransactionCase):
         session.seat_ids.filtered(lambda s: s.student_id == ana).attended = False
         with self.assertRaises(UserError):
             period.action_close()
-        session.action_done()
+        # A secretaria regista o resultado da sessão; a nota entra por fora da janela do professor.
+        clerk = self.env['res.users'].create(
+            {
+                'name': 'Secretaria',
+                'login': 'secretaria_exames',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        session.with_user(clerk).action_done()
         grades = {grade.student_id: grade for grade in assessment.grade_ids}
         self.assertEqual((grades[carla].score, grades[ana].score, grades[ana].absent), (14, 0, True))
         period.action_close()

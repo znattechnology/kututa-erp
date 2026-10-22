@@ -175,7 +175,9 @@ class EduGradeGrid(models.AbstractModel):
             continuous = assessments.filtered(
                 lambda a, t=trimester: a.trimester_id == t and a.assessment_type == 'continuous'
             )
-            npp_only = not continuous or (len(continuous) == 1 and continuous.name == 'NPP')
+            # Técnico: a NPP é uma só avaliação contínua por trimestre (não há MAC); a de anos migrados com várias
+            # fica só para consulta (a média delas).
+            npp_only = len(continuous) <= 1
             if teaches:
                 editable, reason = self._editable(edu_class, subject, trimester)
             else:
@@ -229,8 +231,9 @@ class EduGradeGrid(models.AbstractModel):
                     lambda a, t=trimester: a.trimester_id == t and a.assessment_type == 'trimester_test'
                 )[:1]
                 npp = assessments.filtered(
-                    lambda a, t=trimester: a.trimester_id == t and a.assessment_type == 'continuous' and a.name == 'NPP'
-                )[:1]
+                    lambda a, t=trimester: a.trimester_id == t and a.assessment_type == 'continuous'
+                )
+                npp = npp if len(npp) == 1 else npp.browse()
                 npt_grade = grade_by_key.get((enrollment.id, test.id)) if test else None
                 npp_grade = grade_by_key.get((enrollment.id, npp.id)) if npp else None
                 excused, absent = absences.get((enrollment.id, trimester.id), (0, 0))
@@ -381,13 +384,10 @@ class EduGradeGrid(models.AbstractModel):
         ]
         if column in ('npt', 'npp'):
             domain.append(('trimester_id', '=', trimester.id))
-        if column == 'npp':
-            continuous = Assessment.sudo().search(domain)
-            if continuous.filtered(lambda a: a.name != 'NPP'):
-                raise UserError(
-                    self.env._('A NPP deste trimestre é a média das avaliações contínuas: lance-as em «Lançar MAC».')
-                )
-            domain.append(('name', '=', 'NPP'))
+        if column == 'npp' and Assessment.sudo().search_count(domain) > 1:
+            raise UserError(
+                self.env._('Este trimestre tem várias avaliações contínuas antigas: a NPP é a média delas.')
+            )
         assessment = Assessment.sudo().search(domain, limit=1)
         if assessment:
             return assessment.with_env(self.env)

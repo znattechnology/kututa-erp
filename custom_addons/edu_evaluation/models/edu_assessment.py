@@ -11,14 +11,14 @@ ENROLLED = ('active', 'irregular')
 
 
 def check_grade_entry(env, edu_class, subject, trimester):
-    """Janela de lançamento: trimestre fechado → só por reapreciação; a secretaria lança em qualquer trimestre
-    aberto; o professor só na sua disciplina e no trimestre em curso do ano em curso, ou com autorização."""
-    if env.context.get('edu_grade_appeal') or env.su:
+    """Janela de lançamento: só o professor da disciplina lança as notas (a secretaria e a direcção consultam), no
+    trimestre em curso do ano em curso ou com autorização da secretaria; trimestre fechado → só por reapreciação.
+    Entram por fora da janela a reapreciação deferida e os resultados das sessões de exame (``edu_grade_appeal``,
+    ``edu_grade_exam``)."""
+    if env.context.get('edu_grade_appeal') or env.context.get('edu_grade_exam') or env.su:
         return
     if trimester.state == 'closed':
         raise UserError(env._('O %s está fechado: a correcção das notas faz-se por reapreciação.', trimester.name))
-    if env.user.has_group('edu_core.group_edu_user'):
-        return
     employee = env.user.employee_id
     assigned = (
         env['edu.teaching.assignment']
@@ -118,8 +118,19 @@ class EduAssessment(models.Model):
                 ('subject_id', '=', assessment.subject_id.id),
                 ('assessment_type', '=', assessment.assessment_type),
             ]
-            if assessment.assessment_type == 'trimester_test':
+            # Técnico (Despacho 60/08, art. 13.º, n.º 3): não há MAC; a avaliação contínua do trimestre é a NPP, a
+            # proposta do professor (0 a 20) — uma por trimestre.
+            technical_npp = assessment.assessment_type == 'continuous' and policy.regime == 'technical'
+            if assessment.assessment_type == 'trimester_test' or technical_npp:
                 unique.append(('trimester_id', '=', assessment.trimester_id.id))
+            if technical_npp and self.search_count(unique, limit=1):
+                raise ValidationError(
+                    self.env._(
+                        'No ensino técnico não há MAC: %(subject)s já tem a NPP (nota do professor) do %(trimester)s.',
+                        subject=assessment.subject_id.name,
+                        trimester=assessment.trimester_id.name,
+                    )
+                )
             if assessment.assessment_type != 'continuous' and self.search_count(unique, limit=1):
                 raise ValidationError(
                     self.env._(
