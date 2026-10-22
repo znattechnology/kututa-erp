@@ -226,7 +226,7 @@ class EduClass(models.Model):
         """Horário da turma no estilo da pauta: grelha com os tempos na vertical e segunda a sexta (e o sábado, se
         tiver aulas) na horizontal; em cada aula a disciplina, o professor e a sala."""
         self.ensure_one()
-        schedules = self.schedule_ids.filtered(lambda s: not s.trimester_id)
+        schedules = self._edu_current_schedules()
         days = [0, 1, 2, 3, 4] + ([5] if schedules.filtered(lambda s: s.weekday == '5') else [])
         rows = sorted({(s.hour_from, s.hour_to) for s in schedules})
         cells = {(int(s.weekday), s.hour_from, s.hour_to): s for s in schedules}

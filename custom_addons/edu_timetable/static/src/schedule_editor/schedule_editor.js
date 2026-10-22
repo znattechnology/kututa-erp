@@ -142,7 +142,7 @@ export class ScheduleEditor extends Component {
                 const slot = { day: day.code, from: period.from, to: period.to };
                 const lesson = data.lessons.find((l) => overlaps(l, slot));
                 return {
-                    key: `${day.code}-${period.from}`,
+                    key: `${day.code}-${period.from}-${period.to}`,
                     slot,
                     lesson,
                     // A aula ocupa a célula onde começa; nas seguintes não se repete.

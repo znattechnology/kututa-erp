@@ -82,12 +82,25 @@ class EduSchedule(models.Model):
     exception_ids = fields.One2many('edu.schedule.exception', 'schedule_id', string='Aulas sem realização')
     replacement_ids = fields.One2many('edu.schedule.replacement', 'schedule_id', string='Substituições')
 
-    @api.depends('class_id', 'subject_id')
+    @api.depends('class_id', 'subject_id', 'trimester_id')
     def _compute_teacher_id(self):
-        Assignment = self.env['edu.teaching.assignment']
         for schedule in self:
             if schedule.class_id and schedule.subject_id and not schedule.teacher_id:
-                schedule.teacher_id = Assignment._teacher_for(schedule.class_id, schedule.subject_id)
+                schedule.teacher_id = schedule._assigned_teacher()
+
+    def _assigned_teacher(self):
+        """O professor colocado: o do trimestre do tempo, se o houver, senão o do ano."""
+        self.ensure_one()
+        day = self.trimester_id.date_start or None
+        return self.env['edu.teaching.assignment']._teacher_for(self.class_id, self.subject_id, day=day)
+
+    def write(self, vals):
+        result = super().write(vals)
+        if {'subject_id', 'class_id', 'trimester_id'} & set(vals) and 'teacher_id' not in vals:
+            # Outra disciplina (ou turma, ou trimestre): o professor é o dessa colocação.
+            for schedule in self:
+                schedule.teacher_id = schedule._assigned_teacher()
+        return result
 
     @api.depends('class_id')
     def _compute_room_id(self):
@@ -136,6 +149,10 @@ class EduSchedule(models.Model):
         for schedule in self:
             if not 0 <= schedule.hour_from < schedule.hour_to <= 24:
                 raise ValidationError(self.env._('As horas do tempo não são válidas.'))
+            if schedule.weekday == '6':
+                raise ValidationError(self.env._('Não há aulas ao domingo.'))
+            if schedule.trimester_id and schedule.trimester_id.academic_year_id != schedule.academic_year_id:
+                raise ValidationError(self.env._('O trimestre não é do ano lectivo da turma.'))
             subjects = schedule.class_id.subject_line_ids.subject_id
             if subjects and schedule.subject_id not in subjects:
                 raise ValidationError(self.env._('%s não faz parte do plano da turma.', schedule.subject_id.name))
@@ -158,6 +175,27 @@ class EduSchedule(models.Model):
                             'name': schedule[field_name].display_name,
                             'other': f'{clash.display_name} ({clash.class_id.display_name})',
                         }
+                    )
+            # O professor não pode ter, à mesma hora, uma substituição marcada noutra turma.
+            if schedule.teacher_id and not self.env.context.get('edu_schedule_import'):
+                busy = self.env['edu.schedule.replacement'].search(
+                    [
+                        ('replacement_teacher_id', '=', schedule.teacher_id.id),
+                        ('date', '>=', fields.Date.context_today(self)),
+                        ('schedule_id', '!=', schedule.id),
+                        ('schedule_id.weekday', '=', schedule.weekday),
+                        ('schedule_id.hour_from', '<', schedule.hour_to),
+                        ('schedule_id.hour_to', '>', schedule.hour_from),
+                    ],
+                    limit=1,
+                )
+                if busy and schedule._occurs_on(busy.date):
+                    raise ValidationError(
+                        self.env._(
+                            '%(teacher)s tem uma substituição a essa hora: %(other)s.',
+                            teacher=schedule.teacher_id.name,
+                            other=busy.display_name,
+                        )
                     )
 
     def _occurs_on(self, day):
@@ -269,6 +307,11 @@ class EduScheduleReplacement(models.Model):
             schedule = replacement.schedule_id
             if not schedule._occurs_on(replacement.date):
                 raise ValidationError(self.env._('Nesta data não há esta aula.'))
+            off = self.env['edu.calendar.event']._days_without_lessons(
+                schedule.company_id, schedule.class_id.level_id, replacement.date, replacement.date
+            )
+            if off:
+                raise ValidationError(self.env._('Nesta data não há aulas (feriado ou pausa do calendário escolar).'))
             if replacement.replacement_teacher_id == schedule.teacher_id:
                 raise ValidationError(self.env._('O substituto é o próprio professor da turma.'))
             busy = self.env['edu.schedule'].search(

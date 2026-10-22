@@ -1,5 +1,5 @@
 from odoo import api, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 from .edu_schedule import WEEKDAYS
 from .edu_time_slot import format_hour
@@ -13,8 +13,15 @@ class EduSchedule(models.Model):
     _inherit = 'edu.schedule'
 
     @api.model
+    def _editor_check(self):
+        """O editor é da secretaria e da direcção (os métodos públicos chamam-se por RPC)."""
+        if not self.env.su and not self.env.user.has_group('edu_core.group_edu_user'):
+            raise AccessError(self.env._('O editor de horários é da secretaria.'))
+
+    @api.model
     def editor_options(self):
         """Turmas e professores do ano lectivo em curso, para as listas do topo."""
+        self._editor_check()
         year = self.env['edu.academic.year'].search(
             [('is_current', '=', True), ('company_id', 'in', self.env.companies.ids)], limit=1
         )
@@ -29,10 +36,13 @@ class EduSchedule(models.Model):
             'classes': [{'id': c.id, 'name': c._editor_label()} for c in classes],
             'teachers': [{'id': t.id, 'name': t.name} for t in teachers],
             'trimesters': [{'id': t.id, 'name': t.name} for t in year.trimester_ids] if year else [],
+            # O horário impresso é do edu_documents (pode não estar instalado).
+            'can_print': hasattr(self.env['edu.class'], 'action_print_schedule'),
         }
 
     @api.model
     def editor_class_data(self, class_id, trimester_id=False):
+        self._editor_check()
         edu_class = self.env['edu.class'].browse(class_id).exists()
         if not edu_class:
             raise UserError(self.env._('A turma já não existe.'))
@@ -46,7 +56,8 @@ class EduSchedule(models.Model):
             subject = line.subject_id
             if not line.weekly_hours and not counts.get(subject.id):
                 continue  # disciplina sem tempos nesta classe e sem aulas na grelha
-            teacher = Assignment._teacher_for(edu_class, subject).sudo()
+            trimester = self.env['edu.trimester'].browse(trimester_id)
+            teacher = Assignment._teacher_for(edu_class, subject, day=trimester.date_start or None).sudo()
             subjects.append(
                 {
                     'id': subject.id,
@@ -85,7 +96,12 @@ class EduSchedule(models.Model):
 
     @api.model
     def editor_teacher_data(self, teacher_id, trimester_id=False):
-        teacher = self.env['hr.employee'].sudo().browse(teacher_id).exists()
+        self._editor_check()
+        teacher = (
+            self.env['hr.employee']
+            .sudo()
+            .search([('id', '=', teacher_id), ('company_id', 'in', self.env.companies.ids)], limit=1)
+        )
         if not teacher:
             raise UserError(self.env._('O professor já não existe.'))
         lessons = self._editor_scope(
@@ -121,6 +137,8 @@ class EduSchedule(models.Model):
     def editor_move(self, weekday, hour_from, hour_to):
         """Arrasta a aula para outra célula; as verificações de choques são as mesmas da criação."""
         self.ensure_one()
+        # A aula mantém a duração (um bloco de 90 minutos não encolhe para a linha onde cai).
+        hour_to = hour_from + (self.hour_to - self.hour_from)
         self.write({'weekday': str(weekday), 'hour_from': hour_from, 'hour_to': hour_to, 'time_slot_id': False})
         return {'id': self.id, 'warning': self._editor_load_warning()}
 

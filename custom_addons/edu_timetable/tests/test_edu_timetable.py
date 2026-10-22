@@ -1,6 +1,6 @@
 from datetime import date
 
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -246,3 +246,52 @@ class TestEduTimetable(TransactionCase):
         self.assertIn('menos 2 por ser director(a) de turma da 10ª A · ENF', public.edu_load_notes)
         self.assertIn('Matemática', self.class_a.missing_teacher_subjects)
         self.assertIn(self.class_a, self.env['edu.class'].search([('missing_teacher_subjects', '!=', False)]))
+
+    def test_audit_schedule_rules(self):
+        """Auditoria da fase 5: professor da colocação do trimestre e da disciplina nova, domingo e trimestre de outro
+        ano recusados, o editor mantém a duração e é só da secretaria."""
+        Assignment = self.env['edu.teaching.assignment']
+        Schedule = self.env['edu.schedule']
+        second = self.year.trimester_ids.filtered(lambda t: t.number == 2)
+        Assignment.create(
+            {
+                'class_id': self.class_b.id,
+                'subject_id': self.mat.id,
+                'teacher_id': self.teacher2.id,
+                'trimester_id': second.id,
+            }
+        )
+        placed = Schedule.editor_place(self.class_b.id, self.mat.id, 0, 7.5, 8.25, trimester_id=second.id)
+        self.assertEqual(Schedule.browse(placed['id']).teacher_id, self.teacher2)
+        # Mudar a disciplina de um tempo: passa ao professor colocado na nova.
+        Assignment.create([
+            {'class_id': self.class_a.id, 'subject_id': self.lp.id, 'teacher_id': self.teacher.id},
+            {'class_id': self.class_a.id, 'subject_id': self.mat.id, 'teacher_id': self.teacher2.id},
+        ])  # fmt: skip
+        lesson = Schedule.create(
+            {'class_id': self.class_a.id, 'subject_id': self.lp.id, 'weekday': '1', 'hour_from': 9.0, 'hour_to': 10.5}
+        )
+        self.assertEqual(lesson.teacher_id, self.teacher)
+        lesson.subject_id = self.mat
+        self.assertEqual(lesson.teacher_id, self.teacher2)
+        # Arrastar mantém a duração (90 minutos).
+        lesson.editor_move(2, 8.0, 8.75)
+        self.assertEqual((lesson.weekday, lesson.hour_from, lesson.hour_to), ('2', 8.0, 9.5))
+        with self.assertRaisesRegex(ValidationError, 'domingo'):
+            lesson.weekday = '6'
+        other_year = self.env['edu.academic.year'].create(
+            {'name': '2027/2028', 'date_start': date(2027, 9, 1), 'date_end': date(2028, 7, 31)}
+        )
+        other_year.action_generate_trimesters()
+        with self.assertRaisesRegex(ValidationError, 'trimestre'):
+            lesson.trimester_id = other_year.trimester_ids[:1]
+        # O editor é da secretaria.
+        teacher_user = self.env['res.users'].create(
+            {
+                'name': 'Professor',
+                'login': 'prof_editor',
+                'group_ids': [(6, 0, [self.env.ref('edu_core.group_edu_teacher').id])],
+            }
+        )
+        with self.assertRaises(AccessError):
+            Schedule.with_user(teacher_user).editor_options()

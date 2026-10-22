@@ -42,8 +42,8 @@
                         </div>
                         <span class="flex-grow-1"/>
                         <span t-if="this.state.options.year" class="text-muted">Ano lectivo <t t-out="this.state.options.year"/></span>
-                        <button t-if="this.state.mode === 'class' and this.state.data" type="button" class="btn btn-secondary"
-                                t-on-click="() => this.print()">
+                        <button t-if="this.state.mode === 'class' and this.state.data and this.state.options.can_print" type="button"
+                                class="btn btn-secondary" t-on-click="() => this.print()">
                             <i class="oi me-1" data-icon="print" aria-hidden="true"/>Imprimir
                         </button>
                     </div>
@@ -140,7 +140,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr t-foreach="this.rows" t-as="row" t-key="row.from">
+                <tr t-foreach="this.rows" t-as="row" t-key="row.from + '-' + row.to">
                     <th class="o_edu_se_hour" t-out="row.label"/>
                     <t t-foreach="row.cells" t-as="cell" t-key="cell.key">
                         <td t-if="cell.lesson" class="o_edu_se_lesson">

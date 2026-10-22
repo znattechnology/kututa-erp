@@ -128,12 +128,13 @@ class EduClass(models.Model):
         'schedule_ids.subject_id',
         'schedule_ids.teacher_id',
         'schedule_ids.room_id',
+        'schedule_ids.trimester_id',
     )
     def _compute_schedule_grid(self):
         """A semana toda de uma vez, como o horário impresso: os tempos na vertical, os dias na horizontal e, em cada
         aula, a disciplina, o professor e a sala."""
         for edu_class in self:
-            schedules = edu_class.schedule_ids.filtered(lambda s: not s.trimester_id)
+            schedules = edu_class._edu_current_schedules()
             if not schedules:
                 edu_class.schedule_grid = False
                 continue
@@ -142,6 +143,12 @@ class EduClass(models.Model):
                 schedules,
                 lambda s: [s.teacher_id.name or self.env._('Sem professor'), s.room_id.name],
             )
+
+    def _edu_current_schedules(self):
+        """O horário que a turma está a ter: os tempos do ano todo e os do trimestre em curso."""
+        self.ensure_one()
+        current = self.academic_year_id.trimester_ids.filtered('is_current')[:1]
+        return self.schedule_ids.filtered(lambda s: not s.trimester_id or s.trimester_id == current)
 
     def _editor_label(self):
         """«10ª A · EST»: a turma sem o ano lectivo, que o editor de horários já mostra no topo."""
