@@ -80,7 +80,9 @@ class EduStudent(models.Model):
         for student in students:
             if student.partner_id.company_id and student.partner_id.company_id != student.company_id:
                 continue
-            student.partner_id.company_id = student.company_id
+            # Em sudo: mudar a empresa do contacto faz verificações noutros módulos (o stock procura lotes) que a
+            # secretaria não pode ler.
+            student.partner_id.sudo().company_id = student.company_id
         return students
 
     @api.constrains('birth_date')
