@@ -103,9 +103,14 @@ class TestEduEvaluation(TransactionCase):
 
     def _full_year(self, edu_class, code, scores_by_trimester, pg=True):
         """{trimestre: {aluno: (contínua, prova)}}"""
+        policy = self.env['edu.evaluation.policy']._get(edu_class.company_id, edu_class.level_id)
+        exam_class = policy.regime == 'general' and policy._is_exam_class(edu_class.class_number)
+        last_trimester = edu_class.academic_year_id.trimester_ids.sorted('number')[-1:]
         for trimester, scores in scores_by_trimester.items():
             self._assess(edu_class, code, trimester, 'continuous', {s: v[0] for s, v in scores.items()})
-            self._assess(edu_class, code, trimester, 'trimester_test', {s: v[1] for s, v in scores.items()})
+            # Na classe de exame do geral, o último trimestre não tem prova trimestral (há o exame nacional).
+            if not (exam_class and trimester == last_trimester):
+                self._assess(edu_class, code, trimester, 'trimester_test', {s: v[1] for s, v in scores.items()})
         # Técnico: a disciplina com prova global só fica completa com a PG (lança-se a nota da última prova).
         line = edu_class.subject_line_ids.filtered(lambda line: line.subject_id.code == code)
         last = edu_class.academic_year_id.trimester_ids.sorted('number')[-1:]
@@ -750,3 +755,31 @@ class TestEduEvaluation(TransactionCase):
                 self.assertIn(text, html)
             with self.assertRaisesRegex(UserError, 'director de turma'):
                 session.with_user(self.teacher_user).action_print_acta()
+
+    def test_audit_appeals_and_rules(self):
+        """Reapreciação: sem nova nota não se defere (não grava 0), igual à anterior indefere-se, indeferir exige a
+        decisão; uma só prova trimestral por trimestre; decisão manual «transita» numa classe terminal é «concluiu»."""
+        ana = self.students[0]
+        self._enroll(self.class7, ana, ['LP'])
+        test = self._assess(self.class7, 'LP', self.t1, 'trimester_test', {ana: 12})
+        with self.assertRaisesRegex(ValidationError, 'já tem esta avaliação'):
+            self._assess(self.class7, 'LP', self.t1, 'trimester_test', {ana: 13})
+        grade = test.grade_ids
+        appeal = self.env['edu.grade.appeal'].create({'grade_id': grade.id, 'reason': 'Erro de soma'})
+        with self.assertRaisesRegex(UserError, 'nova nota'):
+            appeal.action_grant()
+        self.assertEqual(grade.score, 12)
+        appeal.new_score = 12
+        with self.assertRaisesRegex(UserError, 'indefira'):
+            appeal.action_grant()
+        with self.assertRaisesRegex(UserError, 'decisão'):
+            appeal.action_deny()
+        appeal.decision = 'A nota estava certa.'
+        appeal.action_deny()
+        self.assertTrue(appeal.decided_date)
+        # Classe terminal (13.ª do técnico): transitar à mão é concluir.
+        thirteenth = self._class(self.tec, 13)
+        enrollment = self._enroll(thirteenth, self.students[1], ['LP'])
+        result = self.env['edu.year.result'].create({'enrollment_id': enrollment.id})
+        result.action_manual_promote()
+        self.assertEqual(result.status, 'graduated')

@@ -250,7 +250,9 @@ class EduYearResult(models.Model):
         return True
 
     def action_manual_promote(self):
-        return self._set_manual('promoted')
+        # Numa classe terminal, transitar é concluir.
+        terminal = self[:1]._policy()._rules(self[:1].class_id).terminal if self else False
+        return self._set_manual('graduated' if terminal else 'promoted')
 
     def action_manual_retain(self):
         return self._set_manual('retained')

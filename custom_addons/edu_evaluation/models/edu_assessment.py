@@ -110,6 +110,34 @@ class EduAssessment(models.Model):
             if assessment.assessment_type == 'national_exam':
                 if not policy._is_exam_class(assessment.class_id.class_number):
                     raise ValidationError(self.env._('Só há exame nacional nas classes de exame (6.ª, 9.ª e 12.ª).'))
+            # Uma só prova trimestral por turma, disciplina e trimestre; uma só PG e um só exame nacional por turma e
+            # disciplina (a grelha de notas cria-as e encontra-as).
+            unique = [
+                ('id', '!=', assessment.id),
+                ('class_id', '=', assessment.class_id.id),
+                ('subject_id', '=', assessment.subject_id.id),
+                ('assessment_type', '=', assessment.assessment_type),
+            ]
+            if assessment.assessment_type == 'trimester_test':
+                unique.append(('trimester_id', '=', assessment.trimester_id.id))
+            if assessment.assessment_type != 'continuous' and self.search_count(unique, limit=1):
+                raise ValidationError(
+                    self.env._(
+                        '%(subject)s já tem esta avaliação (%(type)s) nesta turma.',
+                        subject=assessment.subject_id.name,
+                        type=dict(self._fields['assessment_type']._description_selection(self.env)).get(
+                            assessment.assessment_type
+                        ),
+                    )
+                )
+            if (
+                assessment.assessment_type == 'trimester_test'
+                and policy.regime not in ('technical', 'primary')
+                and policy._is_exam_class(assessment.class_id.class_number)
+                and assessment.trimester_id == assessment.academic_year_id.trimester_ids.sorted('number')[-1:]
+            ):
+                # Na classe de exame, a MT3 é (MT1 + MT2 + MAC3)/3: no último trimestre há o exame, não a prova.
+                raise ValidationError(self.env._('Na classe de exame, o último trimestre não tem prova trimestral.'))
             if assessment.assessment_type in ('global_exam', 'national_exam'):
                 last = assessment.academic_year_id.trimester_ids.sorted('number')[-1:]
                 if assessment.trimester_id != last:
@@ -170,6 +198,7 @@ class EduGrade(models.Model):
         string='Faltou', help='Falta injustificada à prova: vale 0 valores (Despacho 60/08, art. 21.º).'
     )
     note = fields.Char(string='Observação')
+    negative = fields.Boolean(string='Negativa', compute='_compute_negative')
 
     _assessment_enrollment_uniq = models.Constraint(
         'UNIQUE(assessment_id, enrollment_id)', 'O aluno já tem nota nesta avaliação.'
@@ -204,6 +233,15 @@ class EduGrade(models.Model):
             check_grade_entry(self.env, assessment.class_id, assessment.subject_id, assessment.trimester_id)
         grades.filtered('graded')._recompute_results()
         return grades
+
+    @api.depends('score', 'graded', 'assessment_id.max_score')
+    def _compute_negative(self):
+        """Negativa pela nota de aprovação do regime (5 no primário, 10 nos outros), na escala da avaliação."""
+        for grade in self:
+            policy = grade.assessment_id._policy()
+            scale = grade.assessment_id.max_score or policy.scale_max
+            value = grade.score * policy.scale_max / scale if scale else grade.score
+            grade.negative = bool(grade.graded and value < policy.pass_grade)
 
     def write(self, vals):
         for assessment in self.assessment_id:

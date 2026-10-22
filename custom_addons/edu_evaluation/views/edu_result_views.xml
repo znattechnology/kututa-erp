@@ -65,10 +65,6 @@
                 <field name="complete" optional="hide"/>
                 <field name="passed"/>
                 <field name="borderline" column_invisible="1"/>
-                <button name="action_grant_one" type="object" string="+1" invisible="not borderline"/>
-                <button name="action_grant_two" type="object" string="+2" invisible="not borderline"/>
-                <button name="action_council_vote" type="object" string="Votar +2" invisible="not borderline"/>
-                <button name="action_remove_points" type="object" string="Retirar" invisible="not council_points"/>
             </list>
         </field>
     </record>
