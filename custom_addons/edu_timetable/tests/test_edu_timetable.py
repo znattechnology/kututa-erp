@@ -163,3 +163,45 @@ class TestEduTimetable(TransactionCase):
         holiday = date(2026, 9, 21)
         self.env['edu.schedule.exception'].create({'schedule_id': lesson.id, 'date': holiday, 'reason': 'Feriado'})
         self.assertFalse(lesson._occurs_on(holiday))
+
+    def test_schedule_editor(self):
+        """Editor de horários: os dados da turma, colocar, mover e os choques que se vêem antes de colocar."""
+        Schedule = self.env['edu.schedule']
+        Assignment = self.env['edu.teaching.assignment']
+        Assignment.create({'class_id': self.class_a.id, 'subject_id': self.lp.id, 'teacher_id': self.teacher.id})
+        Assignment.create({'class_id': self.class_b.id, 'subject_id': self.mat.id, 'teacher_id': self.teacher.id})
+        self.class_a.shift_id = self.shift
+        self.shift.action_generate_slots()
+        options = Schedule.editor_options()
+        self.assertIn(self.class_a.id, [c['id'] for c in options['classes']])
+        self.assertIn('10ª A · ENF', [c['name'] for c in options['classes']])
+
+        # A outra turma tem o mesmo professor à segunda às 07:30: a célula aparece ocupada para LP na turma A.
+        Schedule.create(
+            {'class_id': self.class_b.id, 'subject_id': self.mat.id, 'weekday': '0', 'hour_from': 7.5, 'hour_to': 8.25}
+        )
+        data = Schedule.editor_class_data(self.class_a.id)
+        lp = next(s for s in data['subjects'] if s['id'] == self.lp.id)
+        self.assertEqual((lp['planned'], lp['placed'], lp['teacher']), (4, 0, self.teacher.name))
+        self.assertEqual(data['teacher_busy'][str(self.teacher.id)][0]['label'], '10ª B · ENF · Matemática')
+        self.assertEqual(data['periods'][0]['label'], '07:30 – 08:15')
+        self.assertEqual([d['name'] for d in data['days']][-1], 'Sexta-feira')
+
+        # Colocar onde o professor está ocupado é recusado; noutra célula entra, e arrasta-se para terça.
+        with self.assertRaises(ValidationError):
+            Schedule.editor_place(self.class_a.id, self.lp.id, 0, 7.5, 8.25)
+        placed = Schedule.editor_place(self.class_a.id, self.lp.id, 1, 7.5, 8.25)
+        lesson = Schedule.browse(placed['id'])
+        self.assertEqual((lesson.teacher_id, lesson.room_id), (self.teacher, self.room))
+        lesson.editor_move(2, 8.25, 9.0)
+        self.assertEqual((lesson.weekday, lesson.hour_from), ('2', 8.25))
+        with self.assertRaises(ValidationError):
+            lesson.editor_move(0, 7.5, 8.25)
+        data = Schedule.editor_class_data(self.class_a.id)
+        self.assertEqual(next(s for s in data['subjects'] if s['id'] == self.lp.id)['placed'], 1)
+        self.assertEqual(data['lessons'][0]['teacher'], self.teacher.name)
+
+        # Por professor: as aulas dele em todas as turmas.
+        teacher = Schedule.editor_teacher_data(self.teacher.id)
+        self.assertEqual(sorted(lesson['class'] for lesson in teacher['lessons']), ['10ª A · ENF', '10ª B · ENF'])
+        self.assertEqual(self.class_a.action_edit_schedule()['context'], {'default_class_id': self.class_a.id})

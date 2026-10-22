@@ -262,3 +262,17 @@ Referência: `apps/web/components/academic/mini-pauta-document.tsx` do secPed.
 - **Separador «Horário» da turma (2026-10-22):** por baixo da grelha aparecia a lista editável das aulas (uma linha por tempo, 32 linhas na 10.ª A EST), com as mesmas informações da grelha e as horas repetidas três vezes: «07:00–07:45 (07:00–07:45)», «7h» e «7h 45min». O separador passa a mostrar só a grelha, o aviso dos tempos diferentes do plano e o botão «Editar horário», que abre a lista das aulas da turma.
   - Os tempos lectivos já não repetem as horas quando o nome já as tem.
   - As horas de relógio (horários, tempos, turnos, aulas e exames) mostram-se como «07:45» e não como «7h 45min».
+
+## 14. Editor de horários (2026-10-22)
+Referência: `apps/web/app/admin-servicos-academicos/horarios/editor/page.tsx` do secPed. No secPed escolhe-se a disciplina e clica-se na célula; aqui também se pode arrastar.
+
+- **Onde:** Horários › Editor de horários (primeiro item do menu) e o botão «Editar horário» no separador «Horário» da turma, que abre o editor nessa turma. O editor lembra-se da última turma.
+- **Por turma:**
+  - à esquerda, as disciplinas do plano da classe, com «colocados/plano» (verde quando completo) e o professor da colocação, ou «Sem professor»;
+  - por cima, o estado numa frase: «28 de 32 tempos colocados — faltam 4: Matemática 1, …», as disciplinas acima do plano e as que não têm professor;
+  - à direita, a grelha Hora × dias no estilo da pauta. As linhas são as horas das aulas que existem mais os tempos do turno da turma que não as cruzem. Sábado opcional. Filtro «Ano todo» ou «Só o 1.º trimestre».
+- **Colocar:** arrastar a disciplina para uma célula livre, ou clicar na disciplina e depois na célula. As aulas arrastam-se para outra célula e retiram-se com o ×.
+- **Choques visíveis antes de colocar:** com uma disciplina na mão (escolhida ou arrastada), as células onde o professor ou a sala da turma já têm aula noutra turma ficam riscadas e dizem porquê («Professor(a) ocupado(a): 10ª D · EST · Educação Física»); não aceitam a aula. O servidor volta a verificar turma, professor e sala ao gravar, e avisa (sem bloquear) quando o professor passa o máximo de tempos semanais.
+- **Por professor:** as aulas do professor em todas as turmas, com a carga «8 de 24 tempos semanais». Clicar numa aula abre o horário dessa turma.
+- **Menu:** a lista «Por turma» passou a «Tempos por turma» (a lista de linhas, para correcções em massa).
+- **Código:** acção cliente `edu_timetable.schedule_editor` (`static/src/schedule_editor/`) e os métodos `editor_*` de `edu.schedule` (`models/edu_schedule_editor.py`).

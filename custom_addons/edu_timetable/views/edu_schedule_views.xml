@@ -113,6 +113,13 @@
         <field name="view_mode">list</field>
     </record>
 
+    <!-- Editor de horários (acção cliente): as disciplinas arrastam-se para a grelha da turma. -->
+    <record id="action_edu_schedule_editor" model="ir.actions.client">
+        <field name="name">Editor de horários</field>
+        <field name="tag">edu_timetable.schedule_editor</field>
+    </record>
+
+    <menuitem id="menu_edu_schedule_editor" action="action_edu_schedule_editor" parent="edu_core.menu_edu_academic" sequence="35"/>
     <menuitem id="menu_edu_schedule" action="action_edu_schedule" parent="edu_core.menu_edu_academic" sequence="40"/>
     <menuitem id="menu_edu_schedule_replacement" action="action_edu_schedule_replacement" parent="edu_core.menu_edu_academic" sequence="45"/>
 </odoo>

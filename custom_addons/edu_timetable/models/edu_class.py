@@ -138,16 +138,17 @@ class EduClass(models.Model):
                 html += Markup('</tr>')
             edu_class.schedule_grid = html + Markup('</tbody></table>')
 
-    def action_view_schedule(self):
+    def _editor_label(self):
+        """«10ª A · EST»: a turma sem o ano lectivo, que o editor de horários já mostra no topo."""
         self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': self.env._('Horário da %s', self.display_name),
-            'res_model': 'edu.schedule',
-            'view_mode': 'list,form',
-            'domain': [('class_id', '=', self.id)],
-            'context': {'default_class_id': self.id},
-        }
+        return ' · '.join(p for p in [f'{self.class_number}ª {self.name}', self.course_id.code] if p)
+
+    def action_edit_schedule(self):
+        """Abre o editor de horários nesta turma."""
+        self.ensure_one()
+        action = self.env['ir.actions.actions']._for_xml_id('edu_timetable.action_edu_schedule_editor')
+        action['context'] = {'default_class_id': self.id}
+        return action
 
 
 class HrEmployee(models.Model):

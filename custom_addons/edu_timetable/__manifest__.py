@@ -1,6 +1,6 @@
 {
     'name': 'Secretaria Express - Horários',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Tempos lectivos, colocação de professores, director de turma, horários, faltas de aula e substituições',
     'description': """
 Secretaria Express: organização pedagógica da escola.
@@ -9,6 +9,7 @@ Secretaria Express: organização pedagógica da escola.
 * Colocação dos professores por turma e disciplina, para o ano ou para um trimestre
 * Director de turma: um por turma, e no máximo uma turma por professor em cada ano lectivo
 * Horário semanal da turma com verificação de conflitos de turma, professor e sala
+* Editor de horários: as disciplinas arrastam-se para a grelha e os choques de professor e sala vêem-se antes
 * Confronto dos tempos do horário com a carga semanal do plano curricular
 * Aulas que não se realizam (feriados, greves) e substituições de professor numa data
     """,
@@ -23,5 +24,10 @@ Secretaria Express: organização pedagógica da escola.
         'views/edu_schedule_views.xml',
         'views/edu_class_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'edu_timetable/static/src/**/*',
+        ],
+    },
     'license': 'OPL-1',
 }

@@ -1,1 +1,1 @@
-from . import edu_class, edu_schedule, edu_teaching_assignment, edu_time_slot
+from . import edu_class, edu_schedule, edu_schedule_editor, edu_teaching_assignment, edu_time_slot
