@@ -10,6 +10,7 @@
                     <group>
                         <group>
                             <field name="edu_planned"/>
+                            <field name="edu_holidays"/>
                             <field name="edu_exceptions"/>
                             <field name="edu_replacement_out"/>
                             <field name="edu_replacement_in"/>
@@ -19,7 +20,7 @@
                         </group>
                     </group>
                     <div class="text-muted">
-                        Tempos a pagar = previstos − aulas sem realização − dadas por substitutos + substituições dadas + acerto.
+                        Tempos a pagar = previstos − feriados e pausas − aulas sem realização − dadas por substitutos + substituições dadas + acerto.
                         Recalcule o recibo depois de alterar o acerto. Desmarque «escritos à mão» para voltar ao cálculo.
                     </div>
                 </page>

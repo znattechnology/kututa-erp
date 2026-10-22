@@ -67,18 +67,45 @@ class TestEduPayroll(TransactionCase):
             self.env['edu.schedule.replacement'].create(
                 {'schedule_id': other_slot.id, 'date': day, 'replacement_teacher_id': self.teacher.id}
             )
+        # Feriado a 28/09 (segunda) e pausa a 9/09 (quarta, dia de uma substituição): não contam.
+        self.env['edu.calendar.event'].create(
+            [
+                {
+                    'name': 'Feriado',
+                    'academic_year_id': self.year.id,
+                    'event_type': 'holiday',
+                    'date_start': date(2026, 9, 28),
+                },
+                {
+                    'name': 'Pausa',
+                    'academic_year_id': self.year.id,
+                    'event_type': 'holiday',
+                    'date_start': date(2026, 9, 9),
+                },
+                {
+                    'name': 'Reunião',
+                    'academic_year_id': self.year.id,
+                    'event_type': 'meeting',
+                    'date_start': date(2026, 9, 7),
+                },
+            ]
+        )
         run = self.env['l10n_ao_payroll.run'].create({'company_id': self.company.id, 'year': 2026, 'month': '9'})
         run.action_compute()
         slip = run.payslip_ids.filtered(lambda s: s.employee_id == self.teacher)
-        # 4 previstos − 1 sem realização − 1 dado pela substituta + 2 substituições dadas = 4.
+        # 4 previstos − 1 feriado − 1 sem realização − 1 dado pela substituta + 1 substituição dada = 2.
         self.assertEqual(
-            (slip.edu_planned, slip.edu_exceptions, slip.edu_replacement_out, slip.edu_replacement_in), (4, 1, 1, 2)
-        )
-        self.assertEqual(slip.lesson_count, 4)
-        self.assertEqual(slip.gross, 10_000)
+            (
+                slip.edu_planned, slip.edu_holidays, slip.edu_exceptions, slip.edu_replacement_out,
+                slip.edu_replacement_in,
+            ),
+            (4, 1, 1, 1, 1),
+        )  # fmt: skip
+        self.assertEqual(slip.lesson_count, 2)
+        self.assertEqual(slip.gross, 5_000)
         slip.edu_adjustment = 2
         run.action_compute()
-        self.assertEqual(slip.lesson_count, 6)
+        self.assertEqual(slip.lesson_count, 4)
         slip.lesson_count = 3
         run.action_compute()
         self.assertTrue(slip.edu_lesson_manual)
