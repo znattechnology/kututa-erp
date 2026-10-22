@@ -134,6 +134,54 @@
         <field name="print_report_name">'Directores de turma'</field>
         <field name="paperformat_id" ref="paperformat_a4_portrait"/>
     </record>
+    <record id="action_report_listing_application" model="ir.actions.report">
+        <field name="name">Lista de candidaturas</field>
+        <field name="model">edu.application</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_listing_application</field>
+        <field name="print_report_name">'Lista de candidaturas'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
+    <record id="action_report_listing_enrollment" model="ir.actions.report">
+        <field name="name">Lista de matrículas</field>
+        <field name="model">edu.enrollment</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_listing_enrollment</field>
+        <field name="print_report_name">'Lista de matrículas'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
+    <record id="action_report_listing_transfer" model="ir.actions.report">
+        <field name="name">Lista de transferências</field>
+        <field name="model">edu.transfer</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_listing_transfer</field>
+        <field name="print_report_name">'Transferências'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
+    <record id="action_report_listing_student" model="ir.actions.report">
+        <field name="name">Lista de alunos</field>
+        <field name="model">edu.student</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_listing_student</field>
+        <field name="print_report_name">'Lista de alunos'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
+    <record id="action_report_listing_confirmation" model="ir.actions.report">
+        <field name="name">Confirmação de matrículas</field>
+        <field name="model">edu.enrollment.confirmation</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_listing_confirmation</field>
+        <field name="print_report_name">'Confirmação de matrículas'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
+    <record id="action_report_application_receipt" model="ir.actions.report">
+        <field name="name">Comprovativo de candidatura</field>
+        <field name="model">edu.application</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_application_receipt</field>
+        <field name="print_report_name">'Comprovativo de candidatura %s' % object.name</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
     <record id="action_report_student_card" model="ir.actions.report">
         <field name="name">Cartão de estudante</field>
         <field name="model">edu.student</field>

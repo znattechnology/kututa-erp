@@ -209,6 +209,19 @@ class EduEnrollment(models.Model):
         return result
 
 
+class EduTransfer(models.Model):
+    _inherit = 'edu.transfer'
+
+    def _complete_external(self):
+        """A taxa de transferência (se o plano de propinas a tiver) cobra-se na saída."""
+        result = super()._complete_external()
+        enrollment = self.enrollment_id
+        plan = self.env['edu.fee.plan'].sudo()._for_enrollment(enrollment)
+        for line in plan.line_ids.filtered(lambda line: line.category == 'transfer'):
+            line._create_invoice(enrollment, self.effective_date, f'{line.id}-transfer-{self.id}')
+        return result
+
+
 class EduDocument(models.Model):
     _inherit = 'edu.document'
 

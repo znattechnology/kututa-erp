@@ -1,1 +1,1 @@
-from . import edu_pauta_print
+from . import edu_enrollment_confirmation, edu_pauta_print

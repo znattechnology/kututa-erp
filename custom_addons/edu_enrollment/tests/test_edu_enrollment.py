@@ -203,6 +203,7 @@ class TestEduEnrollment(TransactionCase):
 
     def test_transfers(self):
         carla, ana, _bento = self.students
+        self.class_b.capacity = 30
         enrollment = self._enroll(carla, self.class_a)
         other = self._enroll(ana, self.class_b)
         transfer = self.env['edu.transfer'].create(
@@ -233,10 +234,59 @@ class TestEduEnrollment(TransactionCase):
                 'reason': 'Mudança de província',
             }
         )
+        self.assertEqual(exit_transfer.from_class_id, self.class_b)  # a origem fica gravada logo no pedido
         exit_transfer.action_approve()
+        self.assertIn('parecer de vaga', exit_transfer.next_step)
+        with self.assertRaisesRegex(UserError, 'confirmação de vaga'):
+            exit_transfer.action_complete()
+        exit_transfer.write({'vacancy_confirmed': True, 'vacancy_reference': 'Ofício 12/2026'})
         exit_transfer.action_complete()
         self.assertEqual(other.state, 'transferred')
         self.assertIn('Liceu do Huambo', other.drop_reason)
+        with self.assertRaises(UserError):
+            exit_transfer.unlink()  # concluída: não se apaga
+        # Rejeitar exige fundamentação; a decisão é da direcção.
+        secretary = self.env['res.users'].create(
+            {'name': 'Sec', 'login': 'sec_trf', 'group_ids': [(6, 0, [self.env.ref('edu_core.group_edu_user').id])]}
+        )
+        bento_enrollment = self._enroll(_bento, self.class_b)
+        pending = self.env['edu.transfer'].create(
+            {
+                'student_id': _bento.id,
+                'enrollment_id': bento_enrollment.id,
+                'transfer_type': 'class_change',
+                'to_class_id': self.class_a.id,
+                'reason': 'Turno',
+            }
+        )
+        with self.assertRaisesRegex(UserError, 'direcção'):
+            pending.with_user(secretary).action_approve()
+        with self.assertRaisesRegex(UserError, 'fundamentação'):
+            pending.action_reject()
+        # Mudar de turma só para uma turma da mesma classe.
+        eleventh = self._class(self.nursing, 'C', 11)
+        with self.assertRaisesRegex(ValidationError, 'mesma classe'):
+            pending.to_class_id = eleventh
+        # Entrada de outra escola: cria o aluno e matricula-o como transferido.
+        incoming = self.env['edu.transfer'].create(
+            {
+                'transfer_type': 'incoming',
+                'incoming_name': 'Zeferino Lukamba',
+                'incoming_id_number': '009988776LA041',
+                'origin_school': 'Instituto Médio de Saúde do Huambo',
+                'to_class_id': self.class_b.id,
+                'reason': 'Mudança de residência',
+            }
+        )
+        incoming.action_approve()
+        with self.assertRaisesRegex(UserError, 'guia'):
+            incoming.action_complete()
+        incoming.origin_documents = True
+        incoming.action_complete()
+        self.assertEqual(incoming.student_id.id_number, '009988776LA041')
+        self.assertEqual(
+            (incoming.enrollment_id.enrollment_type, incoming.enrollment_id.state), ('transfer_in', 'active')
+        )
         with self.assertRaises(ValidationError):
             self.env['edu.transfer'].create(
                 {'student_id': ana.id, 'enrollment_id': other.id, 'transfer_type': 'external', 'reason': 'x'}

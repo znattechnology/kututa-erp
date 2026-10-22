@@ -80,6 +80,8 @@ class EduDocument(models.Model):
                 raise UserError(self.env._('A matrícula ainda não tem classificações finais.'))
         if kind == 'transfer_guide' and (not self.transfer_id or self.transfer_id.transfer_type != 'external'):
             raise UserError(self.env._('A guia de transferência exige uma transferência para outra escola.'))
+        if kind == 'transfer_guide' and self.transfer_id.state != 'completed':
+            raise UserError(self.env._('A guia só se emite depois de a transferência estar concluída.'))
         if kind in ('certificate', 'diploma') and (not self.graduation_id or self.graduation_id.state != 'issued'):
             raise UserError(self.env._('O certificado e o diploma exigem a conclusão emitida.'))
 
@@ -139,6 +141,7 @@ class EduDocument(models.Model):
 class EduStudent(models.Model):
     _inherit = 'edu.student'
 
+    birth_municipality = fields.Char(string='Município de naturalidade')
     document_ids = fields.One2many('edu.document', 'student_id', string='Documentos')
 
     def action_new_document(self):
@@ -153,3 +156,43 @@ class EduStudent(models.Model):
                 'default_enrollment_id': self.current_enrollment_id.id or self.enrollment_ids[:1].id,
             },
         }
+
+
+class EduTransfer(models.Model):
+    _inherit = 'edu.transfer'
+
+    document_ids = fields.One2many('edu.document', 'transfer_id', string='Documentos de saída')
+
+    def _exit_document(self, kind, enrollment):
+        """O documento de saída desta transferência (o já emitido, ou um novo, emitido agora)."""
+        self.ensure_one()
+        if self.transfer_type != 'external' or self.state != 'completed':
+            raise UserError(
+                self.env._('Os documentos de saída emitem-se depois de concluída a saída para outra escola.')
+            )
+        document = self.document_ids.filtered(lambda d: d.document_type == kind and d.state == 'issued')[:1]
+        if not document:
+            document = self.env['edu.document'].create(
+                {
+                    'document_type': kind,
+                    'student_id': self.student_id.id,
+                    'enrollment_id': enrollment.id,
+                    'transfer_id': self.id,
+                    'purpose': self.env._('efeitos de transferência'),
+                }
+            )
+            document.action_issue()
+        return document.action_preview()
+
+    def action_print_transfer_guide(self):
+        """Guia de transferência: a carta à escola de destino com a lista dos documentos do processo individual."""
+        return self._exit_document('transfer_guide', self.enrollment_id)
+
+    def action_print_transfer_declaration(self):
+        """Declaração com as notas da última classe concluída (numa saída a meio do ano, a do ano anterior)."""
+        self.ensure_one()
+        finished = self.student_id.enrollment_ids.filtered(lambda e: e.subject_result_ids.filtered('complete'))
+        enrollment = finished.sorted(lambda e: e.academic_year_id.date_start, reverse=True)[:1]
+        if not enrollment:
+            raise UserError(self.env._('O aluno ainda não tem nenhuma classe com classificações finais.'))
+        return self._exit_document('transfer_declaration', enrollment)

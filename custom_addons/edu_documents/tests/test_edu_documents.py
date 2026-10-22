@@ -223,6 +223,22 @@ class TestEduDocuments(TransactionCase):
         html = self._render('edu_documents.action_report_class_directors', self.edu_class)
         for text in ('DIRECTORES DE TURMA', 'Sem director', '0 DE 1 TURMAS COM DIRECTOR'):
             self.assertIn(text, html)
+        # Listas das matrículas, com o cabeçalho e as assinaturas da pauta.
+        self.assertEqual(self.enrollment.action_print_listing()['report_type'], 'qweb-html')
+        html = self._render('edu_documents.action_report_listing_enrollment', self.enrollment)
+        for text in ('LISTA DE MATRÍCULAS', self.student.name, 'REPÚBLICA DE ANGOLA'):
+            self.assertIn(text, html)
+        html = self._render('edu_documents.action_report_listing_student', self.student)
+        self.assertIn('LISTA DE ALUNOS', html)
+        application = self.env['edu.application'].create(
+            {'name': 'Candidata Teste', 'desired_course_id': self.course.id, 'desired_class_number': 10}
+        )
+        application.action_submit()
+        html = self._render('edu_documents.action_report_listing_application', application)
+        self.assertIn('LISTA DE CANDIDATURAS', html)
+        receipt = self._render('edu_documents.action_report_application_receipt', application)
+        for text in ('COMPROVATIVO DE CANDIDATURA', application.reference, 'não constitui garantia de admissão'):
+            self.assertIn(text, receipt)
         # Plano curricular: a matriz por componentes com o cabeçalho da pauta, a partir do curso.
         self.assertEqual(self.course.action_print_curriculum()['report_type'], 'qweb-html')
         plan = self._render('edu_documents.action_report_curriculum', self.course.curriculum_id)
@@ -242,7 +258,17 @@ class TestEduDocuments(TransactionCase):
                 'reason': 'Mudança de residência',
             }  # fmt: skip
         )
-        guide = self._document('transfer_guide', transfer_id=transfer.id)
+        with self.assertRaisesRegex(UserError, 'concluída'):
+            self._document('transfer_guide', transfer_id=transfer.id).action_issue()
+        transfer.action_approve()
+        transfer.write({'vacancy_confirmed': True})
+        transfer.action_complete()
+        self.assertEqual(transfer.action_print_transfer_guide()['report_type'], 'qweb-html')
+        guide = transfer.document_ids.filtered(lambda d: d.document_type == 'transfer_guide')
+        self.assertEqual(guide.state, 'issued')
         html = self._render('edu_documents.action_report_transfer_guide', guide)
+        listing = self._render('edu_documents.action_report_listing_transfer', transfer)
+        self.assertIn('TRANSFERÊNCIAS', listing)
+        self.assertIn('Instituto Médio de Saúde de Luanda', listing)
         self.assertIn('DIRECÇÃO DO INSTITUTO MÉDIO DE SAÚDE DE LUANDA', html)
         self.assertIn('vai transferida para', html)

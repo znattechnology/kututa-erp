@@ -116,6 +116,94 @@
         </field>
     </record>
 
+    <record id="edu_transfer_form_documents" model="ir.ui.view">
+        <field name="name">edu.transfer.form.documents</field>
+        <field name="model">edu.transfer</field>
+        <field name="inherit_id" ref="edu_enrollment.edu_transfer_form"/>
+        <field name="arch" type="xml">
+            <button name="action_cancel" position="before">
+                <button name="action_print_transfer_guide" type="object" string="Guia de transferência" icon="print"
+                        invisible="state != 'completed' or transfer_type != 'external'"/>
+                <button name="action_print_transfer_declaration" type="object" string="Declaração com notas" icon="print"
+                        invisible="state != 'completed' or transfer_type != 'external'"/>
+            </button>
+        </field>
+    </record>
+
+    <record id="edu_application_list_print" model="ir.ui.view">
+        <field name="name">edu.application.list.print</field>
+        <field name="model">edu.application</field>
+        <field name="inherit_id" ref="edu_enrollment.edu_application_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='name']" position="before">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_enrollment_list_print" model="ir.ui.view">
+        <field name="name">edu.enrollment.list.print</field>
+        <field name="model">edu.enrollment</field>
+        <field name="inherit_id" ref="edu_enrollment.edu_enrollment_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='class_id']" position="before">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_transfer_list_print" model="ir.ui.view">
+        <field name="name">edu.transfer.list.print</field>
+        <field name="model">edu.transfer</field>
+        <field name="inherit_id" ref="edu_enrollment.edu_transfer_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='display_name']" position="before">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_student_list_print" model="ir.ui.view">
+        <field name="name">edu.student.list.print</field>
+        <field name="model">edu.student</field>
+        <field name="inherit_id" ref="edu_people.edu_student_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='matricula_number']" position="before">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_application_form_print" model="ir.ui.view">
+        <field name="name">edu.application.form.print</field>
+        <field name="model">edu.application</field>
+        <field name="inherit_id" ref="edu_enrollment.edu_application_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_print_receipt" type="object" string="Comprovativo" icon="print" invisible="state == 'draft'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_enrollment_confirmation_form_print" model="ir.ui.view">
+        <field name="name">edu.enrollment.confirmation.form.print</field>
+        <field name="model">edu.enrollment.confirmation</field>
+        <field name="inherit_id" ref="edu_evaluation.edu_enrollment_confirmation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='state']" position="before">
+                <button name="action_print_listing" type="object" string="Imprimir" icon="print" invisible="state == 'draft'"/>
+            </xpath>
+        </field>
+    </record>
+
     <record id="edu_class_form_documents" model="ir.ui.view">
         <field name="name">edu.class.form.documents</field>
         <field name="model">edu.class</field>

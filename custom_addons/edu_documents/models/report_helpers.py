@@ -174,6 +174,12 @@ ReportTeachers = _document_report('report_teachers', 'hr.employee.public')
 ReportTeacherSchedule = _document_report('report_teacher_schedule', 'hr.employee.public')
 ReportAssignments = _document_report('report_assignments', 'edu.teaching.assignment')
 ReportClassDirectors = _document_report('report_class_directors', 'edu.class')
+ReportListingApplication = _document_report('report_listing_application', 'edu.application')
+ReportListingEnrollment = _document_report('report_listing_enrollment', 'edu.enrollment')
+ReportListingTransfer = _document_report('report_listing_transfer', 'edu.transfer')
+ReportListingStudent = _document_report('report_listing_student', 'edu.student')
+ReportListingConfirmation = _document_report('report_listing_confirmation', 'edu.enrollment.confirmation')
+ReportApplicationReceipt = _document_report('report_application_receipt', 'edu.application')
 
 
 class ReportTerm(models.AbstractModel):
@@ -195,12 +201,6 @@ class ReportTerm(models.AbstractModel):
             cells = {(r.enrollment_id.id, r.subject_id.id): r for r in results}
             terms[document.id] = {'enrollments': enrollments, 'subjects': subjects, 'cells': cells}
         return {'terms': terms}
-
-
-class EduStudent(models.Model):
-    _inherit = 'edu.student'
-
-    birth_municipality = fields.Char(string='Município de naturalidade')
 
 
 SCHEDULE_DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']

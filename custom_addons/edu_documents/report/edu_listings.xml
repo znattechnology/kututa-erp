@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Listas das matrículas (candidaturas, matrículas, anulações, transferências, alunos, confirmação): o mesmo
+         documento, com o cabeçalho e as assinaturas da pauta; os dados vêm de _listing_data de cada modelo. -->
+    <template id="listing_body">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-set="d" t-value="docs._listing_data()"/>
+                <t t-call="edu_documents.pauta_styles"/>
+                <t t-call="edu_documents.teacher_doc_styles"/>
+                <div class="page ep">
+                    <t t-call="edu_documents.pauta_head" visto="False" title="d['title']" context="d['context']"/>
+                    <table class="ep-list o_ignore_layout_styling">
+                        <thead>
+                            <tr>
+                                <th t-foreach="d['columns']" t-as="col"
+                                    t-att-class="'ep-c' if col[2] == 'c' else None"
+                                    t-att-style="col[1] and ('width: ' + str(col[1]) + '%') or None" t-out="col[0]"/>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="d['groups']" t-as="g">
+                                <tr t-if="g['label']" class="ep-group">
+                                    <td t-att-colspan="len(d['columns'])"><t t-out="g['label']"/> · <t t-out="len(g['rows'])"/></td>
+                                </tr>
+                                <tr t-foreach="g['rows']" t-as="row">
+                                    <td t-foreach="row" t-as="cell"
+                                        t-att-class="'ep-c' if d['columns'][cell_index][2] == 'c' else None" t-out="cell"/>
+                                </tr>
+                            </t>
+                            <tr t-if="not d['groups']">
+                                <td t-att-colspan="len(d['columns'])" class="ep-muted">Sem registos.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <t t-call="edu_documents.pauta_signatures" left_role="h.role_case(h.pedagogical_title())" left_name="company.edu_pedagogical_director_name" right_role="h.role_case(h.director_title())" right_name="company.edu_director_name"/>
+                    <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                </div>
+            </t>
+        </t>
+    </template>
+    <template id="report_listing_application"><t t-call="edu_documents.listing_body"/></template>
+    <template id="report_listing_enrollment"><t t-call="edu_documents.listing_body"/></template>
+    <template id="report_listing_transfer"><t t-call="edu_documents.listing_body"/></template>
+    <template id="report_listing_student"><t t-call="edu_documents.listing_body"/></template>
+    <template id="report_listing_confirmation"><t t-call="edu_documents.listing_body"/></template>
+
+    <!-- Comprovativo de candidatura (como o do secPed): o que se entregou, para o candidato guardar. -->
+    <template id="report_application_receipt">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="a">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="a.company_id"/>
+                    <t t-call="edu_documents.pauta_styles"/>
+                    <t t-call="edu_documents.teacher_doc_styles"/>
+                    <div class="page ep">
+                        <t t-call="edu_documents.pauta_head" visto="False" title="'COMPROVATIVO DE CANDIDATURA'"
+                           context="'N.º %s  ANO LECTIVO: %s' % (a.reference, a.academic_year_id.name or '')"/>
+                        <table class="ep-list o_ignore_layout_styling" style="width: 100%;">
+                            <tbody>
+                                <tr><th style="width: 32%">Candidato(a)</th><td t-out="a.name"/></tr>
+                                <tr><th>Data de nascimento</th><td t-out="a.birth_date and a.birth_date.strftime('%d/%m/%Y') or ''"/></tr>
+                                <tr><th>N.º do BI / passaporte</th><td t-out="a.id_number or ''"/></tr>
+                                <tr><th>Encarregado(a) de educação</th><td t-out="' · '.join(p for p in [a.guardian_name, a.guardian_phone] if p)"/></tr>
+                                <tr><th>Curso pretendido</th><td t-out="a.desired_course_id.name or ''"/></tr>
+                                <tr><th>Classe pretendida</th><td t-out="a.desired_class_number and '%sª classe' % a.desired_class_number or ''"/></tr>
+                                <tr t-if="a.previous_school"><th>Escola de proveniência</th><td t-out="a.previous_school"/></tr>
+                                <tr t-if="a.admission_test_required">
+                                    <th>Prova de acesso</th>
+                                    <td t-out="a.has_admission_score and ('%g valores (mínimo %g)' % (a.admission_score, a.admission_min_score)) or 'Por realizar (mínimo %g valores)' % a.admission_min_score"/>
+                                </tr>
+                                <tr><th>Submetida em</th><td t-out="a.submitted_date and context_timestamp(a.submitted_date).strftime('%d/%m/%Y, %H:%M') or ''"/></tr>
+                                <tr><th>Estado</th><td t-out="dict(a._fields['state']._description_selection(a.env)).get(a.state)"/></tr>
+                            </tbody>
+                        </table>
+                        <p style="margin-top: 14px; font-size: 12px;">Este comprovativo não constitui garantia de admissão.
+                        A admissão depende da nota mínima na prova de acesso (quando exigida) e das vagas do curso.</p>
+                        <t t-call="edu_documents.pauta_signatures" left_role="'A Secretaria'" left_name="False" right_role="'O(A) Candidato(a) ou Encarregado(a)'" right_name="False"/>
+                        <div class="ep-generated">Gerado em <t t-out="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y, %H:%M')"/></div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

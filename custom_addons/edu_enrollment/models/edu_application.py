@@ -98,12 +98,19 @@ class EduApplication(models.Model):
         domain="[('academic_year_id', '=', academic_year_id)]",
         help='Turma onde o aluno é matriculado na aprovação.',
     )
+    reference = fields.Char(string='N.º da candidatura', compute='_compute_reference')
     submitted_date = fields.Datetime(string='Submetida em', readonly=True, copy=False)
     reviewed_by_id = fields.Many2one('res.users', string='Decidida por', readonly=True, copy=False)
     reviewed_date = fields.Datetime(string='Decidida em', readonly=True, copy=False)
     decision_note = fields.Text(string='Fundamentação')
     student_id = fields.Many2one('edu.student', string='Aluno', readonly=True, copy=False)
     enrollment_id = fields.Many2one('edu.enrollment', string='Matrícula', readonly=True, copy=False)
+
+    @api.depends('academic_year_id')
+    def _compute_reference(self):
+        for application in self:
+            year = (application.academic_year_id.name or '').replace('/', '-')
+            application.reference = f'CAND/{year}/{application.id:05d}' if application.id else False
 
     @api.depends('desired_course_id')
     def _compute_admission_test(self):

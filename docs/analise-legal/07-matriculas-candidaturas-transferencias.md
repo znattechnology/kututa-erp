@@ -320,3 +320,37 @@ Menu Matrículas › Confirmação de matrículas, que substitui a antiga «Rema
   - só para matrículas anuladas ou transferidas (já não aceita concluídas nem retidas).
 - **Vovó Eva:** as 55 anulações migradas («DESISTENTE») ficaram com o motivo «Desistência». A migração do secPed faz o mesmo nas próximas corridas.
 - **Por decidir:** anulação **por disciplina** no técnico (Despacho 60/08, art. 11.º), à espera da confirmação de que o despacho se aplica.
+
+## 7. Feito (2026-10-22): fase C, transferências, e impressões das matrículas
+
+### Transferências
+- **Quatro casos:** «Mudar de turma», «Mudar de curso», «Sair para outra escola» e, novo, «Entrada de outra escola». O tipo «Mudança interna», igual a mudar de turma, saiu.
+- **Mudar de turma ou de curso:**
+  - a turma de destino tem de ser da mesma classe;
+  - mudar de turma exige o mesmo curso; mudar de curso exige outro curso;
+  - a turma de origem fica gravada logo no pedido;
+  - na mudança de curso, as disciplinas passam a ser as do novo plano, mais as que já têm notas.
+- **Saída:**
+  - só se conclui com a **confirmação de vaga** da escola de destino e a referência do parecer (DP 162/23, art. 30.º, n.º 2);
+  - na conclusão, a matrícula fica «Transferido» e cobra-se a taxa de transferência do plano de propinas, se existir;
+  - depois de concluída, «Guia de transferência» (a carta à escola de destino, no modelo da escola) e «Declaração com notas» (com a última classe concluída; numa saída a meio do ano, a do ano anterior);
+  - a guia já não se emite antes de a transferência estar concluída.
+- **Entrada:**
+  - aluno escolhido (se já esteve na escola) ou indicado pelo nome, BI, data de nascimento e sexo, com a escola de origem e a turma;
+  - na conclusão exige a recepção da guia e do processo individual;
+  - cria o aluno (ou reutiliza-o pelo BI) e matricula-o como «Transferido de outra escola»;
+  - só até ao fim do 1.º mês do II trimestre (art. 25.º, n.º 2); depois disso, só a direcção.
+- **Decisão:** aprovar e rejeitar é da direcção; rejeitar exige fundamentação. A lista mostra o «Próximo passo» (decisão da direcção, parecer de vaga, guia recebida, concluir) e tem filtros por estado, tipo e ano. Uma transferência aprovada ou concluída não se apaga.
+- O tipo de matrícula «Rematrícula» passa a «Confirmação de matrícula».
+
+### Visualizar e imprimir
+Todas as impressões levam o cabeçalho e as assinaturas da pauta. Nas listas, sem linhas escolhidas, imprime-se o ano em curso.
+
+| Tela | Documento |
+|---|---|
+| Candidaturas | «Lista de candidaturas» por curso, ordenada pela nota da prova de acesso, e «Comprovativo» de cada candidatura (n.º CAND/ano/n.º, dados, prova de acesso e a nota «não constitui garantia de admissão»; como no secPed) |
+| Lista de matrículas | «Lista de matrículas» por turma, com o n.º de ordem, o n.º de matrícula, o tipo e o estado |
+| Anulações de matrícula | «Anulações de matrícula» por ano: data, motivo, quem pediu e se é justificada |
+| Transferências | «Transferências» por tipo: de, para e estado |
+| Alunos e Falta confirmar | «Lista de alunos» por situação |
+| Confirmação de matrículas | o resultado: confirmados, pendentes e fora da confirmação, com o motivo |

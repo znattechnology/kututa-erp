@@ -4,15 +4,44 @@
         <field name="name">edu.transfer.list</field>
         <field name="model">edu.transfer</field>
         <field name="arch" type="xml">
-            <list string="Transferências">
-                <field name="student_id"/>
-                <field name="transfer_type"/>
+            <list string="Transferências" decoration-muted="state in ('rejected', 'cancelled')">
+                <field name="display_name" string="Transferência"/>
                 <field name="from_class_id" optional="show"/>
                 <field name="to_class_id" optional="show"/>
                 <field name="external_school" optional="show"/>
+                <field name="origin_school" optional="hide"/>
                 <field name="effective_date"/>
-                <field name="state" widget="badge" decoration-success="state == 'completed'" decoration-info="state in ('pending', 'approved')"/>
+                <field name="next_step" decoration-warning="state == 'approved'"/>
+                <field name="state" widget="badge" decoration-success="state == 'completed'"
+                       decoration-info="state in ('pending', 'approved')" decoration-danger="state == 'rejected'"/>
             </list>
+        </field>
+    </record>
+
+    <record id="edu_transfer_search" model="ir.ui.view">
+        <field name="name">edu.transfer.search</field>
+        <field name="model">edu.transfer</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="student_id"/>
+                <field name="incoming_name"/>
+                <field name="external_school"/>
+                <field name="origin_school"/>
+                <filter name="open" string="Por tratar" domain="[('state', 'in', ('pending', 'approved'))]"/>
+                <filter name="completed" string="Concluídas" domain="[('state', '=', 'completed')]"/>
+                <filter name="closed" string="Rejeitadas ou canceladas" domain="[('state', 'in', ('rejected', 'cancelled'))]"/>
+                <separator/>
+                <filter name="type_external" string="Saídas" domain="[('transfer_type', '=', 'external')]"/>
+                <filter name="type_incoming" string="Entradas" domain="[('transfer_type', '=', 'incoming')]"/>
+                <filter name="type_internal" string="Dentro da escola" domain="[('transfer_type', 'in', ('class_change', 'course_change'))]"/>
+                <separator/>
+                <filter name="current_year" string="Ano em curso" domain="[('academic_year_id.is_current', '=', True)]"/>
+                <group>
+                    <filter name="group_type" string="Tipo" context="{'group_by': 'transfer_type'}"/>
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                    <filter name="group_year" string="Ano lectivo" context="{'group_by': 'academic_year_id'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
@@ -22,29 +51,63 @@
         <field name="arch" type="xml">
             <form string="Transferência">
                 <header>
-                    <button name="action_approve" type="object" string="Aprovar" class="btn-primary" invisible="state != 'pending'"/>
-                    <button name="action_reject" type="object" string="Rejeitar" invisible="state != 'pending'"/>
-                    <button name="action_complete" type="object" string="Concluir" class="btn-primary" invisible="state != 'approved'"
-                            confirm="Aplica a transferência à matrícula. Continuar?"/>
-                    <button name="action_cancel" type="object" string="Cancelar" invisible="state in ('completed', 'cancelled')"/>
+                    <button name="action_approve" type="object" string="Aprovar" class="btn-primary" invisible="state != 'pending'"
+                            groups="edu_core.group_edu_manager"/>
+                    <button name="action_reject" type="object" string="Rejeitar" invisible="state != 'pending'"
+                            groups="edu_core.group_edu_manager"/>
+                    <button name="action_complete" type="object" string="Concluir a transferência" class="btn-primary"
+                            invisible="state != 'approved'"
+                            confirm="Concluir a transferência? A matrícula é alterada (ou criada, numa entrada) e a operação não se desfaz."/>
+                    <button name="action_cancel" type="object" string="Cancelar o pedido" invisible="not id or state in ('completed', 'cancelled', 'rejected')"/>
                     <field name="state" widget="statusbar" statusbar_visible="pending,approved,completed"/>
                 </header>
                 <sheet>
+                    <div class="alert alert-info" role="status" invisible="not next_step">
+                        <strong>Próximo passo:</strong> <field name="next_step" class="d-inline"/>
+                    </div>
                     <group>
                         <group>
-                            <field name="student_id" readonly="state != 'pending'" options="{'no_create': True}"/>
-                            <field name="enrollment_id" readonly="state != 'pending'" options="{'no_create': True}"/>
-                            <field name="transfer_type" readonly="state != 'pending'"/>
-                            <field name="academic_year_id" invisible="1"/>
+                            <field name="transfer_type" widget="radio" readonly="state != 'pending'"/>
+                            <field name="student_id" readonly="state != 'pending'" options="{'no_create': True}"
+                                   required="transfer_type != 'incoming'"
+                                   placeholder="Se já esteve na escola"/>
+                            <field name="enrollment_id" readonly="state != 'pending'" options="{'no_create': True}"
+                                   invisible="transfer_type == 'incoming'" required="transfer_type != 'incoming'"/>
+                            <field name="from_class_id" invisible="not from_class_id"/>
+                            <field name="academic_year_id" options="{'no_create': True}"
+                                   readonly="transfer_type != 'incoming' or state != 'pending'"/>
                             <field name="company_id" invisible="1"/>
                         </group>
                         <group>
-                            <field name="from_class_id" invisible="not from_class_id"/>
-                            <field name="to_class_id" invisible="transfer_type == 'external'" readonly="state not in ('pending', 'approved')" options="{'no_create': True}"/>
-                            <field name="external_school" invisible="transfer_type != 'external'" readonly="state not in ('pending', 'approved')"/>
-                            <field name="effective_date"/>
+                            <field name="to_class_id" invisible="transfer_type == 'external'"
+                                   readonly="state not in ('pending', 'approved')" options="{'no_create': True}"/>
+                            <field name="external_school" invisible="transfer_type != 'external'"
+                                   readonly="state not in ('pending', 'approved')"/>
+                            <field name="vacancy_confirmed" invisible="transfer_type != 'external'"
+                                   readonly="state not in ('pending', 'approved')"/>
+                            <field name="vacancy_reference" invisible="transfer_type != 'external'"
+                                   readonly="state not in ('pending', 'approved')"/>
+                            <field name="origin_school" invisible="transfer_type != 'incoming'"
+                                   readonly="state not in ('pending', 'approved')"/>
+                            <field name="origin_documents" invisible="transfer_type != 'incoming'"
+                                   readonly="state not in ('pending', 'approved')"/>
+                            <field name="effective_date" readonly="state == 'completed'"/>
                             <field name="reviewed_by_id" invisible="not reviewed_by_id"/>
                         </group>
+                    </group>
+                    <group string="Aluno que vem transferido" invisible="transfer_type != 'incoming' or student_id">
+                        <group>
+                            <field name="incoming_name" readonly="state not in ('pending', 'approved')"/>
+                            <field name="incoming_id_number" readonly="state not in ('pending', 'approved')"/>
+                        </group>
+                        <group>
+                            <field name="incoming_birth_date" readonly="state not in ('pending', 'approved')"/>
+                            <field name="incoming_gender" readonly="state not in ('pending', 'approved')"/>
+                        </group>
+                        <div colspan="2" class="text-muted small">
+                            Se o aluno já esteve na escola, escolha-o em «Aluno»; senão, é criado na conclusão (ou
+                            reutilizado, se o BI já existir).
+                        </div>
                     </group>
                     <group>
                         <field name="reason"/>
@@ -60,6 +123,13 @@
         <field name="name">Transferências</field>
         <field name="res_model">edu.transfer</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="edu_transfer_search"/>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Não há transferências por tratar.</p>
+            <p>Mudar de turma ou de curso (na mesma classe), sair para outra escola (com o parecer de vaga da escola de
+            destino) ou receber um aluno de outra escola. A secretaria pede, a direcção aprova.</p>
+        </field>
     </record>
 
     <menuitem id="menu_edu_transfer" action="action_edu_transfer" parent="edu_core.menu_edu_students" sequence="30"/>

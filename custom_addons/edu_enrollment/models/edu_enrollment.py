@@ -66,7 +66,7 @@ class EduEnrollment(models.Model):
     enrollment_type = fields.Selection(
         [
             ('new', 'Nova matrícula'),
-            ('renewal', 'Rematrícula'),
+            ('renewal', 'Confirmação de matrícula'),
             ('repeat', 'Repetente'),
             ('transfer_in', 'Transferido de outra escola'),
         ],
