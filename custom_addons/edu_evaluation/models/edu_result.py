@@ -238,10 +238,17 @@ class EduSubjectResult(models.Model):
                 result = self.sudo().create({'enrollment_id': enrollment_id, 'subject_id': subject_id})
             result._recompute()
 
+    def _subject_class(self):
+        """A turma onde o aluno faz a disciplina: a sua, ou a da classe anterior (Decreto Executivo 60/08)."""
+        self.ensure_one()
+        enrollment = self.enrollment_id
+        lower = enrollment.lower_subject_ids.filtered(lambda line: line.subject_id == self.subject_id)
+        return lower[:1].class_id or enrollment.class_id
+
     def _component(self):
         """Componente de formação da disciplina no plano da turma (a da disciplina, se o plano não a tiver)."""
         self.ensure_one()
-        line = self.enrollment_id.class_id.subject_line_ids.filtered(lambda line: line.subject_id == self.subject_id)
+        line = self._subject_class().subject_line_ids.filtered(lambda line: line.subject_id == self.subject_id)
         return line[:1].component or self.subject_id.component
 
     def _recompute(self):
@@ -259,7 +266,7 @@ class EduSubjectResult(models.Model):
                 mts.append(term.mt if term else None)
             graded = len([mt for mt in mts if mt is not None])
             imported = result.imported_cf if result.has_imported_cf else None
-            line = enrollment.class_id.subject_line_ids.filtered(
+            line = result._subject_class().subject_line_ids.filtered(
                 lambda line, s=result.subject_id: line.subject_id == s
             )[:1]
             vals = {
@@ -353,7 +360,7 @@ class EduSubjectResult(models.Model):
     def _subject_span(self):
         """Classes do plano em que a disciplina é leccionada e se esta turma é a última delas."""
         self.ensure_one()
-        edu_class = self.enrollment_id.class_id
+        edu_class = self._subject_class()
         lines = edu_class.curriculum_id.line_ids.filtered(lambda line: line.subject_id == self.subject_id)
         span = sorted(set(lines.mapped('year_id.class_number')))
         terminal = not span or edu_class.class_number >= span[-1]

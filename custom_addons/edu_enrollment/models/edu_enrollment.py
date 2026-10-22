@@ -80,6 +80,8 @@ class EduEnrollment(models.Model):
         string='N.º de ordem', readonly=True, copy=False, tracking=True, help='Número na pauta da turma, fixo no ano.'
     )
     date = fields.Date(string='Data', required=True, default=fields.Date.context_today)
+    level_subsystem = fields.Selection(related='class_id.level_id.subsystem')
+    level_class_from = fields.Integer(related='class_id.level_id.class_from')
     late_reason = fields.Char(
         string='Motivo da matrícula fora de prazo',
         help='Transferência, doença grave… (DP 162/23, art. 25.º, n.º 2). Exigido fora do período de matrícula.',

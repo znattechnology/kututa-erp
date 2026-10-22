@@ -34,8 +34,11 @@ class EduClass(models.Model):
         self.env.flush_all()
         Summary = self.env['edu.absence.summary'].sudo()
         Summary.invalidate_model()
-        summaries = Summary.search([('class_id', '=', self.id)])
-        return summaries.filtered(lambda s: s.status == FAILED).enrollment_id
+        # Pela matrícula (as faltas de uma disciplina feita noutra turma contam) e sem as disciplinas anuladas.
+        summaries = Summary.search([('enrollment_id.class_id', '=', self.id)])
+        return summaries.filtered(
+            lambda s: s.status == FAILED and s.subject_id not in s.enrollment_id._dropped_subjects()
+        ).enrollment_id
 
     def action_view_lessons(self):
         self.ensure_one()

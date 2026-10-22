@@ -393,3 +393,18 @@ Todas as impressões levam o cabeçalho e as assinaturas da pauta. Nas listas, s
   - até 2 disciplinas em atraso da classe anterior; com mais, bloqueia;
   - na 9.ª e na 12.ª deixa de bloquear e passa a condicional, que só fica efectiva com a aprovação no exame extraordinário até ao fim do I trimestre;
   - o aviso da matrícula diz quais são as disciplinas e o prazo.
+
+## 9. Feito (2026-10-22): ensino técnico, disciplina a disciplina (Decreto Executivo n.º 60/08)
+
+- **Anular uma disciplina** (art. 11.º), com o botão «Anular uma disciplina» na matrícula:
+  - só no ensino técnico; o prazo é o da anulação da matrícula (5.º dia útil do III trimestre); depois disso só a direcção;
+  - a disciplina sai da pauta, da chamada e das faltas, e não conta na decisão final;
+  - nas pautas e mini-pautas aparece «c)»;
+  - fica registada no separador «Disciplinas anuladas» e no histórico da matrícula.
+- **Fazer uma disciplina na classe anterior** (arts. 9.º e 10.º), no separador «Na classe anterior» (a partir da 11.ª):
+  - é o que acontece a quem transita com 6 ou menos valores numa disciplina de continuação, ou com duas negativas seguidas;
+  - a turma tem de ser do mesmo curso e ano lectivo, de uma classe anterior, e ter a disciplina no plano;
+  - o aluno aparece nas notas e na chamada dessa turma, e as notas lançadas lá contam na sua matrícula;
+  - na pauta da turma de origem aparece «e) Feita na classe anterior»; na pauta da turma onde a faz, o aluno vem numa linha à parte («Da Nª classe»).
+- **Proposta automática na confirmação de matrículas:** o assistente propõe estas disciplinas a partir das notas do ano anterior. A linha mostra o motivo «Na classe anterior (Decreto Executivo 60/08): …» e a secretaria confirma.
+- Testes: `test_despacho_60_08_subjects` e `test_lower_subject_proposal` (`edu_evaluation`).

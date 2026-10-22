@@ -250,7 +250,11 @@ class EduEnrollmentConfirmationLine(models.TransientModel):
         except UserError as error:
             self.write({'state': 'pending', 'reason': str(error.args[0] if error.args else error)})
             return
-        self.write({'state': 'done', 'enrollment_id': enrollment.id, 'reason': enrollment.warning or False})
+        notes = enrollment._edu_propose_lower_subjects(previous)
+        if notes:
+            notes = [self.env._('Na classe anterior (Decreto Executivo 60/08): %s', '; '.join(notes))]
+        reason = '\n'.join(filter(None, [enrollment.warning, *notes])) or False
+        self.write({'state': 'done', 'enrollment_id': enrollment.id, 'reason': reason})
 
     def action_retry(self):
         """Depois de resolver o que faltava (exames, turma, faltas justificadas, decisão da direcção), volta a ver o

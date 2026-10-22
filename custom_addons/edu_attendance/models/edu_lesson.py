@@ -194,18 +194,7 @@ class EduLesson(models.Model):
     # ------------------------------------------------------------------
     def _enrollments(self):
         self.ensure_one()
-        return (
-            self.env['edu.enrollment']
-            .sudo()
-            .search(
-                [
-                    ('class_id', '=', self.class_id.id),
-                    ('state', 'in', ENROLLED),
-                    ('subject_ids', 'in', self.subject_id.ids),
-                ],
-                order='order_number, id',
-            )
-        )
+        return self.env['edu.enrollment']._for_class_subject(self.class_id, self.subject_id)
 
     def action_open_roll_call(self):
         """Abre a chamada: uma linha por aluno matriculado na disciplina, todos presentes por omissão."""

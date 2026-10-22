@@ -26,7 +26,7 @@ LEGEND_GENERAL = (
 LEGEND_NATIONAL = '; EN - Exame Nacional; MFED - Média Final de Exame da Disciplina'
 LEGEND_COMMON = (
     'Ex - Exame; CFD - Classificação Final da Disciplina; a) Disciplina já feita; b) Sem elementos de avaliação; '
-    'c) Matrícula anulada; d) Transferido; EEF - Excluído por excesso de faltas'
+    'c) Matrícula anulada; d) Transferido; e) Feita na classe anterior; EEF - Excluído por excesso de faltas'
 )
 # Situação na coluna «Resultado»: texto e cor (azul transita, verde transferido, preto exame/pendente, vermelho).
 VERDICTS = {
@@ -105,10 +105,46 @@ class EduPautaPrint(models.TransientModel):
         return Helpers.ordered(results).subject_id or self.class_id.subject_line_ids.subject_id
 
     def _results(self):
-        return {
-            (r.enrollment_id.id, r.subject_id.id): r
-            for r in self.env['edu.subject.result'].search([('class_id', '=', self.class_id.id)])
-        }
+        Result = self.env['edu.subject.result']
+        found = Result.search([('class_id', '=', self.class_id.id)])
+        for enrollment, subjects in self._visitors().items():
+            found |= Result.search([('enrollment_id', '=', enrollment.id), ('subject_id', 'in', subjects.ids)])
+        return {(r.enrollment_id.id, r.subject_id.id): r for r in found}
+
+    def _visitors(self):
+        """Alunos de outras turmas que fazem aqui uma disciplina (Decreto Executivo 60/08, arts. 9.º e 10.º): por
+        matrícula, as disciplinas que cá fazem."""
+        visitors = {}
+        if 'edu.enrollment.lower.subject' not in self.env:
+            return visitors
+        lines = self.env['edu.enrollment.lower.subject'].sudo().search([('class_id', '=', self.class_id.id)])
+        for line in lines.filtered(lambda line: line.enrollment_id.state != 'draft'):
+            visitors.setdefault(line.enrollment_id, self.env['edu.subject'])
+            visitors[line.enrollment_id] |= line.subject_id
+        return visitors
+
+    def _terms(self, trimester):
+        """Classificações do trimestre da turma e as dos alunos que cá fazem uma disciplina."""
+        Term = self.env['edu.term.result']
+        found = Term.search([('class_id', '=', self.class_id.id), ('trimester_id', '=', trimester.id)])
+        for enrollment, subjects in self._visitors().items():
+            found |= Term.search(
+                [
+                    ('enrollment_id', '=', enrollment.id),
+                    ('subject_id', 'in', subjects.ids),
+                    ('trimester_id', 'in', enrollment.academic_year_id.trimester_ids.filtered(
+                        lambda t, n=trimester.number: t.number == n).ids),
+                ]
+            )  # fmt: skip
+        return {(t.enrollment_id.id, t.subject_id.id): t for t in found}
+
+    def _cell_mark(self, enrollment, subject):
+        """«c)» na disciplina anulada, «e)» na que o aluno faz numa turma da classe anterior."""
+        if 'subject_drop_ids' in enrollment._fields and subject in enrollment.subject_drop_ids.subject_id:
+            return 'c)'
+        if 'lower_subject_ids' in enrollment._fields and subject in enrollment.lower_subject_ids.subject_id:
+            return 'e)'
+        return False
 
     def _trimester_absences(self, trimester):
         """Faltas justificadas e injustificadas do trimestre por (matrícula, disciplina)."""
@@ -151,12 +187,7 @@ class EduPautaPrint(models.TransientModel):
             tail = ['CF', 'PG', 'CA'] if technical else (['MFD', 'CFD', 'EN', 'MFED'] if national else ['MFD', 'CFD'])
         labels = base + tail
         pass_grade = policy.pass_grade
-        terms = {
-            (t.enrollment_id.id, t.subject_id.id): t
-            for t in self.env['edu.term.result'].search(
-                [('class_id', '=', self.class_id.id), ('trimester_id', '=', trimester.id)]
-            )
-        }
+        terms = self._terms(trimester)
         absences = self._trimester_absences(trimester)
         year_results = self._year_results()
 
@@ -171,14 +202,20 @@ class EduPautaPrint(models.TransientModel):
             return (str(value) if value else '', None)
 
         rows = []
-        for enrollment in self._enrollments():
+        visitors = self._visitors()
+        for enrollment in self._enrollments() | self.env['edu.enrollment'].concat(*visitors):
             exit_code = EXIT_CODES.get(enrollment.state)
+            only = visitors.get(enrollment) if enrollment.class_id != self.class_id else None
             cells = {}
             for subject in subjects:
                 key = (enrollment.id, subject.id)
                 excused, absent = absences.get(key, (0, 0))
-                if exit_code:
-                    code = (exit_code[0], None)
+                if only is not None and subject not in only:
+                    cells[subject.id] = [('', None)] * (len(base) + len(tail))
+                    continue
+                mark = exit_code[0] if exit_code else self._cell_mark(enrollment, subject)
+                if mark:
+                    code = (mark, None)
                     cells[subject.id] = [code, code, code, count(excused), count(absent)] + [code] * len(tail)
                     continue
                 term = terms.get(key)
@@ -212,7 +249,9 @@ class EduPautaPrint(models.TransientModel):
                             ]
                 cells[subject.id] = values
             year_result = year_results.get(enrollment.id)
-            if exit_code:
+            if only is not None:
+                verdict, negatives = (f'Da {enrollment.class_id.class_number}ª classe', None), ''
+            elif exit_code:
                 verdict, negatives = (exit_code[1], exit_code[2]), ''
             elif year_result and year_result.absence_excluded:
                 verdict, negatives = ('EEF', 'neg'), str(year_result.negative_count)
@@ -222,7 +261,7 @@ class EduPautaPrint(models.TransientModel):
                 verdict, negatives = ('Pendente', None), ''
             rows.append(
                 {
-                    'number': enrollment.order_number or '',
+                    'number': '' if only is not None else enrollment.order_number or '',
                     'name': enrollment.student_id.name,
                     'cells': cells,
                     'negatives': negatives,
@@ -298,18 +337,19 @@ class EduPautaPrint(models.TransientModel):
         else:
             description = 'classificação do trimestre (cumulativa)' if technical else 'média do trimestre'
         results = self._results()
-        terms = {
-            (t.enrollment_id.id, t.subject_id.id): t
-            for t in self.env['edu.term.result'].search(
-                [('class_id', '=', self.class_id.id), ('trimester_id', '=', trimester.id)]
-            )
-        }
+        terms = self._terms(trimester)
         absences = self._trimester_absences(trimester)
         rows = []
-        for enrollment in self._enrollments():
+        visitors = self._visitors()
+        for enrollment in self._enrollments() | self.env['edu.enrollment'].concat(*visitors):
+            only = visitors.get(enrollment) if enrollment.class_id != self.class_id else None
             cells, values = {}, []
             for subject in subjects:
                 key = (enrollment.id, subject.id)
+                mark = self._cell_mark(enrollment, subject)
+                if (only is not None and subject not in only) or mark:
+                    cells[subject.id] = (mark or '', False, '', '')
+                    continue
                 if final:
                     result = results.get(key)
                     value = result.cf if result and result.complete else None
@@ -329,7 +369,7 @@ class EduPautaPrint(models.TransientModel):
             average = round_units(sum(values) / len(values)) if values else None
             rows.append(
                 {
-                    'number': enrollment.order_number or '',
+                    'number': '' if only is not None else enrollment.order_number or '',
                     'name': enrollment.student_id.name,
                     'cells': cells,
                     'average': '—' if average is None else str(average),

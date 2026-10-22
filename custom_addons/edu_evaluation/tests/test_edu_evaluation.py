@@ -474,3 +474,89 @@ class TestEduEvaluation(TransactionCase):
         lines[domingos].action_retry()
         self.assertEqual((lines[domingos].state, lines[domingos].enrollment_id.class_number), ('done', 11))
         self.assertEqual(enrollments[domingos].state, 'completed')
+
+    def test_despacho_60_08_subjects(self):
+        """Técnico (Decreto Executivo n.º 60/08): anulação a uma disciplina (art. 11.º) e disciplina feita numa turma da
+        classe anterior (arts. 9.º e 10.º)."""
+        ana, bento = self.students[:2]
+        class11 = self._class(self.tec, 11)
+        shared = (self.class10.subject_line_ids.subject_id & class11.subject_line_ids.subject_id)[:2]
+        subject, other = shared[0], shared[1]
+        codes = shared.mapped('code')
+        ana_enrollment = self._enroll(class11, ana, codes)
+        bento_enrollment = self._enroll(class11, bento, codes)
+        # Anulação a uma disciplina: sai das notas dessa disciplina e da decisão; as outras seguem.
+        self.env['edu.enrollment.subject.drop'].create(
+            {'enrollment_id': ana_enrollment.id, 'subject_id': other.id, 'reason': 'Pedido do aluno'}
+        )
+        Enrollment = self.env['edu.enrollment']
+        self.assertNotIn(ana_enrollment, Enrollment._for_class_subject(class11, other))
+        self.assertIn(ana_enrollment, Enrollment._for_class_subject(class11, subject))
+        # Fora do prazo (5.º dia útil do III trimestre), só a direcção.
+        secretary = self.env['res.users'].create(
+            {
+                'name': 'Sec',
+                'login': 'sec_6008',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        late_date = ana_enrollment._drop_deadline() + timedelta(days=1)
+        with self.assertRaisesRegex(UserError, 'só a direcção'):
+            self.env['edu.enrollment.subject.drop'].with_user(secretary).create(
+                {'enrollment_id': bento_enrollment.id, 'subject_id': other.id, 'date': late_date}
+            )
+        # Só no técnico.
+        general = self._enroll(self.class7, self.students[2], ['LP'])
+        with self.assertRaises(ValidationError):
+            self.env['edu.enrollment.subject.drop'].create(
+                {'enrollment_id': general.id, 'subject_id': self._subject(self.class7, 'LP').id}
+            )
+        # Disciplina na classe anterior: o Bento faz «subject» com a 10.ª.
+        self.env['edu.enrollment.lower.subject'].create(
+            {'enrollment_id': bento_enrollment.id, 'subject_id': subject.id, 'class_id': self.class10.id}
+        )
+        self.assertIn(bento_enrollment, Enrollment._for_class_subject(self.class10, subject))
+        self.assertNotIn(bento_enrollment, Enrollment._for_class_subject(class11, subject))
+        assessment = self.env['edu.assessment'].create(
+            {
+                'name': 'Teste',
+                'class_id': self.class10.id,
+                'subject_id': subject.id,
+                'trimester_id': self.t1.id,
+                'assessment_type': 'continuous',
+            }
+        )
+        assessment.action_fill_students()
+        self.assertIn(bento_enrollment, assessment.grade_ids.enrollment_id)
+        # Pautas (edu_documents): na 10.ª, o Bento só nessa disciplina; na 11.ª, «e)» e a disciplina anulada «c)».
+        if 'edu.pauta.print' not in self.env:
+            return
+        wizard10 = self.env['edu.pauta.print'].create({'class_id': self.class10.id, 'trimester_id': self.t1.id})
+        rows10 = {row['name']: row for row in wizard10._pauta_data()['rows']}
+        self.assertEqual(rows10[bento.name]['verdict'][0], 'Da 11ª classe')
+        wizard11 = self.env['edu.pauta.print'].create({'class_id': class11.id, 'trimester_id': self.t1.id})
+        rows11 = {row['name']: row for row in wizard11._pauta_data()['rows']}
+        self.assertEqual(rows11[bento.name]['cells'][subject.id][0][0], 'e)')
+        self.assertEqual(rows11[ana.name]['cells'][other.id][0][0], 'c)')
+
+    def test_lower_subject_proposal(self):
+        """Na confirmação, a disciplina de continuação com 6 ou menos passa para uma turma da classe anterior."""
+        ana = self.students[0]
+        class11 = self._class(self.tec, 11, year=self.next_year)
+        self._class(self.tec, 10, year=self.next_year)
+        subject = (self.class10.subject_line_ids.subject_id & class11.subject_line_ids.subject_id)[:1]
+        enrollment = self._enroll(self.class10, ana, subject.mapped('code'))
+        self.env['edu.subject.result'].create(
+            {'enrollment_id': enrollment.id, 'subject_id': subject.id, 'final': 6, 'complete': True}
+        )
+        self.env['edu.year.result'].create({'enrollment_id': enrollment.id, 'status': 'promoted'})
+        wizard = self.env['edu.enrollment.confirmation'].create(
+            {'source_year_id': self.year.id, 'target_year_id': self.next_year.id, 'create_classes': False}
+        )
+        wizard.action_prepare()
+        wizard.action_confirm()
+        line = wizard.line_ids.filtered(lambda line: line.student_id == ana)
+        self.assertEqual(line.state, 'done')
+        lower = line.enrollment_id.lower_subject_ids
+        self.assertEqual((lower.subject_id, lower.class_id.class_number), (subject, 10))
+        self.assertIn('classe anterior', line.reason)

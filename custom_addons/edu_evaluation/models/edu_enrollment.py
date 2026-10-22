@@ -131,6 +131,54 @@ class EduEnrollment(models.Model):
         )
         return alerts
 
+    def _edu_propose_lower_subjects(self, previous):
+        """Técnico (Decreto Executivo n.º 60/08, arts. 9.º e 10.º): ao transitar, as disciplinas de continuação com 6 ou
+        menos valores na classe anterior — ou com negativa nos dois anos anteriores (trienais) — fazem-se numa turma
+        dessa classe, havendo vaga. Cria essas inscrições e devolve as notas a mostrar (o que não teve turma)."""
+        self.ensure_one()
+        if self.level_subsystem != 'technical' or self.class_number <= previous.class_number:
+            return []
+        continuing = self.class_id.subject_line_ids.subject_id
+        notes = []
+        older = self.student_id.enrollment_ids.filtered(
+            lambda e: e.academic_year_id.date_start < previous.academic_year_id.date_start
+        ).sorted(lambda e: e.academic_year_id.date_start, reverse=True)[:1]
+        for result in previous.sudo().subject_result_ids.filtered(lambda r: r.complete and r.subject_id in continuing):
+            subject = result.subject_id
+            before = older.sudo().subject_result_ids.filtered(lambda r, s=subject: r.subject_id == s and r.complete)
+            two_negatives = result.final < 10 and before and before[:1].final < 10
+            if result.final > 6 and not two_negatives:
+                continue
+            classes = self.env['edu.class'].search(
+                [
+                    ('academic_year_id', '=', self.academic_year_id.id),
+                    ('course_id', '=', self.course_id.id),
+                    ('class_number', '=', previous.class_number),
+                ]
+            )
+            target = classes.filtered(lambda c: c.name == previous.class_id.name)[:1] or classes[:1]
+            if not target:
+                notes.append(
+                    self.env._(
+                        '%(subject)s: sem turma da %(number)sª para a fazer.',
+                        subject=subject.name,
+                        number=previous.class_number,
+                    )
+                )
+                continue
+            reason = (
+                self.env._('Negativa em dois anos seguidos')
+                if two_negatives and result.final > 6
+                else self.env._('%s valores na classe anterior', f'{result.final:g}')
+            )
+            self.env['edu.enrollment.lower.subject'].create(
+                {'enrollment_id': self.id, 'subject_id': subject.id, 'class_id': target.id, 'reason': reason}
+            )
+            notes.append(
+                self.env._('%(subject)s na %(class)s', subject=subject.name, **{'class': target._editor_label()})
+            )
+        return notes
+
     def _edu_is_terminal(self):
         """A última classe do plano do curso."""
         self.ensure_one()

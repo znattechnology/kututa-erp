@@ -26,6 +26,8 @@
                     <button name="action_confirm" type="object" string="Confirmar a matrícula" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_mark_irregular" type="object" string="Marcar irregular" invisible="state != 'active'"/>
                     <button name="action_mark_regular" type="object" string="Regularizar" invisible="state != 'irregular'"/>
+                    <button name="action_drop_subject" type="object" string="Anular uma disciplina"
+                            invisible="state not in ('active', 'irregular') or level_subsystem != 'technical'"/>
                     <button name="action_drop" type="object" string="Anular a matrícula" invisible="state not in ('draft', 'active', 'irregular')"/>
                     <button name="action_reactivate" type="object" string="Reactivar" invisible="state not in ('dropped', 'transferred')"
                             confirm="Reactivar a matrícula? Voltam a aplicar-se as regras da matrícula (vagas, retenções, dívida); a saída anterior fica no histórico."/>
@@ -56,6 +58,9 @@
                             <field name="drop_exam_right" invisible="not drop_exam_right"/>
                             <field name="drop_reason" invisible="not drop_reason"/>
                             <field name="company_id" invisible="1"/>
+                            <field name="level_subsystem" invisible="1"/>
+                            <field name="level_class_from" invisible="1"/>
+                            <field name="class_number" invisible="1"/>
                         </group>
                     </group>
                     <div class="alert alert-danger" role="alert" invisible="not documents_overdue or documents_complete">
@@ -79,6 +84,17 @@
                                 <field name="documents_overdue" invisible="1"/>
                             </group>
                         </page>
+                        <page string="Disciplinas anuladas" name="subject_drops" invisible="not subject_drop_ids">
+                            <field name="subject_drop_ids" readonly="1">
+                                <list>
+                                    <field name="subject_id"/>
+                                    <field name="date"/>
+                                    <field name="reason"/>
+                                </list>
+                            </field>
+                            <p class="text-muted small">A anulação produz efeitos só nessa disciplina; o aluno pode fazer
+                            exame na época normal (Decreto Executivo n.º 60/08, arts. 11.º e 39.º).</p>
+                        </page>
                         <page string="Disciplinas" name="subjects">
                             <field name="subject_ids" readonly="state not in ('draft', 'active', 'irregular')">
                                 <list>
@@ -87,6 +103,19 @@
                                     <field name="component"/>
                                 </list>
                             </field>
+                        </page>
+                        <page string="Na classe anterior" name="lower_subjects" invisible="level_subsystem != 'technical' or class_number &lt;= level_class_from">
+                            <field name="lower_subject_ids" readonly="state not in ('active', 'irregular')">
+                                <list editable="bottom">
+                                    <field name="subject_id" options="{'no_create': True}"/>
+                                    <field name="class_id" options="{'no_create': True}"/>
+                                    <field name="reason"/>
+                                    <field name="academic_year_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                            <p class="text-muted small">Disciplinas de continuação com 6 ou menos valores, ou trienais com
+                            duas negativas seguidas, fazem-se numa turma da classe anterior, havendo vaga (Decreto
+                            Executivo n.º 60/08, arts. 9.º e 10.º). As notas lançam-se nessa turma.</p>
                         </page>
                         <page string="Notas" name="note"><field name="note" nolabel="1"/></page>
                     </notebook>
@@ -158,4 +187,26 @@
     </record>
     <menuitem id="menu_edu_enrollment_document_type" action="action_edu_enrollment_document_type"
               parent="edu_core.menu_edu_config" sequence="40"/>
+
+    <record id="edu_enrollment_subject_drop_form" model="ir.ui.view">
+        <field name="name">edu.enrollment.subject.drop.form</field>
+        <field name="model">edu.enrollment.subject.drop</field>
+        <field name="arch" type="xml">
+            <form string="Anular a matrícula a uma disciplina">
+                <group>
+                    <field name="enrollment_id" readonly="1"/>
+                    <field name="enrollment_subject_ids" invisible="1"/>
+                    <field name="subject_id" options="{'no_create': True}"/>
+                    <field name="date"/>
+                    <field name="reason"/>
+                </group>
+                <p class="text-muted small">Até ao 5.º dia útil do III trimestre, com efeito só nessa disciplina
+                (Decreto Executivo n.º 60/08, art. 11.º); depois disso, só a direcção.</p>
+                <footer>
+                    <button string="Anular a disciplina" special="save" class="btn-primary"/>
+                    <button string="Cancelar" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>

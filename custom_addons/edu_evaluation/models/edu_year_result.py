@@ -91,14 +91,17 @@ class EduYearResult(models.Model):
                 continue  # uma decisão manual nunca é sobreposta
             enrollment = result.enrollment_id
             policy = result._policy()
-            subjects = enrollment.subject_ids
+            # A disciplina anulada (Decreto Executivo 60/08, art. 11.º) não conta para a decisão.
+            subjects = enrollment.subject_ids - enrollment._dropped_subjects()
             if policy.regime != 'preschool':
                 Subject._recompute_keys({(enrollment.id, subject.id) for subject in subjects})
             subject_results = Subject.search(
                 [('enrollment_id', '=', enrollment.id), ('subject_id', 'in', subjects.ids)]
             )
             # As disciplinas sem professor não contam para as negativas (resumo do regime, IV.6).
-            taught = enrollment.class_id.assignment_ids.subject_id or subjects
+            taught = (
+                enrollment.class_id.assignment_ids.subject_id or subjects
+            ) | enrollment.lower_subject_ids.subject_id
             counted = subject_results.filtered(lambda r, taught=taught: r.subject_id in taught)
             complete = bool(counted) and all(counted.mapped('complete')) and len(counted) == len(subjects & taught)
             finals = {r.subject_id.code or str(r.subject_id.id): r.final for r in counted if r.complete}

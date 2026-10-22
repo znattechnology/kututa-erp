@@ -12,3 +12,9 @@ access_edu_enrollment_document_type_employee,access_edu_enrollment_document_type
 access_edu_enrollment_document_user,access_edu_enrollment_document_user,edu.enrollment.document,edu_core.group_edu_user,crud,
 access_edu_enrollment_document_employee,access_edu_enrollment_document_employee,edu.enrollment.document,base.group_user,r,
 edu_enrollment_document_comp_rule,edu.enrollment.document multi-empresa,edu.enrollment.document,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_enrollment_subject_drop_user,access_edu_enrollment_subject_drop_user,edu.enrollment.subject.drop,edu_core.group_edu_user,crud,
+access_edu_enrollment_subject_drop_employee,access_edu_enrollment_subject_drop_employee,edu.enrollment.subject.drop,base.group_user,r,
+access_edu_enrollment_lower_subject_user,access_edu_enrollment_lower_subject_user,edu.enrollment.lower.subject,edu_core.group_edu_user,crud,
+access_edu_enrollment_lower_subject_employee,access_edu_enrollment_lower_subject_employee,edu.enrollment.lower.subject,base.group_user,r,
+edu_enrollment_subject_drop_comp_rule,edu.enrollment.subject.drop multi-empresa,edu.enrollment.subject.drop,,crud,"[('company_id', 'in', company_ids)]"
+edu_enrollment_lower_subject_comp_rule,edu.enrollment.lower.subject multi-empresa,edu.enrollment.lower.subject,,crud,"[('company_id', 'in', company_ids)]"

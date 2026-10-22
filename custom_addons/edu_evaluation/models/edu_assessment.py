@@ -140,18 +140,8 @@ class EduAssessment(models.Model):
     def action_fill_students(self):
         """Uma linha por aluno matriculado na disciplina, pela ordem da pauta."""
         for assessment in self:
-            enrollments = (
-                self.env['edu.enrollment']
-                .sudo()
-                .search(
-                    [
-                        ('class_id', '=', assessment.class_id.id),
-                        ('state', 'in', ENROLLED),
-                        ('subject_ids', 'in', assessment.subject_id.ids),
-                    ],
-                    order='order_number, id',
-                )
-            )
+            # Os da turma inscritos na disciplina e os de outras turmas que a fazem aqui (Decreto Executivo 60/08).
+            enrollments = self.env['edu.enrollment']._for_class_subject(assessment.class_id, assessment.subject_id)
             missing = enrollments - assessment.grade_ids.enrollment_id
             self.env['edu.grade'].create(
                 [{'assessment_id': assessment.id, 'enrollment_id': enrollment.id} for enrollment in missing]
@@ -192,7 +182,11 @@ class EduGrade(models.Model):
                 raise ValidationError(
                     self.env._('A nota vai de 0 a %s (cotação da avaliação).', grade.assessment_id.max_score)
                 )
-            if grade.enrollment_id.class_id != grade.assessment_id.class_id:
+            assessment = grade.assessment_id
+            visiting = grade.enrollment_id.lower_subject_ids.filtered(
+                lambda line, a=assessment: line.class_id == a.class_id and line.subject_id == a.subject_id
+            )
+            if grade.enrollment_id.class_id != assessment.class_id and not visiting:
                 raise ValidationError(self.env._('%s não é desta turma.', grade.student_id.name))
 
     def _prepare(self, vals):
