@@ -151,6 +151,8 @@ class EduTransfer(models.Model):
                     raise ValidationError(self.env._('Indique a escola de origem.'))
                 if not transfer.to_class_id:
                     raise ValidationError(self.env._('Indique a turma onde o aluno fica.'))
+                if transfer.academic_year_id and transfer.to_class_id.academic_year_id != transfer.academic_year_id:
+                    raise ValidationError(self.env._('A turma tem de ser do ano lectivo da transferência.'))
                 continue
             if not transfer.student_id or not transfer.enrollment_id:
                 raise ValidationError(self.env._('Indique o aluno e a matrícula.'))
@@ -166,12 +168,23 @@ class EduTransfer(models.Model):
             origin = transfer.from_class_id or transfer.enrollment_id.class_id
             if target == origin and transfer.state == 'pending':
                 raise ValidationError(self.env._('A turma de destino é a actual.'))
+            if target.academic_year_id != transfer.enrollment_id.academic_year_id:
+                raise ValidationError(self.env._('A turma de destino tem de ser do mesmo ano lectivo.'))
             if target.class_number != origin.class_number:
                 raise ValidationError(self.env._('A turma de destino tem de ser da mesma classe.'))
             if kind == 'class_change' and target.course_id != origin.course_id:
                 raise ValidationError(self.env._('Para mudar de curso, escolha «Mudar de curso».'))
             if kind == 'course_change' and target.course_id == origin.course_id:
                 raise ValidationError(self.env._('Numa mudança de curso, a turma de destino é de outro curso.'))
+
+    def write(self, vals):
+        # Mudar o destino de uma transferência aprovada volta a pedir a decisão da direcção.
+        decided = {'to_class_id', 'external_school', 'vacancy_confirmed', 'vacancy_reference', 'transfer_type'}
+        if decided & set(vals) and 'state' not in vals and not self.env.user.has_group('edu_core.group_edu_manager'):
+            approved = self.filtered(lambda t: t.state == 'approved')
+            if approved:
+                super(EduTransfer, approved).write({'state': 'pending', 'reviewed_by_id': False})
+        return super().write(vals)
 
     def _check_manager(self):
         if not self.env.su and not self.env.user.has_group('edu_core.group_edu_manager'):

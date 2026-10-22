@@ -310,6 +310,11 @@ class TestEduEnrollment(TransactionCase):
         self.assertEqual(set(renewed.mapped('state')), {'active'})
         self.assertEqual(set(renewed.mapped('enrollment_type')), {'renewal'})
         self.assertEqual(carla.matricula_number, '2026-0001')
+        # Enquanto o ano que acaba for o ano em curso, a turma actual é a dele (a lista «Matriculados este ano» não
+        # se esvazia); ao passar ao ano seguinte, é a nova.
+        self.assertEqual(carla.current_class_id, self.class_b)
+        self.assertEqual(carla.student_status, 'enrolled')
+        self.next_year.action_set_current()
         self.assertEqual(carla.current_class_id, eleventh)
         # Repetir a rematrícula não duplica.
         self.env['edu.enrollment.renewal'].create(
@@ -420,3 +425,136 @@ class TestEduEnrollment(TransactionCase):
             late.late_reason = 'Transferência de outra província'
             late.action_confirm()
             self.assertEqual(late.state, 'active')
+
+    def test_audit_enrollment(self):
+        """Auditoria da fase 5: vagas da seriação, período de matrícula do ano certo, transferências e anulações."""
+        carla, ana, bento = self.students
+        self.class_b.capacity = 30
+        Application = self.env['edu.application']
+        self.nursing.admission_vacancies = 2
+
+        def candidates(*names):
+            apps = Application.create(
+                [
+                    {
+                        'name': name,
+                        'desired_course_id': self.nursing.id,
+                        'desired_class_number': 10,
+                        'completed_class': 9,
+                        'birth_date': date(2010, 3, 1),
+                    }
+                    for name in names
+                ]
+            )
+            apps.action_submit()
+            apps.write({'has_admission_score': True, 'admission_score': 14})
+            return apps
+
+        first = candidates('Um', 'Dois')
+        Application.action_rank()
+        first.write({'class_id': self.class_b.id})
+        first.action_approve()
+        # Os aprovados ocupam as vagas: os que chegam depois ficam suplentes.
+        late = candidates('Três', 'Quatro')
+        Application.action_rank()
+        self.assertEqual(set(late.mapped('admission_result')), {'waitlist'})
+        # Quem perde a nota sai da seriação.
+        late[0].has_admission_score = False
+        Application.action_rank()
+        self.assertFalse(late[0].admission_result)
+        # Um transferido não entra na seriação nem precisa de ser admitido.
+        self.assertFalse(Application.new({'desired_course_id': self.nursing.id, 'transfer_in': True})._edu_ranked())
+
+        # Transferência interna aprovada: o destino não sai do ano e, mudado pela secretaria, volta a pendente.
+        enrollment = self._enroll(carla, self.class_a)
+        secretary = self.env['res.users'].create(
+            {'name': 'Sec', 'login': 'sec_aud', 'group_ids': [(6, 0, [self.env.ref('edu_core.group_edu_user').id])]}
+        )
+        transfer = self.env['edu.transfer'].create(
+            {
+                'student_id': carla.id,
+                'enrollment_id': enrollment.id,
+                'transfer_type': 'class_change',
+                'to_class_id': self.class_b.id,
+                'reason': 'Turno',
+            }
+        )
+        transfer.action_approve()
+        next_class = self._class(self.nursing, 'A', 10, year=self.next_year)
+        with self.assertRaisesRegex(ValidationError, 'mesmo ano lectivo'):
+            transfer.with_user(secretary).to_class_id = next_class
+        other_class = self._class(self.nursing, 'D', 10)
+        transfer.with_user(secretary).to_class_id = other_class
+        self.assertEqual(transfer.state, 'pending')
+
+        # Anular só matrículas em curso; o rascunho apaga-se.
+        draft = self._enroll(ana, self.class_b, confirm=False)
+        with self.assertRaisesRegex(UserError, 'rascunho'):
+            draft._drop('x')
+        # Depois de uma saída para outra escola, não se reactiva.
+        exit_enrollment = self._enroll(bento, self.class_b)
+        exit_transfer = self.env['edu.transfer'].create(
+            {
+                'student_id': bento.id,
+                'enrollment_id': exit_enrollment.id,
+                'transfer_type': 'external',
+                'external_school': 'Outra escola',
+                'vacancy_confirmed': True,
+                'vacancy_reference': 'Ofício 1/2026',
+                'reason': 'Mudança',
+            }
+        )
+        exit_transfer.action_approve()
+        exit_transfer.action_complete()
+        with self.assertRaisesRegex(UserError, 'entrada por transferência'):
+            exit_enrollment.action_reactivate()
+        with self.assertRaisesRegex(UserError, 'fechada'):
+            exit_enrollment._drop('outra vez')
+
+        # Calendário com o período de 2027/2028 (Agosto de 2027): não serve para 2026/2027.
+        self.env['edu.calendar.event'].create(
+            {
+                'name': 'Matrícula de novos alunos',
+                'academic_year_id': self.year.id,
+                'phase': 'enrollment',
+                'date_start': date(2027, 8, 16),
+                'date_end': date(2027, 8, 20),
+            }
+        )
+        with freeze_time('2026-10-22'):
+            student = self.env['edu.student'].create({'name': 'Atrasado', 'birth_date': date(2010, 1, 1)})
+            new = self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': self.class_b.id})
+            with self.assertRaisesRegex(UserError, 'motivo do atraso'):
+                new.action_confirm()
+            # A entrada por transferência tem o seu prazo e conclui-se.
+            incoming = self.env['edu.transfer'].create(
+                {
+                    'transfer_type': 'incoming',
+                    'incoming_name': 'Vem de fora',
+                    'origin_school': 'Escola de origem',
+                    'to_class_id': self.class_b.id,
+                    'origin_documents': True,
+                    'reason': 'Mudança de residência',
+                }
+            )
+            incoming.action_approve()
+            incoming.action_complete()
+            self.assertEqual(incoming.enrollment_id.state, 'active')
+
+    def test_drop_deadline_skips_breaks(self):
+        """Técnico: o 5.º dia útil do III trimestre não conta os feriados nem as pausas do calendário escolar."""
+        enrollment = self._enroll(self.students[0], self.class_b)
+        third = self.year.trimester_ids.filtered(lambda t: t.number == 3)
+        before = enrollment._drop_deadline()
+        self.env['edu.calendar.event'].create(
+            {
+                'name': 'Pausa pedagógica',
+                'academic_year_id': self.year.id,
+                'event_type': 'holiday',
+                'date_start': third.date_start,
+                'date_end': third.date_start + timedelta(days=13),
+            }
+        )
+        after = enrollment._drop_deadline()
+        self.assertGreater(after, third.date_start + timedelta(days=13))
+        self.assertGreater(after, before)

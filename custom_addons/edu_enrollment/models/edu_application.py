@@ -178,7 +178,10 @@ class EduApplication(models.Model):
             if application.state != 'draft':
                 raise UserError(self.env._('Só um rascunho se submete.'))
             start, end = self.env['edu.calendar.event']._phase_window(
-                'application', level=application.desired_course_id.level_id, company=application.company_id
+                'application',
+                level=application.desired_course_id.level_id,
+                company=application.company_id,
+                year=application.academic_year_id,
             )
             today = fields.Date.context_today(self)
             if end and not start <= today <= end and not manager:
@@ -254,7 +257,7 @@ class EduApplication(models.Model):
                             min=age_level.min_age,
                         )
                     )
-            if course.admission_vacancies and application.admission_result != 'admitted':
+            if application._edu_ranked() and application.admission_result != 'admitted':
                 raise UserError(
                     self.env._(
                         'O curso tem %s vagas: aprove só os admitidos na seriação («Seriar candidaturas»).',
@@ -300,20 +303,42 @@ class EduApplication(models.Model):
         decrescente da nota da prova (desempate pela média do nível anterior), até esgotar as vagas; os seguintes
         ficam suplentes. Os que não têm a nota mínima já foram rejeitados."""
         domain = [('state', 'in', REVIEWABLE), ('company_id', '=', self.env.company.id)]
-        candidates = self.search(domain)
+        candidates = self.search(domain).filtered(lambda a: a._edu_ranked() or a.admission_result)
         for course, year in {(a.desired_course_id, a.academic_year_id) for a in candidates if a.desired_course_id}:
             group = candidates.filtered(
                 lambda a, c=course, y=year: a.desired_course_id == c and a.academic_year_id == y
             )
-            ranked = group.filtered(lambda a: not a.admission_test_required or a.has_admission_score).sorted(
-                lambda a: (-a.admission_score, -a.previous_average, a.name or '')
+            # Cada seriação recomeça: quem deixou de ter nota (ou de contar) perde o lugar.
+            group.write({'admission_rank': 0, 'admission_result': False})
+            # As vagas que os já aprovados ocupam saem das vagas do curso.
+            taken = self.search_count(
+                [
+                    ('state', '=', 'approved'),
+                    ('desired_course_id', '=', course.id),
+                    ('academic_year_id', '=', year.id),
+                    ('company_id', '=', self.env.company.id),
+                ]
             )
+            free = max(course.admission_vacancies - taken, 0)
+            ranked = group.filtered(
+                lambda a: a._edu_ranked() and (not a.admission_test_required or a.has_admission_score)
+            ).sorted(lambda a: (-a.admission_score, -a.previous_average, a.name or ''))
             for position, application in enumerate(ranked, start=1):
-                within = not course.admission_vacancies or position <= course.admission_vacancies
+                within = not course.admission_vacancies or position <= free
                 application.write(
                     {'admission_rank': position, 'admission_result': 'admitted' if within else 'waitlist'}
                 )
         return True
+
+    def _edu_ranked(self):
+        """Entra na seriação: curso com vagas, candidatura à classe de entrada do curso e que não é transferência
+        (as vagas da seriação são as da classe de entrada, DP 167/23, art. 49.º)."""
+        self.ensure_one()
+        course = self.desired_course_id
+        if not course.admission_vacancies or self.transfer_in:
+            return False
+        entry = course.curriculum_id.class_from or course.level_id.class_from
+        return not self.desired_class_number or not entry or self.desired_class_number == entry
 
     def _find_or_create_student(self):
         self.ensure_one()

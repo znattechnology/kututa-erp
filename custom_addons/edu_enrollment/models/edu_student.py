@@ -2,6 +2,8 @@ from odoo import api, fields, models
 
 from .edu_enrollment import SEAT_STATES
 
+YEAR_DONE = ('completed', 'retained')
+
 STUDENT_STATUS = [
     ('enrolled', 'Matriculado'),
     ('pending', 'Matrícula pendente'),
@@ -47,10 +49,15 @@ class EduStudent(models.Model):
     def _compute_current_enrollment_id(self):
         for student in self:
             enrollments = student.enrollment_ids.sorted(lambda e: (e.academic_year_id.date_start, e.id), reverse=True)
-            current = enrollments.filtered(lambda e: e.state in SEAT_STATES)[:1]
+            # A matrícula do ano em curso manda, mesmo já fechada (a confirmação fecha o ano em Julho e cria a do ano
+            # seguinte); senão, a que ocupa lugar.
+            current = (
+                enrollments.filtered(lambda e: e.academic_year_id.is_current and e.state in SEAT_STATES + YEAR_DONE)[:1]
+                or enrollments.filtered(lambda e: e.state in SEAT_STATES)[:1]
+            )
             student.current_enrollment_id = current
             student.current_class_id = current.class_id
-            student.student_status = student._status_of(enrollments[:1])
+            student.student_status = student._status_of(current or enrollments[:1])
             student.last_academic_year_id = enrollments[:1].academic_year_id
 
     def _status_of(self, last):
@@ -58,7 +65,7 @@ class EduStudent(models.Model):
         if not last:
             return 'none'
         in_current_year = last.academic_year_id.is_current
-        if in_current_year and last.state in SEAT_STATES:
+        if in_current_year and last.state in SEAT_STATES + YEAR_DONE:
             return 'enrolled'
         if in_current_year and last.state == 'draft':
             return 'pending'

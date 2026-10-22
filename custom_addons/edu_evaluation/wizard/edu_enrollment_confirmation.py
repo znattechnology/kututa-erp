@@ -1,5 +1,5 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 CLOSED = ('dropped', 'transferred')
 LINE_STATES = [
@@ -251,7 +251,12 @@ class EduEnrollmentConfirmationLine(models.TransientModel):
         except UserError as error:
             self.write({'state': 'pending', 'reason': str(error.args[0] if error.args else error)})
             return
-        notes = enrollment._edu_propose_lower_subjects(previous)
+        try:
+            with self.env.cr.savepoint():
+                notes = enrollment._edu_propose_lower_subjects(previous)
+        except (UserError, ValidationError) as error:
+            # A matrícula fica; a disciplina na classe anterior trata-se à mão.
+            notes = [str(error.args[0] if error.args else error)]
         if notes:
             notes = [self.env._('Na classe anterior (Decreto Executivo 60/08): %s', '; '.join(notes))]
         reason = '\n'.join(filter(None, [enrollment.warning, *notes])) or False
@@ -263,7 +268,8 @@ class EduEnrollmentConfirmationLine(models.TransientModel):
         for line in self.filtered(lambda line: line.state == 'pending'):
             line.previous_enrollment_id._edu_close_year()
             proposal = line.wizard_id._proposal(line.previous_enrollment_id)
-            if line.target_class_id and (proposal.pop('_no_class', False) or proposal['state'] == 'confirm'):
+            no_class = proposal.pop('_no_class', False)
+            if line.target_class_id and (no_class or proposal['state'] == 'confirm'):
                 proposal.update(state='confirm', target_class_id=line.target_class_id.id)  # a turma escolhida à mão
             line.write({k: v for k, v in proposal.items() if k not in ('student_id', 'previous_enrollment_id')})
             if line.state == 'confirm':

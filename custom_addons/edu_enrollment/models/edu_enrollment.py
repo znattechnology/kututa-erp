@@ -168,8 +168,12 @@ class EduEnrollment(models.Model):
         """Bloqueios da matrícula: levanta UserError. Na primeira matrícula, a idade mínima e o prazo do calendário; a
         avaliação acrescenta retenções e disciplinas em atraso."""
         self.ensure_one()
-        if self.env.context.get('edu_matricula_import') or self.enrollment_type not in ('new', 'transfer_in'):
-            return
+        if (
+            self.env.context.get('edu_matricula_import')
+            or self.env.context.get('edu_reactivate')
+            or self.enrollment_type not in ('new', 'transfer_in')
+        ):
+            return  # na reactivação já não se volta a ver a idade nem o prazo da primeira matrícula
         age, level = self._edu_age(), self.class_id.level_id
         if age is not None and level.min_age and age < level.min_age:
             raise UserError(
@@ -182,7 +186,9 @@ class EduEnrollment(models.Model):
                     min=level.min_age,
                 )
             )
-        self._edu_check_enrollment_window()
+        # A entrada por transferência tem o seu prazo (até ao 1.º mês do II trimestre), verificado na transferência.
+        if self.enrollment_type == 'new':
+            self._edu_check_enrollment_window()
 
     def _edu_age(self):
         """Idade completa no ano da matrícula (a lei conta os anos feitos até 31 de Dezembro desse ano)."""
@@ -193,14 +199,33 @@ class EduEnrollment(models.Model):
         """Fora do período de matrícula do calendário: só com motivo (transferência, doença…) e até ao fim do 1.º mês
         do II trimestre (DP 162/23, art. 25.º, n.º 2); depois disso, só a direcção."""
         today = fields.Date.context_today(self)
+        year = self.academic_year_id
+        manager = self.env.user.has_group('edu_core.group_edu_manager')
         start, end = self.env['edu.calendar.event']._phase_window(
-            'enrollment', level=self.class_id.level_id, company=self.company_id, around=today
+            'enrollment', level=self.class_id.level_id, company=self.company_id, around=today, year=year
         )
-        if not end or today <= end:
+        if not end:
+            # A escola usa o calendário mas não tem o período deste ano: fora de prazo depois do início das aulas.
+            # Sem calendário nenhum, não há prazo a aplicar.
+            uses_calendar = self.env['edu.calendar.event'].search_count(
+                [('company_id', '=', self.company_id.id), ('phase', '=', 'enrollment')], limit=1
+            )
+            if not uses_calendar or not year.date_start or today < year.date_start:
+                return
+            start = end = year.date_start - timedelta(days=1)
+        if start and today < start and not manager:
+            raise UserError(
+                self.env._(
+                    'O período de matrícula de %(year)s abre a %(start)s: só a direcção matricula antes.',
+                    year=year.name,
+                    start=start.strftime('%d/%m/%Y'),
+                )
+            )
+        if today <= end:
             return
         second = self.academic_year_id.trimester_ids.filtered(lambda t: t.number == 2)[:1]
         limit = second.date_start + relativedelta(months=1, days=-1) if second else False
-        if limit and today > limit and not self.env.user.has_group('edu_core.group_edu_manager'):
+        if limit and today > limit and not manager:
             raise UserError(
                 self.env._(
                     'Matrícula fora do prazo excepcional (até %s, DP 162/23, art. 25.º, n.º 2): só a direcção.',
@@ -289,13 +314,18 @@ class EduEnrollment(models.Model):
             third = trimesters.filtered(lambda t: t.number == 3)[:1]
             if not third:
                 return False
+            # Dias úteis: sem fins-de-semana nem os feriados e pausas do calendário escolar.
+            off = self.env['edu.calendar.event']._days_without_lessons(
+                self.company_id, self.course_id.level_id, third.date_start, third.date_end
+            )
             day, working = third.date_start, 0
-            while True:
-                if day.weekday() < 5:
+            while day <= third.date_end:
+                if day.weekday() < 5 and day not in off:
                     working += 1
                     if working == 5:
                         return day
                 day += timedelta(days=1)
+            return third.date_end
         second = trimesters.filtered(lambda t: t.number == 2)[:1]
         return second.date_end if second else False
 
@@ -306,7 +336,11 @@ class EduEnrollment(models.Model):
 
     def _drop(self, reason, state='dropped', day=None, *, reason_code=False, requested_by=False, justified=False):
         for enrollment in self:
-            if enrollment.state in CLOSED_STATES:
+            if enrollment.state == 'draft':
+                raise UserError(
+                    self.env._('A matrícula de %s ainda é um rascunho: apague-a.', enrollment.student_id.name)
+                )
+            if enrollment.state not in SEAT_STATES:
                 raise UserError(self.env._('A matrícula de %s já está fechada.', enrollment.student_id.name))
             enrollment.write(
                 {
@@ -336,8 +370,26 @@ class EduEnrollment(models.Model):
         for enrollment in self.filtered(lambda e: e.state in CLOSED_STATES):
             if not enrollment.academic_year_id.is_current:
                 raise UserError(self.env._('Só se reactiva uma matrícula do ano lectivo em curso.'))
+            if (
+                self.env['edu.transfer']
+                .sudo()
+                .search_count(
+                    [
+                        ('enrollment_id', '=', enrollment.id),
+                        ('transfer_type', '=', 'external'),
+                        ('state', '=', 'completed'),
+                    ]
+                )
+            ):
+                raise UserError(
+                    self.env._(
+                        '%s saiu para outra escola com a guia de transferência emitida: registe o regresso como uma '
+                        'entrada por transferência.',
+                        enrollment.student_id.name,
+                    )
+                )
             enrollment._check_capacity()
-            enrollment._edu_check_enrollment_allowed()
+            enrollment.with_context(edu_reactivate=True)._edu_check_enrollment_allowed()
             labels = dict(DROP_REASONS)
             enrollment.message_post(
                 body=self.env._(

@@ -2,6 +2,8 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -67,12 +69,20 @@ class EduCalendarEvent(models.Model):
         return super().write(vals)
 
     @api.model
-    def _phase_window(self, phase, level=None, company=None, around=None):
+    def _phase_window(self, phase, level=None, company=None, around=None, year=None):
         """O período (início, fim) de uma fase das matrículas que abrange ``around`` (hoje) ou, sem isso, o mais
-        próximo. Sem a fase no calendário, (False, False): não há prazo a aplicar."""
+        próximo. Com ``year``, só as fases desse ano lectivo: as que começam entre 9 meses antes e 2 meses depois do
+        seu início (as matrículas de 2027/2028 fazem-se em Agosto de 2027). Sem a fase no calendário,
+        (False, False)."""
         company = company or self.env.company
         around = around or fields.Date.context_today(self)
-        events = self.search([('company_id', '=', company.id), ('phase', '=', phase)])
+        domain = [('company_id', '=', company.id), ('phase', '=', phase)]
+        if year:
+            domain += [
+                ('date_start', '>=', year.date_start - relativedelta(months=9)),
+                ('date_start', '<=', year.date_start + relativedelta(months=2)),
+            ]
+        events = self.search(domain)
         if level:
             events = events.filtered(lambda e: not e.level_ids or level in e.level_ids)
         if not events:
