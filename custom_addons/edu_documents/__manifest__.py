@@ -33,9 +33,11 @@ do Despacho n.º 60/08.
         'wizard/edu_pauta_print_views.xml',
         'views/edu_document_views.xml',
         'views/edu_mini_pauta_views.xml',
+        'views/edu_declaration_page_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
+            'edu_documents/static/src/declarations/*',
             'edu_documents/static/src/mini_pauta/*',
         ],
     },

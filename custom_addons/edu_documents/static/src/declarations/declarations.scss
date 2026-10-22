@@ -1,0 +1,128 @@
+// Declarações: a página do secPed-Express (escolher o aluno, tipo, dados de identificação) com as cores do sistema.
+.o_edu_declarations {
+    .o_edu_dc_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_dc_intro {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .o_edu_dc_lead {
+        max-width: 72ch;
+        margin: 0;
+        color: $text-muted;
+    }
+
+    .o_edu_dc_card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_dc_picked {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .o_edu_dc_fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+
+        @include media-breakpoint-down(sm) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_dc_field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0;
+
+        > span:first-child {
+            font-size: 0.875rem;
+            color: $text-muted;
+        }
+    }
+
+    .o_edu_dc_wide {
+        grid-column: 1 / -1;
+    }
+
+    .o_edu_dc_list {
+        display: flex;
+        flex-direction: column;
+        max-height: 360px;
+        overflow-y: auto;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+    }
+
+    .o_edu_dc_row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border: 0;
+        border-bottom: 1px solid $border-color;
+        background: transparent;
+        text-align: left;
+
+        &:last-child {
+            border-bottom: 0;
+        }
+
+        &:hover,
+        &:focus-visible {
+            background: $o-gray-100;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $o-action;
+            outline-offset: -2px;
+        }
+    }
+
+    .o_edu_dc_num {
+        min-width: 2.5em;
+        color: $text-muted;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_dc_tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .o_edu_dc_h2 {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_dc_actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        padding-top: 16px;
+        border-top: 1px solid $border-color;
+    }
+}

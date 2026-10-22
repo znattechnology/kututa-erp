@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_documents.Declarations">
+        <div class="o_action o_edu_declarations">
+            <Layout display="this.display">
+                <div class="o_edu_dc_body">
+                    <div class="o_edu_dc_intro">
+                        <p class="o_edu_dc_lead">
+                            Declaração de frequência, com as notas do ano, de matrícula ou para transferência, pronta a
+                            imprimir e assinar. Os dados de identificação que faltarem completam-se aqui e ficam guardados
+                            na ficha do aluno.
+                        </p>
+                        <button type="button" class="btn btn-link" t-on-click="() => this.openRegistry()">
+                            <i class="oi me-1" data-icon="list_alt" aria-hidden="true"/>Registo das declarações
+                        </button>
+                    </div>
+
+                    <!-- Escolher o aluno -->
+                    <section class="o_edu_dc_card">
+                        <div t-if="this.state.pick" class="o_edu_dc_picked">
+                            <div class="flex-grow-1">
+                                <strong t-out="this.state.pick.name"/>
+                                <div class="small text-muted">
+                                    <t t-out="this.state.pick.class"/><t t-if="this.state.pick.number">, n.º <t t-out="this.state.pick.number"/></t>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.otherStudent()">
+                                <i class="oi me-1" data-icon="close" aria-hidden="true"/>Outro aluno
+                            </button>
+                        </div>
+                        <t t-else="">
+                            <div class="o_edu_dc_fields">
+                                <label class="o_edu_dc_field">
+                                    <span>Ano lectivo</span>
+                                    <select class="form-select" t-on-change="(ev) => this.onYearChange(ev)">
+                                        <option t-foreach="this.state.years" t-as="y" t-key="y.id" t-att-value="y.id"
+                                                t-att-selected="y.id === this.state.yearId">
+                                            <t t-out="y.name"/><t t-if="y.is_current"> (em curso)</t>
+                                        </option>
+                                    </select>
+                                </label>
+                                <label class="o_edu_dc_field">
+                                    <span>Turma (opcional)</span>
+                                    <select class="form-select" t-on-change="(ev) => this.onClassChange(ev)">
+                                        <option value="" t-att-selected="!this.state.classId">Todas as turmas</option>
+                                        <option t-foreach="this.state.classes" t-as="c" t-key="c.id" t-att-value="c.id"
+                                                t-att-selected="c.id === this.state.classId">
+                                            <t t-out="c.name"/><t t-if="c.shift"> · <t t-out="c.shift"/></t>
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div class="o_edu_dc_field">
+                                <span>Aluno</span>
+                                <!-- Pela turma: a lista dos alunos. -->
+                                <t t-if="this.selectedClass">
+                                    <p t-if="!this.state.students.length" class="mb-0 text-muted">
+                                        A <t t-out="this.selectedClass.name"/> não tem alunos matriculados neste ano.
+                                    </p>
+                                    <div t-else="" class="o_edu_dc_list" role="listbox" aria-label="Alunos da turma">
+                                        <button t-foreach="this.state.students" t-as="s" t-key="s.enrollment_id" type="button"
+                                                role="option" class="o_edu_dc_row" t-on-click="() => this.choose(s)">
+                                            <span class="o_edu_dc_num" t-out="s.number"/>
+                                            <span class="flex-grow-1" t-out="s.name"/>
+                                            <span t-if="s.gone" class="badge text-bg-light" t-out="s.state"/>
+                                        </button>
+                                    </div>
+                                    <p class="small text-muted mt-2 mb-0"><t t-out="this.state.students.length"/> alunos, pelo número da turma.</p>
+                                </t>
+                                <!-- Pelo nome. -->
+                                <t t-else="">
+                                    <input type="search" class="form-control" placeholder="Escreva o nome do aluno ou o n.º de processo"
+                                           t-att-value="this.state.query" t-on-input="(ev) => this.onQuery(ev)" aria-label="Procurar aluno"/>
+                                    <div t-if="this.state.results.length" class="o_edu_dc_list mt-2" role="listbox" aria-label="Alunos encontrados">
+                                        <button t-foreach="this.state.results" t-as="s" t-key="s.enrollment_id" type="button"
+                                                role="option" class="o_edu_dc_row" t-on-click="() => this.choose(s)">
+                                            <span class="flex-grow-1" t-out="s.name"/>
+                                            <span class="small text-muted"><t t-out="s.class"/><t t-if="s.number">, n.º <t t-out="s.number"/></t></span>
+                                            <span t-if="s.gone" class="badge text-bg-light" t-out="s.state"/>
+                                        </button>
+                                    </div>
+                                    <p t-elif="this.state.query.trim().length >= 2 and !this.state.searching" class="small text-muted mt-2 mb-0">
+                                        Nenhum aluno com esse nome neste ano lectivo.
+                                    </p>
+                                    <p class="small text-muted mt-2 mb-0">
+                                        Ou escolha a turma para ver a lista dos alunos. Quem já saiu da escola encontra-se no último
+                                        ano lectivo em que esteve matriculado.
+                                    </p>
+                                </t>
+                            </div>
+                        </t>
+                    </section>
+
+                    <!-- A declaração -->
+                    <section t-if="this.state.pick and this.state.data" class="o_edu_dc_card">
+                        <t t-set="d" t-value="this.state.data"/>
+                        <div role="tablist" aria-label="Tipo de declaração" class="o_edu_dc_tabs">
+                            <button t-foreach="this.state.types" t-as="t" t-key="t.key" type="button" role="tab" class="btn"
+                                    t-att-class="t.key === this.state.type ? 'btn-primary' : 'btn-secondary'"
+                                    t-att-aria-selected="t.key === this.state.type ? 'true' : 'false'"
+                                    t-on-click="() => this.selectType(t.key)" t-out="t.name"/>
+                        </div>
+
+                        <p class="mb-0">
+                            <t t-out="d.enrollment.class"/><t t-if="d.enrollment.course">, <t t-out="d.enrollment.course"/></t><t t-if="d.enrollment.number">, n.º <t t-out="d.enrollment.number"/></t>,
+                            regime <t t-out="d.enrollment.regime"/>, <t t-out="d.enrollment.year"/> (matrícula <t t-out="d.enrollment.state.toLowerCase()"/>).
+                        </p>
+                        <div t-if="d.blocked" class="alert alert-warning mb-0" role="alert" t-out="d.blocked"/>
+
+                        <div>
+                            <h2 class="o_edu_dc_h2">Dados de identificação</h2>
+                            <p class="small mb-2" t-att-class="this.missing.length ? 'text-warning' : 'text-success'">
+                                <t t-if="!this.missing.length">Estão todos preenchidos.</t>
+                                <t t-else="">
+                                    <t t-out="this.missing.length === 1 ? 'Falta 1 dado' : 'Faltam ' + this.missing.length + ' dados'"/>:
+                                    na declaração <t t-out="this.missing.length === 1 ? 'sai' : 'saem'"/> como linha para preencher à mão.
+                                </t>
+                            </p>
+                            <div class="o_edu_dc_fields">
+                                <label t-foreach="this.state.fields" t-as="f" t-key="f.key" class="o_edu_dc_field">
+                                    <span t-out="f.label"/>
+                                    <select t-if="f.key === 'birth_state_id'" class="form-select" t-on-change="(ev) => this.onIdentity(f.key, ev)">
+                                        <option value="" t-att-selected="!this.state.identity[f.key]">—</option>
+                                        <option t-foreach="this.state.states" t-as="p" t-key="p.id" t-att-value="p.id"
+                                                t-att-selected="p.id === this.state.identity[f.key]" t-out="p.name"/>
+                                    </select>
+                                    <input t-else="" class="form-control" t-att-type="f.key.endsWith('date') ? 'date' : 'text'"
+                                           t-att-value="this.state.identity[f.key] or ''" t-on-input="(ev) => this.onIdentity(f.key, ev)"/>
+                                </label>
+                                <label class="o_edu_dc_field o_edu_dc_wide">
+                                    <span>Destina-se a</span>
+                                    <input class="form-control" placeholder="Vazio: sai uma linha para preencher à mão"
+                                           t-att-value="this.state.purpose" t-on-input="(ev) => this.onPurpose(ev)"/>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="o_edu_dc_actions">
+                            <button t-if="this.changed" type="button" class="btn btn-secondary" t-att-disabled="this.state.busy"
+                                    t-on-click="() => this.save()">Guardar os dados</button>
+                            <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy or d.blocked"
+                                    t-on-click="() => this.open('preview')">
+                                <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>
+                                <t t-out="this.changed ? 'Guardar e ver a declaração' : 'Ver a declaração'"/>
+                            </button>
+                            <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy or d.blocked"
+                                    t-on-click="() => this.open('issue_and_print')">
+                                <i class="oi me-1" data-icon="print" aria-hidden="true"/>Emitir e imprimir
+                            </button>
+                        </div>
+                        <p class="small text-muted mb-0">
+                            «Ver» mostra a declaração sem a emitir. «Emitir e imprimir» dá-lhe o número do registo e gera o PDF.
+                        </p>
+                    </section>
+
+                    <!-- Já emitidas -->
+                    <section t-if="this.state.pick and this.state.data and this.state.data.documents.length" class="o_edu_dc_card">
+                        <h2 class="o_edu_dc_h2">Declarações já emitidas a este aluno</h2>
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr><th>Número</th><th>Declaração</th><th>Ano</th><th>Data</th><th>Impressões</th><th/></tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="this.state.data.documents" t-as="doc" t-key="doc.id" t-att-class="{'text-muted': doc.state === 'cancelled'}">
+                                    <td t-out="doc.name"/>
+                                    <td t-out="doc.type"/>
+                                    <td t-out="doc.year"/>
+                                    <td t-out="doc.date"/>
+                                    <td t-out="doc.state === 'cancelled' ? 'Anulada' : doc.prints"/>
+                                    <td class="text-end">
+                                        <button t-if="doc.state === 'issued'" type="button" class="btn btn-sm btn-secondary"
+                                                t-att-disabled="this.state.busy" t-on-click="() => this.reprint(doc)"
+                                                title="Reimprimir (sai «2.ª VIA»)">
+                                            <i class="oi me-1" data-icon="print" aria-hidden="true"/>2.ª via
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

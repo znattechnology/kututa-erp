@@ -398,3 +398,39 @@ class TestEduDocuments(TransactionCase):
         self.assertEqual(Page.page_open(self.edu_class.id, trimester, False)['report_type'], 'qweb-pdf')
         with self.assertRaises(UserError):
             Page.page_open(self.edu_class.id, False, True)
+
+    def test_declarations_page(self):
+        """Página «Declarações», como no secPed: o aluno pela turma ou pelo nome, os dados de identificação, ver
+        (rascunho, sem número), emitir e imprimir (com número) e a 2.ª via."""
+        Page = self.env['edu.declaration.page']
+        options = Page.page_options()
+        self.assertIn(self.edu_class.id, [c['id'] for c in options['classes']])
+        self.assertEqual(
+            [t['key'] for t in options['types']], ['frequency', 'grades', 'enrollment', 'transfer_declaration']
+        )
+        rows = Page.class_students(self.edu_class.id)
+        self.assertIn(self.enrollment.id, [r['enrollment_id'] for r in rows])
+        found = Page.search_students(self.year.id, self.student.name[:4])
+        self.assertIn(self.enrollment.id, [r['enrollment_id'] for r in found])
+        self.assertEqual(Page.search_students(self.year.id, 'a'), [])
+
+        data = Page.student_data(self.enrollment.id, 'frequency')
+        self.assertFalse(data['blocked'])
+        self.assertTrue(data['blocked'] is False and Page.student_data(self.enrollment.id, 'grades')['blocked'])
+        identity = {**data['identity'], 'process_number': '77-B'}
+        action = Page.preview(self.enrollment.id, 'frequency', identity, 'efeitos de bolsa')
+        self.assertEqual(action['report_type'], 'qweb-html')
+        self.assertEqual(self.student.process_number, '77-B')
+        draft = self.env['edu.document'].search([('enrollment_id', '=', self.enrollment.id), ('state', '=', 'draft')])
+        self.assertEqual((len(draft), draft.purpose), (1, 'efeitos de bolsa'))
+        # Ver outra vez reaproveita o rascunho; emitir dá-lhe o número.
+        Page.preview(self.enrollment.id, 'frequency', identity, '')
+        Page.issue_and_print(self.enrollment.id, 'frequency', identity, '')
+        self.assertEqual(draft.state, 'issued')
+        self.assertTrue(draft.name.startswith('DSN/'))
+        documents = Page.student_data(self.enrollment.id, 'frequency')['documents']
+        self.assertEqual([d['id'] for d in documents], draft.ids)
+        Page.reprint(draft.id)
+        self.assertEqual(draft.print_count, 2)
+        with self.assertRaises(UserError):
+            Page.preview(self.enrollment.id, 'grades', identity, '')
