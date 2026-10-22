@@ -50,9 +50,11 @@ class EduLesson(models.Model):
     )
     date = fields.Date(string='Data', required=True, default=fields.Date.context_today, index=True)
     hour_from = fields.Float(
-        string='Das', compute='_compute_from_schedule', store=True, readonly=False, precompute=True
+        aggregator=None, string='Das', compute='_compute_from_schedule', store=True, readonly=False, precompute=True
     )
-    hour_to = fields.Float(string='Às', compute='_compute_from_schedule', store=True, readonly=False, precompute=True)
+    hour_to = fields.Float(
+        aggregator=None, string='Às', compute='_compute_from_schedule', store=True, readonly=False, precompute=True
+    )
     trimester_id = fields.Many2one(
         'edu.trimester', string='Trimestre', compute='_compute_trimester_id', store=True, index=True
     )

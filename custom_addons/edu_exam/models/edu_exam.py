@@ -94,8 +94,8 @@ class EduExamSession(models.Model):
         help='Provas e exames das turmas: as notas da sessão vão para estas avaliações.',
     )
     date = fields.Date(string='Data', required=True)
-    hour_from = fields.Float(string='Das', required=True, default=8.0)
-    hour_to = fields.Float(string='Às', required=True, default=10.0)
+    hour_from = fields.Float(aggregator=None, string='Das', required=True, default=8.0)
+    hour_to = fields.Float(aggregator=None, string='Às', required=True, default=10.0)
     state = fields.Selection(
         [('scheduled', 'Marcada'), ('done', 'Realizada'), ('cancelled', 'Anulada')],
         string='Estado',

@@ -116,8 +116,8 @@ class EduShift(models.Model):
         required=True,
         default='morning',
     )
-    hour_from = fields.Float(string='Das', required=True, default=7.5)
-    hour_to = fields.Float(string='Às', required=True, default=12.5)
+    hour_from = fields.Float(aggregator=None, string='Das', required=True, default=7.5)
+    hour_to = fields.Float(aggregator=None, string='Às', required=True, default=12.5)
     active = fields.Boolean(default=True)
 
     _name_company_uniq = models.Constraint('UNIQUE(company_id, name)', 'Já existe um turno com este nome.')

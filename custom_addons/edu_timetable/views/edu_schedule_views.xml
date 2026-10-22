@@ -5,7 +5,7 @@
         <field name="model">edu.schedule</field>
         <field name="arch" type="xml">
             <list string="Horários" editable="bottom">
-                <field name="class_id" options="{'no_create': True}"/>
+                <field name="class_id" optional="hide" options="{'no_create': True}"/>
                 <field name="academic_year_id" column_invisible="1"/>
                 <field name="company_id" column_invisible="1"/>
                 <field name="weekday"/>
@@ -88,7 +88,7 @@
     </record>
 
     <record id="action_edu_schedule" model="ir.actions.act_window">
-        <field name="name">Horários</field>
+        <field name="name">Tempos por turma</field>
         <field name="res_model">edu.schedule</field>
         <field name="view_mode">list,form</field>
         <field name="context">{'search_default_current_year': 1, 'search_default_group_class': 1}</field>

@@ -18,8 +18,8 @@ class EduTimeSlot(models.Model):
         'res.company', string='Escola', required=True, default=lambda self: self.env.company, index=True
     )
     shift_id = fields.Many2one('edu.shift', string='Turno', required=True, index=True, check_company=True)
-    hour_from = fields.Float(string='Das', required=True)
-    hour_to = fields.Float(string='Às', required=True)
+    hour_from = fields.Float(aggregator=None, string='Das', required=True)
+    hour_to = fields.Float(aggregator=None, string='Às', required=True)
     is_break = fields.Boolean(string='Intervalo')
     active = fields.Boolean(default=True)
 

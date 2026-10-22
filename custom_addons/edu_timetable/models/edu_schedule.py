@@ -62,10 +62,22 @@ class EduSchedule(models.Model):
         check_company=True,
     )
     hour_from = fields.Float(
-        string='Das', compute='_compute_hours', store=True, readonly=False, precompute=True, required=True
+        aggregator=None,
+        string='Das',
+        compute='_compute_hours',
+        store=True,
+        readonly=False,
+        precompute=True,
+        required=True,
     )
     hour_to = fields.Float(
-        string='Às', compute='_compute_hours', store=True, readonly=False, precompute=True, required=True
+        aggregator=None,
+        string='Às',
+        compute='_compute_hours',
+        store=True,
+        readonly=False,
+        precompute=True,
+        required=True,
     )
     exception_ids = fields.One2many('edu.schedule.exception', 'schedule_id', string='Aulas sem realização')
     replacement_ids = fields.One2many('edu.schedule.replacement', 'schedule_id', string='Substituições')
