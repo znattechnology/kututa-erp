@@ -43,6 +43,10 @@ class IrUiMenu(models.Model):
             + (TECHNICAL_MENUS if not technical else ())
             + tuple(xmlid for xmlid, model in OPTIONAL_MENUS.items() if model not in self.env)
         )
+        # As férias só para quem tem o acesso de funcionário às ausências (os Recursos Humanos dão-no).
+        time_off = self.env.ref('hr_holidays.group_hr_holidays_employee', raise_if_not_found=False)
+        if time_off and time_off not in self.env.user.all_group_ids:
+            xmlids += ('edu_roles.menu_teacher_time_off',)
         for xmlid in xmlids:
             menu = self.env.ref(xmlid, raise_if_not_found=False)
             if menu:

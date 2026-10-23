@@ -34,7 +34,7 @@
                                         <span class="o_edu_th_time" t-out="l.hours"/>
                                         <div class="flex-grow-1">
                                             <div class="fw-semibold" t-out="l.subject"/>
-                                            <div class="small text-muted"><t t-out="l.class"/><t t-if="l.room">, sala <t t-out="l.room"/></t></div>
+                                            <div class="small text-muted"><t t-out="l.class"/><t t-if="l.room">, <t t-out="l.room"/></t></div>
                                         </div>
                                         <span class="badge" t-att-class="this.stateClass(l)" t-out="this.stateLabel(l)"/>
                                         <button type="button" class="btn btn-sm" t-att-class="l.state === 'scheduled' and l.today ? 'btn-primary' : 'btn-secondary'"
@@ -82,10 +82,10 @@
                                 <h2 class="o_edu_th_h2">Atalhos</h2>
                                 <div class="o_edu_th_links">
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_my_schedule')">
-                                        <i class="oi me-2" data-icon="calendar_month" aria-hidden="true"/>O meu horário
+                                        <i class="oi me-2" data-icon="calendar_today" aria-hidden="true"/>O meu horário
                                     </button>
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_attendance.action_edu_absence_summary')">
-                                        <i class="oi me-2" data-icon="fact_check" aria-hidden="true"/>Relatório de faltas
+                                        <i class="oi me-2" data-icon="check_circle" aria-hidden="true"/>Relatório de faltas
                                     </button>
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('mail.action_discuss')">
                                         <i class="oi me-2" data-icon="forum" aria-hidden="true"/>Mensagens

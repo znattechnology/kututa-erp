@@ -73,7 +73,8 @@ class EduAbsenceSummary(models.Model):
     @api.depends('enrollment_id', 'subject_id', 'absent', 'year_absent')
     def _compute_status(self):
         for summary in self:
-            edu_class = summary.class_id
+            # O regime e os tempos semanais vêm do plano curricular, que o professor não lê.
+            edu_class = summary.class_id.sudo()
             regime = edu_class._edu_regime()
             hours = edu_class._edu_weekly_hours(summary.subject_id)
             limit = absence_limit(hours, regime)

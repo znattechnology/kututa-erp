@@ -82,18 +82,21 @@
         <field name="context">{'create': False}</field>
     </record>
     <record id="action_teacher_profile" model="ir.actions.server">
+        <field name="group_ids" eval="[(4, ref('edu_core.group_edu_teacher'))]"/>
         <field name="name">O meu perfil</field>
         <field name="model_id" ref="model_edu_teacher_home"/>
         <field name="state">code</field>
         <field name="code">action = model.action_my_profile()</field>
     </record>
     <record id="action_teacher_payslips" model="ir.actions.server">
+        <field name="group_ids" eval="[(4, ref('edu_core.group_edu_teacher'))]"/>
         <field name="name">Os meus recibos</field>
         <field name="model_id" ref="model_edu_teacher_home"/>
         <field name="state">code</field>
         <field name="code">action = model.action_my_payslips()</field>
     </record>
     <record id="action_teacher_time_off" model="ir.actions.server">
+        <field name="group_ids" eval="[(4, ref('edu_core.group_edu_teacher'))]"/>
         <field name="name">Férias e ausências</field>
         <field name="model_id" ref="model_edu_teacher_home"/>
         <field name="state">code</field>

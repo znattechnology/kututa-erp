@@ -1,7 +1,10 @@
+import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 WEEKDAYS = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo']
 
@@ -95,7 +98,7 @@ class EduTeacherHome(models.AbstractModel):
                         'hours': f'{_hour(slot.hour_from)}–{_hour(slot.hour_to)}',
                         'class': slot.class_id._editor_label(),
                         'subject': slot.subject_id.name,
-                        'room': slot.room_id.name or '',
+                        'room': slot.room_id.display_name or '',
                         'lesson_id': lesson.id if lesson else False,
                         'state': lesson.state if lesson else 'scheduled',
                         'today': day == today,
@@ -123,6 +126,13 @@ class EduTeacherHome(models.AbstractModel):
                 'date': day,
             }
         )
+        if lesson.state == 'scheduled' and not lesson.attendance_ids:
+            # Um toque abre a chamada (todos presentes), como no secPed; num trimestre fechado fica só a aula.
+            try:
+                with self.env.cr.savepoint():
+                    lesson.with_user(self.env.user).action_open_roll_call()
+            except UserError as error:
+                _logger.info('Chamada não aberta para %s: %s', lesson.display_name, error)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'edu.lesson',
@@ -163,4 +173,7 @@ class EduTeacherHome(models.AbstractModel):
     def action_my_time_off(self):
         if 'hr.leave' not in self.env:
             raise UserError(self.env._('As férias e ausências não estão instaladas.'))
+        group = self.env.ref('hr_holidays.group_hr_holidays_employee', raise_if_not_found=False)
+        if group and group not in self.env.user.all_group_ids:
+            raise UserError(self.env._('Ainda não tem acesso às férias e ausências: peça-o aos Recursos Humanos.'))
         return self.env['ir.actions.act_window']._for_xml_id('hr_holidays.hr_leave_action_new_request')
