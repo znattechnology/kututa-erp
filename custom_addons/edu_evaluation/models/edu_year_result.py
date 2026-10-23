@@ -39,6 +39,7 @@ class EduYearResult(models.Model):
     reason = fields.Char(string='Fundamento')
     manual = fields.Boolean(string='Decisão manual', readonly=True, tracking=True)
     decided_by_id = fields.Many2one('res.users', string='Decidida por', readonly=True)
+    decided_date = fields.Datetime(string='Decidida em', readonly=True)
     note = fields.Text(string='Observações')
     retention_count = fields.Integer(string='Retenções no nível', readonly=True, aggregator=False)
     requires_review = fields.Boolean(string='Exige decisão da direcção', readonly=True)
@@ -238,10 +239,19 @@ class EduYearResult(models.Model):
             result._decide(excluded_absence=result.enrollment_id in excluded)
         return True
 
-    def _set_manual(self, status):
+    def _set_manual(self, status, reason=None):
         if not self.env.user.has_group('edu_core.group_edu_manager'):
             raise UserError(self.env._('Só a direcção decide manualmente a transição.'))
-        self.write({'status': status, 'manual': True, 'decided_by_id': self.env.uid, 'requires_review': False})
+        vals = {
+            'status': status,
+            'manual': True,
+            'decided_by_id': self.env.uid,
+            'decided_date': fields.Datetime.now(),
+            'requires_review': False,
+        }
+        if reason:
+            vals['reason'] = reason
+        self.write(vals)
         # Com o ano já fechado, a matrícula acompanha a decisão (a confirmação de matrículas lê-a).
         for result in self.sudo():
             enrollment = result.enrollment_id
@@ -257,8 +267,24 @@ class EduYearResult(models.Model):
     def action_manual_retain(self):
         return self._set_manual('retained')
 
+    def manual_decide(self, status, reason):
+        """A decisão da direcção, com o fundamento: transita (conclui numa classe terminal), transita com disciplinas
+        em atraso, ou não transita."""
+        self.ensure_one()
+        if not (reason or '').strip():
+            raise UserError(self.env._('Escreva o fundamento da decisão.'))
+        terminal = self._policy()._rules(self.class_id).terminal
+        if status == 'promoted' and terminal:
+            status = 'graduated'
+        allowed = ('graduated',) if terminal else ('promoted', 'conditional')
+        if status not in (*allowed, 'retained'):
+            raise UserError(self.env._('Esta decisão não se aplica a esta classe.'))
+        return self._set_manual(status, reason.strip())
+
     def action_reset_automatic(self):
-        self.write({'manual': False, 'decided_by_id': False})
+        if not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise UserError(self.env._('Só a direcção decide manualmente a transição.'))
+        self.write({'manual': False, 'decided_by_id': False, 'decided_date': False})
         return self.action_recompute()
 
     def _after_exams(self):

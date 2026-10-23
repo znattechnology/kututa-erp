@@ -56,7 +56,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr t-foreach="d.rows" t-as="r" t-key="r.enrollment_id" t-att-class="{'o_edu_sh_current': r.tone === 'current'}">
+                                    <t t-foreach="d.rows" t-as="r" t-key="r.enrollment_id">
+                                    <tr t-att-class="{'o_edu_sh_current': r.tone === 'current'}">
                                         <td class="text-nowrap" t-out="r.year"/>
                                         <td>
                                             <span class="fw-semibold text-nowrap" t-out="r.class"/>
@@ -67,14 +68,47 @@
                                             <span t-att-class="this.averageClass(r.average)" t-out="this.fmtAverage(r.average)"/>
                                         </td>
                                         <td t-if="d.has_attendance" class="text-center" t-out="this.fmtRate(r.attendance)"/>
-                                        <td t-att-class="this.toneClass(r.tone)" t-out="r.result"/>
+                                        <td>
+                                            <span t-att-class="this.toneClass(r.tone)" t-out="r.result"/>
+                                            <div t-if="r.decision_note" class="small text-muted" t-out="r.decision_note"/>
+                                        </td>
                                         <td class="text-end">
-                                            <button t-if="r.year_result_id" type="button" class="btn btn-sm btn-link text-nowrap"
-                                                    t-att-disabled="this.state.busy" t-on-click="() => this.printYear(r)">
-                                                <i class="oi me-1" data-icon="description" aria-hidden="true"/>Termo de <t t-out="r.year"/>
-                                            </button>
+                                            <div class="o_edu_sh_actions">
+                                                <button t-if="r.year_result_id" type="button" class="btn btn-sm btn-link text-nowrap"
+                                                        t-att-disabled="this.state.busy" t-on-click="() => this.printYear(r)">
+                                                    <i class="oi me-1" data-icon="description" aria-hidden="true"/>Termo de <t t-out="r.year"/>
+                                                </button>
+                                                <t t-if="r.year_result_id and d.can_decide">
+                                                    <button type="button" class="btn btn-sm btn-link text-nowrap" t-att-disabled="this.state.busy"
+                                                            t-on-click="() => this.startDecision(r)">Alterar decisão</button>
+                                                    <button t-if="r.manual" type="button" class="btn btn-sm btn-link text-nowrap" t-att-disabled="this.state.busy"
+                                                            t-on-click="() => this.resetDecision(r)">Voltar à automática</button>
+                                                </t>
+                                            </div>
                                         </td>
                                     </tr>
+                                    <tr t-if="this.state.editing === r.enrollment_id" class="o_edu_sh_decision">
+                                        <td t-att-colspan="d.has_attendance ? 6 : 5">
+                                            <div class="o_edu_sh_decision_form">
+                                                <strong>Decisão da direcção para <t t-out="r.year"/></strong>
+                                                <select class="form-select" aria-label="Nova decisão" t-on-change="(ev) => this.onStatus(ev)">
+                                                    <option value="" t-att-selected="!this.state.status">Escolha a decisão…</option>
+                                                    <option t-foreach="this.decisionOptions(r)" t-as="o" t-key="o.key" t-att-value="o.key"
+                                                            t-att-selected="o.key === this.state.status" t-out="o.label"/>
+                                                </select>
+                                                <input class="form-control" placeholder="Fundamento (obrigatório): acta, despacho, recurso…"
+                                                       aria-label="Fundamento" t-att-value="this.state.reason" t-on-input="(ev) => this.onReason(ev)"/>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-primary btn-sm"
+                                                            t-att-disabled="this.state.busy or !this.state.status or !this.state.reason.trim()"
+                                                            t-on-click="() => this.saveDecision(r)">Guardar a decisão</button>
+                                                    <button type="button" class="btn btn-secondary btn-sm" t-on-click="() => this.cancelDecision()">Cancelar</button>
+                                                </div>
+                                                <p class="small text-muted mb-0">Fica registado quem decidiu e quando. A decisão manual não é sobreposta pelo recálculo.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    </t>
                                 </tbody>
                             </table>
                         </div>

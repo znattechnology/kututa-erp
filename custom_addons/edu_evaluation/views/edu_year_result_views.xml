@@ -95,6 +95,17 @@
             </search>
         </field>
     </record>
+    <!-- Análise: quantos transitam, ficam retidos ou vão a exame, por turma (Relatórios). -->
+    <record id="edu_year_result_pivot" model="ir.ui.view">
+        <field name="name">edu.year.result.pivot</field>
+        <field name="model">edu.year.result</field>
+        <field name="arch" type="xml">
+            <pivot string="Resultados do ano" disable_linking="1">
+                <field name="class_id" type="row"/>
+                <field name="status" type="col"/>
+            </pivot>
+        </field>
+    </record>
     <record id="action_edu_year_result" model="ir.actions.act_window">
         <field name="name">Resultados do ano</field>
         <field name="res_model">edu.year.result</field>

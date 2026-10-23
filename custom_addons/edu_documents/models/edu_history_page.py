@@ -66,6 +66,10 @@ class EduHistoryPage(models.AbstractModel):
                     'result': label,
                     'tone': tone,
                     'year_result_id': result.id if result else False,
+                    'status': result.status if result else False,
+                    'manual': bool(result and result.manual),
+                    'decision_note': self._decision_note(result) if result and result.manual else '',
+                    'terminal': bool(result) and result._policy()._rules(result.class_id).terminal,
                 }
             )
         last = enrollments[-1:]
@@ -84,7 +88,36 @@ class EduHistoryPage(models.AbstractModel):
             'rows': rows,
             'has_attendance': any(r['attendance'] for r in rows),
             'has_results': bool(student.year_result_ids),
+            'can_decide': self.env.user.has_group('edu_core.group_edu_manager'),
         }
+
+    @api.model
+    def _decision_note(self, result):
+        """«Decisão da direcção (Maria, 12/07/2026): fundamento»."""
+        if not result.decided_by_id:
+            # Decisões que vieram da migração (a pauta assinada): só o fundamento.
+            return result.reason or self.env._('Decisão manual')
+        when = result.decided_date.strftime('%d/%m/%Y') if result.decided_date else ''
+        head = self.env._('Decisão da direcção (%s)', ', '.join(filter(None, [result.decided_by_id.name, when])))
+        return f'{head}: {result.reason}' if result.reason else head
+
+    @api.model
+    def decide(self, year_result_id, status, reason):
+        """A direcção altera a decisão do ano, com o fundamento (fica registado quem e quando)."""
+        result = self.env['edu.year.result'].browse(year_result_id).exists()
+        if not result:
+            raise UserError(self.env._('Este ano ainda não tem resultado do conselho.'))
+        result.manual_decide(status, reason)
+        return self.student_history(result.student_id.id)
+
+    @api.model
+    def reset_decision(self, year_result_id):
+        """Volta à decisão automática (a das regras, com as notas do ano)."""
+        result = self.env['edu.year.result'].browse(year_result_id).exists()
+        if not result:
+            raise UserError(self.env._('Este ano ainda não tem resultado do conselho.'))
+        result.action_reset_automatic()
+        return self.student_history(result.student_id.id)
 
     @api.model
     def print_year_term(self, year_result_id):

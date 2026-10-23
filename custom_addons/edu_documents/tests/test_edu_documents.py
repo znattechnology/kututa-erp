@@ -487,3 +487,35 @@ class TestEduDocuments(TransactionCase):
         self.assertEqual(Page.verify(row['id'])['diploma_label'], 'Verificado, falta assinar')
         self.assertEqual(Page.sign(row['id'])['diploma_label'], 'Assinado')
         self.assertEqual(Page.graduations(False)['summary']['signed'], 1)
+
+    def test_student_history_decision(self):
+        """A direcção altera a decisão do ano no Histórico do aluno, com o fundamento; volta-se à automática."""
+        result = self.env['edu.year.result'].create({'enrollment_id': self.enrollment.id})
+        result.action_recompute()
+        Page = self.env['edu.history.page']
+        row = Page.student_history(self.student.id)['rows'][0]
+        self.assertFalse(row['manual'])
+        self.assertTrue(row['terminal'])
+        with self.assertRaises(UserError):
+            Page.decide(result.id, 'retained', '  ')
+        with self.assertRaises(UserError):
+            Page.decide(result.id, 'conditional', 'Acta n.º 3')  # numa classe terminal não há «com atraso»
+        data = Page.decide(result.id, 'promoted', 'Recurso deferido, despacho n.º 12')
+        row = data['rows'][0]
+        self.assertEqual((row['status'], row['result'], row['manual']), ('graduated', 'Concluiu', True))
+        self.assertIn('Recurso deferido', row['decision_note'])
+        self.assertEqual(result.decided_by_id, self.env.user)
+        self.assertTrue(result.decided_date)
+        clerk = self.env['res.users'].create(
+            {
+                'name': 'Secretaria',
+                'login': 'secretaria_decisao',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        self.assertFalse(Page.with_user(clerk).student_history(self.student.id)['can_decide'])
+        with self.assertRaises(UserError):
+            Page.with_user(clerk).decide(result.id, 'retained', 'Sem direito')
+        row = Page.reset_decision(result.id)['rows'][0]
+        self.assertFalse(row['manual'])
+        self.assertFalse(result.decided_date)

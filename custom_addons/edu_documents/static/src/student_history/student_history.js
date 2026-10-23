@@ -19,7 +19,8 @@ export class StudentHistory extends Component {
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
-        this.state = proxy({ studentId: false, data: null, busy: false });
+        this.notification = useService("notification");
+        this.state = proxy({ studentId: false, data: null, busy: false, editing: null, status: "", reason: "" });
         onWillStart(async () => {
             const studentId = (this.props.action.context || {}).default_student_id;
             if (studentId) {
@@ -44,6 +45,68 @@ export class StudentHistory extends Component {
     otherStudent() {
         this.state.studentId = false;
         this.state.data = null;
+        this.state.editing = null;
+    }
+
+    // Decisão da direcção
+
+    decisionOptions(row) {
+        const options = row.terminal
+            ? [{ key: "graduated", label: "Concluiu o curso" }]
+            : [
+                  { key: "promoted", label: "Transita" },
+                  { key: "conditional", label: "Transita com disciplinas em atraso" },
+              ];
+        return [...options, { key: "retained", label: "Não transita" }];
+    }
+
+    startDecision(row) {
+        this.state.editing = row.enrollment_id;
+        this.state.status = row.status && this.decisionOptions(row).some((o) => o.key === row.status) ? row.status : "";
+        this.state.reason = "";
+    }
+
+    cancelDecision() {
+        this.state.editing = null;
+    }
+
+    onStatus(ev) {
+        this.state.status = ev.target.value;
+    }
+
+    onReason(ev) {
+        this.state.reason = ev.target.value;
+    }
+
+    async saveDecision(row) {
+        if (!this.state.status || !this.state.reason.trim() || this.state.busy) {
+            return;
+        }
+        this.state.busy = true;
+        try {
+            this.state.data = await this.orm.call("edu.history.page", "decide", [
+                row.year_result_id,
+                this.state.status,
+                this.state.reason,
+            ]);
+            this.state.editing = null;
+            this.notification.add("Decisão alterada.", { type: "success" });
+        } finally {
+            this.state.busy = false;
+        }
+    }
+
+    async resetDecision(row) {
+        if (this.state.busy || !window.confirm("Voltar à decisão automática (a das regras, com as notas do ano)?")) {
+            return;
+        }
+        this.state.busy = true;
+        try {
+            this.state.data = await this.orm.call("edu.history.page", "reset_decision", [row.year_result_id]);
+            this.notification.add("Decisão automática reposta.", { type: "success" });
+        } finally {
+            this.state.busy = false;
+        }
     }
 
     fmtAverage(value) {

@@ -48,6 +48,25 @@
         }
     }
 
+    .o_edu_sh_actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+    .o_edu_sh_decision td {
+        background: $o-gray-100;
+    }
+
+    .o_edu_sh_decision_form {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 560px;
+        padding: 8px 4px;
+    }
+
     .o_edu_sh_current td {
         background: rgba($info, 0.06);
     }
