@@ -67,20 +67,6 @@
         <field name="view_mode">calendar,list,form</field>
         <field name="context">{'search_default_current_year': 1, 'create': False, 'edit': False, 'delete': False}</field>
     </record>
-    <record id="action_my_internships" model="ir.actions.act_window">
-        <field name="name">Estágios que acompanho</field>
-        <field name="res_model">edu.internship</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('tutor_id.user_id', '=', uid)]</field>
-        <field name="context">{'create': False}</field>
-    </record>
-    <record id="action_my_final_projects" model="ir.actions.act_window">
-        <field name="name">Trabalhos de fim de curso</field>
-        <field name="res_model">edu.final.project</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">['|', ('advisor_id.user_id', '=', uid), ('jury_ids.user_id', '=', uid)]</field>
-        <field name="context">{'create': False}</field>
-    </record>
     <record id="action_teacher_profile" model="ir.actions.server">
         <field name="group_ids" eval="[(4, ref('edu_core.group_edu_teacher'))]"/>
         <field name="name">O meu perfil</field>
@@ -132,8 +118,8 @@
               parent="menu_teacher_direction" sequence="40"/>
     <!-- Formação técnica (só numa escola com o ensino técnico) -->
     <menuitem id="menu_teacher_training" name="Formação técnica" parent="menu_edu_teacher_root" sequence="30"/>
-    <menuitem id="menu_my_internships" name="Estágios" action="action_my_internships" parent="menu_teacher_training" sequence="10"/>
-    <menuitem id="menu_my_final_projects" name="Trabalhos de fim de curso" action="action_my_final_projects"
+    <menuitem id="menu_my_internships" name="Estágios" action="edu_records.action_edu_internships" parent="menu_teacher_training" sequence="10"/>
+    <menuitem id="menu_my_final_projects" name="Trabalhos de fim de curso" action="edu_records.action_edu_final_projects"
               parent="menu_teacher_training" sequence="20"/>
     <!-- Comunicação -->
     <menuitem id="menu_teacher_communication" name="Comunicação" parent="menu_edu_teacher_root" sequence="40"/>

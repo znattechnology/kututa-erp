@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_records.TrainingPage">
+        <div class="o_action o_edu_training">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body">
+
+                    <!-- Lista -->
+                    <t t-if="this.state.mode === 'list'">
+                        <div class="o_edu_tr_intro">
+                            <div>
+                                <h2 class="o_edu_tr_h2" t-out="this.title"/>
+                                <p class="o_edu_tr_lead">
+                                    <t t-if="this.isProject">A Prova de Aptidão Profissional (PAP) dos finalistas: o tema, o orientador, a entrega, a defesa e a nota.</t>
+                                    <t t-else="">Os estágios curriculares dos finalistas: a entidade onde decorrem, o tutor da escola, as horas cumpridas e a nota.</t>
+                                </p>
+                            </div>
+                            <button t-if="this.state.isStaff" type="button" class="btn btn-primary" t-on-click="() => this.openNew()">
+                                <i class="oi me-1" data-icon="add" aria-hidden="true"/><t t-out="this.isProject ? 'Novo trabalho' : 'Novo estágio'"/>
+                            </button>
+                        </div>
+                        <p t-if="this.summary" class="mb-0">
+                            <t t-out="this.summary.text"/>
+                            <span t-if="this.summary.alert" class="text-danger"> <t t-out="this.summary.alert"/></span>
+                        </p>
+                        <div class="o_edu_tr_bar">
+                            <div role="tablist" aria-label="Estado" class="o_edu_tr_tabs">
+                                <button t-foreach="this.tabs" t-as="tab" t-key="tab.id" type="button" role="tab" class="btn"
+                                        t-att-class="this.state.tab === tab.id ? 'btn-primary' : 'btn-secondary'"
+                                        t-att-aria-selected="this.state.tab === tab.id ? 'true' : 'false'" t-on-click="() => this.selectTab(tab.id)">
+                                    <t t-out="tab.label"/> <span class="o_edu_tr_count" t-out="tab.count"/>
+                                </button>
+                            </div>
+                            <div class="o_edu_tr_filters">
+                                <select t-if="this.state.years.length > 1" class="form-select" aria-label="Ano lectivo" t-on-change="(ev) => this.onYear(ev)">
+                                    <option value="" t-att-selected="!this.state.yearId">Todos os anos</option>
+                                    <option t-foreach="this.state.years" t-as="y" t-key="y.id" t-att-value="y.id"
+                                            t-att-selected="y.id === this.state.yearId" t-out="y.name"/>
+                                </select>
+                                <input type="search" class="form-control" aria-label="Procurar" t-att-value="this.state.query" t-on-input="(ev) => this.onQuery(ev)"
+                                       t-att-placeholder="this.isProject ? 'Aluno, tema ou orientador' : 'Aluno, entidade ou tutor'"/>
+                            </div>
+                        </div>
+                        <div class="o_edu_tr_card">
+                            <p t-if="!this.visibleRows.length" class="mb-0 text-muted p-3" t-out="this.emptyText"/>
+                            <div t-else="" class="table-responsive">
+                                <table class="table table-sm table-hover o_edu_tr_table mb-0">
+                                    <thead>
+                                        <tr t-if="this.isProject">
+                                            <th>Aluno</th><th>Tema</th><th>Orientador</th><th>Defesa</th>
+                                            <th class="text-center">Nota</th><th>Estado</th>
+                                        </tr>
+                                        <tr t-else="">
+                                            <th>Aluno</th><th>Entidade</th><th>Tutor da escola</th><th>Período</th>
+                                            <th class="text-center">Horas</th><th class="text-center">Nota</th><th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="this.visibleRows" t-as="r" t-key="r.id" class="o_edu_tr_row" t-on-click="() => this.open(r)">
+                                            <td><div class="fw-semibold" t-out="r.student"/><div class="small text-muted" t-out="r.class"/></td>
+                                            <t t-if="this.isProject">
+                                                <td><div t-out="r.title"/><div class="small text-muted" t-out="r.course"/></td>
+                                                <td><t t-if="r.advisor" t-out="r.advisor"/><span t-else="" class="text-danger">Por atribuir</span></td>
+                                                <td class="text-nowrap"><t t-if="r.defense" t-out="r.defense"/><span t-else="" class="text-muted">Por marcar</span></td>
+                                            </t>
+                                            <t t-else="">
+                                                <td><div t-out="r.entity"/><div t-if="r.supervisor" class="small text-muted" t-out="r.supervisor"/></td>
+                                                <td><t t-if="r.tutor" t-out="r.tutor"/><span t-else="" class="text-muted">Por atribuir</span></td>
+                                                <td class="text-nowrap">
+                                                    <t t-if="r.start or r.end"><t t-out="r.start or '?'"/> – <t t-out="r.end or '?'"/></t>
+                                                    <span t-else="" class="text-muted">—</span>
+                                                </td>
+                                                <td class="text-center tabular-nums" t-out="r.hours"/>
+                                            </t>
+                                            <td class="text-center" t-out="this.fmtGrade(r.grade)"/>
+                                            <td><span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Novo -->
+                    <t t-elif="this.state.mode === 'new'">
+                        <t t-set="o" t-value="this.state.options"/>
+                        <div>
+                            <button type="button" class="btn btn-link px-0" t-on-click="() => this.backToList()">
+                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/><t t-out="this.isProject ? 'Voltar aos trabalhos' : 'Voltar aos estágios'"/>
+                            </button>
+                            <h2 class="o_edu_tr_h2" t-out="this.isProject ? 'Novo trabalho' : 'Novo estágio'"/>
+                            <p class="o_edu_tr_lead">
+                                <t t-if="this.isProject">O tema da Prova de Aptidão Profissional de um finalista e quem o orienta.</t>
+                                <t t-else="">Atribui o estágio a um ou vários alunos da mesma turma, na mesma entidade. Cada estágio ajusta-se depois na sua ficha.</t>
+                            </p>
+                        </div>
+                        <section class="o_edu_tr_card o_edu_tr_pad">
+                            <h3 class="o_edu_tr_h3"><t t-out="this.isProject ? 'Aluno' : 'Alunos'"/></h3>
+                            <p t-if="!o.year" class="mb-0 text-danger">Não há ano lectivo em curso: marque-o em Configuração › Anos lectivos.</p>
+                            <t t-else="">
+                                <label class="o_edu_tr_field o_edu_tr_narrow">
+                                    <span>Turma da classe final (<t t-out="o.year"/>)</span>
+                                    <select class="form-select" t-on-change="(ev) => this.onClass(ev)">
+                                        <option value="" t-att-selected="!this.state.classId">
+                                            <t t-out="o.classes.length ? 'Escolha a turma' : 'Não há turmas finalistas de cursos que o prevejam'"/>
+                                        </option>
+                                        <option t-foreach="o.classes" t-as="c" t-key="c.id" t-att-value="c.id"
+                                                t-att-selected="c.id === this.state.classId" t-out="c.label"/>
+                                    </select>
+                                </label>
+                                <div t-if="this.state.classId">
+                                    <div class="o_edu_tr_pickbar">
+                                        <span class="small text-muted">
+                                            <t t-if="this.chosenIds.length">
+                                                <t t-out="this.chosenIds.length"/> <t t-out="this.chosenIds.length === 1 ? 'aluno escolhido' : 'alunos escolhidos'"/>.
+                                            </t>
+                                            <t t-else="">
+                                                <t t-out="this.freeStudents.length"/> de <t t-out="this.state.students.length"/> alunos sem <t t-out="this.isProject ? 'trabalho' : 'estágio'"/>.
+                                            </t>
+                                        </span>
+                                        <button t-if="!this.isProject and this.freeStudents.length" type="button" class="btn btn-link btn-sm"
+                                                t-on-click="() => this.toggleAll()" t-out="this.allChosen ? 'Limpar a escolha' : 'Escolher todos'"/>
+                                    </div>
+                                    <p t-if="!this.state.students.length" class="mb-0">A turma não tem alunos matriculados.</p>
+                                    <ul t-else="" class="o_edu_tr_students">
+                                        <li t-foreach="this.state.students" t-as="s" t-key="s.enrollment_id">
+                                            <label t-att-class="{'o_edu_tr_taken': s.taken}">
+                                                <input t-att-type="this.isProject ? 'radio' : 'checkbox'" name="o_edu_tr_student" class="form-check-input"
+                                                       t-att-checked="this.state.chosen[s.enrollment_id] ? 'checked' : undefined"
+                                                       t-att-disabled="s.taken" t-on-change="() => this.toggleStudent(s)"/>
+                                                <span class="text-truncate" t-out="s.name"/>
+                                                <small t-if="s.taken" class="ms-auto text-muted text-nowrap">já tem <t t-out="this.isProject ? 'trabalho' : 'estágio'"/></small>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </t>
+                        </section>
+
+                        <section class="o_edu_tr_card o_edu_tr_pad o_edu_tr_form">
+                            <t t-if="this.isProject">
+                                <label class="o_edu_tr_field o_edu_tr_wide">
+                                    <span>Tema</span>
+                                    <input class="form-control" placeholder="Ex.: Cuidados de enfermagem ao doente diabético"
+                                           t-att-value="this.state.form.name" t-on-input="(ev) => this.onNew('name', ev)"/>
+                                </label>
+                                <label class="o_edu_tr_field o_edu_tr_wide">
+                                    <span>Descrição (opcional)</span>
+                                    <textarea class="form-control" rows="3" t-on-input="(ev) => this.onNew('description', ev)" t-out="this.state.form.description"/>
+                                </label>
+                                <label class="o_edu_tr_field o_edu_tr_wide">
+                                    <span>Orientador</span>
+                                    <select class="form-select" t-on-change="(ev) => this.onNew('advisor_id', ev)">
+                                        <option value="">Por atribuir</option>
+                                        <option t-foreach="o.teachers" t-as="t" t-key="t.id" t-att-value="t.id" t-out="t.name"/>
+                                    </select>
+                                    <small class="text-muted">O professor que orienta o trabalho. Vê-o no Painel do Professor.</small>
+                                </label>
+                            </t>
+                            <t t-else="">
+                                <h3 class="o_edu_tr_h3 o_edu_tr_wide">Entidade</h3>
+                                <label class="o_edu_tr_field o_edu_tr_wide">
+                                    <span>Entidade onde decorre o estágio</span>
+                                    <input class="form-control" placeholder="Ex.: Hospital Geral do Sumbe"
+                                           t-att-value="this.state.form.entity" t-on-input="(ev) => this.onNew('entity', ev)"/>
+                                </label>
+                                <label class="o_edu_tr_field">
+                                    <span>Supervisor na entidade</span>
+                                    <input class="form-control" t-att-value="this.state.form.supervisor" t-on-input="(ev) => this.onNew('supervisor', ev)"/>
+                                </label>
+                                <label class="o_edu_tr_field">
+                                    <span>Contacto do supervisor</span>
+                                    <input class="form-control" t-att-value="this.state.form.supervisor_contact" t-on-input="(ev) => this.onNew('supervisor_contact', ev)"/>
+                                </label>
+                                <h3 class="o_edu_tr_h3 o_edu_tr_wide">Acompanhamento</h3>
+                                <label class="o_edu_tr_field o_edu_tr_wide">
+                                    <span>Tutor da escola</span>
+                                    <select class="form-select" t-on-change="(ev) => this.onNew('tutor_id', ev)">
+                                        <option value="">Por atribuir</option>
+                                        <option t-foreach="o.teachers" t-as="t" t-key="t.id" t-att-value="t.id" t-out="t.name"/>
+                                    </select>
+                                    <small class="text-muted">O professor que acompanha o estágio. Vê-o no Painel do Professor.</small>
+                                </label>
+                                <label class="o_edu_tr_field">
+                                    <span>Início</span>
+                                    <input type="date" class="form-control" t-att-value="this.state.form.date_start" t-on-change="(ev) => this.onNew('date_start', ev)"/>
+                                </label>
+                                <label class="o_edu_tr_field">
+                                    <span>Fim</span>
+                                    <input type="date" class="form-control" t-att-value="this.state.form.date_end" t-on-change="(ev) => this.onNew('date_end', ev)"/>
+                                    <small t-if="this.dateError" class="text-danger">O fim tem de ser depois do início.</small>
+                                </label>
+                            </t>
+                            <div class="o_edu_tr_wide d-flex gap-2">
+                                <button type="button" class="btn btn-primary" t-att-disabled="!this.canCreate" t-on-click="() => this.create()" t-out="this.createLabel"/>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.backToList()">Cancelar</button>
+                            </div>
+                        </section>
+                    </t>
+
+                    <!-- Ficha -->
+                    <t t-else="">
+                        <t t-set="d" t-value="this.state.detail"/>
+                        <div>
+                            <button type="button" class="btn btn-link px-0" t-on-click="() => this.backToList()">
+                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/><t t-out="this.isProject ? 'Voltar aos trabalhos' : 'Voltar aos estágios'"/>
+                            </button>
+                            <h2 class="o_edu_tr_h2">
+                                <t t-out="this.isProject ? 'Trabalho de ' : 'Estágio de '"/><t t-out="d.student"/>
+                                <span class="badge ms-2 align-middle" t-att-class="this.stateClass(d.state)" t-out="d.state_label"/>
+                            </h2>
+                            <p class="mb-0 text-muted"><t t-out="d.class"/><t t-if="d.year">, ano lectivo <t t-out="d.year"/></t>.</p>
+                        </div>
+                        <div class="o_edu_tr_grid">
+                            <section class="o_edu_tr_card o_edu_tr_pad o_edu_tr_form">
+                                <t t-if="this.isProject">
+                                    <h3 class="o_edu_tr_h3 o_edu_tr_wide">Trabalho</h3>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Tema</span>
+                                        <input class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.name" t-on-input="(ev) => this.onEdit('name', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Descrição</span>
+                                        <textarea class="form-control" rows="3" t-att-disabled="!this.editable" t-on-input="(ev) => this.onEdit('description', ev)" t-out="this.state.edit.description"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Orientador</span>
+                                        <select t-if="d.is_staff" class="form-select" t-att-disabled="!this.editable" t-on-change="(ev) => this.onEdit('advisor_id', ev)">
+                                            <option value="" t-att-selected="!this.state.edit.advisor_id">Por atribuir</option>
+                                            <option t-foreach="d.teachers" t-as="t" t-key="t.id" t-att-value="t.id"
+                                                    t-att-selected="t.id === this.state.edit.advisor_id" t-out="t.name"/>
+                                        </select>
+                                        <input t-else="" class="form-control" disabled="disabled" t-att-value="d.advisor or 'Por atribuir'"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Júri da defesa</span>
+                                        <select t-if="d.is_staff" class="form-select o_edu_tr_multi" multiple="multiple" t-att-disabled="!this.editable" t-on-change="(ev) => this.onJury(ev)">
+                                            <option t-foreach="d.teachers" t-as="t" t-key="t.id" t-att-value="t.id"
+                                                    t-att-selected="this.state.edit.jury_ids.includes(t.id)" t-out="t.name"/>
+                                        </select>
+                                        <input t-else="" class="form-control" disabled="disabled" t-att-value="d.jury or '—'"/>
+                                        <small t-if="d.is_staff and this.editable" class="text-muted">Ctrl ou ⌘ para escolher vários.</small>
+                                    </label>
+                                    <h3 class="o_edu_tr_h3 o_edu_tr_wide">Defesa</h3>
+                                    <label class="o_edu_tr_field">
+                                        <span>Data da defesa</span>
+                                        <input type="date" class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.defense_date" t-on-change="(ev) => this.onEdit('defense_date', ev)"/>
+                                    </label>
+                                    <div class="o_edu_tr_field">
+                                        <span>Entregue em</span>
+                                        <div class="form-control-plaintext" t-out="d.submitted or 'Ainda não foi entregue'"/>
+                                    </div>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Observações</span>
+                                        <textarea class="form-control" rows="3" t-att-disabled="this.closed" t-on-input="(ev) => this.onEdit('note', ev)" t-out="this.state.edit.note"/>
+                                    </label>
+                                </t>
+                                <t t-else="">
+                                    <h3 class="o_edu_tr_h3 o_edu_tr_wide">Entidade</h3>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Entidade</span>
+                                        <input class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.entity" t-on-input="(ev) => this.onEdit('entity', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Supervisor na entidade</span>
+                                        <input class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.supervisor" t-on-input="(ev) => this.onEdit('supervisor', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Contacto do supervisor</span>
+                                        <input class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.supervisor_contact" t-on-input="(ev) => this.onEdit('supervisor_contact', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Tutor da escola</span>
+                                        <select t-if="d.is_staff" class="form-select" t-att-disabled="!this.editable" t-on-change="(ev) => this.onEdit('tutor_id', ev)">
+                                            <option value="" t-att-selected="!this.state.edit.tutor_id">Por atribuir</option>
+                                            <option t-foreach="d.teachers" t-as="t" t-key="t.id" t-att-value="t.id"
+                                                    t-att-selected="t.id === this.state.edit.tutor_id" t-out="t.name"/>
+                                        </select>
+                                        <input t-else="" class="form-control" disabled="disabled" t-att-value="d.tutor or 'Por atribuir'"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Início</span>
+                                        <input type="date" class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.date_start" t-on-change="(ev) => this.onEdit('date_start', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Fim</span>
+                                        <input type="date" class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.date_end" t-on-change="(ev) => this.onEdit('date_end', ev)"/>
+                                        <small t-if="this.dateError" class="text-danger">O fim tem de ser depois do início.</small>
+                                    </label>
+                                    <h3 class="o_edu_tr_h3 o_edu_tr_wide">Acompanhamento</h3>
+                                    <label class="o_edu_tr_field">
+                                        <span>Horas cumpridas</span>
+                                        <input type="number" min="0" step="1" class="form-control" t-att-disabled="this.closed" t-att-value="this.state.edit.hours" t-on-input="(ev) => this.onEdit('hours', ev)"/>
+                                    </label>
+                                    <div class="o_edu_tr_field"/>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Apreciação</span>
+                                        <textarea class="form-control" rows="3" t-att-disabled="this.closed" t-on-input="(ev) => this.onEdit('appraisal', ev)" t-out="this.state.edit.appraisal"/>
+                                        <small class="text-muted">O parecer do tutor ou do supervisor sobre o estágio.</small>
+                                    </label>
+                                    <label t-if="d.is_staff" class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Observações</span>
+                                        <textarea class="form-control" rows="2" t-att-disabled="this.closed" t-on-input="(ev) => this.onEdit('note', ev)" t-out="this.state.edit.note"/>
+                                    </label>
+                                </t>
+                                <div t-if="!this.closed" class="o_edu_tr_wide">
+                                    <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy or this.dateError" t-on-click="() => this.save()">Guardar</button>
+                                </div>
+                            </section>
+
+                            <div class="o_edu_tr_side">
+                                <!-- Estado e nota -->
+                                <section class="o_edu_tr_card o_edu_tr_pad">
+                                    <h3 class="o_edu_tr_h3">Próximo passo</h3>
+                                    <t t-if="!d.is_staff">
+                                        <p class="mb-0 text-muted">
+                                            <t t-if="this.closed">Fechado<t t-if="d.grade !== null"> com <t t-out="this.fmtGrade(d.grade)"/> valores</t>.</t>
+                                            <t t-else="">A secretaria regista o estado e a nota. Aqui regista as horas, o parecer<t t-if="!this.isProject"> e os relatórios entregues</t>.</t>
+                                        </p>
+                                    </t>
+                                    <t t-elif="this.closed">
+                                        <p class="mb-2">
+                                            <t t-if="d.state === 'cancelled'">Estágio anulado.</t>
+                                            <t t-else=""><t t-out="d.state_label"/> com <strong t-out="this.fmtGrade(d.grade)"/> valores.</t>
+                                        </p>
+                                        <button t-if="d.is_manager" type="button" class="btn btn-secondary" t-att-disabled="this.state.busy"
+                                                t-on-click="() => this.act('reopen', null, 'Reaberto.')">Reabrir</button>
+                                        <p t-else="" class="mb-0 small text-muted">Só a direcção reabre.</p>
+                                    </t>
+                                    <t t-else="">
+                                        <t t-if="this.isProject">
+                                            <button t-if="d.state === 'proposed'" type="button" class="btn btn-secondary mb-3" t-att-disabled="this.state.busy"
+                                                    t-on-click="() => this.act('start', null, 'Trabalho em elaboração.')">Marcar «em elaboração»</button>
+                                            <div t-if="d.state === 'proposed' or d.state === 'ongoing'" class="mb-3">
+                                                <label class="o_edu_tr_field">
+                                                    <span>Dia da entrega</span>
+                                                    <input type="date" class="form-control" t-att-value="this.state.submitted" t-on-change="(ev) => this.onSubmitted(ev)"/>
+                                                    <small class="text-muted">Vazio: hoje.</small>
+                                                </label>
+                                                <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy"
+                                                        t-on-click="() => this.act('submit', this.state.submitted || null, 'Entrega registada.')">Registar a entrega</button>
+                                            </div>
+                                        </t>
+                                        <t t-else="">
+                                            <button t-if="d.state === 'planned'" type="button" class="btn btn-secondary mb-3" t-att-disabled="this.state.busy"
+                                                    t-on-click="() => this.act('start', null, 'Estágio a decorrer.')">Marcar «a decorrer»</button>
+                                        </t>
+                                        <label class="o_edu_tr_field">
+                                            <span><t t-out="this.isProject ? 'Nota da defesa (0 a 20)' : 'Nota do estágio (0 a 20)'"/></span>
+                                            <input type="number" min="0" max="20" step="0.1" class="form-control" t-att-value="this.state.grade" t-on-input="(ev) => this.onGrade(ev)"/>
+                                            <small t-if="this.gradeError" class="text-danger" t-out="this.gradeError"/>
+                                            <small t-elif="this.isProject and !this.state.edit.defense_date" class="text-muted">Indique primeiro a data da defesa.</small>
+                                            <small t-else="" class="text-muted">Aprovado com 10 ou mais.</small>
+                                        </label>
+                                        <button type="button" class="btn btn-primary"
+                                                t-att-disabled="this.state.busy or this.state.grade === '' or this.gradeError or (this.isProject and !this.state.edit.defense_date)"
+                                                t-on-click="() => this.evaluate()">Fechar com esta nota</button>
+                                        <div t-if="!this.isProject" class="mt-3">
+                                            <button type="button" class="btn btn-link px-0 text-danger" t-att-disabled="this.state.busy"
+                                                    t-on-click="() => this.act('cancel', null, 'Estágio anulado.')">Anular o estágio</button>
+                                        </div>
+                                    </t>
+                                    <div t-if="d.is_manager" class="mt-3 pt-3 border-top">
+                                        <button t-if="!this.state.confirmRemove" type="button" class="btn btn-link px-0 text-danger" t-on-click="() => this.askRemove()">
+                                            Remover <t t-out="this.isProject ? 'o trabalho' : 'o estágio'"/>
+                                        </button>
+                                        <div t-else="">
+                                            <p class="small mb-2">
+                                                <t t-if="this.isProject">O tema, a defesa e a nota deste trabalho saem com ele.</t>
+                                                <t t-else="">As horas, a nota e os relatórios deste estágio saem com ele.</t>
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-secondary" t-on-click="() => this.cancelRemove()">Voltar</button>
+                                                <button type="button" class="btn btn-danger" t-att-disabled="this.state.busy" t-on-click="() => this.remove()">Remover</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <!-- Relatórios entregues -->
+                                <section t-if="!this.isProject" class="o_edu_tr_card o_edu_tr_pad">
+                                    <h3 class="o_edu_tr_h3">Relatórios entregues</h3>
+                                    <p class="small text-muted">Regista-se cada relatório que o aluno entrega (intercalar, final…).</p>
+                                    <p t-if="!d.reports.length" class="text-muted">Ainda nenhum.</p>
+                                    <ul t-else="" class="o_edu_tr_reports">
+                                        <li t-foreach="d.reports" t-as="rep" t-key="rep.id">
+                                            <i class="oi" data-icon="description" aria-hidden="true"/>
+                                            <div class="flex-grow-1 text-truncate">
+                                                <a t-if="rep.has_file" t-att-href="this.reportUrl(rep)" t-out="rep.name"/>
+                                                <span t-else="" t-out="rep.name"/>
+                                                <div class="small text-muted" t-out="rep.date"/>
+                                            </div>
+                                            <button t-if="!this.closed" type="button" class="btn btn-link btn-sm text-danger" t-att-aria-label="'Remover ' + rep.name"
+                                                    t-on-click="() => this.removeReport(rep)">Remover</button>
+                                        </li>
+                                    </ul>
+                                    <div t-if="!this.closed" class="o_edu_tr_report_form">
+                                        <input class="form-control" placeholder="Ex.: Relatório intercalar" t-att-value="this.state.report.name"
+                                               t-on-input="(ev) => this.onReport('name', ev)"/>
+                                        <input type="date" class="form-control" aria-label="Entregue em" t-att-value="this.state.report.date"
+                                               t-on-change="(ev) => this.onReport('date', ev)"/>
+                                        <input type="file" class="form-control" aria-label="Ficheiro (opcional)" t-on-change="(ev) => this.onReportFile(ev)"/>
+                                        <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy or !this.state.report.name.trim()"
+                                                t-on-click="() => this.addReport()">Registar</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

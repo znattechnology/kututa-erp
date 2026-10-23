@@ -5,7 +5,8 @@
     'description': """
 Secretaria Express: o arquivo do percurso do aluno.
 
-* Estágio curricular (ensino técnico): entidade, supervisor, tutor, horas e classificação
+* Estágio curricular (ensino técnico): entidade, supervisor, tutor, horas, relatórios entregues e classificação;
+  páginas «Estágios» e «Trabalho de fim de curso» como no secPed (novo por turma da classe final)
 * Prova de Aptidão Profissional (PAP): tema, orientador, júri, defesa e classificação
 * Conclusão de curso ou de nível: classificação final do plano curricular (média das CFD), estágio e PAP, com a
   fórmula da escola ((2 × PC + PAP)/3 ou (4 × PC + EC + PAP)/6); número de diploma sequencial, livro e folha de
@@ -20,5 +21,10 @@ Secretaria Express: o arquivo do percurso do aluno.
         'security/ir.access.csv',
         'views/edu_records_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'edu_records/static/src/training/*',
+        ],
+    },
     'license': 'OPL-1',
 }

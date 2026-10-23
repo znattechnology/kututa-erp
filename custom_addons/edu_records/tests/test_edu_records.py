@@ -4,7 +4,7 @@ from psycopg2 import IntegrityError
 
 from odoo import Command
 from odoo.exceptions import UserError, ValidationError
-from odoo.tests import TransactionCase, tagged
+from odoo.tests import TransactionCase, new_test_user, tagged
 from odoo.tools import mute_logger
 
 
@@ -132,3 +132,95 @@ class TestEduRecords(TransactionCase):
             self.env['edu.graduation'].create(
                 {'student_id': self.student.id, 'year_result_id': self.enrollment.year_result_id.id}
             )
+
+    def test_training_pages(self):
+        """Estágios e PAP como no secPed: o estágio a vários alunos de uma vez pela turma finalista, um por aluno e ano
+        (o reprovado pode repetir), só nos cursos que o prevêem; reabrir é da direcção; o tutor só regista as horas, o
+        parecer e os relatórios."""
+        Page = self.env['edu.training.page']
+        other = self.env['edu.student'].create({'name': 'Bruno Lemos'})
+        other_enrollment = self.env['edu.enrollment'].create(
+            {'student_id': other.id, 'class_id': self.edu_class.id, 'subject_ids': [Command.set(self.subjects.ids)]}
+        )
+        other_enrollment.action_confirm()
+        # O curso não prevê estágio: não aparece no «Novo» e o servidor recusa.
+        self.assertFalse(Page.new_options('internship')['classes'])
+        with self.assertRaises(UserError):
+            Page.create_records('internship', {'enrollment_ids': [self.enrollment.id], 'entity': 'Hospital'})
+        self.course.requires_internship = True
+        self.assertEqual([c['id'] for c in Page.new_options('internship')['classes']], [self.edu_class.id])
+
+        ids = Page.create_records(
+            'internship',
+            {
+                'enrollment_ids': [self.enrollment.id, other_enrollment.id],
+                'entity': 'Hospital Geral',
+                'supervisor': 'Dr. Tomás',
+            },
+        )
+        internships = self.env['edu.internship'].browse(ids)
+        self.assertEqual(len(internships), 2)
+        self.assertEqual(internships.academic_year_id, self.year)
+        self.assertEqual(internships[0].display_name, f'Estágio de {internships[0].student_id.name} (Hospital Geral)')
+        self.assertTrue(all(s['taken'] for s in Page.class_students('internship', self.edu_class.id)))
+        with self.assertRaises(ValidationError):
+            Page.create_records('internship', {'enrollment_ids': [self.enrollment.id], 'entity': 'Outra'})
+
+        mine = internships.filtered(lambda i: i.student_id == self.student)
+        Page.run_action('internship', mine.id, 'start')
+        with self.assertRaises(UserError):
+            Page.run_action('internship', mine.id, 'evaluate', '')  # sem nota não se fecha
+        detail = Page.run_action('internship', mine.id, 'evaluate', '8')
+        self.assertEqual((detail['state'], detail['grade']), ('failed', 8))
+        # Reprovado: pode ter um novo estágio no mesmo ano.
+        retry = self.env['edu.internship'].browse(
+            Page.create_records('internship', {'enrollment_ids': [self.enrollment.id], 'entity': 'Centro de Saúde'})
+        )
+        self.assertEqual(retry.state, 'planned')
+
+        clerk = new_test_user(self.env, 'clerk_tr', groups='edu_core.group_edu_user')
+        with self.assertRaises(UserError):
+            Page.with_user(clerk).run_action('internship', mine.id, 'reopen')
+        with self.assertRaises(UserError):
+            Page.with_user(clerk).remove('internship', retry.id)
+
+        # O tutor vê só os seus estágios e grava só as horas e o parecer.
+        tutor_user = new_test_user(self.env, 'tutor_tr', groups='edu_core.group_edu_teacher')
+        tutor = self.env['hr.employee'].create({'name': 'Prof. Ana', 'user_id': tutor_user.id, 'edu_is_teacher': True})
+        retry.tutor_id = tutor
+        listing = Page.with_user(tutor_user).listing('internship')
+        self.assertEqual([r['id'] for r in listing['rows']], retry.ids)
+        self.assertFalse(listing['is_staff'])
+        Page.with_user(tutor_user).save('internship', retry.id, {'hours': 120, 'appraisal': 'Assíduo', 'entity': 'X'})
+        self.assertEqual((retry.hours, retry.appraisal, retry.entity), (120, 'Assíduo', 'Centro de Saúde'))
+        with self.assertRaises(UserError):
+            Page.with_user(tutor_user).run_action('internship', retry.id, 'evaluate', '15')
+        detail = Page.with_user(tutor_user).add_report(retry.id, 'Relatório intercalar', False, None)
+        self.assertEqual([r['name'] for r in detail['reports']], ['Relatório intercalar'])
+
+        # PAP: um aluno, tema obrigatório; o resultado exige a data da defesa.
+        with self.assertRaises(UserError):
+            Page.create_records(
+                'project', {'enrollment_ids': [self.enrollment.id, other_enrollment.id], 'name': 'Tema'}
+            )
+        project = self.env['edu.final.project'].browse(
+            Page.create_records(
+                'project', {'enrollment_ids': [self.enrollment.id], 'name': 'Cuidados ao recém-nascido'}
+            )
+        )
+        # A secretaria grava o júri (fichas de funcionários que não lê); só com professores.
+        Page.with_user(clerk).save('project', project.id, {'jury_ids': [tutor.id]})
+        self.assertEqual(project.jury_ids, tutor)
+        stranger = self.env['hr.employee'].create({'name': 'Contabilista'})
+        with self.assertRaises(UserError):
+            Page.with_user(clerk).save('project', project.id, {'jury_ids': [stranger.id]})
+        with self.assertRaises(UserError):
+            Page.save('project', project.id, {'advisor_id': stranger.id})
+        Page.run_action('project', project.id, 'submit', '2027-06-01')
+        self.assertEqual((project.state, project.submitted_date), ('submitted', date(2027, 6, 1)))
+        with self.assertRaises(UserError):
+            Page.run_action('project', project.id, 'evaluate', '16')
+        Page.save('project', project.id, {'defense_date': '2027-07-10'})
+        self.assertEqual(Page.run_action('project', project.id, 'evaluate', '16')['state'], 'passed')
+        with self.assertRaises(ValidationError):
+            Page.create_records('project', {'enrollment_ids': [self.enrollment.id], 'name': 'Outro tema'})

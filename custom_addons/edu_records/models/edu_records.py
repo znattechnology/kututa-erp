@@ -72,14 +72,86 @@ class EduStudent(models.Model):
         }
 
 
+class EduTrainingMixin(models.AbstractModel):
+    """O que o estágio e a PAP partilham: são dos finalistas de um curso que os prevê, um por aluno e ano lectivo (sem
+    contar os reprovados e os anulados, para se poder repetir), e o aluno vem da matrícula do ano."""
+
+    _name = 'edu.training.mixin'
+    _description = 'Etapa da formação técnica'
+
+    # Campo do curso que diz se a etapa é obrigatória, e os estados que deixam o aluno repetir.
+    _course_flag = None
+    _graduation_field = None
+    _label = ''  # «estágio», «PAP»: nas mensagens
+    _repeat_states = ('failed', 'cancelled')
+
+    def _fill_enrollment(self):
+        if self.student_id and self.enrollment_id.student_id != self.student_id:
+            self.enrollment_id = self.student_id.enrollment_ids.filtered(
+                lambda e: e.state in ('active', 'irregular')
+            ).sorted(lambda e: e.academic_year_id.date_start, reverse=True)[:1]
+
+    def _check_one_per_year(self):
+        for record in self:
+            if record.enrollment_id.student_id and record.enrollment_id.student_id != record.student_id:
+                raise ValidationError(self.env._('A matrícula é de outro aluno.'))
+            if record.state in self._repeat_states or not record.academic_year_id:
+                continue
+            twin = self.search_count(
+                [
+                    ('id', '!=', record.id),
+                    ('student_id', '=', record.student_id.id),
+                    ('academic_year_id', '=', record.academic_year_id.id),
+                    ('state', 'not in', self._repeat_states),
+                ]
+            )
+            if twin:
+                raise ValidationError(
+                    self.env._(
+                        '%(student)s já tem %(what)s em %(year)s (um reprovado ou anulado não conta).',
+                        student=record.student_id.name,
+                        what=self._label,
+                        year=record.academic_year_id.name,
+                    )
+                )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for record in records:
+            if not record.enrollment_id:
+                record._fill_enrollment()
+            course = record.course_id
+            if course and self._course_flag and not course[self._course_flag]:
+                raise UserError(
+                    self.env._('O curso %(course)s não prevê %(what)s.', course=course.name, what=self._label)
+                )
+        return records
+
+    def _check_manager(self, message):
+        if not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise UserError(message)
+
+    def _check_not_in_graduation(self):
+        if (
+            self.env['edu.graduation']
+            .sudo()
+            .search_count([('state', '=', 'issued'), (self._graduation_field, 'in', self.ids)], limit=1)
+        ):
+            raise UserError(self.env._('Já entrou numa conclusão de curso emitida: não se altera.'))
+
+
 class EduInternship(models.Model):
     """Estágio curricular (resumo do regime de avaliação, III.5: condição de conclusão do curso técnico)."""
 
     _name = 'edu.internship'
     _description = 'Estágio curricular'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'edu.training.mixin']
     _order = 'date_start desc, id desc'
     _check_company_auto = True
+    _course_flag = 'requires_internship'
+    _graduation_field = 'internship_id'
+    _label = 'estágio'
 
     student_id = fields.Many2one('edu.student', string='Aluno', required=True, index=True, check_company=True)
     enrollment_id = fields.Many2one(
@@ -89,6 +161,7 @@ class EduInternship(models.Model):
         'res.company', string='Escola', required=True, default=lambda self: self.env.company, index=True
     )
     course_id = fields.Many2one(related='enrollment_id.course_id', store=True)
+    academic_year_id = fields.Many2one(related='enrollment_id.academic_year_id', store=True, index=True)
     entity = fields.Char(string='Entidade de acolhimento', required=True)
     supervisor = fields.Char(string='Supervisor na entidade')
     supervisor_contact = fields.Char(string='Contacto do supervisor')
@@ -96,11 +169,11 @@ class EduInternship(models.Model):
     date_start = fields.Date(string='Início')
     date_end = fields.Date(string='Fim')
     hours = fields.Integer(string='Horas realizadas')
-    grade = fields.Float(string='Classificação', digits=(4, 2))
+    grade = fields.Float(string='Classificação', digits=(4, 2), tracking=True)
     state = fields.Selection(
         [
-            ('planned', 'Planeado'),
-            ('ongoing', 'Em curso'),
+            ('planned', 'Por começar'),
+            ('ongoing', 'A decorrer'),
             ('passed', 'Aprovado'),
             ('failed', 'Não aprovado'),
             ('cancelled', 'Anulado'),
@@ -110,25 +183,81 @@ class EduInternship(models.Model):
         required=True,
         tracking=True,
     )
+    appraisal = fields.Text(string='Apreciação', help='O parecer do tutor ou do supervisor sobre o estágio.')
     note = fields.Text(string='Observações')
+    report_ids = fields.One2many('edu.internship.report', 'internship_id', string='Relatórios entregues')
 
-    @api.constrains('grade', 'date_start', 'date_end')
+    @api.onchange('student_id')
+    def _onchange_student_id(self):
+        self._fill_enrollment()
+
+    @api.constrains('student_id', 'enrollment_id', 'state')
+    def _check_student_year(self):
+        self._check_one_per_year()
+
+    @api.depends('student_id', 'entity')
+    def _compute_display_name(self):
+        for internship in self:
+            internship.display_name = (
+                self.env._(
+                    'Estágio de %(student)s (%(entity)s)', student=internship.student_id.name, entity=internship.entity
+                )
+                if internship.entity
+                else self.env._('Estágio de %s', internship.student_id.name or '…')
+            )
+
+    @api.constrains('grade', 'date_start', 'date_end', 'hours')
     def _check_internship(self):
         for internship in self:
             if not 0 <= internship.grade <= 20:
                 raise ValidationError(self.env._('A classificação vai de 0 a 20.'))
+            if internship.hours < 0:
+                raise ValidationError(self.env._('As horas não podem ser negativas.'))
             if internship.date_start and internship.date_end and internship.date_end < internship.date_start:
                 raise ValidationError(self.env._('O estágio termina antes de começar.'))
 
     def action_start(self):
+        if self.filtered(lambda i: i.state != 'planned'):
+            raise UserError(self.env._('Só um estágio por começar se marca como a decorrer.'))
         self.write({'state': 'ongoing'})
         return True
 
-    def action_evaluate(self):
+    def action_evaluate(self, grade=None):
         """Fecha o estágio com a classificação: aprovado com 10 ou mais."""
         for internship in self:
+            if internship.state not in ('planned', 'ongoing'):
+                raise UserError(self.env._('O estágio de %s já está fechado.', internship.student_id.name))
+            if grade is not None:
+                internship.grade = grade
             internship.state = 'passed' if internship.grade >= 10 else 'failed'
         return True
+
+    def action_cancel(self):
+        self._check_not_in_graduation()
+        self.write({'state': 'cancelled'})
+        return True
+
+    def action_reopen(self):
+        """A direcção reabre um estágio fechado (a nota estava errada, ou foi anulado por engano)."""
+        self._check_manager(self.env._('Só a direcção reabre um estágio fechado.'))
+        self._check_not_in_graduation()
+        self.write({'state': 'ongoing'})
+        return True
+
+
+class EduInternshipReport(models.Model):
+    """Relatório que o aluno entrega durante o estágio (intercalar, final…), com o ficheiro."""
+
+    _name = 'edu.internship.report'
+    _description = 'Relatório de estágio'
+    _order = 'date desc, id desc'
+
+    internship_id = fields.Many2one('edu.internship', string='Estágio', required=True, index=True, ondelete='cascade')
+    company_id = fields.Many2one(related='internship_id.company_id', store=True)
+    name = fields.Char(string='Relatório', required=True)
+    date = fields.Date(string='Entregue em', required=True, default=fields.Date.context_today)
+    file = fields.Binary(string='Ficheiro', attachment=True)
+    file_name = fields.Char(string='Nome do ficheiro')
 
 
 class EduFinalProject(models.Model):
@@ -136,9 +265,13 @@ class EduFinalProject(models.Model):
 
     _name = 'edu.final.project'
     _description = 'Prova de Aptidão Profissional (PAP)'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin', 'edu.training.mixin']
     _order = 'defense_date desc, id desc'
     _check_company_auto = True
+    _course_flag = 'requires_final_project'
+    _graduation_field = 'final_project_id'
+    _label = 'PAP'
+    _repeat_states = ('failed',)
 
     name = fields.Char(string='Tema', required=True, tracking=True)
     student_id = fields.Many2one('edu.student', string='Aluno', required=True, index=True, check_company=True)
@@ -149,19 +282,22 @@ class EduFinalProject(models.Model):
         'res.company', string='Escola', required=True, default=lambda self: self.env.company, index=True
     )
     course_id = fields.Many2one(related='enrollment_id.course_id', store=True)
+    academic_year_id = fields.Many2one(related='enrollment_id.academic_year_id', store=True, index=True)
     advisor_id = fields.Many2one('hr.employee', string='Orientador(a)', check_company=True)
     jury_ids = fields.Many2many('hr.employee', string='Júri', check_company=True)
     description = fields.Text(string='Resumo')
+    submitted_date = fields.Date(string='Entregue em')
     defense_date = fields.Date(string='Data da defesa')
     grade = fields.Float(string='Classificação', digits=(4, 2), tracking=True)
+    note = fields.Text(string='Observações')
     state = fields.Selection(
         [
-            ('proposed', 'Proposta'),
+            ('proposed', 'Proposto'),
             ('ongoing', 'Em elaboração'),
             ('submitted', 'Entregue'),
-            ('defended', 'Defendida'),
-            ('passed', 'Aprovada'),
-            ('failed', 'Não aprovada'),
+            ('defended', 'Defendido'),
+            ('passed', 'Aprovado'),
+            ('failed', 'Reprovado'),
         ],
         string='Estado',
         default='proposed',
@@ -169,17 +305,49 @@ class EduFinalProject(models.Model):
         tracking=True,
     )
 
+    @api.onchange('student_id')
+    def _onchange_student_id(self):
+        self._fill_enrollment()
+
+    @api.constrains('student_id', 'enrollment_id', 'state')
+    def _check_student_year(self):
+        self._check_one_per_year()
+
     @api.constrains('grade')
     def _check_grade(self):
         for project in self:
             if not 0 <= project.grade <= 20:
                 raise ValidationError(self.env._('A classificação vai de 0 a 20.'))
 
-    def action_evaluate(self):
+    def action_start(self):
+        if self.filtered(lambda p: p.state != 'proposed'):
+            raise UserError(self.env._('Só um trabalho proposto passa a «em elaboração».'))
+        self.write({'state': 'ongoing'})
+        return True
+
+    def action_submit(self, day=None):
+        if self.filtered(lambda p: p.state not in ('proposed', 'ongoing')):
+            raise UserError(self.env._('O trabalho já foi entregue.'))
+        self.write({'state': 'submitted', 'submitted_date': day or fields.Date.context_today(self)})
+        return True
+
+    def action_evaluate(self, grade=None):
+        """O resultado da defesa: aprovado com 10 ou mais."""
         for project in self:
+            if project.state in ('passed', 'failed'):
+                raise UserError(self.env._('A PAP de %s já tem resultado.', project.student_id.name))
             if not project.defense_date:
                 raise UserError(self.env._('Indique a data da defesa.'))
+            if grade is not None:
+                project.grade = grade
             project.state = 'passed' if project.grade >= 10 else 'failed'
+        return True
+
+    def action_reopen(self):
+        """A direcção reabre uma PAP com resultado (a nota estava errada)."""
+        self._check_manager(self.env._('Só a direcção reabre uma PAP com resultado.'))
+        self._check_not_in_graduation()
+        self.write({'state': 'submitted'})
         return True
 
 

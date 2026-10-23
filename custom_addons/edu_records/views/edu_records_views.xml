@@ -59,8 +59,10 @@
         <field name="arch" type="xml">
             <form string="Estágio curricular">
                 <header>
-                    <button name="action_start" type="object" string="Iniciar" class="btn-primary" invisible="state != 'planned'"/>
-                    <button name="action_evaluate" type="object" string="Avaliar" invisible="state != 'ongoing'"/>
+                    <button name="action_start" type="object" string="Marcar «a decorrer»" class="btn-primary" invisible="state != 'planned' or not id"/>
+                    <button name="action_evaluate" type="object" string="Fechar com a nota" invisible="state != 'ongoing'"/>
+                    <button name="action_reopen" type="object" string="Reabrir" invisible="state not in ('passed', 'failed', 'cancelled')"
+                            groups="edu_core.group_edu_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="planned,ongoing,passed"/>
                 </header>
                 <sheet>
@@ -68,6 +70,7 @@
                         <group>
                             <field name="student_id" options="{'no_create': True}"/>
                             <field name="enrollment_id" options="{'no_create': True}"/>
+                            <field name="academic_year_id"/>
                             <field name="entity"/>
                             <field name="supervisor"/>
                             <field name="supervisor_contact"/>
@@ -81,11 +84,45 @@
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         </group>
                     </group>
-                    <field name="note" placeholder="Observações e relatórios (anexe os ficheiros no histórico)"/>
+                    <notebook>
+                        <page string="Apreciação">
+                            <field name="appraisal" placeholder="O parecer do tutor ou do supervisor sobre o estágio"/>
+                        </page>
+                        <page string="Relatórios entregues">
+                            <field name="report_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="file" filename="file_name"/>
+                                    <field name="file_name" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observações">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
             </form>
         </field>
+    </record>
+    <!-- Estágios e PAP (acções cliente), como no secPed: lista, novo por turma e ficha de acompanhamento. O professor
+         abre as mesmas páginas e vê os seus orientandos. -->
+    <record id="action_edu_internships" model="ir.actions.client">
+        <field name="name">Estágios</field>
+        <field name="tag">edu_records.training</field>
+        <field name="context">{'training_kind': 'internship'}</field>
+    </record>
+    <record id="action_edu_internship_new_page" model="ir.actions.client">
+        <field name="name">Novo estágio</field>
+        <field name="tag">edu_records.training</field>
+        <field name="context">{'training_kind': 'internship', 'training_new': True}</field>
+    </record>
+    <record id="action_edu_final_projects" model="ir.actions.client">
+        <field name="name">Trabalho de fim de curso</field>
+        <field name="tag">edu_records.training</field>
+        <field name="context">{'training_kind': 'project'}</field>
     </record>
     <record id="action_edu_internship" model="ir.actions.act_window">
         <field name="name">Estágios curriculares</field>
@@ -113,9 +150,13 @@
         <field name="arch" type="xml">
             <form string="Prova de Aptidão Profissional">
                 <header>
+                    <button name="action_start" type="object" string="Marcar «em elaboração»" invisible="state != 'proposed' or not id"/>
+                    <button name="action_submit" type="object" string="Registar a entrega" invisible="state not in ('proposed', 'ongoing') or not id"/>
                     <button name="action_evaluate" type="object" string="Registar o resultado da defesa" class="btn-primary"
-                            invisible="state in ('passed', 'failed')"/>
-                    <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
+                            invisible="state in ('passed', 'failed') or not id"/>
+                    <button name="action_reopen" type="object" string="Reabrir" invisible="state not in ('passed', 'failed')"
+                            groups="edu_core.group_edu_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="proposed,ongoing,submitted,passed"/>
                 </header>
                 <sheet>
                     <div class="oe_title"><h1><field name="name" placeholder="Tema da PAP"/></h1></div>
@@ -127,12 +168,15 @@
                             <field name="jury_ids" widget="many2many_tags" options="{'no_create': True}"/>
                         </group>
                         <group>
+                            <field name="academic_year_id"/>
+                            <field name="submitted_date"/>
                             <field name="defense_date"/>
                             <field name="grade"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         </group>
                     </group>
                     <field name="description" placeholder="Resumo do projecto"/>
+                    <field name="note" placeholder="Observações"/>
                 </sheet>
                 <chatter/>
             </form>
@@ -354,7 +398,7 @@
 
     <menuitem id="menu_edu_records" name="Arquivo" parent="edu_core.menu_edu_root" sequence="38" groups="edu_core.group_edu_user">
         <menuitem id="menu_edu_graduation" action="action_edu_graduation" sequence="10"/>
-        <menuitem id="menu_edu_internship" action="action_edu_internship" sequence="20"/>
-        <menuitem id="menu_edu_final_project" action="action_edu_final_project" sequence="30"/>
+        <menuitem id="menu_edu_internship" action="action_edu_internships" sequence="20"/>
+        <menuitem id="menu_edu_final_project" action="action_edu_final_projects" sequence="30"/>
     </menuitem>
 </odoo>

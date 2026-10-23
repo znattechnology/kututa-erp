@@ -8,3 +8,6 @@ edu_internship_comp_rule,edu.internship multi-empresa,edu.internship,,crud,"[('c
 edu_final_project_comp_rule,edu.final.project multi-empresa,edu.final.project,,crud,"[('company_id', 'in', company_ids)]"
 edu_graduation_comp_rule,edu.graduation multi-empresa,edu.graduation,,crud,"[('company_id', 'in', company_ids)]"
 access_edu_graduation_register_user,access_edu_graduation_register_user,edu.graduation.register,edu_core.group_edu_user,crud,
+access_edu_internship_report_user,access_edu_internship_report_user,edu.internship.report,edu_core.group_edu_user,crud,
+access_edu_internship_report_teacher,access_edu_internship_report_teacher,edu.internship.report,edu_core.group_edu_teacher,crud,"[('internship_id.tutor_id.user_id', '=', user.id)]"
+edu_internship_report_comp_rule,edu.internship.report multi-empresa,edu.internship.report,,crud,"[('company_id', 'in', company_ids)]"
