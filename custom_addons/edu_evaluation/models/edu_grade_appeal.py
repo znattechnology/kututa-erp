@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 # Em curso: recebido, admitido (em apreciação pelo conselho ou pela comissão) e no Conselho Pedagógico.
 OPEN = ('pending', 'review', 'appealed')
@@ -84,10 +84,25 @@ class EduGradeAppeal(models.Model):
     decided_by_id = fields.Many2one('res.users', string='Decidida por', readonly=True)
     notified_date = fields.Date(string='Interessado informado em', copy=False, tracking=True)
 
-    @api.depends('class_id.level_id.subsystem')
+    @api.depends('class_id')
     def _compute_regime(self):
+        # O regime de avaliação da escola para o nível (o mesmo da pauta e da grelha).
         for appeal in self:
-            appeal.regime = 'technical' if appeal.class_id.level_id.subsystem == 'technical' else 'general'
+            edu_class = appeal.class_id
+            policy = self.env['edu.evaluation.policy'].sudo()._get(edu_class.company_id, edu_class.level_id)
+            appeal.regime = 'technical' if edu_class and policy.regime == 'technical' else 'general'
+
+    @api.constrains('grade_id', 'enrollment_id', 'subject_id', 'trimester_id')
+    def _check_grade(self):
+        """A nota corrigida é do aluno, da disciplina e (havendo) do trimestre do pedido."""
+        for appeal in self.filtered('grade_id'):
+            grade = appeal.grade_id
+            if (
+                grade.enrollment_id != appeal.enrollment_id
+                or grade.subject_id != appeal.subject_id
+                or (appeal.trimester_id and grade.trimester_id != appeal.trimester_id)
+            ):
+                raise ValidationError(self.env._('A nota escolhida não é da disciplina e da pauta deste pedido.'))
 
     @api.depends('posting_date', 'request_date', 'regime')
     def _compute_deadlines(self):
@@ -126,6 +141,8 @@ class EduGradeAppeal(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if vals.get('state', 'pending') != 'pending':
+                self._check_protected({'state'})
             # Um pedido sobre uma nota concreta herda dela a matrícula, a disciplina e o trimestre.
             if vals.get('grade_id') and not vals.get('enrollment_id'):
                 grade = self.env['edu.grade'].browse(vals['grade_id'])
@@ -146,6 +163,13 @@ class EduGradeAppeal(models.Model):
                 ]
             ):
                 raise ValidationError(self.env._('Este resultado já tem uma reapreciação em curso.'))
+            trimester = appeal.trimester_id or appeal.class_id.academic_year_id.trimester_ids.sorted('number')[-1:]
+            if trimester.state != 'closed':
+                raise ValidationError(
+                    self.env._(
+                        'Só se pede a reapreciação de uma pauta afixada: o %s ainda não foi encerrado.', trimester.name
+                    )
+                )
             if not appeal.posting_date:
                 appeal.posting_date = appeal._default_posting_date()
             if not appeal.requester_name:
@@ -154,17 +178,29 @@ class EduGradeAppeal(models.Model):
                     student.primary_guardian_id.name if appeal.requester_type == 'guardian' else student.name
                 ) or False
             if appeal.grade_id:
-                appeal.original_score = appeal.grade_id.score
+                appeal.sudo().original_score = appeal.grade_id.score
             if 'new_score' in vals:
-                appeal.has_new_score = True
+                appeal.sudo().has_new_score = True
         return appeals
 
     def _default_posting_date(self):
         """A pauta afixa-se quando o trimestre encerra; a final, quando encerra o último."""
         trimester = self.trimester_id or self.class_id.academic_year_id.trimester_ids.sorted('number')[-1:]
-        return trimester.closed_date.date() if trimester.closed_date else False
+        if not trimester.closed_date:
+            return False
+        return fields.Datetime.context_timestamp(self, trimester.closed_date).date()
+
+    PROTECTED = frozenset(
+        {'state', 'admitted_date', 'decided_by_id', 'decided_date', 'original_score', 'has_new_score'}
+    )
+
+    def _check_protected(self, vals):
+        """O estado e as decisões mudam pelas acções da direcção, não por escrita directa."""
+        if self.PROTECTED & set(vals) and not self.env.su and not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise AccessError(self.env._('Só a direcção admite e decide as reapreciações.'))
 
     def write(self, vals):
+        self._check_protected(vals)
         # A nova nota escreveu-se (0 é uma nota): sem ela não se defere.
         if 'new_score' in vals:
             vals = dict(vals, has_new_score=True)
@@ -204,7 +240,7 @@ class EduGradeAppeal(models.Model):
                             limit.strftime('%d/%m/%Y'),
                         )
                     )
-            appeal.write({'state': 'review', 'admitted_date': today, 'meeting_date': meeting})
+            appeal.sudo().write({'state': 'review', 'admitted_date': today, 'meeting_date': meeting})
         return True
 
     def action_review(self):
@@ -220,7 +256,7 @@ class EduGradeAppeal(models.Model):
             text = (reason or appeal.decision or '').strip()
             if not text:
                 raise UserError(self.env._('Escreva o motivo do indeferimento (fora de prazo, sem fundamento…).'))
-            appeal.write(
+            appeal.sudo().write(
                 {
                     'state': 'rejected',
                     'decision': text,
@@ -247,8 +283,10 @@ class EduGradeAppeal(models.Model):
                 raise UserError(self.env._('A nova nota é igual à anterior: para manter a nota, indefira.'))
             if not 0 <= appeal.new_score <= grade.assessment_id.max_score:
                 raise ValidationError(self.env._('A nova nota vai de 0 a %s.', grade.assessment_id.max_score))
-            grade.with_context(edu_grade_appeal=True).write({'score': appeal.new_score, 'absent': False})
-            appeal.write({'state': 'granted', 'decided_by_id': self.env.uid, 'decided_date': fields.Datetime.now()})
+            grade.sudo().write({'score': appeal.new_score, 'absent': False})
+            appeal.sudo().write(
+                {'state': 'granted', 'decided_by_id': self.env.uid, 'decided_date': fields.Datetime.now()}
+            )
             # A decisão do ano (se já tomada e não manual) acompanha a nota reapreciada.
             year_result = grade.enrollment_id.sudo().year_result_id
             if year_result and not year_result.manual:
@@ -266,11 +304,13 @@ class EduGradeAppeal(models.Model):
                 if not (appeal.decision or '').strip():
                     raise UserError(self.env._('Escreva a deliberação (o fundamento do indeferimento).'))
                 if appeal.regime == 'technical':
-                    appeal.state = 'appealed'
+                    appeal.sudo().state = 'appealed'
                     continue
             elif not (appeal.pedagogical_decision or '').strip():
                 raise UserError(self.env._('Escreva a decisão do Conselho Pedagógico.'))
-            appeal.write({'state': 'denied', 'decided_by_id': self.env.uid, 'decided_date': fields.Datetime.now()})
+            appeal.sudo().write(
+                {'state': 'denied', 'decided_by_id': self.env.uid, 'decided_date': fields.Datetime.now()}
+            )
         return True
 
     def action_notify(self, date=None):

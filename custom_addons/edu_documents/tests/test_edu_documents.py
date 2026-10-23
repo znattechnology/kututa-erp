@@ -476,7 +476,7 @@ class TestEduDocuments(TransactionCase):
         data = Page.graduations(self.year.id, self.course.id)
         row = data['rows'][0]
         self.assertEqual((row['diploma_state'], row['diploma_label']), ('draft', 'Por emitir'))
-        self.assertEqual(data['summary'], {'total': 1, 'signed': 0, 'to_verify': 0, 'draft': 1})
+        self.assertEqual(data['summary'], {'total': 1, 'signed': 0, 'to_verify': 0, 'to_sign': 0, 'draft': 1})
         with self.assertRaises(UserError):
             Page.print_document(row['id'], 'diploma')
         row = Page.issue(row['id'])

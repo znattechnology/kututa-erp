@@ -258,6 +258,21 @@ export class GradeGrid extends Component {
         return original.absent ? "F" : fmtDecimal(original.value);
     }
 
+    /**
+     * O campo identifica-se pela sua chave (data-key): as variáveis do modelo (a coluna, o trimestre) só se lêem no
+     * desenho — no momento do evento já têm o último valor do ciclo, e a NPP gravava-se como NPT.
+     */
+    cellFromKey(key) {
+        const [enrollment, trimester, column] = key.split("|");
+        const student = this.state.data.students.find((s) => s.enrollment_id === parseInt(enrollment, 10));
+        return { student, trimesterId: parseInt(trimester, 10) || 0, column };
+    }
+
+    onCellInput(ev) {
+        const { student, trimesterId, column } = this.cellFromKey(ev.target.dataset.key);
+        return this.onInput(student, trimesterId, column, ev);
+    }
+
     onInput(student, trimesterId, column, ev) {
         const key = this.key(student, trimesterId, column);
         const text = ev.target.value.trim();
@@ -294,28 +309,28 @@ export class GradeGrid extends Component {
         const input = ev.target;
         const row = parseInt(input.dataset.row, 10);
         const col = input.dataset.col;
-        let target = null;
-        if (ev.key === "Enter" || ev.key === "ArrowDown") {
-            target = row + 1;
-        } else if (ev.key === "ArrowUp") {
-            target = row - 1;
-        } else if (ev.key === "Escape") {
-            const [enrollment, trimester, column] = input.dataset.key.split("|");
-            const student = this.state.data.students.find((s) => s.enrollment_id === parseInt(enrollment, 10));
+        if (ev.key === "Escape") {
+            const { student, trimesterId, column } = this.cellFromKey(input.dataset.key);
             delete this.state.edits[input.dataset.key];
             delete this.state.errors[input.dataset.key];
-            input.value = this.inputValue(student, parseInt(trimester, 10), column);
+            input.value = this.inputValue(student, trimesterId, column);
             ev.preventDefault();
             return;
         }
-        if (target === null) {
+        const down = ev.key === "Enter" || ev.key === "ArrowDown";
+        if (!down && ev.key !== "ArrowUp") {
             return;
         }
         ev.preventDefault();
-        const next = this.table()?.querySelector(`input[data-col="${col}"][data-row="${target}"]`);
-        if (next) {
-            next.focus();
-            next.select();
+        // O aluno seguinte (ou anterior) com campo nesta coluna: quem saiu da turma não tem campo.
+        const inputs = [...(this.table()?.querySelectorAll(`input[data-col="${col}"]`) || [])];
+        const ordered = inputs
+            .map((el) => ({ el, row: parseInt(el.dataset.row, 10) }))
+            .filter((item) => (down ? item.row > row : item.row < row))
+            .sort((a, b) => (down ? a.row - b.row : b.row - a.row));
+        if (ordered.length) {
+            ordered[0].el.focus();
+            ordered[0].el.select();
         }
     }
 

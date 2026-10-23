@@ -91,6 +91,9 @@ export class Graduations extends Component {
         if (s.to_verify) {
             parts.push(`${s.to_verify} por verificar`);
         }
+        if (s.to_sign) {
+            parts.push(`${s.to_sign} por assinar`);
+        }
         if (s.draft) {
             parts.push(`${s.draft} por emitir`);
         }

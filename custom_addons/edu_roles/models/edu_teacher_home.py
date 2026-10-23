@@ -73,17 +73,25 @@ class EduTeacherHome(models.AbstractModel):
     @api.model
     def _next_lessons(self, employee, today):
         """As aulas de hoje pelo horário; sem nenhuma, as do próximo dia de aulas (até duas semanas)."""
+        # Os tempos do professor e os que substitui; em cada dia conta quem dá a aula (o substituto, se houver).
+        replaced = (
+            self.env['edu.schedule.replacement']
+            .sudo()
+            .search([('replacement_teacher_id', '=', employee.id), ('date', '>=', today)])
+        )
         schedules = (
             self.env['edu.schedule']
             .sudo()
             .search([('teacher_id', '=', employee.id), ('academic_year_id.is_current', '=', True)])
-        )
+        ) | replaced.schedule_id
         if not schedules:
             return False, []
         Lesson = self.env['edu.lesson'].sudo()
         for offset in range(15):
             day = today + timedelta(days=offset)
-            slots = schedules.filtered(lambda s, d=day: s._occurs_on(d)).sorted('hour_from')
+            slots = schedules.filtered(lambda s, d=day: s._occurs_on(d) and s._teacher_on(d) == employee).sorted(
+                'hour_from'
+            )
             if not slots:
                 continue
             lessons = Lesson.search([('schedule_id', 'in', slots.ids), ('date', '=', day)])
@@ -112,9 +120,9 @@ class EduTeacherHome(models.AbstractModel):
         """A aula do horário nesse dia (criada se ainda não existe), aberta para a chamada e o sumário."""
         employee = self._employee()
         schedule = self.env['edu.schedule'].sudo().browse(schedule_id).exists()
-        if not schedule or schedule.teacher_id != employee:
-            raise UserError(self.env._('Este tempo não é seu.'))
         day = fields.Date.to_date(date)
+        if not schedule or not day or schedule._teacher_on(day) != employee:
+            raise UserError(self.env._('Este tempo não é seu.'))
         if not schedule._occurs_on(day):
             raise UserError(self.env._('Este tempo não tem aula nesse dia.'))
         Lesson = self.env['edu.lesson'].sudo()
@@ -126,7 +134,7 @@ class EduTeacherHome(models.AbstractModel):
                 'date': day,
             }
         )
-        if lesson.state == 'scheduled' and not lesson.attendance_ids:
+        if lesson.state == 'scheduled' and not lesson.attendance_ids and day <= fields.Date.context_today(self):
             # Um toque abre a chamada (todos presentes), como no secPed; num trimestre fechado fica só a aula.
             try:
                 with self.env.cr.savepoint():

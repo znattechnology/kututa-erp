@@ -52,3 +52,21 @@ class IrUiMenu(models.Model):
             if menu:
                 hidden.append(menu.id)
         return hidden
+
+
+class EduClass(models.Model):
+    _inherit = 'edu.class'
+
+    # Os menus que dependem dos níveis de ensino da escola (RDEC, MAC, formação técnica) ficam em cache: uma turma
+    # nova (ou que muda de nível ou de escola) refaz a lista.
+    @api.model_create_multi
+    def create(self, vals_list):
+        classes = super().create(vals_list)
+        self.env.transaction.invalidate_ormcache()
+        return classes
+
+    def write(self, vals):
+        result = super().write(vals)
+        if {'level_id', 'company_id', 'curriculum_year_id', 'course_id'} & set(vals):
+            self.env.transaction.invalidate_ormcache()
+        return result

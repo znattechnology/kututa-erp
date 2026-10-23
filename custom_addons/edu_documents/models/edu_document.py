@@ -156,6 +156,8 @@ class EduDocument(models.Model):
                     'name': f'{PREFIXES[document.document_type]}/Nº{int(number):02d}/{label}',
                     'state': 'issued',
                     'issued_by_id': self.env.uid,
+                    # A data do documento é a da emissão (o rascunho pode ter sido visto noutro dia).
+                    'date': fields.Date.context_today(self),
                 }
             )
         return True

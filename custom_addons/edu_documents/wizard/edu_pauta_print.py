@@ -104,12 +104,14 @@ class EduPautaPrint(models.TransientModel):
     def _subjects(self):
         """As disciplinas do plano da turma e as que têm resultados (mesmo as que ainda não têm notas aparecem)."""
         results = self.env['edu.subject.result'].search([('class_id', '=', self.class_id.id)])
-        return Helpers.ordered(results).subject_id | self.class_id.subject_line_ids.subject_id
+        # O director de turma (professor) não lê o plano curricular.
+        return Helpers.ordered(results).subject_id | self.class_id.sudo().subject_line_ids.subject_id.with_env(self.env)
 
     def _national_subjects(self):
         """Disciplinas com exame nacional na turma: a marca da linha do plano ou a da disciplina."""
-        lines = self.class_id.subject_line_ids
-        return lines.filtered(lambda line: line.is_national_exam or line.subject_id.is_national_exam).subject_id
+        lines = self.class_id.sudo().subject_line_ids
+        national = lines.filtered(lambda line: line.is_national_exam or line.subject_id.is_national_exam).subject_id
+        return national.with_env(self.env)
 
     def _results(self):
         Result = self.env['edu.subject.result']

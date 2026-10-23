@@ -654,6 +654,9 @@ class TestEduEvaluation(TransactionCase):
         self.class7.action_compute_year_results()
         self.assertEqual(seventh.year_result_id.status, 'promoted')
         grades = self.env['edu.grade'].search([('enrollment_id', '=', seventh.id)])
+        # A reapreciação é de pautas afixadas: os trimestres encerram primeiro.
+        for trimester in (self.t1, self.t2, self.t3):
+            trimester.action_close()
         for grade in grades:
             appeal = self.env['edu.grade.appeal'].create({'grade_id': grade.id, 'reason': 'Erro de soma'})
             appeal.action_admit()
@@ -767,6 +770,9 @@ class TestEduEvaluation(TransactionCase):
         with self.assertRaisesRegex(ValidationError, 'já tem esta avaliação'):
             self._assess(self.class7, 'LP', self.t1, 'trimester_test', {ana: 13})
         grade = test.grade_ids
+        with self.assertRaisesRegex(ValidationError, 'pauta afixada'):
+            self.env['edu.grade.appeal'].create({'grade_id': grade.id, 'reason': 'Erro de soma'})
+        self.t1.action_close()
         appeal = self.env['edu.grade.appeal'].create({'grade_id': grade.id, 'reason': 'Erro de soma'})
         with self.assertRaisesRegex(UserError, 'admitida'):
             appeal.action_grant()
@@ -888,9 +894,10 @@ class TestEduEvaluation(TransactionCase):
         assessment = self._assess(self.class7, 'LP', self.t1, 'continuous', {ana: 12})
         with self.assertRaises(AccessError):
             assessment.grade_ids.with_user(clerk).score = 18
-        # A reapreciação deferida entra por fora da janela.
-        assessment.grade_ids.with_user(clerk).with_context(edu_grade_appeal=True).score = 13
-        self.assertEqual(assessment.grade_ids.score, 13)
+        # O contexto não abre a janela (o cliente controla-o): a reapreciação deferida entra em sudo.
+        with self.assertRaises(AccessError):
+            assessment.grade_ids.with_user(clerk).with_context(edu_grade_appeal=True, edu_grade_exam=True).score = 13
+        self.assertEqual(assessment.grade_ids.score, 12)
 
         # Técnico: a segunda avaliação contínua do mesmo trimestre é recusada; no geral há várias (a MAC).
         self._enroll(self.class10, self.students[1], ['LP'])

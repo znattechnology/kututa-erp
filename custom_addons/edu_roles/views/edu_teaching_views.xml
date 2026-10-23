@@ -112,6 +112,8 @@
               parent="menu_teacher_classes" sequence="10"/>
     <menuitem id="menu_my_classes" action="action_my_classes" parent="menu_teacher_classes" sequence="20"/>
     <menuitem id="menu_my_assessments" action="action_my_assessments" parent="menu_teacher_classes" sequence="30"/>
+    <menuitem id="menu_teacher_mini_pauta" name="Mini-pauta" action="edu_documents.action_edu_mini_pauta"
+              parent="menu_teacher_classes" sequence="35"/>
     <menuitem id="menu_my_schedule" name="O meu horário" action="action_my_schedule" parent="menu_teacher_classes" sequence="40"/>
     <menuitem id="menu_my_supervisions" name="Vigilâncias" action="action_my_supervisions" parent="menu_teacher_classes" sequence="50"/>
     <menuitem id="menu_teacher_calendar" action="action_teacher_calendar" parent="menu_teacher_classes" sequence="60"/>

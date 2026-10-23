@@ -1,5 +1,5 @@
 from odoo import api, models
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 
 
 class EduGradeGrid(models.AbstractModel):
@@ -25,7 +25,10 @@ class EduGradeGrid(models.AbstractModel):
         edu_class = self._class(class_id)
         if not self._can_print(edu_class):
             raise AccessError(self.env._('Só a secretaria e o director de turma imprimem a pauta da turma.'))
+        trimester = edu_class.academic_year_id.trimester_ids.filtered(lambda t: t.id == trimester_id)
+        if not trimester:
+            raise UserError(self.env._('Escolha um trimestre do ano lectivo da turma.'))
         wizard = self.env['edu.pauta.print'].create(
-            {'class_id': edu_class.id, 'kind': 'final', 'trimester_id': trimester_id}
+            {'class_id': edu_class.id, 'kind': 'final', 'trimester_id': trimester.id}
         )
         return wizard.action_preview() if preview else wizard.action_print()

@@ -13,9 +13,9 @@ ENROLLED = ('active', 'irregular')
 def check_grade_entry(env, edu_class, subject, trimester):
     """Janela de lançamento: só o professor da disciplina lança as notas (a secretaria e a direcção consultam), no
     trimestre em curso do ano em curso ou com autorização da secretaria; trimestre fechado → só por reapreciação.
-    Entram por fora da janela a reapreciação deferida e os resultados das sessões de exame (``edu_grade_appeal``,
-    ``edu_grade_exam``)."""
-    if env.context.get('edu_grade_appeal') or env.context.get('edu_grade_exam') or env.su:
+    Entram por fora da janela, em sudo, a reapreciação deferida pela direcção e os resultados das sessões de exame
+    (o contexto não serve de chave: o cliente controla-o em qualquer chamada)."""
+    if env.su:
         return
     if trimester.state == 'closed':
         raise UserError(env._('O %s está fechado: a correcção das notas faz-se por reapreciação.', trimester.name))
@@ -143,7 +143,7 @@ class EduAssessment(models.Model):
                 )
             if (
                 assessment.assessment_type == 'trimester_test'
-                and policy.regime not in ('technical', 'primary')
+                and policy.regime != 'technical'
                 and policy._is_exam_class(assessment.class_id.class_number)
                 and assessment.trimester_id == assessment.academic_year_id.trimester_ids.sorted('number')[-1:]
             ):

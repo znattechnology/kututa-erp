@@ -250,6 +250,15 @@ class TestEduRoles(TransactionCase):
         self.assertFalse(data['can_edit'])
         self.assertTrue(data['can_print'])
         self.assertEqual(Grid.grid_print(self.class_b.id, trimester, True)['report_type'], 'qweb-html')
+        # O director gera mesmo a pauta (sem acesso ao plano curricular).
+        wizard = self.env['edu.pauta.print'].with_user(self.teacher_user).search([], order='id desc', limit=1)
+        html = (
+            self.env['ir.actions.report']
+            .with_user(self.teacher_user)
+            ._render_qweb_html('edu_documents.report_pauta', wizard.ids)[0]
+            .decode()
+        )
+        self.assertIn('MAPA DE APROVEITAMENTO', html)
         with self.assertRaises(AccessError):
             Grid.grid_save(self.class_b.id, self.lp.id, [])
 

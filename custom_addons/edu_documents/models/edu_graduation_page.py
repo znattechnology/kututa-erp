@@ -80,6 +80,7 @@ class EduGraduationPage(models.AbstractModel):
                 'total': len(valid),
                 'signed': len(valid.filtered(lambda g: g.state == 'issued' and g.diploma_state == 'signed')),
                 'to_verify': len(valid.filtered(lambda g: g.state == 'issued' and g.diploma_state == 'to_verify')),
+                'to_sign': len(valid.filtered(lambda g: g.state == 'issued' and g.diploma_state == 'to_sign')),
                 'draft': len(valid.filtered(lambda g: g.state == 'draft')),
             },
         }
@@ -156,6 +157,7 @@ class EduGraduationPage(models.AbstractModel):
                     'number': result.enrollment_id.order_number or '',
                     'average': result.average if result.average else None,
                     'registered': bool(result.graduation_id),
+                    'cancelled': result.graduation_id.state == 'cancelled',
                 }
             )
         return rows

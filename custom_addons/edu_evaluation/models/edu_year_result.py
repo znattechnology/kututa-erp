@@ -1,5 +1,5 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 from ..tools import grading
 
@@ -166,7 +166,7 @@ class EduYearResult(models.Model):
                 and policy.regime != 'primary'
                 and prior + 1 > policy.max_retentions,
             }
-            result.write(values)
+            result.sudo().write(values)
             # Os exames por realizar que a decisão já não pede saem (os realizados ficam no histórico).
             wanted = {grading.CONDITIONAL: 'extraordinary', grading.EXAM: 'resit'}.get(decision.status)
             result.requirement_ids.filtered(
@@ -239,6 +239,14 @@ class EduYearResult(models.Model):
             result._decide(excluded_absence=result.enrollment_id in excluded)
         return True
 
+    def write(self, vals):
+        """A decisão (automática ou manual) só a escreve o sistema (os recálculos correm em sudo) ou a direcção: a
+        secretaria não altera resultados por chamada directa."""
+        protected = {'status', 'manual', 'decided_by_id', 'decided_date', 'reason', 'requires_review'}
+        if protected & set(vals) and not self.env.su and not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise AccessError(self.env._('Só a direcção altera a decisão do ano.'))
+        return super().write(vals)
+
     def _set_manual(self, status, reason=None):
         if not self.env.user.has_group('edu_core.group_edu_manager'):
             raise UserError(self.env._('Só a direcção decide manualmente a transição.'))
@@ -297,8 +305,8 @@ class EduYearResult(models.Model):
             excluded = result.class_id._edu_absence_exclusions()
             result._decide(excluded_absence=result.enrollment_id in excluded)
             if result.status == 'exam':
-                result.write({'status': 'retained'})
-            result.reason = self.env._('Depois dos exames: %s', result.reason or '')
+                result.sudo().write({'status': 'retained'})
+            result.sudo().reason = self.env._('Depois dos exames: %s', result.reason or '')
 
 
 class EduExamRequirement(models.Model):

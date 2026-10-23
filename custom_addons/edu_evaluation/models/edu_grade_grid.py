@@ -210,7 +210,8 @@ class EduGradeGrid(models.AbstractModel):
                     'closed': trimester.state == 'closed',
                     'editable': editable,
                     'reason': reason,
-                    'permission_until': permission and fields.Date.to_string(permission.date_expiry.date()),
+                    'permission_until': bool(permission)
+                    and fields.Datetime.context_timestamp(self, permission.date_expiry).strftime('%d/%m/%Y'),
                     # Técnico: a NPP escreve-se na grelha (uma avaliação «NPP»); com várias contínuas, é a média delas.
                     'npp_editable': technical and npp_only,
                     'has_npt': not (exam_class and trimester == last),
@@ -351,6 +352,16 @@ class EduGradeGrid(models.AbstractModel):
             raise AccessError(self.env._('Só o professor que lecciona a disciplina lança as notas.'))
         trimesters = edu_class.academic_year_id.trimester_ids.sorted('number')
         last = trimesters[-1:]
+        # As mesmas regras da grelha, no servidor: as colunas que existem e os alunos que ainda estão na turma.
+        data = self.grid_data(class_id, subject_id)
+        allowed = {'npt'}
+        if data['technical']:
+            allowed.add('npp')
+        if data['subject']['has_pg']:
+            allowed.add('pg')
+        if data['subject']['has_en']:
+            allowed.add('en')
+        students = {s['enrollment_id'] for s in data['students'] if not s['exit']}
         errors = []
         try:
             with self.env.cr.savepoint():
@@ -362,6 +373,10 @@ class EduGradeGrid(models.AbstractModel):
                         last if column in ('pg', 'en') else self.env['edu.trimester'].browse(change.get('trimester_id'))
                     )
                     try:
+                        if column not in allowed:
+                            raise UserError(self.env._('Esta disciplina não tem a coluna %s.', COLUMN_NAMES[column]))
+                        if change.get('enrollment_id') not in students:
+                            raise UserError(self.env._('Este aluno já não está na turma.'))
                         assessment = self._assessment(edu_class, subject, trimester, column)
                         self._write_grade(assessment, change)
                     except (UserError, ValidationError, AccessError) as error:

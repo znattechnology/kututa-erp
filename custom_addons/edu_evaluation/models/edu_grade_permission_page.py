@@ -1,5 +1,7 @@
 from datetime import datetime, time, timedelta
 
+import pytz
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -39,7 +41,7 @@ class EduGradePermissionPage(models.AbstractModel):
             'teacher': permission.teacher_id.name,
             'class': permission.class_id._editor_label(),
             'subject': permission.subject_id.name,
-            'trimester': f'{trimester.number}.º, {trimester.academic_year_id.name}',
+            'trimester': f'{trimester.name}, {trimester.academic_year_id.name}',
             'reason': permission.reason,
             'situation': situation,
             'tone': tone,
@@ -99,7 +101,7 @@ class EduGradePermissionPage(models.AbstractModel):
         return {
             'year': year.name or '',
             'teachers': sorted(teachers.values(), key=lambda t: t['name']),
-            'trimesters': [{'id': t.id, 'label': f'{t.number}.º trimestre'} for t in trimesters],
+            'trimesters': [{'id': t.id, 'label': t.name} for t in trimesters],
             'default_until': fields.Date.to_string(today + timedelta(days=7)),
             'max_until': fields.Date.to_string(today + timedelta(days=MAX_DAYS)),
             'min_until': fields.Date.to_string(today),
@@ -114,7 +116,11 @@ class EduGradePermissionPage(models.AbstractModel):
         today = fields.Date.context_today(self)
         if until < today or until > today + timedelta(days=MAX_DAYS):
             raise UserError(self.env._('No máximo %s dias a partir de hoje.', MAX_DAYS))
-        expiry = min(datetime.combine(until, time(23, 59, 59)), fields.Datetime.now() + timedelta(days=MAX_DAYS))
+        # O fim do dia escolhido na hora local do utilizador, gravado em UTC.
+        tz = pytz.timezone(self.env.user.tz or 'Africa/Luanda')
+        local_end = tz.localize(datetime.combine(until, time(23, 59, 59)))
+        expiry = local_end.astimezone(pytz.utc).replace(tzinfo=None)
+        expiry = min(expiry, fields.Datetime.now() + timedelta(days=MAX_DAYS))
         permission = self.env['edu.grade.edit.permission'].create(
             {
                 'teacher_id': values.get('teacher_id'),

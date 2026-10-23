@@ -2,13 +2,13 @@ id,name,model_id,group_id/id,operation,domain
 access_edu_evaluation_policy_user,access_edu_evaluation_policy_user,edu.evaluation.policy,edu_core.group_edu_user,r,
 access_edu_evaluation_policy_manager,access_edu_evaluation_policy_manager,edu.evaluation.policy,edu_core.group_edu_manager,crud,
 access_edu_evaluation_policy_teacher,access_edu_evaluation_policy_teacher,edu.evaluation.policy,edu_core.group_edu_teacher,r,
-access_edu_assessment_user,access_edu_assessment_user,edu.assessment,edu_core.group_edu_user,crud,
+access_edu_assessment_user,access_edu_assessment_user,edu.assessment,edu_core.group_edu_user,r,
 access_edu_assessment_teacher,access_edu_assessment_teacher,edu.assessment,edu_core.group_edu_teacher,crud,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
-access_edu_grade_user,access_edu_grade_user,edu.grade,edu_core.group_edu_user,crud,
+access_edu_grade_user,access_edu_grade_user,edu.grade,edu_core.group_edu_user,r,
 access_edu_grade_teacher,access_edu_grade_teacher,edu.grade,edu_core.group_edu_teacher,crud,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
-access_edu_term_result_user,access_edu_term_result_user,edu.term.result,edu_core.group_edu_user,crud,
+access_edu_term_result_user,access_edu_term_result_user,edu.term.result,edu_core.group_edu_user,r,
 access_edu_term_result_teacher,access_edu_term_result_teacher,edu.term.result,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
-access_edu_subject_result_user,access_edu_subject_result_user,edu.subject.result,edu_core.group_edu_user,crud,
+access_edu_subject_result_user,access_edu_subject_result_user,edu.subject.result,edu_core.group_edu_user,r,
 access_edu_subject_result_teacher,access_edu_subject_result_teacher,edu.subject.result,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
 access_edu_year_result_user,access_edu_year_result_user,edu.year.result,edu_core.group_edu_user,crud,
 access_edu_year_result_teacher,access_edu_year_result_teacher,edu.year.result,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"

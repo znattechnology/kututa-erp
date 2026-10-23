@@ -54,6 +54,10 @@
                         <field name="reason" nolabel="1" colspan="2"/>
                         <field name="attachment_ids" widget="many2many_binary" colspan="2"/>
                     </group>
+                    <group string="Decisão da direcção" invisible="state != 'pending'" groups="edu_core.group_edu_manager">
+                        <field name="meeting_date"/>
+                        <field name="decision" string="Motivo (indeferimento liminar)" placeholder="Fora de prazo, sem fundamento…"/>
+                    </group>
                     <group string="Apreciação" invisible="state == 'pending'">
                         <group>
                             <field name="admitted_date" invisible="not admitted_date"/>

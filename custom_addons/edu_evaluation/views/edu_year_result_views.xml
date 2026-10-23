@@ -101,6 +101,7 @@
         <field name="model">edu.year.result</field>
         <field name="arch" type="xml">
             <pivot string="Resultados do ano" disable_linking="1">
+                <field name="academic_year_id" type="row"/>
                 <field name="class_id" type="row"/>
                 <field name="status" type="col"/>
             </pivot>

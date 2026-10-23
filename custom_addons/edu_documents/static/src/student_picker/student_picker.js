@@ -69,14 +69,18 @@ export class StudentPicker extends Component {
             this.state.results = [];
             return;
         }
+        // Uma resposta antiga (lenta) não se sobrepõe à da pesquisa mais recente.
+        const request = (this.searchRequest = (this.searchRequest || 0) + 1);
         this.state.searching = true;
         try {
-            this.state.results = await this.orm.call("edu.student.picker", "search_students", [
-                this.state.yearId,
-                query,
-            ]);
+            const results = await this.orm.call("edu.student.picker", "search_students", [this.state.yearId, query]);
+            if (request === this.searchRequest) {
+                this.state.results = results;
+            }
         } finally {
-            this.state.searching = false;
+            if (request === this.searchRequest) {
+                this.state.searching = false;
+            }
         }
     }
 

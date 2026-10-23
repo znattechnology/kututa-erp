@@ -1,3 +1,5 @@
+import base64
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -87,7 +89,12 @@ class EduAppealPage(models.AbstractModel):
         attachments = self.env['ir.attachment']
         for item in values.get('attachments') or []:
             attachments |= attachments.create(
-                {'name': item.get('name') or 'documento', 'datas': item.get('datas'), 'res_model': 'edu.grade.appeal'}
+                {
+                    'name': item.get('name') or 'documento',
+                    # O Odoo 20 recebe o conteúdo em bytes (raw); a página envia-o em base64.
+                    'raw': base64.b64decode(item.get('datas') or ''),
+                    'res_model': 'edu.grade.appeal',
+                }
             )
         appeal = self.env['edu.grade.appeal'].create(
             {

@@ -48,9 +48,12 @@ class EduHistoryPage(models.AbstractModel):
         for enrollment in enrollments:
             edu_class = enrollment.class_id
             result = results.get(enrollment.id)
-            if result:
+            gone = enrollment.state in ('transferred', 'dropped')
+            ongoing = enrollment.state in ('active', 'irregular') and (not result or result.status == 'pending')
+            if result and not gone and not ongoing:
                 label, tone = RESULTS.get(result.status, (result.status, 'muted'))
             else:
+                # A saída e o ano em curso vêm da matrícula (um resultado «por decidir» do ano corrente não conta).
                 label, tone = EXITS.get(enrollment.state, (enrollment.state, 'muted'))
             if enrollment.state in ('transferred', 'dropped') and enrollment.drop_date:
                 label = f'{label} em {enrollment.drop_date.strftime("%d/%m/%Y")}'
@@ -65,7 +68,7 @@ class EduHistoryPage(models.AbstractModel):
                     'attendance': result.attendance_rate if result and result.attendance_rate else None,
                     'result': label,
                     'tone': tone,
-                    'year_result_id': result.id if result else False,
+                    'year_result_id': result.id if result and not ongoing else False,
                     'status': result.status if result else False,
                     'manual': bool(result and result.manual),
                     'decision_note': self._decision_note(result) if result and result.manual else '',

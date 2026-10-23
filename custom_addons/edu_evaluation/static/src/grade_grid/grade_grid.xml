@@ -9,7 +9,7 @@
                    t-att-title="this.cellError(st, tid, column)"
                    t-att-aria-label="label + ' · ' + st.name"
                    t-att-data-key="this.key(st, tid, column)" t-att-data-row="st_index" t-att-data-col="tid + '-' + column"
-                   t-on-input="(ev) => this.onInput(st, tid, column, ev)"
+                   t-on-input="(ev) => this.onCellInput(ev)"
                    t-on-keydown="(ev) => this.onKeydown(ev)"
                    t-on-focus="(ev) => ev.target.select()"/>
             <span t-elif="absent" class="text-danger fw-bold" title="Faltou à prova">F</span>

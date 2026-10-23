@@ -158,7 +158,8 @@
                                                 <div t-out="f.student"/>
                                                 <div class="small text-muted">Média final <t t-out="this.fmtAverage(f.average)"/></div>
                                             </div>
-                                            <span t-if="f.registered" class="small text-success">Registado</span>
+                                            <span t-if="f.cancelled" class="small text-muted">Conclusão anulada</span>
+                                            <span t-elif="f.registered" class="small text-success">Registado</span>
                                             <span t-elif="f.average === null" class="small text-muted" title="O conselho de turma não apurou a média final deste aluno.">sem média</span>
                                             <button t-else="" type="button" class="btn btn-sm btn-secondary" t-att-disabled="this.state.busy"
                                                     t-on-click="() => this.register([f])" t-att-aria-label="'Registar a conclusão de ' + f.student">Registar</button>

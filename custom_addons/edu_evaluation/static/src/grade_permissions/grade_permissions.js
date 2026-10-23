@@ -56,7 +56,7 @@ export class GradePermissions extends Component {
     revoke(row) {
         this.dialog.add(ConfirmationDialog, {
             title: "Revogar a autorização?",
-            body: `${row.teacher} deixa de poder alterar as notas de ${row.subject} da ${row.class} no ${row.trimester.split(",")[0]} trimestre. As notas que já lançou ficam.`,
+            body: `${row.teacher} deixa de poder alterar as notas de ${row.subject} da ${row.class} no ${row.trimester.split(",")[0]}. As notas que já lançou ficam.`,
             confirmLabel: "Revogar",
             confirm: async () => {
                 await this.orm.call("edu.grade.permission.page", "revoke", [row.id]);

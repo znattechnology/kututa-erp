@@ -92,7 +92,9 @@ class EduGradeEditPermission(models.Model):
                 limit=1,
             )
             if existing:
-                existing.write({'reason': vals.get('reason'), 'date_expiry': vals.get('date_expiry')})
+                renew = {key: vals[key] for key in ('reason', 'date_expiry') if vals.get(key)}
+                if renew:
+                    existing.write(renew)
                 result |= existing
             else:
                 to_create.append(vals)
