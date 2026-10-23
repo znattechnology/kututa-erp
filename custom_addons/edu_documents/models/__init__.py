@@ -1,4 +1,5 @@
 from . import (
+    edu_appeal_page,
     edu_council_docs,
     edu_declaration_page,
     edu_document,

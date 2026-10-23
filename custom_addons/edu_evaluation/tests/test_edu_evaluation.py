@@ -411,6 +411,7 @@ class TestEduEvaluation(TransactionCase):
         self.assertEqual(appeal.original_score, 12)
         with self.assertRaises(ValidationError):
             self.env['edu.grade.appeal'].create({'grade_id': grade.id, 'reason': 'Outro pedido'})
+        appeal.action_admit()
         appeal.new_score = 15
         appeal.action_grant()
         self.assertEqual(grade.score, 15)
@@ -655,6 +656,7 @@ class TestEduEvaluation(TransactionCase):
         grades = self.env['edu.grade'].search([('enrollment_id', '=', seventh.id)])
         for grade in grades:
             appeal = self.env['edu.grade.appeal'].create({'grade_id': grade.id, 'reason': 'Erro de soma'})
+            appeal.action_admit()
             appeal.new_score = 2
             appeal.action_grant()
         self.assertEqual(seventh.year_result_id.status, 'retained')
@@ -766,13 +768,16 @@ class TestEduEvaluation(TransactionCase):
             self._assess(self.class7, 'LP', self.t1, 'trimester_test', {ana: 13})
         grade = test.grade_ids
         appeal = self.env['edu.grade.appeal'].create({'grade_id': grade.id, 'reason': 'Erro de soma'})
+        with self.assertRaisesRegex(UserError, 'admitida'):
+            appeal.action_grant()
+        appeal.action_admit()
         with self.assertRaisesRegex(UserError, 'nova nota'):
             appeal.action_grant()
         self.assertEqual(grade.score, 12)
         appeal.new_score = 12
         with self.assertRaisesRegex(UserError, 'indefira'):
             appeal.action_grant()
-        with self.assertRaisesRegex(UserError, 'decisão'):
+        with self.assertRaisesRegex(UserError, 'deliberação'):
             appeal.action_deny()
         appeal.decision = 'A nota estava certa.'
         appeal.action_deny()
@@ -941,3 +946,67 @@ class TestEduEvaluation(TransactionCase):
         self.assertEqual(len(Page.permissions(False)['rows']), 1)
         with self.assertRaises(AccessError):
             self._assess(self.class7, 'LP', self.t3, 'continuous', {}, user=self.teacher_user)
+
+    def test_appeal_law_flow(self):
+        """Reapreciação no técnico (Despacho 60/08, art. 15.º): pedido até 3 dias úteis após a afixação (fora de prazo
+        indefere-se liminarmente), admissão pela direcção com o conselho extraordinário até 5 dias úteis, sem
+        provimento vai ao Conselho Pedagógico, deferido corrige a nota, e o interessado é informado."""
+        ana, bento = self.students[:2]
+        enrollments = self._enroll(self.class10, (ana, bento), ['LP'])
+        lp = self._subject(self.class10, 'LP')
+        npt = self._assess(self.class10, 'LP', self.t1, 'trimester_test', {ana: 9, bento: 9})
+        self.t1.action_close()
+        Appeal = self.env['edu.grade.appeal']
+        posted = fields.Date.context_today(Appeal)
+        vals = {'enrollment_id': enrollments[0].id, 'subject_id': lp.id, 'trimester_id': self.t1.id}
+        appeal = Appeal.create({**vals, 'reason': 'A prova foi mal somada', 'posting_date': posted})
+        self.assertEqual(appeal.regime, 'technical')
+        self.assertFalse(appeal.late)
+        self.assertEqual(appeal.answer_deadline, appeal.request_date + timedelta(days=30))
+        with self.assertRaisesRegex(ValidationError, 'em curso'):
+            Appeal.create({**vals, 'reason': 'Outro pedido'})
+        # A secretaria regista mas não decide.
+        clerk = self.env['res.users'].create(
+            {
+                'name': 'Secretaria',
+                'login': 'secretaria_reaprec',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        with self.assertRaisesRegex(UserError, 'direcção'):
+            appeal.with_user(clerk).action_admit()
+        with self.assertRaisesRegex(UserError, 'cinco dias úteis'):
+            appeal.action_admit(fields.Date.to_string(posted + timedelta(days=30)))
+        appeal.action_admit()
+        self.assertEqual(appeal.state, 'review')
+        self.assertTrue(appeal.meeting_date)
+        # Sem provimento: passa ao Conselho Pedagógico, que defere e corrige a nota.
+        appeal.decision = 'O conselho manteve a nota.'
+        appeal.action_deny()
+        self.assertEqual(appeal.state, 'appealed')
+        with self.assertRaisesRegex(UserError, 'depois da decisão'):
+            appeal.action_notify()
+        grade = npt.grade_ids.filtered(lambda g: g.student_id == ana)
+        appeal.write({'grade_id': grade.id, 'new_score': 11})
+        self.assertEqual(appeal.original_score, 9)
+        appeal.action_grant()
+        self.assertEqual((appeal.state, grade.score), ('granted', 11))
+        appeal.action_notify()
+        self.assertEqual(appeal.notified_date, fields.Date.context_today(appeal))
+        # Fora de prazo: indefere-se liminarmente.
+        late = Appeal.create(
+            {
+                'enrollment_id': enrollments[1].id,
+                'subject_id': lp.id,
+                'trimester_id': self.t1.id,
+                'reason': 'Pedido atrasado',
+                'posting_date': posted - timedelta(days=20),
+            }
+        )
+        self.assertTrue(late.late)
+        with self.assertRaisesRegex(UserError, 'fora de prazo'):
+            late.action_admit()
+        with self.assertRaisesRegex(UserError, 'motivo'):
+            late.action_reject()
+        late.action_reject('Entregue fora do prazo de três dias úteis.')
+        self.assertEqual(late.state, 'rejected')

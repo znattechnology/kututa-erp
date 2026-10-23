@@ -36,6 +36,7 @@ do Despacho n.º 60/08.
         'views/edu_declaration_page_views.xml',
         'views/edu_history_page_views.xml',
         'views/edu_graduation_page_views.xml',
+        'views/edu_appeal_page_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
@@ -43,6 +44,7 @@ do Despacho n.º 60/08.
             'edu_documents/static/src/declarations/*',
             'edu_documents/static/src/student_history/*',
             'edu_documents/static/src/graduations/*',
+            'edu_documents/static/src/appeals/*',
             'edu_documents/static/src/mini_pauta/*',
         ],
     },

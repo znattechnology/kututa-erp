@@ -4,13 +4,16 @@
         <field name="name">edu.grade.appeal.list</field>
         <field name="model">edu.grade.appeal</field>
         <field name="arch" type="xml">
-            <list string="Reapreciações">
+            <list string="Reapreciações" decoration-muted="state in ('denied', 'rejected')" decoration-danger="late">
+                <field name="request_date"/>
                 <field name="student_id"/>
                 <field name="class_id"/>
                 <field name="subject_id"/>
-                <field name="original_score"/>
-                <field name="new_score"/>
-                <field name="state" widget="badge" decoration-success="state == 'granted'" decoration-danger="state == 'denied'"/>
+                <field name="trimester_id"/>
+                <field name="answer_deadline"/>
+                <field name="late" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'granted'" decoration-danger="state in ('denied', 'rejected')"
+                       decoration-warning="state in ('pending', 'review', 'appealed')"/>
             </list>
         </field>
     </record>
@@ -20,28 +23,52 @@
         <field name="arch" type="xml">
             <form string="Reapreciação">
                 <header>
-                    <button name="action_review" type="object" string="Pôr em apreciação" invisible="state != 'pending'"/>
-                    <button name="action_grant" type="object" string="Deferir" class="btn-primary" invisible="state not in ('pending', 'review')"/>
-                    <button name="action_deny" type="object" string="Indeferir" invisible="state not in ('pending', 'review')"/>
-                    <field name="state" widget="statusbar"/>
+                    <button name="action_admit" type="object" string="Admitir" class="btn-primary" invisible="state != 'pending'" groups="edu_core.group_edu_manager"/>
+                    <button name="action_reject" type="object" string="Indeferir liminarmente" invisible="state != 'pending'" groups="edu_core.group_edu_manager"/>
+                    <button name="action_grant" type="object" string="Deferir" class="btn-primary" invisible="state not in ('review', 'appealed')" groups="edu_core.group_edu_manager"/>
+                    <button name="action_deny" type="object" string="Sem provimento" invisible="state not in ('review', 'appealed')" groups="edu_core.group_edu_manager"/>
+                    <button name="action_notify" type="object" string="Interessado informado" invisible="state not in ('granted', 'denied', 'rejected') or notified_date"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,review,granted"/>
                 </header>
                 <sheet>
                     <group>
-                        <group>
-                            <field name="grade_id" options="{'no_create': True}" readonly="id"/>
+                        <group string="Pedido">
+                            <field name="enrollment_id" options="{'no_create': True}" readonly="id"/>
                             <field name="student_id"/>
-                            <field name="subject_id"/>
-                            <field name="class_id"/>
+                            <field name="subject_id" options="{'no_create': True}" readonly="id"/>
+                            <field name="trimester_id" options="{'no_create': True}" readonly="id"/>
+                            <field name="requester_type"/>
+                            <field name="requester_name"/>
+                            <field name="regime" invisible="1"/>
                         </group>
-                        <group>
-                            <field name="original_score"/>
-                            <field name="new_score" readonly="state not in ('pending', 'review')"/>
-                            <field name="decided_by_id" invisible="not decided_by_id"/>
+                        <group string="Prazos">
+                            <field name="posting_date"/>
+                            <field name="request_date"/>
+                            <field name="deadline_date" invisible="not deadline_date"/>
+                            <field name="late" invisible="not late"/>
+                            <field name="answer_deadline"/>
+                            <field name="notified_date" invisible="not notified_date"/>
                         </group>
                     </group>
-                    <group>
-                        <field name="reason"/>
-                        <field name="decision"/>
+                    <group string="Fundamentação">
+                        <field name="reason" nolabel="1" colspan="2"/>
+                        <field name="attachment_ids" widget="many2many_binary" colspan="2"/>
+                    </group>
+                    <group string="Apreciação" invisible="state == 'pending'">
+                        <group>
+                            <field name="admitted_date" invisible="not admitted_date"/>
+                            <field name="meeting_date"/>
+                            <field name="minutes_ref"/>
+                        </group>
+                        <group>
+                            <field name="grade_id" options="{'no_create': True}" domain="[('enrollment_id', '=', enrollment_id), ('subject_id', '=', subject_id)]"
+                                   readonly="state not in ('review', 'appealed')"/>
+                            <field name="original_score" invisible="not grade_id"/>
+                            <field name="new_score" readonly="state not in ('review', 'appealed')"/>
+                            <field name="decided_by_id" invisible="not decided_by_id"/>
+                        </group>
+                        <field name="decision" placeholder="Deliberação (relatório que integra a acta)" colspan="2"/>
+                        <field name="pedagogical_decision" placeholder="Decisão do Conselho Pedagógico" invisible="state != 'appealed' and not pedagogical_decision" colspan="2"/>
                     </group>
                 </sheet>
                 <chatter/>

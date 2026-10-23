@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_documents.Appeals">
+        <div class="o_action o_edu_appeals">
+            <Layout display="this.display">
+                <div class="o_edu_ap_body">
+
+                    <!-- Lista -->
+                    <t t-if="this.state.mode === 'list'">
+                        <div class="o_edu_ap_intro">
+                            <p class="o_edu_ap_lead">
+                                Os pedidos de reapreciação dos resultados da avaliação: o requerimento fundamentado do aluno ou do
+                                encarregado, a admissão pela direcção, a deliberação do conselho de turma extraordinário (técnico) ou da
+                                comissão (geral) e a resposta ao interessado, até 30 dias após a entrada.
+                            </p>
+                            <button type="button" class="btn btn-primary" t-on-click="() => this.openNew()">
+                                <i class="oi me-1" data-icon="add" aria-hidden="true"/>Registar pedido
+                            </button>
+                        </div>
+                        <div class="o_edu_ap_bar">
+                            <div role="tablist" aria-label="Reapreciações" class="o_edu_ap_tabs">
+                                <button type="button" role="tab" class="btn" t-att-class="this.state.tab === 'open' ? 'btn-primary' : 'btn-secondary'"
+                                        t-att-aria-selected="this.state.tab === 'open' ? 'true' : 'false'" t-on-click="() => this.selectTab('open')">
+                                    Em curso<t t-if="this.state.openCount"> (<t t-out="this.state.openCount"/>)</t>
+                                </button>
+                                <button type="button" role="tab" class="btn" t-att-class="this.state.tab === 'done' ? 'btn-primary' : 'btn-secondary'"
+                                        t-att-aria-selected="this.state.tab === 'done' ? 'true' : 'false'" t-on-click="() => this.selectTab('done')">Decididos</button>
+                            </div>
+                            <p t-if="this.state.tab === 'open' and this.state.alerts" class="mb-0 text-danger">
+                                <t t-out="this.state.alerts"/> <t t-out="this.state.alerts === 1 ? 'pedido com' : 'pedidos com'"/> a resposta a menos de 5 dias.
+                            </p>
+                        </div>
+                        <div class="o_edu_ap_card">
+                            <p t-if="!this.state.rows.length" class="mb-0 text-muted p-3">
+                                <t t-if="this.state.tab === 'open'">Não há pedidos de reapreciação em curso.</t>
+                                <t t-else="">Ainda não há pedidos decididos.</t>
+                            </p>
+                            <div t-else="" class="table-responsive">
+                                <table class="table table-sm table-hover o_edu_ap_table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Entrada</th>
+                                            <th>Aluno</th>
+                                            <th>Disciplina e pauta</th>
+                                            <th>Estado</th>
+                                            <th t-if="this.state.tab === 'open'">Responder até</th>
+                                            <th t-else="">Interessado informado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="this.state.rows" t-as="r" t-key="r.id" class="o_edu_ap_row" t-on-click="() => this.open(r)">
+                                            <td class="text-nowrap" t-out="r.request_date"/>
+                                            <td><div class="fw-semibold" t-out="r.student"/><div class="small text-muted" t-out="r.class"/></td>
+                                            <td><div t-out="r.subject"/><div class="small text-muted" t-out="r.moment"/></td>
+                                            <td>
+                                                <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
+                                                <div t-if="r.late" class="small text-danger">Fora de prazo</div>
+                                            </td>
+                                            <td t-if="this.state.tab === 'open'" class="text-nowrap" t-att-class="{'text-danger fw-semibold': r.alert}">
+                                                <t t-out="r.answer_deadline"/>
+                                                <div class="small" t-att-class="r.alert ? 'text-danger' : 'text-muted'">
+                                                    <t t-if="r.days_left &lt; 0">atrasado <t t-out="-r.days_left"/> dias</t>
+                                                    <t t-else="">faltam <t t-out="r.days_left"/> dias</t>
+                                                </div>
+                                            </td>
+                                            <td t-else="" class="text-nowrap" t-out="r.notified or 'Por informar'"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Registar pedido -->
+                    <t t-elif="this.state.mode === 'new'">
+                        <div>
+                            <button type="button" class="btn btn-link px-0" t-on-click="() => this.backToList()">
+                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/>Voltar às reapreciações
+                            </button>
+                            <h2 class="o_edu_ap_h2">Registar pedido de reapreciação</h2>
+                        </div>
+                        <section class="o_edu_ap_card o_edu_ap_pad">
+                            <StudentPicker t-if="!this.state.pick" onPick="(row) => this.choose(row)"/>
+                            <div t-else="" class="o_edu_ap_picked">
+                                <div class="flex-grow-1">
+                                    <strong t-out="this.state.pick.name"/>
+                                    <div class="small text-muted" t-out="this.state.pick.class"/>
+                                </div>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.otherStudent()">Outro aluno</button>
+                            </div>
+                        </section>
+                        <section t-if="this.state.options" class="o_edu_ap_card o_edu_ap_pad o_edu_ap_form">
+                            <label class="o_edu_ap_field">
+                                <span>Disciplina</span>
+                                <select class="form-select" t-on-change="(ev) => this.onForm('subjectId', ev)">
+                                    <option value="" t-att-selected="!this.state.form.subjectId">Escolha a disciplina</option>
+                                    <option t-foreach="this.state.options.subjects" t-as="s" t-key="s.id" t-att-value="s.id"
+                                            t-att-selected="s.id === this.state.form.subjectId" t-out="s.name"/>
+                                </select>
+                            </label>
+                            <label class="o_edu_ap_field">
+                                <span>Pauta contestada</span>
+                                <select class="form-select" t-on-change="(ev) => this.onForm('momentId', ev)">
+                                    <option value="" t-att-selected="this.state.form.momentId === ''">Escolha a pauta</option>
+                                    <option t-foreach="this.state.options.moments" t-as="m" t-key="m.id" t-att-value="m.id"
+                                            t-att-selected="m.id === this.state.form.momentId" t-out="m.label"/>
+                                </select>
+                                <small class="text-muted">
+                                    <t t-if="this.state.options.technical">Técnico: as pautas dos trimestres encerrados e a final (Despacho 60/08, art. 15.º).</t>
+                                    <t t-else="">Geral: a avaliação de fim de ano (DE 424/25, art. 36.º).</t>
+                                </small>
+                            </label>
+                            <label class="o_edu_ap_field">
+                                <span>Requerente</span>
+                                <select class="form-select" t-on-change="(ev) => this.onForm('requesterType', ev)">
+                                    <option value="guardian" t-att-selected="this.state.form.requesterType === 'guardian'">Encarregado de educação</option>
+                                    <option value="student" t-att-selected="this.state.form.requesterType === 'student'">O próprio aluno (maior de idade)</option>
+                                </select>
+                            </label>
+                            <label class="o_edu_ap_field">
+                                <span>Nome do requerente</span>
+                                <input class="form-control" t-att-value="this.state.form.requesterName" t-on-input="(ev) => this.onForm('requesterName', ev)"/>
+                            </label>
+                            <label class="o_edu_ap_field">
+                                <span>Entrada do pedido</span>
+                                <input type="date" class="form-control" t-att-value="this.state.form.requestDate" t-on-change="(ev) => this.onForm('requestDate', ev)"/>
+                            </label>
+                            <label class="o_edu_ap_field">
+                                <span>Afixação da pauta</span>
+                                <input type="date" class="form-control" t-att-value="this.state.form.postingDate" t-on-change="(ev) => this.onForm('postingDate', ev)"/>
+                                <small class="text-muted">Vazio: o dia em que o trimestre foi encerrado. No técnico o pedido entra até 3 dias úteis depois.</small>
+                            </label>
+                            <label class="o_edu_ap_field o_edu_ap_wide">
+                                <span>Fundamentação do pedido</span>
+                                <textarea class="form-control" rows="4" t-on-input="(ev) => this.onForm('reason', ev)" t-out="this.state.form.reason"/>
+                            </label>
+                            <label class="o_edu_ap_field o_edu_ap_wide">
+                                <span>Documentos do requerimento (opcional)</span>
+                                <input type="file" class="form-control" multiple="multiple" t-on-change="(ev) => this.onFiles(ev)"/>
+                            </label>
+                            <div class="o_edu_ap_wide d-flex gap-2">
+                                <button type="button" class="btn btn-primary" t-att-disabled="!this.canSubmit" t-on-click="() => this.submit()">Registar o pedido</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.backToList()">Cancelar</button>
+                            </div>
+                        </section>
+                    </t>
+
+                    <!-- Processo -->
+                    <t t-else="">
+                        <t t-set="d" t-value="this.state.detail"/>
+                        <div>
+                            <button type="button" class="btn btn-link px-0" t-on-click="() => this.backToList()">
+                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/>Voltar às reapreciações
+                            </button>
+                            <h2 class="o_edu_ap_h2"><t t-out="d.student"/> · <t t-out="d.subject"/></h2>
+                            <p class="mb-0 text-muted"><t t-out="d.class"/>, <t t-out="d.moment"/>.
+                                <span class="badge ms-1" t-att-class="this.stateClass(d.state)" t-out="d.state_label"/></p>
+                        </div>
+                        <div class="o_edu_ap_grid">
+                            <section class="o_edu_ap_card o_edu_ap_pad">
+                                <h3 class="o_edu_ap_h3">O pedido</h3>
+                                <dl class="o_edu_ap_dl">
+                                    <dt>Requerente</dt><dd t-out="d.requester"/>
+                                    <dt>Entrada</dt><dd t-out="d.request_date"/>
+                                    <dt>Afixação da pauta</dt><dd t-out="d.posting_date or '—'"/>
+                                    <t t-if="d.deadline_date"><dt>Prazo do pedido</dt>
+                                        <dd t-att-class="{'text-danger fw-semibold': d.late}"><t t-out="d.deadline_date"/><t t-if="d.late"> (entrou fora de prazo)</t></dd></t>
+                                    <dt>Responder até</dt><dd t-att-class="{'text-danger fw-semibold': d.alert}" t-out="d.answer_deadline"/>
+                                    <t t-if="d.admitted_date"><dt>Admitido em</dt><dd t-out="d.admitted_date"/></t>
+                                    <t t-if="d.meeting_date"><dt>Reunião (<t t-out="d.body"/>)</dt><dd t-out="d.meeting_date"/></t>
+                                    <t t-if="d.minutes_ref"><dt>Acta</dt><dd t-out="d.minutes_ref"/></t>
+                                    <t t-if="d.grade"><dt>Nota corrigida</dt><dd t-out="d.grade"/></t>
+                                    <t t-if="d.decided_by"><dt>Decisão registada por</dt><dd t-out="d.decided_by"/></t>
+                                    <t t-if="d.notified"><dt>Interessado informado</dt><dd t-out="d.notified"/></t>
+                                </dl>
+                                <h3 class="o_edu_ap_h3">Fundamentação</h3>
+                                <p class="o_edu_ap_text" t-out="d.reason"/>
+                                <t t-if="d.decision"><h3 class="o_edu_ap_h3">Deliberação</h3><p class="o_edu_ap_text" t-out="d.decision"/></t>
+                                <t t-if="d.pedagogical_decision"><h3 class="o_edu_ap_h3">Conselho Pedagógico</h3><p class="o_edu_ap_text" t-out="d.pedagogical_decision"/></t>
+                                <t t-if="d.attachments.length">
+                                    <h3 class="o_edu_ap_h3">Documentos</h3>
+                                    <ul class="mb-0"><li t-foreach="d.attachments" t-as="f" t-key="f.id"><a t-att-href="'/web/content/' + f.id + '?download=true'" t-out="f.name"/></li></ul>
+                                </t>
+                            </section>
+
+                            <section class="o_edu_ap_card o_edu_ap_pad o_edu_ap_next">
+                                <h3 class="o_edu_ap_h3">Próximo passo</h3>
+                                <!-- Recebido: a direcção admite ou indefere liminarmente -->
+                                <t t-if="d.state === 'pending'">
+                                    <t t-if="this.state.isManager">
+                                        <label t-if="!d.late" class="o_edu_ap_field">
+                                            <span>Data da reunião (<t t-out="d.body"/>)</span>
+                                            <input type="date" class="form-control" t-att-value="this.state.action.meeting" t-on-change="(ev) => this.onAction('meeting', ev)"/>
+                                            <small t-if="d.regime === 'technical'" class="text-muted">Até 5 dias úteis após a aceitação; vazio marca o último dia.</small>
+                                        </label>
+                                        <button t-if="!d.late" type="button" class="btn btn-primary" t-att-disabled="this.state.busy" t-on-click="() => this.admit()">Admitir o pedido</button>
+                                        <label class="o_edu_ap_field mt-3">
+                                            <span>Indeferir liminarmente (fora de prazo ou sem fundamento)</span>
+                                            <input class="form-control" placeholder="Motivo" t-att-value="this.state.action.reason" t-on-input="(ev) => this.onAction('reason', ev)"/>
+                                        </label>
+                                        <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy or !this.state.action.reason.trim()" t-on-click="() => this.reject()">Indeferir liminarmente</button>
+                                    </t>
+                                    <p t-else="" class="mb-0 text-muted">Aguarda a decisão da direcção: admitir o pedido ou indeferi-lo liminarmente.</p>
+                                </t>
+                                <!-- Em apreciação ou no Conselho Pedagógico: a deliberação -->
+                                <t t-elif="d.state === 'review' or d.state === 'appealed'">
+                                    <t t-if="this.state.isManager">
+                                        <p class="small text-muted">
+                                            <t t-if="d.state === 'review'">A deliberação do <t t-out="d.body"/>. <t t-if="d.regime === 'technical'">Sem provimento, o pedido passa ao Conselho Pedagógico.</t></t>
+                                            <t t-else="">A decisão final do Conselho Pedagógico.</t>
+                                        </p>
+                                        <label class="o_edu_ap_field">
+                                            <span><t t-out="d.state === 'review' ? 'Deliberação (relatório da acta)' : 'Decisão do Conselho Pedagógico'"/></span>
+                                            <textarea class="form-control" rows="3" t-on-input="(ev) => this.onAction('text', ev)" t-out="this.state.action.text"/>
+                                        </label>
+                                        <label class="o_edu_ap_field">
+                                            <span>Acta n.º</span>
+                                            <input class="form-control" t-att-value="this.state.action.minutes" t-on-input="(ev) => this.onAction('minutes', ev)"/>
+                                        </label>
+                                        <div class="o_edu_ap_grant">
+                                            <label class="o_edu_ap_field">
+                                                <span>Nota que a deliberação corrige</span>
+                                                <select class="form-select" t-on-change="(ev) => this.onAction('gradeId', ev)">
+                                                    <option value="" t-att-selected="!this.state.action.gradeId">Escolha a nota</option>
+                                                    <option t-foreach="d.grades" t-as="g" t-key="g.id" t-att-value="g.id" t-att-selected="g.id === this.state.action.gradeId">
+                                                        <t t-out="g.label"/>: <t t-out="g.score === null ? 'sem nota' : g.score"/>
+                                                    </option>
+                                                </select>
+                                            </label>
+                                            <label class="o_edu_ap_field">
+                                                <span>Nova nota</span>
+                                                <input type="number" min="0" max="20" step="0.5" class="form-control" t-att-value="this.state.action.newScore" t-on-input="(ev) => this.onAction('newScore', ev)"/>
+                                            </label>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy or !this.state.action.gradeId or this.state.action.newScore === ''"
+                                                    t-on-click="() => this.deliberate('grant')">Deferir e corrigir a nota</button>
+                                            <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy or !this.state.action.text.trim()"
+                                                    t-on-click="() => this.deliberate('deny')">Sem provimento</button>
+                                        </div>
+                                    </t>
+                                    <p t-else="" class="mb-0 text-muted">A aguardar a deliberação. A direcção regista-a aqui.</p>
+                                </t>
+                                <!-- Decidido: informar o interessado -->
+                                <t t-else="">
+                                    <t t-if="!d.notified">
+                                        <label class="o_edu_ap_field">
+                                            <span>Dia em que o interessado foi informado</span>
+                                            <input type="date" class="form-control" t-att-value="this.state.action.notified" t-on-change="(ev) => this.onAction('notified', ev)"/>
+                                            <small class="text-muted">Vazio: hoje.</small>
+                                        </label>
+                                        <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy" t-on-click="() => this.notify()">Registar que foi informado</button>
+                                    </t>
+                                    <p t-else="" class="mb-0">Processo concluído: o interessado foi informado a <t t-out="d.notified"/>.</p>
+                                </t>
+                            </section>
+                        </div>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

@@ -519,3 +519,48 @@ class TestEduDocuments(TransactionCase):
         row = Page.reset_decision(result.id)['rows'][0]
         self.assertFalse(row['manual'])
         self.assertFalse(result.decided_date)
+
+    def test_appeals_page(self):
+        """Reapreciações, conforme a lei: registar o pedido (aluno, disciplina, pauta, requerente, documentos), admitir,
+        deliberação sem provimento → Conselho Pedagógico, deferido corrige a nota, informar o interessado."""
+        self._grades(9)
+        first = self.year.trimester_ids.sorted('number')[0]
+        first.action_close()
+        Page = self.env['edu.appeal.page']
+        options = Page.request_options(self.enrollment.id)
+        self.assertTrue(options['technical'])
+        self.assertEqual([m['id'] for m in options['moments']], [first.id, 0])
+        subject = self.subjects[0]
+        detail = Page.create_request(
+            {
+                'enrollment_id': self.enrollment.id,
+                'subject_id': subject.id,
+                'trimester_id': first.id,
+                'requester_type': 'guardian',
+                'requester_name': 'Maria Kiala',
+                'posting_date': options['today'],
+                'reason': 'A prova trimestral foi mal corrigida.',
+                'attachments': [{'name': 'requerimento.txt', 'datas': 'UmVxdWVyaW1lbnRv'}],
+            }
+        )
+        self.assertEqual((detail['state'], detail['requester']), ('pending', 'Encarregado de educação: Maria Kiala'))
+        self.assertEqual([a['name'] for a in detail['attachments']], ['requerimento.txt'])
+        self.assertEqual(Page.appeals('open')['open_count'], 1)
+        appeal_id = detail['id']
+        detail = Page.admit(appeal_id, False)
+        self.assertEqual(detail['state'], 'review')
+        self.assertTrue(detail['grades'])
+        detail = Page.deliberate(
+            appeal_id, {'outcome': 'deny', 'text': 'O conselho manteve a nota.', 'minutes_ref': '7'}
+        )
+        self.assertEqual(detail['state'], 'appealed')
+        grade = self.env['edu.grade'].browse(detail['grades'][0]['id'])
+        detail = Page.deliberate(
+            appeal_id, {'outcome': 'grant', 'text': 'Provido.', 'grade_id': grade.id, 'new_score': 12}
+        )
+        self.assertEqual((detail['state'], grade.score), ('granted', 12))
+        self.assertIn('→ 12', detail['grade'])
+        detail = Page.notify(appeal_id, False)
+        self.assertTrue(detail['notified'])
+        done = Page.appeals('done')
+        self.assertEqual([r['id'] for r in done['rows']], [appeal_id])

@@ -1,0 +1,138 @@
+// Reapreciações: o processo da lei (pedido, admissão, deliberação, Conselho Pedagógico, resposta).
+.o_edu_appeals {
+    .o_edu_ap_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_ap_intro,
+    .o_edu_ap_bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_ap_intro {
+        align-items: flex-start;
+    }
+
+    .o_edu_ap_lead {
+        max-width: 72ch;
+        margin: 0;
+        color: $text-muted;
+    }
+
+    .o_edu_ap_tabs {
+        display: flex;
+        gap: 8px;
+    }
+
+    .o_edu_ap_h2 {
+        margin: 4px 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ap_h3 {
+        margin: 12px 0 6px;
+        font-size: 0.95rem;
+        font-weight: 600;
+
+        &:first-child {
+            margin-top: 0;
+        }
+    }
+
+    .o_edu_ap_card {
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_ap_pad {
+        padding: 20px;
+    }
+
+    .o_edu_ap_table {
+        th,
+        td {
+            vertical-align: middle;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+    }
+
+    .o_edu_ap_row {
+        cursor: pointer;
+    }
+
+    .o_edu_ap_picked {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .o_edu_ap_form,
+    .o_edu_ap_grant {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+
+        @include media-breakpoint-down(sm) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_ap_field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0 0 12px;
+
+        > span:first-child {
+            font-size: 0.875rem;
+            color: $text-muted;
+        }
+    }
+
+    .o_edu_ap_wide {
+        grid-column: 1 / -1;
+    }
+
+    .o_edu_ap_grid {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+        gap: 16px;
+        align-items: start;
+
+        @include media-breakpoint-down(lg) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_ap_dl {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 4px 16px;
+        margin: 0;
+
+        dt {
+            font-weight: 400;
+            color: $text-muted;
+        }
+
+        dd {
+            margin: 0;
+        }
+    }
+
+    .o_edu_ap_text {
+        white-space: pre-line;
+    }
+}

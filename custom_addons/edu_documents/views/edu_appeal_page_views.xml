@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Reapreciações (acção cliente): o processo da lei, do pedido à resposta ao interessado. -->
+    <record id="action_edu_appeals" model="ir.actions.client">
+        <field name="name">Reapreciações</field>
+        <field name="tag">edu_documents.appeals</field>
+    </record>
+    <record id="edu_evaluation.menu_edu_grade_appeal" model="ir.ui.menu">
+        <field name="action" ref="action_edu_appeals"/>
+    </record>
+</odoo>
