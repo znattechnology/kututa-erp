@@ -121,6 +121,123 @@ export class ReportsPage extends Component {
         return parts.join(", ");
     }
 
+    // Gráficos (SVG desenhado aqui: barras finas com a ponta arredondada, grelha discreta, dica ao passar o rato)
+
+    get kpis() {
+        const d = this.state.data;
+        return [
+            { key: "enrolled", label: "alunos matriculados", value: fmt(d.enrollments.total) },
+            {
+                key: "grades",
+                label: d.grades.grades ? `positivas no ${d.grades.trimester}` : "positivas (ainda sem notas)",
+                value: d.grades.grades ? `${d.grades.pct}%` : "—",
+            },
+            {
+                key: "attendance",
+                label: d.attendance.calls ? "presenças nas aulas" : "presenças (ainda sem chamadas)",
+                value: d.attendance.calls ? `${d.attendance.pct}%` : "—",
+            },
+            {
+                key: "final",
+                label: d.final.evaluated ? "transitaram ou concluíram" : "transitaram (ano por fechar)",
+                value: d.final.evaluated ? `${d.final.pct}%` : "—",
+            },
+        ];
+    }
+
+    /** Distribuição das notas de 0 a 20: uma coluna por valor e a linha da nota mínima. */
+    get histogram() {
+        const counts = this.state.data.grades.histogram;
+        if (!counts.length) {
+            return null;
+        }
+        const W = 440, H = 150, left = 8, bottom = 22, top = 16;
+        const step = (W - left * 2) / counts.length;
+        const max = Math.max(...counts);
+        const bars = counts.map((count, value) => {
+            const h = max ? ((H - bottom - top) * count) / max : 0;
+            return {
+                key: value,
+                x: left + value * step + 1,
+                y: H - bottom - h,
+                w: step - 2,
+                h,
+                negative: value < 10,
+                title: `${value} valores: ${fmt(count)} ${count === 1 ? "nota" : "notas"}`,
+                label: value % 5 === 0 ? `${value}` : "",
+                lx: left + value * step + step / 2,
+            };
+        });
+        return { W, H, bars, base: H - bottom, passX: left + 10 * step - 0.5, top };
+    }
+
+    /** Percentagem de positivas em cada trimestre do ano. */
+    get trimesterColumns() {
+        const items = this.state.data.grades.by_trimester.filter((t) => t.grades);
+        if (items.length < 2) {
+            return null;
+        }
+        const W = 240, H = 150, bottom = 22, top = 20;
+        const slot = W / items.length;
+        const w = Math.min(36, slot * 0.5);
+        return {
+            W,
+            H,
+            base: H - bottom,
+            columns: items.map((t, i) => {
+                const h = ((H - bottom - top) * (t.pct || 0)) / 100;
+                const cx = slot * i + slot / 2;
+                return { key: t.name, x: cx - w / 2, y: H - bottom - h, w, h, cx, pct: t.pct, name: t.name,
+                    title: `${t.name}: ${t.pct}% positivas em ${fmt(t.grades)} notas` };
+            }),
+        };
+    }
+
+    /** Taxa de transição de ano para ano (os anos com resultado final). */
+    get yearsLine() {
+        const items = this.state.data.years_trend;
+        if (items.length < 2) {
+            return null;
+        }
+        const W = 440, H = 160, left = 34, right = 40, bottom = 22, top = 24;
+        // Os pontos começam afastados do eixo, para o valor do primeiro ano não tapar o «100%».
+        const inset = left + 28;
+        const x = (i) => inset + ((W - inset - right) * i) / (items.length - 1);
+        const y = (pct) => top + ((H - top - bottom) * (100 - pct)) / 100;
+        const points = items.map((t, i) => ({
+            key: t.id,
+            x: x(i),
+            y: y(t.pct),
+            pct: t.pct,
+            name: t.name,
+            current: t.id === this.state.yearId,
+            title: `${t.name}: ${t.pct}% transitaram (${fmt(t.approved)} de ${fmt(t.evaluated)})`,
+        }));
+        return {
+            W,
+            H,
+            points,
+            path: points.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" "),
+            grid: [0, 50, 100].map((v) => ({ v, y: y(v) })),
+            last: points[points.length - 1],
+            // Poucos anos: o valor vai em todos os pontos; muitos, só no ano escolhido e no último.
+            labelAll: points.length <= 5,
+            left,
+        };
+    }
+
+    /** Resultado final de cada grupo, em partes: transitou, recurso, retido. */
+    finalParts(row) {
+        const total = row.evaluated || 1;
+        return [
+            { key: "approved", cls: "o_edu_rp_s1", n: row.approved, label: "transitaram" },
+            { key: "exam", cls: "o_edu_rp_s3", n: row.exam, label: "em exame de recurso" },
+            { key: "retained", cls: "o_edu_rp_s2", n: row.retained, label: "retidos" },
+        ]
+            .filter((part) => part.n)
+            .map((part) => ({ ...part, style: `flex-grow: ${part.n / total}`, title: `${fmt(part.n)} ${part.label}` }));
+    }
+
     // Exportar e análise detalhada
 
     async exportXlsx() {

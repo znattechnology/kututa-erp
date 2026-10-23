@@ -75,6 +75,12 @@ class TestEduReportPage(TransactionCase):
         grades = data['grades']
         self.assertEqual((grades['grades'], grades['pct'], grades['with_negative']), (3, 67, 1))
         self.assertEqual(grades['rows'][0]['average'], 11.3)
+        # Os gráficos: a distribuição das notas (14, 8 e 12) e a evolução por trimestre e por ano.
+        self.assertEqual([grades['histogram'][v] for v in (8, 12, 14)], [1, 1, 1])
+        self.assertEqual(sum(grades['histogram']), 3)
+        self.assertEqual([(t['grades'], t['pct']) for t in grades['by_trimester']], [(3, 67), (0, None), (0, None)])
+        trend = {t['name']: t['pct'] for t in data['years_trend']}
+        self.assertEqual(trend['2030/2031'], 50)
         final = data['final']
         self.assertEqual((final['evaluated'], final['approved'], final['pct'], final['missing']), (2, 1, 50, 1))
         subjects = data['subjects']

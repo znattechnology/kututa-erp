@@ -153,6 +153,11 @@ class EduReportPage(models.AbstractModel):
             row['average'] = None if group_by == 'subsystem' else _avg(row.pop('sum'), row['grades'])
             row.pop('sum', None)
         grades = sum(r['grades'] for r in rows)
+        # Distribuição das notas de 0 a 20 (o primário, de 0 a 10, fica de fora): quantas com cada valor.
+        histogram = [0] * 21
+        for result in results:
+            if pass_grade[result['class_id'][0]] == 10:
+                histogram[min(20, max(0, int(result['mt'] + 0.5)))] += 1
         data.update(
             {
                 'grades': grades,
@@ -160,9 +165,43 @@ class EduReportPage(models.AbstractModel):
                 'students': sum(len(s) for s in students.values()),
                 'with_negative': sum(len(s) for s in negative.values()),
                 'rows': rows,
+                'histogram': histogram if sum(histogram) else [],
+                'by_trimester': self._grades_by_trimester(trimesters, classes, pass_grade),
             }
         )
         return data
+
+    @api.model
+    def _grades_by_trimester(self, trimesters, classes, pass_grade):
+        """A percentagem de positivas em cada trimestre do ano: a evolução ao longo do ano."""
+        counts = defaultdict(lambda: [0, 0])
+        for result in self.env['edu.term.result'].search_read(
+            [('trimester_id', 'in', trimesters.ids), ('has_mt', '=', True), ('class_id', 'in', classes.ids)],
+            ['class_id', 'trimester_id', 'mt'],
+        ):
+            count = counts[result['trimester_id'][0]]
+            count[0] += 1
+            count[1] += result['mt'] >= pass_grade[result['class_id'][0]]
+        return [
+            {'name': t.name, 'grades': counts[t.id][0], 'pct': _pct(counts[t.id][1], counts[t.id][0])}
+            for t in trimesters
+        ]
+
+    @api.model
+    def _years_trend(self):
+        """A taxa de transição de cada ano lectivo com resultados: a evolução de ano para ano."""
+        per_year = defaultdict(lambda: [0, 0])
+        for year, status, count in self.env['edu.year.result']._read_group(
+            [('status', '!=', 'pending'), ('company_id', 'in', self.env.companies.ids)],
+            ['academic_year_id', 'status'],
+            ['__count'],
+        ):
+            per_year[year][0] += count
+            per_year[year][1] += count if status in APPROVED else 0
+        return [
+            {'id': year.id, 'name': year.name, 'evaluated': n, 'approved': a, 'pct': _pct(a, n)}
+            for year, (n, a) in sorted(per_year.items(), key=lambda item: item[0].date_start)
+        ]
 
     @api.model
     def _attendance(self, year, classes, group_by):
@@ -286,6 +325,7 @@ class EduReportPage(models.AbstractModel):
             'attendance': self._attendance(year, classes, group_by),
             'final': self._final_results(year, classes, group_by, enrollments['total']),
             'subjects': self._subjects(year, classes, class_id),
+            'years_trend': self._years_trend(),
         }
 
     # Exportar

@@ -28,7 +28,12 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
         'web.assets_backend': [
             'edu_roles/static/src/teacher_home/*',
             'edu_roles/static/src/guardians/*',
-            'edu_roles/static/src/reports/*',
+            'edu_roles/static/src/reports/reports.js',
+            'edu_roles/static/src/reports/reports.xml',
+            'edu_roles/static/src/reports/reports.scss',
+        ],
+        'web.assets_web_dark': [
+            'edu_roles/static/src/reports/reports.dark.scss',
         ],
     },
     'auto_install': True,
