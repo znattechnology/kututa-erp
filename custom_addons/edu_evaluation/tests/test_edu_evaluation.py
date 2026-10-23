@@ -894,3 +894,50 @@ class TestEduEvaluation(TransactionCase):
             self._assess(self.class10, 'LP', self.t1, 'continuous', {})
         self._assess(self.class10, 'LP', self.t2, 'continuous', {})
         self._assess(self.class7, 'LP', self.t1, 'continuous', {ana: 14})
+
+    def test_grade_permissions_page(self):
+        """Autorizações para alterar notas, como no secPed: formulário guiado (o professor, as turmas e disciplinas que
+        dá, os trimestres que se podem autorizar), «Vale até» um dia, situação e revogar (quem e quando)."""
+        lp = self._subject(self.class7, 'LP')
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': self.class7.id, 'subject_id': lp.id, 'teacher_id': self.teacher.id}
+        )
+        Page = self.env['edu.grade.permission.page']
+        options = Page.form_options()
+        teacher = next(t for t in options['teachers'] if t['id'] == self.teacher.id)
+        self.assertEqual([(o['class_id'], o['subject_id']) for o in teacher['options']], [(self.class7.id, lp.id)])
+        # Nem o corrente (I) nem os encerrados se autorizam.
+        self.assertEqual([t['id'] for t in options['trimesters']], (self.t2 | self.t3).ids)
+        # O II passa a ser o corrente e o I fica encerrado: só o III se autoriza.
+        self.t1.is_current = False
+        self.t2.is_current = True
+        self.t1.action_close()
+        options = Page.form_options()
+        self.assertEqual([t['id'] for t in options['trimesters']], self.t3.ids)
+
+        values = {
+            'teacher_id': self.teacher.id,
+            'class_id': self.class7.id,
+            'subject_id': lp.id,
+            'trimester_id': self.t3.id,
+            'until': options['max_until'],
+            'reason': 'Lançamento em atraso',
+        }
+        too_late = fields.Date.to_string(fields.Date.from_string(options['max_until']) + timedelta(days=1))
+        with self.assertRaises(UserError):
+            Page.create_permission({**values, 'until': too_late})
+        row = Page.create_permission(values)
+        self.assertTrue(row['active'])
+        self.assertTrue(row['situation'].startswith('Até '))
+        data = Page.permissions(True)
+        self.assertEqual((data['active_count'], [r['id'] for r in data['rows']]), (1, [row['id']]))
+        # O professor já lança no III trimestre.
+        self._assess(self.class7, 'LP', self.t3, 'continuous', {}, user=self.teacher_user)
+        row = Page.revoke(row['id'])
+        self.assertTrue(row['situation'].startswith('Revogada a '))
+        permission = self.env['edu.grade.edit.permission'].browse(row['id'])
+        self.assertEqual(permission.revoked_by_id, self.env.user)
+        self.assertEqual(Page.permissions(True)['rows'], [])
+        self.assertEqual(len(Page.permissions(False)['rows']), 1)
+        with self.assertRaises(AccessError):
+            self._assess(self.class7, 'LP', self.t3, 'continuous', {}, user=self.teacher_user)

@@ -15,7 +15,7 @@
         <menuitem id="menu_edu_year_result" action="action_edu_year_result" sequence="50"/>
         <menuitem id="menu_edu_exam_requirement" action="action_edu_exam_requirement" sequence="60" groups="edu_core.group_edu_user"/>
         <menuitem id="menu_edu_grade_appeal" action="action_edu_grade_appeal" sequence="70" groups="edu_core.group_edu_user"/>
-        <menuitem id="menu_edu_grade_edit_permission" action="action_edu_grade_edit_permission" sequence="80" groups="edu_core.group_edu_user"/>
+        <menuitem id="menu_edu_grade_edit_permission" action="action_edu_grade_permissions" sequence="80" groups="edu_core.group_edu_user"/>
         <menuitem id="menu_edu_rdec" action="action_edu_rdec" sequence="90"/>
     </menuitem>
     <menuitem id="menu_edu_evaluation_policy" action="action_edu_evaluation_policy" parent="edu_core.menu_edu_config" sequence="28"/>

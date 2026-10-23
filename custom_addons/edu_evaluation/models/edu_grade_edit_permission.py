@@ -35,6 +35,8 @@ class EduGradeEditPermission(models.Model):
         string='Válida até', required=True, default=lambda self: fields.Datetime.now() + timedelta(days=7)
     )
     revoked = fields.Boolean(string='Revogada', readonly=True, tracking=True)
+    revoked_by_id = fields.Many2one('res.users', string='Revogada por', readonly=True)
+    revoked_date = fields.Datetime(string='Revogada em', readonly=True)
     active_now = fields.Boolean(string='Em vigor', compute='_compute_active_now')
 
     @api.depends('revoked', 'date_expiry')
@@ -97,7 +99,10 @@ class EduGradeEditPermission(models.Model):
         return result | super().create(to_create)
 
     def action_revoke(self):
-        self.write({'revoked': True})
+        """Revoga: o professor deixa de poder alterar as notas desse trimestre; as que já lançou ficam."""
+        self.filtered(lambda p: not p.revoked).write(
+            {'revoked': True, 'revoked_by_id': self.env.uid, 'revoked_date': fields.Datetime.now()}
+        )
         return True
 
     @api.model

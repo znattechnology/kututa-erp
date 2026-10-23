@@ -133,8 +133,14 @@
             </form>
         </field>
     </record>
+    <!-- Autorizações para alterar notas (acção cliente), como no secPed: o menu abre a página; a lista fica para
+         consulta a partir do código. -->
+    <record id="action_edu_grade_permissions" model="ir.actions.client">
+        <field name="name">Autorizações para alterar notas</field>
+        <field name="tag">edu_evaluation.grade_permissions</field>
+    </record>
     <record id="action_edu_grade_edit_permission" model="ir.actions.act_window">
-        <field name="name">Autorizações de lançamento</field>
+        <field name="name">Autorizações para alterar notas</field>
         <field name="res_model">edu.grade.edit.permission</field>
         <field name="view_mode">list,form</field>
     </record>

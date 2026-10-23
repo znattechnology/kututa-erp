@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_evaluation.GradePermissions">
+        <div class="o_action o_edu_grade_permissions">
+            <Layout display="this.display">
+                <div class="o_edu_gp_body">
+                    <!-- Lista -->
+                    <t t-if="this.state.mode === 'list'">
+                        <div class="o_edu_gp_intro">
+                            <p class="o_edu_gp_lead">
+                                Os professores só lançam notas no trimestre corrente. Para alterarem um trimestre passado (ainda não
+                                encerrado) ou futuro, precisam de uma autorização daqui, para a turma, a disciplina e o trimestre, com
+                                prazo. Um trimestre encerrado corrige-se por reapreciação.
+                            </p>
+                            <button type="button" class="btn btn-primary" t-on-click="() => this.openNew()">
+                                <i class="oi me-1" data-icon="add" aria-hidden="true"/>Nova autorização
+                            </button>
+                        </div>
+
+                        <div role="tablist" aria-label="Autorizações" class="o_edu_gp_tabs">
+                            <button type="button" role="tab" class="btn" t-att-class="this.state.tab === 'active' ? 'btn-primary' : 'btn-secondary'"
+                                    t-att-aria-selected="this.state.tab === 'active' ? 'true' : 'false'" t-on-click="() => this.selectTab('active')">
+                                Activas<t t-if="this.state.activeCount"> (<t t-out="this.state.activeCount"/>)</t>
+                            </button>
+                            <button type="button" role="tab" class="btn" t-att-class="this.state.tab === 'all' ? 'btn-primary' : 'btn-secondary'"
+                                    t-att-aria-selected="this.state.tab === 'all' ? 'true' : 'false'" t-on-click="() => this.selectTab('all')">Todas</button>
+                        </div>
+
+                        <div class="o_edu_gp_card">
+                            <p t-if="!this.state.rows.length" class="mb-0 text-muted p-3">
+                                <t t-if="this.state.tab === 'active'">Não há autorizações activas: todos os professores estão a lançar só no trimestre corrente.</t>
+                                <t t-else="">Ainda não foi dada nenhuma autorização.</t>
+                            </p>
+                            <div t-else="" class="table-responsive">
+                                <table class="table table-sm o_edu_gp_table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Professor</th>
+                                            <th>Turma e disciplina</th>
+                                            <th>Trimestre</th>
+                                            <th>Motivo</th>
+                                            <th>Situação</th>
+                                            <th><span class="visually-hidden">Acções</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="this.state.rows" t-as="r" t-key="r.id">
+                                            <td>
+                                                <div class="fw-semibold" t-out="r.teacher"/>
+                                                <div class="small text-muted">Dada por <t t-out="r.granted"/></div>
+                                            </td>
+                                            <td><div t-out="r.class"/><div class="small text-muted" t-out="r.subject"/></td>
+                                            <td class="text-nowrap" t-out="r.trimester"/>
+                                            <td class="o_edu_gp_reason" t-out="r.reason"/>
+                                            <td class="text-nowrap" t-att-class="this.toneClass(r.tone)">
+                                                <t t-out="r.situation"/>
+                                                <div t-if="r.revoked_by" class="small text-muted">por <t t-out="r.revoked_by"/></div>
+                                            </td>
+                                            <td class="text-end">
+                                                <button t-if="r.active" type="button" class="btn btn-sm btn-link text-danger" t-on-click="() => this.revoke(r)">Revogar</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Nova autorização -->
+                    <t t-else="">
+                        <div>
+                            <button type="button" class="btn btn-link px-0" t-on-click="() => this.backToList()">
+                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/>Voltar às autorizações
+                            </button>
+                            <h2 class="o_edu_gp_h2">Nova autorização</h2>
+                            <p class="o_edu_gp_lead">
+                                Para um professor alterar as notas de um trimestre<t t-if="this.state.options.year"> de <t t-out="this.state.options.year"/></t> que não é o corrente.
+                            </p>
+                        </div>
+                        <div class="o_edu_gp_card o_edu_gp_form">
+                            <label class="o_edu_gp_field">
+                                <span>Professor</span>
+                                <select class="form-select" t-on-change="(ev) => this.onTeacher(ev)">
+                                    <option value="" t-att-selected="!this.state.form.teacherId">Escolha o professor</option>
+                                    <option t-foreach="this.state.options.teachers" t-as="t" t-key="t.id" t-att-value="t.id"
+                                            t-att-selected="t.id === this.state.form.teacherId" t-out="t.name"/>
+                                </select>
+                            </label>
+                            <label class="o_edu_gp_field">
+                                <span>Turma e disciplina</span>
+                                <select class="form-select" t-att-disabled="!this.teacher" t-on-change="(ev) => this.onField('key', ev)">
+                                    <option value="" t-att-selected="!this.state.form.key">
+                                        <t t-out="this.teacher ? 'Escolha a turma e a disciplina' : 'Escolha primeiro o professor'"/>
+                                    </option>
+                                    <t t-if="this.teacher">
+                                        <option t-foreach="this.teacher.options" t-as="o" t-key="o.key" t-att-value="o.key"
+                                                t-att-selected="o.key === this.state.form.key" t-out="o.label"/>
+                                    </t>
+                                </select>
+                            </label>
+                            <label class="o_edu_gp_field">
+                                <span>Trimestre</span>
+                                <select class="form-select" t-att-disabled="!this.state.options.trimesters.length" t-on-change="(ev) => this.onField('trimesterId', ev)">
+                                    <option value="" t-att-selected="!this.state.form.trimesterId">
+                                        <t t-out="this.state.options.trimesters.length ? 'Escolha o trimestre' : 'Não há trimestres por autorizar'"/>
+                                    </option>
+                                    <option t-foreach="this.state.options.trimesters" t-as="t" t-key="t.id" t-att-value="t.id"
+                                            t-att-selected="t.id === this.state.form.trimesterId" t-out="t.label"/>
+                                </select>
+                                <small t-if="!this.state.options.trimesters.length" class="text-muted">
+                                    O corrente não precisa de autorização e os encerrados corrigem-se por reapreciação.
+                                </small>
+                            </label>
+                            <label class="o_edu_gp_field">
+                                <span>Vale até</span>
+                                <input type="date" class="form-control" t-att-value="this.state.form.until"
+                                       t-att-min="this.state.options.min_until" t-att-max="this.state.options.max_until"
+                                       t-on-change="(ev) => this.onField('until', ev)"/>
+                                <small class="text-muted">No máximo 30 dias a partir de hoje.</small>
+                            </label>
+                            <label class="o_edu_gp_field o_edu_gp_wide">
+                                <span>Motivo</span>
+                                <textarea class="form-control" rows="3" placeholder="Lançamento em atraso, correcção de uma nota…"
+                                          t-on-input="(ev) => this.onField('reason', ev)" t-out="this.state.form.reason"/>
+                            </label>
+                            <div class="o_edu_gp_wide d-flex gap-2">
+                                <button type="button" class="btn btn-primary" t-att-disabled="!this.canSave" t-on-click="() => this.save()">Dar a autorização</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.backToList()">Cancelar</button>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

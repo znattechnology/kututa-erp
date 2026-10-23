@@ -8,6 +8,7 @@ from . import (
     edu_grade_appeal,
     edu_grade_edit_permission,
     edu_grade_grid,
+    edu_grade_permission_page,
     edu_rdec,
     edu_result,
     edu_year_result,
