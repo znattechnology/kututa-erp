@@ -218,6 +218,9 @@ class EduStudentGuardian(models.Model):
 
     def action_make_primary(self):
         self.ensure_one()
-        (self.student_id.guardian_link_ids - self).filtered('is_primary').write({'is_primary': False})
+        previous = (self.student_id.guardian_link_ids - self).filtered('is_primary')
+        previous.write({'is_primary': False})
+        # Um só principal por aluno (índice único): o anterior sai na base antes de o novo entrar.
+        previous.flush_recordset(['is_primary'])
         self.is_primary = True
         return True

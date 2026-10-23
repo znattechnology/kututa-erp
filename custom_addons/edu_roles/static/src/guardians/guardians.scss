@@ -1,0 +1,203 @@
+// Encarregados de educação: lista, criar e vincular a um aluno.
+.o_edu_guardians {
+    .o_edu_gd_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_gd_intro,
+    .o_edu_gd_bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_gd_intro {
+        align-items: flex-start;
+    }
+
+    .o_edu_gd_lead {
+        max-width: 72ch;
+        margin: 0;
+        color: $text-muted;
+    }
+
+    .o_edu_gd_search {
+        width: 18rem;
+        margin-left: auto;
+    }
+
+    .o_edu_gd_h2 {
+        margin: 4px 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .o_edu_gd_h3 {
+        margin: 4px 0 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .o_edu_gd_card {
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_gd_pad {
+        padding: 20px;
+    }
+
+    .o_edu_gd_table {
+        th,
+        td {
+            vertical-align: middle;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+    }
+
+    .o_edu_gd_email {
+        max-width: 240px;
+    }
+
+    .o_edu_gd_form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 16px;
+
+        @include media-breakpoint-down(sm) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_gd_field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0 0 12px;
+
+        > span:first-child {
+            font-size: 0.875rem;
+            color: $text-muted;
+        }
+    }
+
+    .o_edu_gd_wide {
+        grid-column: 1 / -1;
+    }
+
+    .o_edu_gd_narrow {
+        max-width: 28rem;
+    }
+
+    .o_edu_gd_steps {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+        max-width: 56rem;
+        margin: 0 auto;
+    }
+
+    // O número do passo: os três passos são mesmo uma sequência.
+    .o_edu_gd_step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 16px;
+        font-size: 1rem;
+        font-weight: 600;
+
+        > span {
+            display: grid;
+            place-items: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            border: 1px solid $border-color;
+            border-radius: 50%;
+            background: $gray-100;
+            font-size: 0.85rem;
+        }
+    }
+
+    .o_edu_gd_picked {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .o_edu_gd_current,
+    .o_edu_gd_results {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_gd_current li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        border-bottom: 1px solid $border-color;
+    }
+
+    .o_edu_gd_results {
+        max-height: 18rem;
+        margin-top: 8px;
+        overflow-y: auto;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+
+        li + li {
+            border-top: 1px solid $border-color;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 0;
+            background: none;
+            text-align: left;
+
+            &:hover,
+            &:focus-visible {
+                background: $gray-100;
+            }
+        }
+    }
+
+    .o_edu_gd_auth {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 16px;
+        margin-bottom: 12px;
+
+        @include media-breakpoint-down(sm) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 0;
+            padding: 4px 0;
+            cursor: pointer;
+
+            .form-check-input {
+                margin-top: 0.2rem;
+                flex-shrink: 0;
+            }
+        }
+    }
+}
