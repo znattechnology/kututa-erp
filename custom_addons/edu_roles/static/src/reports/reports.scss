@@ -1,0 +1,152 @@
+// Relatórios: os quadros da escola, cada um com a frase e as barras por grupo.
+.o_edu_reports {
+    .o_edu_rp_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_rp_h2 {
+        margin: 4px 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .o_edu_rp_h3 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_rp_lead {
+        max-width: 80ch;
+        margin: 0;
+        color: $text-muted;
+    }
+
+    .o_edu_rp_controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 12px;
+    }
+
+    .o_edu_rp_field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 0;
+
+        > span {
+            font-size: 0.875rem;
+            color: $text-muted;
+        }
+
+        .form-select {
+            width: auto;
+            min-width: 12rem;
+        }
+    }
+
+    .o_edu_rp_groups,
+    .o_edu_rp_export {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .o_edu_rp_export {
+        margin-left: auto;
+    }
+
+    .o_edu_rp_loading {
+        opacity: 0.55;
+        pointer-events: none;
+    }
+
+    .o_edu_rp_card {
+        margin-bottom: 16px;
+        padding: 20px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+
+        > p {
+            max-width: 90ch;
+        }
+    }
+
+    .o_edu_rp_cardhead {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .o_edu_rp_inline {
+        width: auto;
+        max-width: 22rem;
+    }
+
+    .o_edu_rp_bars {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_rp_bar {
+        display: grid;
+        grid-template-columns: minmax(0, 16rem) minmax(0, 1fr) 15rem;
+        align-items: center;
+        gap: 4px 16px;
+        padding: 8px 0;
+        border-top: 1px solid $border-color;
+
+        @include media-breakpoint-down(md) {
+            grid-template-columns: minmax(0, 1fr) auto;
+
+            .o_edu_rp_track {
+                grid-column: 1 / -1;
+                grid-row: 2;
+            }
+        }
+    }
+
+    .o_edu_rp_name {
+        min-width: 0;
+    }
+
+    .o_edu_rp_track {
+        height: 8px;
+        overflow: hidden;
+        border-radius: 4px;
+        background: $gray-200;
+    }
+
+    .o_edu_rp_fill {
+        height: 100%;
+        border-radius: 4px;
+    }
+
+    // Uma cor por medida: alunos, aproveitamento, presenças.
+    .o_edu_rp_t1 {
+        background: $o-action;
+    }
+
+    .o_edu_rp_t2 {
+        background: $info;
+    }
+
+    .o_edu_rp_t3 {
+        background: $gray-600;
+    }
+
+    .o_edu_rp_value {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+}

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Relatórios (acção cliente), como no secPed: matrículas, notas do trimestre, assiduidade, resultado final e
+         classificações por disciplina, num ano lectivo, por subsistema, nível, curso ou turma. As tabelas dinâmicas
+         ficam como «análise detalhada», abertas a partir da página. -->
+    <record id="action_edu_reports" model="ir.actions.client">
+        <field name="name">Relatórios</field>
+        <field name="tag">edu_roles.reports</field>
+    </record>
+    <record id="menu_edu_reports" model="ir.ui.menu">
+        <field name="action" ref="action_edu_reports"/>
+    </record>
+
+    <record id="action_report_school_figures" model="ir.actions.report">
+        <field name="name">Relatórios da escola</field>
+        <field name="model">edu.report.page</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_roles.report_school_figures</field>
+    </record>
+
+    <template id="report_school_figures">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <t t-call="edu_documents.pauta_styles"/>
+                <t t-call="edu_documents.teacher_doc_styles"/>
+                <div class="page ep">
+                    <t t-call="edu_documents.pauta_head" visto="False" title="'RELATÓRIOS DA ESCOLA'"
+                       context="'ANO LECTIVO: %s · POR %s' % (year, group_label.upper())"/>
+                    <t t-foreach="tables" t-as="table">
+                        <h3 style="margin: 18px 0 6px; font-size: 13px;" t-out="table['title']"/>
+                        <p t-if="not table['rows']" style="font-size: 11px;">Sem dados neste ano.</p>
+                        <table t-else="" class="ep-list o_ignore_layout_styling">
+                            <thead>
+                                <tr><th t-foreach="table['columns']" t-as="col" t-att-class="None if col_first else 'ep-c'" t-out="col"/></tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="table['rows']" t-as="row">
+                                    <td t-foreach="row" t-as="cell" t-att-class="None if cell_first else 'ep-c'" t-out="cell"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                    <p style="margin-top: 14px; font-size: 10px;">Impresso em <t t-out="printed"/>.</p>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

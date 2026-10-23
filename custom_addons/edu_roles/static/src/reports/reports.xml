@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Uma linha com barra: o grupo, a barra (parte do todo) e o número; o texto diz o valor exacto. -->
+    <t t-name="edu_roles.ReportsBar">
+        <li class="o_edu_rp_bar">
+            <div class="o_edu_rp_name">
+                <div class="text-truncate" t-out="label"/>
+                <div t-if="sub" class="small text-muted text-truncate" t-out="sub"/>
+            </div>
+            <div class="o_edu_rp_track" aria-hidden="true"><div t-att-class="'o_edu_rp_fill ' + tone" t-att-style="fill"/></div>
+            <div class="o_edu_rp_value">
+                <div t-out="value"/>
+                <div t-if="detail" class="small" t-att-class="alert ? 'text-danger' : 'text-muted'" t-out="detail"/>
+            </div>
+        </li>
+    </t>
+
+    <t t-name="edu_roles.ReportsPage">
+        <div class="o_action o_edu_reports">
+            <Layout display="this.display">
+                <div class="o_edu_rp_body">
+                    <div>
+                        <h2 class="o_edu_rp_h2">Relatórios</h2>
+                        <p class="o_edu_rp_lead">
+                            Os números da escola: matrículas, notas do trimestre, assiduidade, resultado final e classificações por
+                            disciplina. Durante o ano contam as notas do trimestre e as chamadas; o resultado final aparece quando os
+                            conselhos de turma fecham.
+                        </p>
+                    </div>
+
+                    <div class="o_edu_rp_controls">
+                        <label class="o_edu_rp_field">
+                            <span>Ano lectivo</span>
+                            <select class="form-select" t-on-change="(ev) => this.onYear(ev)">
+                                <option t-if="!this.state.years.length" value="">Sem anos lectivos</option>
+                                <option t-foreach="this.state.years" t-as="y" t-key="y.id" t-att-value="y.id" t-att-selected="y.id === this.state.yearId">
+                                    <t t-out="y.name"/><t t-if="y.current"> (em curso)</t>
+                                </option>
+                            </select>
+                        </label>
+                        <div role="group" aria-label="Ver por" class="o_edu_rp_groups">
+                            <button t-foreach="this.state.groups" t-as="g" t-key="g.value" type="button" class="btn"
+                                    t-att-class="this.state.groupBy === g.value ? 'btn-primary' : 'btn-secondary'"
+                                    t-att-aria-pressed="this.state.groupBy === g.value ? 'true' : 'false'" t-on-click="() => this.setGroup(g.value)">
+                                Por <t t-out="g.label.toLowerCase()"/>
+                            </button>
+                        </div>
+                        <div class="o_edu_rp_export">
+                            <button type="button" class="btn btn-secondary" t-att-disabled="!this.state.data or this.state.exporting" t-on-click="() => this.exportXlsx()">
+                                <t t-out="this.state.exporting === 'xlsx' ? 'A exportar…' : 'Excel'"/>
+                            </button>
+                            <button type="button" class="btn btn-secondary" t-att-disabled="!this.state.data or this.state.exporting" t-on-click="() => this.printPdf()">
+                                <t t-out="this.state.exporting === 'pdf' ? 'A preparar…' : 'PDF'"/>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p t-if="!this.state.yearId" class="text-muted">Ainda não há anos lectivos: crie-os em Configuração › Anos lectivos.</p>
+                    <t t-elif="this.state.data">
+                        <t t-set="d" t-value="this.state.data"/>
+                        <div t-att-class="{'o_edu_rp_loading': this.state.loading}">
+
+                            <!-- Matrículas -->
+                            <section class="o_edu_rp_card">
+                                <h3 class="o_edu_rp_h3">Matrículas</h3>
+                                <p t-if="!d.enrollments.total" class="text-muted mb-0">Ainda não há alunos matriculados neste ano.</p>
+                                <t t-else="">
+                                    <p><t t-out="this.plural(d.enrollments.total, 'Um aluno matriculado', 'alunos matriculados')"/> em
+                                        <t t-out="this.plural(d.enrollments.classes, 'uma turma', 'turmas')"/>, contando os que têm propinas em atraso.</p>
+                                    <ul class="o_edu_rp_bars">
+                                        <t t-foreach="d.enrollments.rows" t-as="r" t-key="r.key">
+                                            <t t-call="edu_roles.ReportsBar" label="r.label" sub="r.sub" tone="'o_edu_rp_t1'"
+                                               fill="this.shareWidth(r.total, d.enrollments.rows, 'total')" value="this.fmt(r.total)"
+                                               detail="r.pct + '% dos alunos'" alert="false"/>
+                                        </t>
+                                    </ul>
+                                </t>
+                            </section>
+
+                            <!-- Notas do trimestre -->
+                            <section class="o_edu_rp_card">
+                                <div class="o_edu_rp_cardhead">
+                                    <h3 class="o_edu_rp_h3">Notas do trimestre</h3>
+                                    <select t-if="d.grades.trimesters.length" class="form-select o_edu_rp_inline" aria-label="Trimestre" t-on-change="(ev) => this.onTrimester(ev)">
+                                        <option t-foreach="d.grades.trimesters" t-as="t" t-key="t.id" t-att-value="t.id" t-att-selected="t.id === d.grades.trimester_id">
+                                            <t t-out="t.name"/><t t-if="t.current"> (em curso)</t><t t-elif="t.closed"> (encerrado)</t>
+                                        </option>
+                                    </select>
+                                </div>
+                                <p t-if="!d.grades.trimesters.length" class="text-muted mb-0">Este ano lectivo ainda não tem trimestres.</p>
+                                <p t-elif="!d.grades.grades" class="text-muted mb-0">Ainda não há notas do <t t-out="d.grades.trimester"/> lançadas.</p>
+                                <t t-else="">
+                                    <p>
+                                        <t t-out="this.gradesSentence"/>
+                                        <t t-if="d.grades.with_negative">
+                                            <span class="text-danger"> <t t-out="this.plural(d.grades.with_negative, 'Um aluno tem', 'alunos têm')"/></span>
+                                            pelo menos uma negativa, de <t t-out="this.fmt(d.grades.students)"/> com notas.
+                                        </t>
+                                        <t t-else=""> Nenhum dos <t t-out="this.fmt(d.grades.students)"/> alunos com notas tem negativas.</t>
+                                    </p>
+                                    <p class="small text-muted">
+                                        A média do trimestre de cada disciplina, contra a nota mínima do nível. A iniciação avalia sem notas e fica de fora.
+                                        <t t-if="d.group_by === 'subsystem'">Por subsistema não há média: o primário dá notas de 0 a 10 e o resto de 0 a 20.</t>
+                                    </p>
+                                    <ul class="o_edu_rp_bars">
+                                        <t t-foreach="d.grades.rows" t-as="r" t-key="r.key">
+                                            <t t-call="edu_roles.ReportsBar" label="r.label" sub="r.sub" tone="'o_edu_rp_t2'" fill="this.width(r.pct)"
+                                               value="r.pct + '% positivas'" detail="this.gradeDetail(r)" alert="r.with_negative > 0"/>
+                                        </t>
+                                    </ul>
+                                </t>
+                            </section>
+
+                            <!-- Assiduidade -->
+                            <section class="o_edu_rp_card">
+                                <h3 class="o_edu_rp_h3">Assiduidade</h3>
+                                <p t-if="!d.attendance.calls" class="text-muted mb-0">Ainda não se fez nenhuma chamada neste ano.</p>
+                                <t t-else="">
+                                    <p>
+                                        Nas aulas dadas, <t t-out="d.attendance.pct"/>% das <t t-out="this.fmt(d.attendance.calls)"/> chamadas foram presenças.
+                                        <span t-if="d.attendance.excluded" class="text-danger">
+                                            <t t-out="this.plural(d.attendance.excluded, 'Um aluno já passou', 'alunos já passaram')"/> o limite legal de faltas.</span>
+                                        <t t-else="">Nenhum aluno passou o limite legal de faltas.</t>
+                                    </p>
+                                    <p class="small text-muted">Contam as aulas dadas em que o aluno foi chamado; chegar atrasado conta como presença.</p>
+                                    <ul class="o_edu_rp_bars">
+                                        <t t-foreach="d.attendance.rows" t-as="r" t-key="r.key">
+                                            <t t-call="edu_roles.ReportsBar" label="r.label" sub="r.sub" tone="'o_edu_rp_t3'" fill="this.width(r.pct)"
+                                               value="r.pct + '% presenças'"
+                                               detail="r.excluded ? this.plural(r.excluded, 'um excluído', 'excluídos') + ' por faltas' : this.fmt(r.calls) + ' chamadas'"
+                                               alert="r.excluded > 0"/>
+                                        </t>
+                                    </ul>
+                                </t>
+                            </section>
+
+                            <!-- Resultado final -->
+                            <section class="o_edu_rp_card">
+                                <div class="o_edu_rp_cardhead">
+                                    <h3 class="o_edu_rp_h3">Resultado final do ano</h3>
+                                    <button type="button" class="btn btn-link btn-sm" t-on-click="() => this.openAnalysis('edu_roles.action_edu_year_result_analysis')">Análise detalhada</button>
+                                </div>
+                                <p t-if="!d.final.evaluated" class="text-muted mb-0">Ainda nenhum aluno tem o resultado final: aparece quando os conselhos de turma do ano fecham.</p>
+                                <t t-else="">
+                                    <p>
+                                        <t t-out="this.plural(d.final.evaluated, 'Um aluno tem', 'alunos têm')"/> o resultado final, e
+                                        <t t-out="d.final.pct"/>% <t t-out="d.final.evaluated === 1 ? 'transitou ou concluiu' : 'transitaram ou concluíram'"/>.
+                                        <t t-if="d.final.exam"> <t t-out="this.plural(d.final.exam, 'Um está', 'estão')"/> admitidos a exame de recurso.</t>
+                                    </p>
+                                    <p t-if="d.final.missing" class="small text-warning-emphasis">
+                                        Faltam <t t-out="this.plural(d.final.missing, 'um aluno', 'alunos')"/> dos <t t-out="this.fmt(d.final.enrolled)"/> matriculados: a taxa ainda não é a do ano.
+                                    </p>
+                                    <ul class="o_edu_rp_bars">
+                                        <t t-foreach="d.final.rows" t-as="r" t-key="r.key">
+                                            <t t-call="edu_roles.ReportsBar" label="r.label" sub="r.sub" tone="'o_edu_rp_t2'" fill="this.width(r.pct)"
+                                               value="r.pct + '% transitaram'" detail="this.finalDetail(r)" alert="false"/>
+                                        </t>
+                                    </ul>
+                                </t>
+                            </section>
+
+                            <!-- Classificações por disciplina -->
+                            <section class="o_edu_rp_card">
+                                <div class="o_edu_rp_cardhead">
+                                    <h3 class="o_edu_rp_h3">Classificações por disciplina</h3>
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <select t-if="d.subjects.classes.length" class="form-select o_edu_rp_inline" aria-label="Turma" t-on-change="(ev) => this.onClass(ev)">
+                                            <option value="" t-att-selected="!d.subjects.class_id">Todas as turmas</option>
+                                            <option t-foreach="d.subjects.classes" t-as="c" t-key="c.id" t-att-value="c.id"
+                                                    t-att-selected="c.id === d.subjects.class_id" t-out="c.label"/>
+                                        </select>
+                                        <button type="button" class="btn btn-link btn-sm" t-on-click="() => this.openAnalysis('edu_roles.action_edu_subject_result_analysis')">Análise detalhada</button>
+                                    </div>
+                                </div>
+                                <p t-if="!d.subjects.count" class="text-muted mb-0">
+                                    Ainda não há classificações finais fechadas<t t-if="d.subjects.class_id"> nesta turma</t>: aparecem quando os conselhos de turma fecham.
+                                </p>
+                                <t t-else="">
+                                    <p>
+                                        <t t-out="d.subjects.pct"/>% das <t t-out="this.fmt(d.subjects.count)"/> classificações finais são de aprovação.
+                                        As disciplinas com menos aprovações vêm primeiro.
+                                    </p>
+                                    <p t-if="d.subjects.incomplete" class="small text-muted">
+                                        <t t-out="this.plural(d.subjects.incomplete, 'Uma classificação ainda não está fechada e não conta', 'classificações ainda não estão fechadas e não contam')"/>.
+                                    </p>
+                                    <ul class="o_edu_rp_bars">
+                                        <t t-foreach="d.subjects.rows" t-as="r" t-key="r.key">
+                                            <t t-call="edu_roles.ReportsBar" label="r.label" sub="r.sub" tone="'o_edu_rp_t2'" fill="this.width(r.pct)"
+                                               value="r.pct + '% aprovados'" detail="this.fmt(r.passed) + ' de ' + this.fmt(r.count) + ', média ' + this.fmt(r.average)"
+                                               alert="r.pct &lt; 50"/>
+                                        </t>
+                                    </ul>
+                                </t>
+                            </section>
+                        </div>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

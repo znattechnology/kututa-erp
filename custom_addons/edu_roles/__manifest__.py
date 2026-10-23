@@ -22,11 +22,13 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
         'views/edu_teaching_views.xml',
         'data/menu_groups.xml',
         'views/edu_secretaria_menu.xml',
+        'views/edu_report_page_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
             'edu_roles/static/src/teacher_home/*',
             'edu_roles/static/src/guardians/*',
+            'edu_roles/static/src/reports/*',
         ],
     },
     'auto_install': True,
