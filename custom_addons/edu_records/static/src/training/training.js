@@ -349,7 +349,8 @@ export class TrainingPage extends Component {
             // Os relatórios gravam-se à parte: o que se escreveu na ficha e ainda não se guardou fica.
             return;
         }
-        this.state.grade = detail.grade_value ? `${detail.grade_value}` : "";
+        // A nota de um estágio reaberto fica à vista, mesmo que seja 0.
+        this.state.grade = detail.grade !== null ? `${detail.grade_value}` : "";
         this.state.submitted = "";
         this.state.edit = this.isProject
             ? {
@@ -474,8 +475,8 @@ export class TrainingPage extends Component {
         await this.run(async () => {
             await this.orm.call("edu.training.page", "remove", [this.kind, this.state.detail.id]);
             this.notification.add(this.isProject ? "Trabalho removido." : "Estágio removido.", { type: "success" });
+            await this.backToList();
         });
-        await this.backToList();
     }
 
     // Relatórios entregues

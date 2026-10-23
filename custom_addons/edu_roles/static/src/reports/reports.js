@@ -55,12 +55,18 @@ export class ReportsPage extends Component {
             return;
         }
         this.state.loading = true;
+        // Cliques rápidos: só a resposta do último pedido conta.
+        const request = (this.request = (this.request || 0) + 1);
         try {
             const data = await this.orm.call("edu.report.page", "report", this.args);
-            this.state.data = data;
-            this.state.trimesterId = data.grades.trimester_id;
+            if (request === this.request) {
+                this.state.data = data;
+                this.state.trimesterId = data.grades.trimester_id;
+            }
         } finally {
-            this.state.loading = false;
+            if (request === this.request) {
+                this.state.loading = false;
+            }
         }
     }
 
@@ -139,8 +145,8 @@ export class ReportsPage extends Component {
             },
             {
                 key: "final",
-                label: d.final.evaluated ? "transitaram ou concluíram" : "transitaram (ano por fechar)",
-                value: d.final.evaluated ? `${d.final.pct}%` : "—",
+                label: d.final.decided ? "transitaram ou concluíram" : "transitaram (ano por fechar)",
+                value: d.final.decided ? `${d.final.pct}%` : "—",
             },
         ];
     }
@@ -148,6 +154,7 @@ export class ReportsPage extends Component {
     /** Distribuição das notas de 0 a 20: uma coluna por valor e a linha da nota mínima. */
     get histogram() {
         const counts = this.state.data.grades.histogram;
+        const pass = this.state.data.grades.histogram_pass;
         if (!counts.length) {
             return null;
         }
@@ -162,13 +169,13 @@ export class ReportsPage extends Component {
                 y: H - bottom - h,
                 w: step - 2,
                 h,
-                negative: value < 10,
+                negative: value < pass,
                 title: `${value} valores: ${fmt(count)} ${count === 1 ? "nota" : "notas"}`,
                 label: value % 5 === 0 ? `${value}` : "",
                 lx: left + value * step + step / 2,
             };
         });
-        return { W, H, bars, base: H - bottom, passX: left + 10 * step - 0.5, top };
+        return { W, H, bars, base: H - bottom, passX: left + Math.ceil(pass) * step - 0.5, top };
     }
 
     /** Percentagem de positivas em cada trimestre do ano. */
@@ -263,8 +270,14 @@ export class ReportsPage extends Component {
         }
     }
 
-    openAnalysis(xmlid) {
-        return this.action.doAction(xmlid);
+    async openAnalysis(kind) {
+        const s = this.state;
+        const action = await this.orm.call("edu.report.page", "analysis_action", [
+            kind,
+            s.yearId,
+            kind === "subjects" ? s.classId || false : false,
+        ]);
+        return this.action.doAction(action);
     }
 }
 

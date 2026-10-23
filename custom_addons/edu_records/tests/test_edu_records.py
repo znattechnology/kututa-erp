@@ -88,6 +88,7 @@ class TestEduRecords(TransactionCase):
         graduation = self.env['edu.graduation'].browse(action['res_id'])
         with self.assertRaises(UserError):
             graduation.action_issue()  # o curso exige a PAP aprovada
+        project.action_submit()
         project.action_evaluate()
         graduation.final_project_id = project
         graduation.action_issue()
@@ -115,6 +116,7 @@ class TestEduRecords(TransactionCase):
                 'grade': 18,
             }
         )
+        project.action_submit()
         project.action_evaluate()
         graduation = self.env['edu.graduation'].browse(result.action_register_graduation()['res_id'])
         graduation.final_project_id = project
@@ -197,6 +199,21 @@ class TestEduRecords(TransactionCase):
             Page.with_user(tutor_user).run_action('internship', retry.id, 'evaluate', '15')
         detail = Page.with_user(tutor_user).add_report(retry.id, 'Relatório intercalar', False, None)
         self.assertEqual([r['name'] for r in detail['reports']], ['Relatório intercalar'])
+
+        # As regras valem no modelo, não só na página: o tutor não fecha nem dá nota por chamada directa; a
+        # secretaria não muda o estado à mão, não anula um estágio fechado nem o remove.
+        with self.assertRaises(UserError):
+            retry.with_user(tutor_user).write({'state': 'passed', 'grade': 20})
+        with self.assertRaises(UserError):
+            retry.with_user(tutor_user).action_evaluate(grade=20)
+        with self.assertRaises(UserError):
+            retry.with_user(clerk).write({'state': 'passed'})
+        with self.assertRaises(UserError):
+            mine.with_user(clerk).action_cancel()  # já está fechado (não aprovado)
+        with self.assertRaises(UserError):
+            mine.with_user(clerk).write({'grade': 15})
+        with self.assertRaises(UserError):
+            retry.with_user(clerk).unlink()
 
         # PAP: um aluno, tema obrigatório; o resultado exige a data da defesa.
         with self.assertRaises(UserError):

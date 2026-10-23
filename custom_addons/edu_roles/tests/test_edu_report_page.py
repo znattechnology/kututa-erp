@@ -1,6 +1,7 @@
 from datetime import date
 
 from odoo import Command
+from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -88,6 +89,26 @@ class TestEduReportPage(TransactionCase):
         self.assertEqual((subjects['count'], subjects['incomplete']), (2, 1))
         self.assertEqual((subjects['rows'][0]['average'], subjects['rows'][0]['pct']), (12, 50))
         self.assertFalse(data['attendance']['calls'])
+
+        # Como na grelha: 9,5 arredonda a 10 e é positiva. E um aluno que saiu (anulou a matrícula) não conta.
+        self.env['edu.term.result'].search([('enrollment_id', '=', self.enrollments[1].id)]).mt = 9.5
+        grades = Page.report(self.year.id, 'class', first.id)['grades']
+        self.assertEqual((grades['pct'], grades['with_negative']), (100, 0))
+        self.assertEqual(grades['histogram'][10], 1)
+        self.enrollments[2].state = 'dropped'
+        data = Page.report(self.year.id, 'class', first.id)
+        self.assertEqual((data['grades']['grades'], data['enrollments']['total'], data['final']['missing']), (2, 2, 0))
+        self.assertEqual(data['subjects']['incomplete'], 0)
+        # Os relatórios são da secretaria: um professor não os lê por chamada directa.
+        teacher = self.env['res.users'].create(
+            {
+                'name': 'Prof',
+                'login': 'prof_rel',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_teacher').id])],
+            }
+        )
+        with self.assertRaises(AccessError):
+            Page.with_user(teacher).report(self.year.id)
         # Por subsistema não há média (escalas diferentes).
         self.assertIsNone(Page.report(self.year.id, 'subsystem')['grades']['rows'][0]['average'])
 

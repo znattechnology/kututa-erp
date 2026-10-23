@@ -46,10 +46,18 @@ class TestEduGuardianPage(TransactionCase):
 
         # Desvincular o principal passa o lugar ao outro encarregado.
         father_link = next(lk for lk in Page.student_guardians(self.student.id) if lk['guardian'] == 'João Kiala')
-        remaining = Page.unlink_link(father_link['id'])
-        self.assertEqual([(lk['guardian'], lk['primary']) for lk in remaining], [('Maria Kiala', True)])
+        result = Page.unlink_link(father_link['id'])
+        self.assertEqual([(lk['guardian'], lk['primary']) for lk in result['links']], [('Maria Kiala', True)])
+        self.assertEqual(result['promoted'], 'Maria Kiala')
+        with self.assertRaises(UserError):
+            Page.link(self.student.id, father['id'], 'cousin', {})
 
         rows = {r['name']: r for r in Page.listing()['rows']}
         self.assertEqual([lk['student'] for lk in rows['Maria Kiala']['links']], ['Ana Kiala'])
         self.assertFalse(rows['João Kiala']['links'])
         self.assertEqual([g['name'] for g in Page.search_guardians('925')], ['João Kiala'])
+
+        # O mesmo BI com espaços e minúsculas, ou de um encarregado arquivado, também é repetido.
+        self.env['edu.guardian'].browse(mother['id']).active = False
+        with self.assertRaises(UserError):
+            Page.create_guardian({'name': 'Outra', 'phone': '926000000', 'id_number': ' 004567890la042 '})

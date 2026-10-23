@@ -6,7 +6,7 @@ import { standardActionServiceProps } from "@web/webclient/actions/action_plugin
 import { StudentPicker } from "@edu_documents/student_picker/student_picker";
 
 const AUTHORIZATIONS = [
-    { key: "is_primary", label: "Encarregado principal", hint: "Recebe as facturas das propinas e é a quem a escola liga primeiro." },
+    { key: "is_primary", label: "Encarregado principal", hint: "É a quem a escola liga primeiro; as facturas das propinas saem em nome dele se tiver NIF." },
     { key: "can_access_portal", label: "Pode ver o aluno no portal", hint: "Notas, faltas e propinas, com a conta do encarregado." },
     { key: "receive_notifications", label: "Recebe os avisos da escola", hint: "" },
     { key: "is_emergency", label: "Contacto de emergência", hint: "" },
@@ -49,6 +49,7 @@ export class GuardiansPage extends Component {
             relationship: "legal_guardian",
             options: {},
             primaryTouched: false,
+            confirmUnlink: false,
         });
         this.searchTimer = null;
         onWillUnmount(() => clearTimeout(this.searchTimer));
@@ -200,8 +201,16 @@ export class GuardiansPage extends Component {
         this.state.student = row;
         this.state.current = null;
         this.state.primaryTouched = false;
+        // A resposta de um aluno escolhido antes não se sobrepõe à do aluno actual.
+        const request = (this.studentRequest = (this.studentRequest || 0) + 1);
         const current = await this.orm.call("edu.guardian.page", "student_guardians", [row.student_id]);
+        if (request !== this.studentRequest) {
+            return;
+        }
         this.state.current = current;
+        if (!this.state.guardian) {
+            await this.searchGuardians();
+        }
         // Quem já tem encarregado principal: o novo não o substitui por omissão.
         this.state.options.is_primary = !current.some((l) => l.primary);
     }
@@ -228,7 +237,11 @@ export class GuardiansPage extends Component {
 
     async searchGuardians() {
         const request = (this.searchRequest = (this.searchRequest || 0) + 1);
-        const results = await this.orm.call("edu.guardian.page", "search_guardians", [this.state.guardianQuery]);
+        const studentId = this.state.student ? this.state.student.student_id : false;
+        const results = await this.orm.call("edu.guardian.page", "search_guardians", [
+            this.state.guardianQuery,
+            studentId,
+        ]);
         if (request === this.searchRequest) {
             this.state.guardianResults = results;
         }
@@ -299,10 +312,23 @@ export class GuardiansPage extends Component {
         });
     }
 
+    askUnlink(link) {
+        this.state.confirmUnlink = link.id;
+    }
+
+    cancelUnlink() {
+        this.state.confirmUnlink = false;
+    }
+
     async removeLink(link) {
         await this.run(async () => {
-            this.state.current = await this.orm.call("edu.guardian.page", "unlink_link", [link.id]);
-            this.notification.add(`${link.guardian} deixou de ser encarregado de ${link.student}.`, { type: "success" });
+            const result = await this.orm.call("edu.guardian.page", "unlink_link", [link.id]);
+            this.state.current = result.links;
+            this.state.confirmUnlink = false;
+            const promoted = result.promoted ? ` ${result.promoted} passa a ser o encarregado principal.` : "";
+            this.notification.add(`${link.guardian} deixou de ser encarregado de ${link.student}.${promoted}`, {
+                type: "success",
+            });
         });
     }
 }

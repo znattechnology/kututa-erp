@@ -11,6 +11,31 @@
         <field name="action" ref="action_edu_reports"/>
     </record>
 
+    <!-- Filtros da «Análise detalhada», como os números da página: classificações fechadas e resultados decididos. -->
+    <record id="edu_subject_result_search_reports" model="ir.ui.view">
+        <field name="name">edu.subject.result.search.reports</field>
+        <field name="model">edu.subject.result</field>
+        <field name="inherit_id" ref="edu_evaluation.edu_subject_result_search"/>
+        <field name="arch" type="xml">
+            <filter name="negative" position="before">
+                <filter name="complete" string="Fechadas" domain="[('complete', '=', True)]"/>
+                <filter name="open" string="Por fechar" domain="[('complete', '=', False)]"/>
+                <separator/>
+            </filter>
+        </field>
+    </record>
+    <record id="edu_year_result_search_reports" model="ir.ui.view">
+        <field name="name">edu.year.result.search.reports</field>
+        <field name="model">edu.year.result</field>
+        <field name="inherit_id" ref="edu_evaluation.edu_year_result_search"/>
+        <field name="arch" type="xml">
+            <filter name="retained" position="before">
+                <filter name="decided" string="Com resultado" domain="[('status', '!=', 'pending')]"/>
+                <separator/>
+            </filter>
+        </field>
+    </record>
+
     <record id="action_report_school_figures" model="ir.actions.report">
         <field name="name">Relatórios da escola</field>
         <field name="model">edu.report.page</field>

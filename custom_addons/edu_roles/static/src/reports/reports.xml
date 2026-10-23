@@ -179,21 +179,21 @@
                             <section class="o_edu_rp_card">
                                 <div class="o_edu_rp_cardhead">
                                     <h3 class="o_edu_rp_h3">Resultado final do ano</h3>
-                                    <button type="button" class="btn btn-link btn-sm" t-on-click="() => this.openAnalysis('edu_roles.action_edu_year_result_analysis')">Análise detalhada</button>
+                                    <button type="button" class="btn btn-link btn-sm" t-on-click="() => this.openAnalysis('final')">Análise detalhada</button>
                                 </div>
                                 <p t-if="!d.final.evaluated" class="text-muted mb-0">Ainda nenhum aluno tem o resultado final: aparece quando os conselhos de turma do ano fecham.</p>
                                 <t t-else="">
                                     <p>
-                                        <t t-out="this.plural(d.final.evaluated, 'Um aluno tem', 'alunos têm')"/> o resultado final, e
-                                        <t t-out="d.final.pct"/>% <t t-out="d.final.evaluated === 1 ? 'transitou ou concluiu' : 'transitaram ou concluíram'"/>.
-                                        <t t-if="d.final.exam"> <t t-out="this.plural(d.final.exam, 'Um está', 'estão')"/> admitidos a exame de recurso.</t>
+                                        <t t-out="this.plural(d.final.evaluated, 'Um aluno tem', 'alunos têm')"/> o resultado final.
+                                        <t t-if="d.final.decided">Dos decididos, <t t-out="d.final.pct"/>% transitaram ou concluíram.</t>
+                                        <t t-if="d.final.exam"> <t t-out="this.plural(d.final.exam, 'Um aguarda', 'aguardam')"/> o exame de recurso e ainda não contam na taxa.</t>
                                     </p>
-                                    <p t-if="d.final.missing" class="small text-warning-emphasis">
+                                    <p t-if="d.final.missing > 0" class="small text-warning-emphasis">
                                         Faltam <t t-out="this.plural(d.final.missing, 'um aluno', 'alunos')"/> dos <t t-out="this.fmt(d.final.enrolled)"/> matriculados: a taxa ainda não é a do ano.
                                     </p>
                                     <figure t-if="this.yearsLine" class="o_edu_rp_figure">
                                         <t t-set="yl" t-value="this.yearsLine"/>
-                                        <figcaption>Transitaram ou concluíram, de ano para ano</figcaption>
+                                        <figcaption>Transitaram ou concluíram, de ano para ano (toda a escola)</figcaption>
                                         <svg t-att-viewBox="'0 0 ' + yl.W + ' ' + yl.H" role="img" aria-label="Percentagem de alunos que transitaram em cada ano lectivo">
                                             <g t-foreach="yl.grid" t-as="g" t-key="g.v">
                                                 <line class="o_edu_rp_grid" t-att-x1="yl.left" t-att-x2="yl.W - 10" t-att-y1="g.y" t-att-y2="g.y"/>
@@ -225,7 +225,7 @@
                                                      t-att-style="part.style" t-att-title="part.title"/>
                                             </div>
                                             <div class="o_edu_rp_value">
-                                                <div t-out="r.pct + '% transitaram'"/>
+                                                <div t-out="r.pct === null ? 'sem decididos' : r.pct + '% transitaram'"/>
                                                 <div class="small text-muted" t-out="this.finalDetail(r)"/>
                                             </div>
                                         </li>
@@ -243,7 +243,7 @@
                                             <option t-foreach="d.subjects.classes" t-as="c" t-key="c.id" t-att-value="c.id"
                                                     t-att-selected="c.id === d.subjects.class_id" t-out="c.label"/>
                                         </select>
-                                        <button type="button" class="btn btn-link btn-sm" t-on-click="() => this.openAnalysis('edu_roles.action_edu_subject_result_analysis')">Análise detalhada</button>
+                                        <button type="button" class="btn btn-link btn-sm" t-on-click="() => this.openAnalysis('subjects')">Análise detalhada</button>
                                     </div>
                                 </div>
                                 <p t-if="!d.subjects.count" class="text-muted mb-0">

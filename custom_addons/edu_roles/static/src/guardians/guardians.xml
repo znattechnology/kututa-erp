@@ -153,8 +153,13 @@
                                         <ul class="o_edu_gd_current">
                                             <li t-foreach="this.state.current" t-as="l" t-key="l.id">
                                                 <span class="flex-grow-1"><t t-out="l.guardian"/> <span class="small text-muted">(<t t-out="l.relationship"/><t t-if="l.primary">, principal</t>)</span></span>
-                                                <button type="button" class="btn btn-link btn-sm text-danger" t-att-disabled="this.state.busy"
-                                                        t-att-aria-label="'Desvincular ' + l.guardian" t-on-click="() => this.removeLink(l)">Desvincular</button>
+                                                <t t-if="this.state.confirmUnlink === l.id">
+                                                    <span class="small">Desvincular<t t-if="l.primary and this.state.current.length > 1"> (outro passa a principal)</t>?</span>
+                                                    <button type="button" class="btn btn-danger btn-sm" t-att-disabled="this.state.busy" t-on-click="() => this.removeLink(l)">Sim</button>
+                                                    <button type="button" class="btn btn-secondary btn-sm" t-on-click="() => this.cancelUnlink()">Não</button>
+                                                </t>
+                                                <button t-else="" type="button" class="btn btn-link btn-sm text-danger" t-att-disabled="this.state.busy"
+                                                        t-att-aria-label="'Desvincular ' + l.guardian" t-on-click="() => this.askUnlink(l)">Desvincular</button>
                                             </li>
                                         </ul>
                                     </div>
@@ -214,7 +219,7 @@
                                     </label>
                                 </div>
                                 <p t-if="this.state.options.is_primary and this.currentPrimary" class="small text-warning-emphasis">
-                                    <t t-out="this.currentPrimary.guardian"/> é o encarregado principal: deixa de o ser, e as facturas passam para este.
+                                    <t t-out="this.currentPrimary.guardian"/> é o encarregado principal e deixa de o ser. As próximas facturas das propinas saem em nome deste<t t-if="!this.state.guardian or !this.state.guardian.vat">, se tiver NIF (sem NIF, saem em nome do aluno)</t>.
                                 </p>
                                 <p t-if="!this.state.options.is_primary and this.state.current and !this.state.current.length" class="small text-muted">
                                     O primeiro encarregado de um aluno fica sempre como principal.

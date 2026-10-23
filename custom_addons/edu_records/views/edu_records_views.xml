@@ -68,8 +68,8 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="student_id" options="{'no_create': True}"/>
-                            <field name="enrollment_id" options="{'no_create': True}"/>
+                            <field name="student_id" options="{'no_create': True}" readonly="state in ('passed', 'failed', 'cancelled')"/>
+                            <field name="enrollment_id" options="{'no_create': True}" readonly="state in ('passed', 'failed', 'cancelled')"/>
                             <field name="academic_year_id"/>
                             <field name="entity"/>
                             <field name="supervisor"/>
@@ -80,7 +80,7 @@
                             <field name="date_start"/>
                             <field name="date_end"/>
                             <field name="hours"/>
-                            <field name="grade"/>
+                            <field name="grade" readonly="state in ('passed', 'failed', 'cancelled')"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         </group>
                     </group>
@@ -153,7 +153,7 @@
                     <button name="action_start" type="object" string="Marcar «em elaboração»" invisible="state != 'proposed' or not id"/>
                     <button name="action_submit" type="object" string="Registar a entrega" invisible="state not in ('proposed', 'ongoing') or not id"/>
                     <button name="action_evaluate" type="object" string="Registar o resultado da defesa" class="btn-primary"
-                            invisible="state in ('passed', 'failed') or not id"/>
+                            invisible="state not in ('submitted', 'defended') or not id"/>
                     <button name="action_reopen" type="object" string="Reabrir" invisible="state not in ('passed', 'failed')"
                             groups="edu_core.group_edu_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="proposed,ongoing,submitted,passed"/>
@@ -162,8 +162,8 @@
                     <div class="oe_title"><h1><field name="name" placeholder="Tema da PAP"/></h1></div>
                     <group>
                         <group>
-                            <field name="student_id" options="{'no_create': True}"/>
-                            <field name="enrollment_id" options="{'no_create': True}"/>
+                            <field name="student_id" options="{'no_create': True}" readonly="state in ('passed', 'failed')"/>
+                            <field name="enrollment_id" options="{'no_create': True}" readonly="state in ('passed', 'failed')"/>
                             <field name="advisor_id" options="{'no_create': True}"/>
                             <field name="jury_ids" widget="many2many_tags" options="{'no_create': True}"/>
                         </group>
@@ -171,7 +171,7 @@
                             <field name="academic_year_id"/>
                             <field name="submitted_date"/>
                             <field name="defense_date"/>
-                            <field name="grade"/>
+                            <field name="grade" readonly="state in ('passed', 'failed')"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                         </group>
                     </group>

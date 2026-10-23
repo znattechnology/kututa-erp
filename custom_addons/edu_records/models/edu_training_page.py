@@ -73,6 +73,12 @@ class EduTrainingPage(models.AbstractModel):
         return [{'id': t.id, 'name': t.name} for t in teachers]
 
     @api.model
+    def _check_teachers(self, values):
+        for key in ('tutor_id', 'advisor_id'):
+            if values.get(key) and values[key] not in {t['id'] for t in self._teachers()}:
+                raise UserError(self.env._('O tutor ou orientador tem de ser um professor da escola.'))
+
+    @api.model
     def _row(self, kind, record):
         staff = record.sudo()
         closed = record.state in ('passed', 'failed')
@@ -180,7 +186,12 @@ class EduTrainingPage(models.AbstractModel):
         enrollments = self.env['edu.enrollment'].browse(vals.get('enrollment_ids') or []).exists()
         if not enrollments:
             raise UserError(self.env._('Escolha pelo menos um aluno.'))
+        # As mesmas regras do «Novo»: finalistas a frequentar, de turmas da classe final.
+        finals = {c['id'] for c in self.new_options(kind)['classes']}
+        if enrollments.filtered(lambda e: e.state not in ('active', 'irregular') or e.class_id.id not in finals):
+            raise UserError(self.env._('Só se registam alunos a frequentar uma turma da classe final do ano.'))
         common = {k: vals.get(k) or False for k in FIELDS[kind] if k in vals}
+        self._check_teachers(common)
         if kind == 'project':
             if len(enrollments) != 1:
                 raise UserError(self.env._('A PAP regista-se a um aluno de cada vez.'))
@@ -188,7 +199,12 @@ class EduTrainingPage(models.AbstractModel):
                 raise UserError(self.env._('Escreva o tema do trabalho.'))
         elif not (vals.get('entity') or '').strip():
             raise UserError(self.env._('Indique a entidade onde decorre o estágio.'))
-        records = Model.create([{**common, 'student_id': e.student_id.id, 'enrollment_id': e.id} for e in enrollments])
+        records = Model.create(
+            [
+                {**common, 'student_id': e.student_id.id, 'enrollment_id': e.id, 'company_id': e.company_id.id}
+                for e in enrollments
+            ]
+        )
         return records.ids
 
     # Ficha
@@ -249,9 +265,7 @@ class EduTrainingPage(models.AbstractModel):
             if value == '':
                 values[key] = False
         jury = values.pop('jury_ids', None)
-        for key in ('tutor_id', 'advisor_id'):
-            if values.get(key) and values[key] not in {t['id'] for t in self._teachers()}:
-                raise UserError(self.env._('O tutor ou orientador tem de ser um professor da escola.'))
+        self._check_teachers(values)
         if kind == 'internship' and 'entity' in values and not values['entity']:
             raise UserError(self.env._('Indique a entidade onde decorre o estágio.'))
         if kind == 'project' and 'name' in values and not values['name']:
@@ -278,7 +292,11 @@ class EduTrainingPage(models.AbstractModel):
         if action == 'evaluate':
             if value in (None, ''):
                 raise UserError(self.env._('Indique a nota, de 0 a 20.'))
-            record.action_evaluate(grade=float(value))
+            try:
+                grade = float(str(value).replace(',', '.'))
+            except ValueError:
+                raise UserError(self.env._('A nota tem de ser um número de 0 a 20.')) from None
+            record.action_evaluate(grade=grade)
         elif action == 'submit':
             record.action_submit(day=value or None)
         else:

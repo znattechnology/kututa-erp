@@ -50,9 +50,11 @@ class EduGuardianPage(models.AbstractModel):
         return {'rows': [self._row(g) for g in guardians]}
 
     @api.model
-    def search_guardians(self, query):
+    def search_guardians(self, query, student_id=False):
         query = (query or '').strip()
-        domain = [('company_id', 'in', self.env.companies.ids)]
+        # Com o aluno escolhido, só os encarregados da escola dele (um vínculo entre escolas é recusado).
+        student = self.env['edu.student'].browse(student_id).exists() if student_id else None
+        domain = [('company_id', 'in', student.company_id.ids if student else self.env.companies.ids)]
         if query:
             domain += [
                 '|', '|', '|', '|',
@@ -78,19 +80,21 @@ class EduGuardianPage(models.AbstractModel):
             raise UserError(self.env._('Escreva o nome do encarregado.'))
         if not values['phone']:
             raise UserError(self.env._('Indique o telefone: é por ele que a escola contacta o encarregado.'))
-        # O mesmo NIF ou BI é a mesma pessoa: vincula-se o registo que já existe.
-        Guardian = self.env['edu.guardian']
+        # O mesmo NIF ou BI é a mesma pessoa: vincula-se o registo que já existe (também se estiver arquivado).
+        Guardian = self.env['edu.guardian'].with_context(active_test=False)
         for field, label in (('vat', 'NIF'), ('id_number', 'BI')):
             if values[field]:
+                values[field] = ''.join(values[field].split()).upper()
                 twin = Guardian.search(
-                    [('company_id', 'in', self.env.companies.ids), (field, '=', values[field])], limit=1
+                    [('company_id', 'in', self.env.companies.ids), (field, '=ilike', values[field])], limit=1
                 )
                 if twin:
                     raise UserError(
                         self.env._(
-                            '%(name)s já está registado com este %(label)s: vincule esse encarregado.',
+                            '%(name)s já está registado com este %(label)s%(archived)s: vincule esse encarregado.',
                             name=twin.name,
                             label=label,
+                            archived=self.env._(' (arquivado: reactive-o na ficha)') if not twin.active else '',
                         )
                     )
         return self._row(Guardian.create(values))
@@ -116,6 +120,11 @@ class EduGuardianPage(models.AbstractModel):
             raise UserError(self.env._('O aluno ou o encarregado já não existe.'))
         if student.guardian_link_ids.filtered(lambda link: link.guardian_id == guardian):
             raise UserError(self.env._('%(g)s já é encarregado de %(s)s.', g=guardian.name, s=student.name))
+        if relationship not in dict(self._relationships()):
+            raise UserError(self.env._('Escolha o que o encarregado é do aluno.'))
+        if guardian.company_id != student.company_id:
+            raise UserError(self.env._('O encarregado está registado noutra escola.'))
+        options = options or {}
         values = {k: bool(options.get(k)) for k in LINK_OPTIONS}
         primary = values.pop('is_primary')
         link = self.env['edu.student.guardian'].create(
@@ -133,6 +142,9 @@ class EduGuardianPage(models.AbstractModel):
         student = link.student_id
         others = student.guardian_link_ids - link
         link.unlink()
+        promoted = False
         if others and not others.filtered('is_primary'):
+            # O aluno fica sempre com um principal: passa a ser o seguinte, e a página diz quem.
             others[:1].is_primary = True
-        return [self._link_row(other) for other in student.guardian_link_ids]
+            promoted = others[:1].guardian_id.name
+        return {'links': [self._link_row(other) for other in student.guardian_link_ids], 'promoted': promoted}
