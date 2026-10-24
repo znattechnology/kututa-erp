@@ -27,6 +27,10 @@ Secretaria Express: a área do estudante, como a do secPed-Express, no Odoo como
     'assets': {
         'web.assets_backend': [
             'edu_portal/static/src/student/*',
+            ('remove', 'edu_portal/static/src/student/*.dark.scss'),
+        ],
+        'web.assets_web_dark': [
+            'edu_portal/static/src/student/*.dark.scss',
         ],
     },
     'license': 'OPL-1',

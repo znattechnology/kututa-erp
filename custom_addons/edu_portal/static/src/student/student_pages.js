@@ -65,6 +65,79 @@ export class StudentHome extends StudentPage {
         const a = this.state.data.absences;
         return a.total - a.present;
     }
+
+    /** As notas do trimestre por disciplina, em barras de 0 ao máximo da escala (as sem nota ficam sem barra). */
+    get gradeBars() {
+        const g = this.state.data.grades;
+        if (!g.active || !g.subjects) {
+            return [];
+        }
+        const max = g.scale_max || 20;
+        return g.subjects.map((s) => {
+            const ct = s.by_trimester[g.active.id].ct;
+            return {
+                id: s.id,
+                name: s.name,
+                grade: ct,
+                width: ct ? Math.max(2, Math.min(100, (ct.value / max) * 100)) : 0,
+            };
+        });
+    }
+
+    get passLeft() {
+        const g = this.state.data.grades;
+        return ((g.pass_grade || 10) / (g.scale_max || 20)) * 100;
+    }
+
+    /** A média de cada trimestre, em colunas (só os trimestres com notas têm coluna). */
+    get trend() {
+        const g = this.state.data.grades;
+        const max = g.scale_max || 20;
+        return (g.trend || []).map((t) => ({ ...t, height: t.value === null ? 0 : Math.max(2, (t.value / max) * 100) }));
+    }
+
+    get hasTrend() {
+        return this.trend.some((t) => t.value !== null);
+    }
+
+    /** As faltas injustificadas face ao limite de cada disciplina (só as que têm limite no plano). */
+    get absenceMeters() {
+        const a = this.state.data.absences;
+        return (a.subjects || [])
+            .filter((s) => s.limit)
+            .map((s) => ({ ...s, width: Math.min(100, (s.counted / s.limit) * 100) }))
+            .sort((x, y) => y.width - x.width || x.name.localeCompare(y.name));
+    }
+
+    statusClass(subject) {
+        return { at_risk: "text-warning", failed: "text-danger" }[subject.status] || "text-muted";
+    }
+
+    meterClass(subject) {
+        return { at_risk: "o_edu_st_meter_warn", failed: "o_edu_st_meter_bad" }[subject.status] || "";
+    }
+
+    get absenceTile() {
+        const a = this.state.data.absences;
+        if (!a.total) {
+            return { value: "—", detail: "Ainda sem chamadas este ano" };
+        }
+        const detail = a.failed.length
+            ? `Limite passado a ${count(a.failed.length, "uma disciplina", "disciplinas")}`
+            : a.at_risk.length
+              ? `A uma falta do limite a ${count(a.at_risk.length, "uma disciplina", "disciplinas")}`
+              : "Dentro do limite em todas as disciplinas";
+        return { value: String(a.absent), detail, bad: a.failed.length > 0, warn: !a.failed.length && a.at_risk.length > 0 };
+    }
+
+    get feesTile() {
+        const f = this.state.data.fees_summary;
+        if (!f || !f.count) {
+            return { value: "Em dia", detail: "Não tens nada por pagar" };
+        }
+        const detail = f.overdue ? `${count(f.overdue, "uma factura", "facturas")} em atraso` : `${count(f.count, "uma factura", "facturas")} por pagar`;
+        return { value: f.total, detail, bad: f.overdue > 0 };
+    }
 }
 
 export class StudentGrades extends StudentPage {

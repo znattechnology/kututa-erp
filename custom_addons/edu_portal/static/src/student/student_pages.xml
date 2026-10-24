@@ -40,11 +40,12 @@
         </section>
     </t>
 
-    <!-- Painel: o dia, as notas do último trimestre com nota, a assiduidade e as próximas provas. -->
+    <!-- Painel: um quadro com o que importa agora e como vai o ano. Em cima, os números principais; depois o dia e as
+         próximas provas; as notas do trimestre por disciplina e a evolução da média; as faltas face ao limite. -->
     <t t-name="edu_portal.StudentHome">
         <div class="o_action o_edu_student">
             <Layout display="this.display">
-                <div class="o_edu_st_body" t-if="this.state.data">
+                <div class="o_edu_st_body o_edu_st_wide" t-if="this.state.data">
                     <t t-set="d" t-value="this.state.data"/>
                     <header>
                         <h1 class="o_edu_st_title" t-out="d.has_student ? this.greeting : 'Área do Estudante'"/>
@@ -53,114 +54,183 @@
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
                     <t t-else="">
                         <t t-call="edu_portal.StudentPage.Debt"/>
-                        <div class="o_edu_st_grid">
-                            <div class="o_edu_st_main">
-                                <!-- O dia -->
-                                <section class="o_edu_st_card">
-                                    <div class="o_edu_st_row mb-2">
-                                        <h2 class="o_edu_st_h2 mb-0" t-out="d.today.title"/>
-                                        <button t-if="d.has_schedule" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_schedule')">Ver o horário da semana</button>
-                                    </div>
-                                    <t t-set="next" t-value="d.today.next"/>
-                                    <div t-if="next">
-                                        <div class="small fw-semibold" t-att-class="d.today.now ? 'text-success' : 'text-primary'">
-                                            <t t-if="d.today.now">Agora</t><t t-else="">A seguir</t>
-                                        </div>
-                                        <div class="fs-4 fw-semibold" t-out="next.subject"/>
-                                        <div class="text-muted">
-                                            <span class="o_edu_st_num" t-out="next.hours"/>
-                                            <t t-if="next.room">, <t t-out="next.room"/></t>
-                                            <t t-if="next.teacher">, com <t t-out="next.teacher"/></t>
-                                        </div>
-                                    </div>
-                                    <div t-else="">
-                                        <p class="mb-1" t-if="!d.has_schedule">O horário da tua turma ainda não foi publicado. Aparece aqui quando a escola o publicar.</p>
-                                        <p class="mb-1" t-elif="d.today.holiday">Hoje não há aulas: é feriado ou pausa no calendário escolar.</p>
-                                        <p class="mb-1" t-elif="d.today.had_lessons">As aulas de hoje já acabaram.</p>
-                                        <p class="mb-1" t-else="">Hoje não tens aulas.</p>
-                                        <p t-if="d.today.next_day" class="mb-0 text-muted">
-                                            <t t-set="first" t-value="d.today.next_day.lesson"/>
-                                            <t t-out="d.today.next_day.when"/>, a primeira aula é <t t-out="first.subject"/>, às <t t-out="first.hours.split('–')[0]"/><t t-if="first.room"> (<t t-out="first.room"/>)</t>.
-                                        </p>
-                                    </div>
-                                    <ul t-if="d.today.rest.length" class="o_edu_st_list mt-3">
-                                        <li t-foreach="d.today.rest" t-as="lesson" t-key="lesson.id">
-                                            <span class="o_edu_st_time" t-out="lesson.hours"/>
-                                            <span class="flex-grow-1" t-out="lesson.subject"/>
-                                            <span t-if="lesson.room" class="small text-muted" t-out="lesson.room"/>
-                                        </li>
-                                    </ul>
-                                </section>
+                        <t t-set="g" t-value="d.grades"/>
 
-                                <!-- As notas -->
-                                <section class="o_edu_st_card">
-                                    <t t-set="g" t-value="d.grades"/>
-                                    <div class="o_edu_st_row mb-2">
-                                        <h2 class="o_edu_st_h2 mb-0">As minhas notas<t t-if="g.active and !g.blocked"> do <t t-out="g.active.name"/></t></h2>
-                                        <button t-if="d.has_enrollment and !g.blocked" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_grades')">Ver todas as notas</button>
+                        <!-- Os números principais -->
+                        <div class="o_edu_st_kpis">
+                            <button type="button" class="o_edu_st_kpi" t-on-click="() => this.open('edu_portal.action_student_grades')">
+                                <span class="o_edu_st_kpi_label">Média do ano</span>
+                                <t t-if="g.blocked"><span class="o_edu_st_kpi_value">—</span><span class="o_edu_st_kpi_detail text-danger">Notas bloqueadas pelas propinas</span></t>
+                                <t t-elif="g.year_average">
+                                    <span class="o_edu_st_kpi_value" t-att-class="{'text-danger': !g.year_average.pos}" t-out="g.year_average.text"/>
+                                    <span class="o_edu_st_kpi_detail"><t t-out="g.year_average.pos ? 'Positiva' : 'Abaixo de ' + g.pass_text"/>, até agora</span>
+                                </t>
+                                <t t-else=""><span class="o_edu_st_kpi_value">—</span><span class="o_edu_st_kpi_detail">Ainda sem notas este ano</span></t>
+                            </button>
+                            <button type="button" class="o_edu_st_kpi" t-on-click="() => this.open('edu_portal.action_student_absences')">
+                                <span class="o_edu_st_kpi_label">Assiduidade</span>
+                                <t t-if="d.absences.total">
+                                    <span class="o_edu_st_kpi_value" t-att-class="{'text-danger': d.absences.rate &lt; 75}"><t t-out="d.absences.rate"/>%</span>
+                                    <span class="o_edu_st_kpi_detail"><t t-out="d.absences.present"/> de <t t-out="d.absences.total"/> aulas com chamada</span>
+                                </t>
+                                <t t-else=""><span class="o_edu_st_kpi_value">—</span><span class="o_edu_st_kpi_detail">Ainda sem chamadas este ano</span></t>
+                            </button>
+                            <button type="button" class="o_edu_st_kpi" t-on-click="() => this.open('edu_portal.action_student_absences')">
+                                <t t-set="at" t-value="this.absenceTile"/>
+                                <span class="o_edu_st_kpi_label">Faltas injustificadas</span>
+                                <span class="o_edu_st_kpi_value" t-out="at.value"/>
+                                <span class="o_edu_st_kpi_detail" t-att-class="{'text-danger': at.bad, 'text-warning': at.warn}">
+                                    <i t-if="at.bad or at.warn" class="oi me-1" data-icon="warning" aria-hidden="true"/><t t-out="at.detail"/>
+                                </span>
+                            </button>
+                            <button type="button" class="o_edu_st_kpi" t-on-click="() => this.open('edu_portal.action_student_fees')">
+                                <t t-set="ft" t-value="this.feesTile"/>
+                                <span class="o_edu_st_kpi_label">Propinas</span>
+                                <span class="o_edu_st_kpi_value o_edu_st_kpi_money" t-out="ft.value"/>
+                                <span class="o_edu_st_kpi_detail" t-att-class="{'text-danger': ft.bad}">
+                                    <i t-if="ft.bad" class="oi me-1" data-icon="warning" aria-hidden="true"/><t t-out="ft.detail"/>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="o_edu_st_grid o_edu_st_grid_even">
+                            <!-- O dia -->
+                            <section class="o_edu_st_card">
+                                <div class="o_edu_st_row mb-2">
+                                    <h2 class="o_edu_st_h2 mb-0" t-out="d.today.title"/>
+                                    <button t-if="d.has_schedule" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_schedule')">Ver o horário da semana</button>
+                                </div>
+                                <t t-set="next" t-value="d.today.next"/>
+                                <div t-if="next">
+                                    <div class="small fw-semibold" t-att-class="d.today.now ? 'text-success' : 'text-primary'">
+                                        <t t-if="d.today.now">Agora</t><t t-else="">A seguir</t>
                                     </div>
-                                    <p t-if="!d.has_enrollment" class="mb-0 text-muted">Não tens matrícula neste ano lectivo. Se achas que é um engano, fala com a secretaria.</p>
-                                    <p t-elif="g.blocked" class="mb-0 text-danger">As tuas notas estão bloqueadas porque há propinas em atraso. Voltam a ver-se quando as propinas vencidas forem pagas.</p>
-                                    <p t-elif="g.preschool" class="mb-0 text-muted">Na Iniciação a avaliação é descritiva: os professores escrevem um relatório por trimestre, sem notas de 0 a 20.</p>
-                                    <p t-elif="!g.active" class="mb-0 text-muted">A escola ainda não tem trimestres neste ano lectivo.</p>
-                                    <t t-else="">
-                                        <p class="text-muted" t-out="g.summary"/>
+                                    <div class="fs-4 fw-semibold" t-out="next.subject"/>
+                                    <div class="text-muted">
+                                        <span class="o_edu_st_num" t-out="next.hours"/>
+                                        <t t-if="next.room">, <t t-out="next.room"/></t>
+                                        <t t-if="next.teacher">, com <t t-out="next.teacher"/></t>
+                                    </div>
+                                </div>
+                                <div t-else="">
+                                    <p class="mb-1" t-if="!d.has_schedule">O horário da tua turma ainda não foi publicado. Aparece aqui quando a escola o publicar.</p>
+                                    <p class="mb-1" t-elif="d.today.holiday">Hoje não há aulas: é feriado ou pausa no calendário escolar.</p>
+                                    <p class="mb-1" t-elif="d.today.had_lessons">As aulas de hoje já acabaram.</p>
+                                    <p class="mb-1" t-else="">Hoje não tens aulas.</p>
+                                    <t t-if="d.today.next_day">
+                                        <p class="mb-2 text-muted"><t t-out="d.today.next_day.when"/>, tens <t t-out="d.today.next_day.lessons.length === 1 ? 'uma aula' : d.today.next_day.lessons.length + ' aulas'"/>:</p>
                                         <ul class="o_edu_st_list">
-                                            <li t-foreach="g.subjects" t-as="s" t-key="s.id">
-                                                <div class="flex-grow-1">
-                                                    <div t-out="s.name"/>
-                                                    <div t-if="s.code" class="small text-muted" t-out="s.code"/>
-                                                </div>
-                                                <t t-set="ct" t-value="s.by_trimester[g.active.id].ct"/>
-                                                <span t-if="!ct" class="small text-muted">sem nota</span>
-                                                <span t-else="" class="o_edu_st_num fs-6" t-att-class="this.gradeClass(ct, true)" t-out="ct.text"/>
+                                            <li t-foreach="d.today.next_day.lessons" t-as="lesson" t-key="lesson.id">
+                                                <span class="o_edu_st_time" t-out="lesson.hours"/>
+                                                <span class="flex-grow-1" t-out="lesson.subject"/>
+                                                <span t-if="lesson.room" class="small text-muted" t-out="lesson.room"/>
                                             </li>
                                         </ul>
                                     </t>
-                                </section>
-                            </div>
+                                </div>
+                                <ul t-if="d.today.rest.length" class="o_edu_st_list mt-3">
+                                    <li t-foreach="d.today.rest" t-as="lesson" t-key="lesson.id">
+                                        <span class="o_edu_st_time" t-out="lesson.hours"/>
+                                        <span class="flex-grow-1" t-out="lesson.subject"/>
+                                        <span t-if="lesson.room" class="small text-muted" t-out="lesson.room"/>
+                                    </li>
+                                </ul>
+                            </section>
+
+                            <!-- As próximas provas -->
+                            <section class="o_edu_st_card">
+                                <div class="o_edu_st_row mb-2">
+                                    <h2 class="o_edu_st_h2 mb-0">Próximas provas</h2>
+                                    <button t-if="d.has_enrollment" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_exams')">Ver o calendário</button>
+                                </div>
+                                <p t-if="!d.next_exams.length" class="mb-0 text-muted">Não há provas marcadas para os próximos dias.</p>
+                                <ul t-else="" class="o_edu_st_list">
+                                    <li t-foreach="d.next_exams" t-as="row" t-key="row.id">
+                                        <div class="o_edu_st_date" t-att-class="{'o_edu_st_date_today': row.today}">
+                                            <span t-out="row.date.slice(8, 10)"/>
+                                            <small t-out="row.day.split(' de ')[1] ? row.day.split(' de ')[1].slice(0, 3) : ''"/>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold" t-out="row.subject"/>
+                                            <div class="small text-muted"><t t-if="row.today">Hoje</t><t t-else="" t-out="row.day.split(',')[0]"/>, <t t-out="row.hours"/><t t-if="row.rooms">, <t t-out="row.rooms"/></t></div>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <p t-if="d.exams_left > d.next_exams.length" class="mb-0 mt-2 small text-muted">
+                                    E mais <t t-out="d.exams_left - d.next_exams.length"/> no calendário.
+                                </p>
+                            </section>
+                        </div>
+
+                        <div class="o_edu_st_grid">
+                            <!-- As notas do trimestre por disciplina -->
+                            <section class="o_edu_st_card" aria-labelledby="o_edu_st_chart_grades">
+                                <div class="o_edu_st_row mb-1">
+                                    <h2 id="o_edu_st_chart_grades" class="o_edu_st_h2 mb-0">Notas do <t t-out="g.active ? g.active.name : 'trimestre'"/></h2>
+                                    <button t-if="d.has_enrollment and !g.blocked" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_grades')">Ver a pauta</button>
+                                </div>
+                                <p t-if="!d.has_enrollment" class="mb-0 text-muted">Não tens matrícula neste ano lectivo.</p>
+                                <p t-elif="g.blocked" class="mb-0 text-danger">As tuas notas estão bloqueadas porque há propinas em atraso. Voltam a ver-se quando as propinas vencidas forem pagas.</p>
+                                <p t-elif="g.preschool" class="mb-0 text-muted">Na Iniciação a avaliação é descritiva: os professores escrevem um relatório por trimestre, sem notas de 0 a 20.</p>
+                                <p t-elif="!g.active" class="mb-0 text-muted">A escola ainda não tem trimestres neste ano lectivo.</p>
+                                <t t-else="">
+                                    <p class="small text-muted mb-3" t-out="g.summary"/>
+                                    <div class="o_edu_st_bars" role="list">
+                                        <div t-foreach="this.gradeBars" t-as="bar" t-key="bar.id" class="o_edu_st_bar_row" role="listitem"
+                                             t-att-title="bar.name + ': ' + (bar.grade ? bar.grade.text + ' valores' + (bar.grade.pos ? '' : ', negativa') : 'sem nota')">
+                                            <span class="o_edu_st_bar_name" t-out="bar.name"/>
+                                            <span class="o_edu_st_bar_track">
+                                                <span class="o_edu_st_bar_pass" t-att-style="'left: ' + this.passLeft + '%'"/>
+                                                <span t-if="bar.grade" class="o_edu_st_bar" t-att-class="{'o_edu_st_bar_neg': !bar.grade.pos}" t-att-style="'width: ' + bar.width + '%'"/>
+                                            </span>
+                                            <span class="o_edu_st_bar_value">
+                                                <t t-if="bar.grade"><t t-out="bar.grade.text"/><span t-if="!bar.grade.pos" class="o_edu_st_bar_flag">negativa</span></t>
+                                                <span t-else="" class="text-muted small">sem nota</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-0 mt-2">A linha marca a positiva (<t t-out="g.pass_text"/> valores). Escala de 0 a <t t-out="g.scale_max"/>.</p>
+                                </t>
+                            </section>
 
                             <div class="o_edu_st_side">
-                                <section class="o_edu_st_card">
-                                    <div class="o_edu_st_row mb-2">
-                                        <h2 class="o_edu_st_h2 mb-0">Assiduidade</h2>
-                                        <button t-if="d.has_enrollment" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_absences')">Ver as faltas</button>
+                                <!-- A evolução da média -->
+                                <section class="o_edu_st_card" aria-labelledby="o_edu_st_chart_trend">
+                                    <h2 id="o_edu_st_chart_trend" class="o_edu_st_h2">Média por trimestre</h2>
+                                    <p t-if="g.blocked or !this.hasTrend" class="mb-0 text-muted">
+                                        <t t-if="g.blocked">Indisponível enquanto as notas estiverem bloqueadas.</t>
+                                        <t t-else="">Aparece quando houver notas lançadas.</t>
+                                    </p>
+                                    <div t-else="" class="o_edu_st_columns" role="list">
+                                        <span class="o_edu_st_col_pass" t-att-style="'bottom: ' + this.passLeft + '%'"/>
+                                        <div t-foreach="this.trend" t-as="t" t-key="t.id" class="o_edu_st_col_slot" role="listitem"
+                                             t-att-title="t.name + ': ' + (t.value === null ? 'sem notas' : 'média ' + t.text + ' em ' + t.count + (t.count === 1 ? ' disciplina' : ' disciplinas'))">
+                                            <span t-if="t.value !== null" class="o_edu_st_col_value" t-out="t.text"/>
+                                            <span t-if="t.value !== null" class="o_edu_st_col" t-att-class="{'o_edu_st_bar_neg': !t.pos}" t-att-style="'height: ' + t.height + '%'"/>
+                                            <span t-else="" class="o_edu_st_col_empty small text-muted">—</span>
+                                        </div>
                                     </div>
-                                    <p t-if="!d.absences.total" class="mb-0 text-muted">Ainda não há presenças registadas este ano.</p>
-                                    <t t-else="">
-                                        <p class="mb-0">
-                                            Estiveste em <t t-out="d.absences.present"/> das <t t-out="d.absences.total"/> aulas com chamada:
-                                            <span class="fw-semibold" t-att-class="{'text-danger': d.absences.rate &lt; 75}"><t t-out="d.absences.rate"/>%</span>.
-                                            <t t-if="this.missed === 1">Faltaste a uma.</t>
-                                            <t t-elif="this.missed">Faltaste a <t t-out="this.missed"/>.</t>
-                                        </p>
-                                        <p t-if="d.absences.failed.length" class="mb-0 mt-2 text-danger">Passaste o limite de faltas a <t t-out="this.list(d.absences.failed)"/>.</p>
-                                        <p t-elif="d.absences.at_risk.length" class="mb-0 mt-2 text-warning">Estás a uma falta do limite a <t t-out="this.list(d.absences.at_risk)"/>.</p>
-                                    </t>
+                                    <div t-if="!g.blocked and this.hasTrend" class="o_edu_st_col_labels">
+                                        <span t-foreach="this.trend" t-as="t" t-key="t.id" t-out="t.name"/>
+                                    </div>
                                 </section>
 
-                                <section class="o_edu_st_card">
+                                <!-- As faltas face ao limite -->
+                                <section class="o_edu_st_card" aria-labelledby="o_edu_st_chart_absences">
                                     <div class="o_edu_st_row mb-2">
-                                        <h2 class="o_edu_st_h2 mb-0">Próximas provas</h2>
-                                        <button t-if="d.has_enrollment" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_exams')">Ver o calendário</button>
+                                        <h2 id="o_edu_st_chart_absences" class="o_edu_st_h2 mb-0">Faltas face ao limite</h2>
+                                        <button t-if="d.absences.total" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_absences')">Ver as faltas</button>
                                     </div>
-                                    <p t-if="!d.next_exams.length" class="mb-0 text-muted">Não há provas marcadas para os próximos dias.</p>
-                                    <ul t-else="" class="o_edu_st_list">
-                                        <li t-foreach="d.next_exams" t-as="row" t-key="row.id">
-                                            <div class="flex-grow-1">
-                                                <div class="fw-semibold" t-out="row.subject"/>
-                                                <div class="small text-muted"><t t-out="row.day"/>, <t t-out="row.hours"/><t t-if="row.rooms">, <t t-out="row.rooms"/></t></div>
+                                    <p t-if="!this.absenceMeters.length" class="mb-0 text-muted">Ainda não há presenças registadas este ano.</p>
+                                    <ul t-else="" class="o_edu_st_meters">
+                                        <li t-foreach="this.absenceMeters" t-as="m" t-key="m_index" t-att-title="m.name + ': ' + m.counted + ' de ' + m.limit + ' faltas injustificadas, ' + m.status_label.toLowerCase()">
+                                            <div class="d-flex justify-content-between gap-2 small">
+                                                <span t-out="m.name"/>
+                                                <span class="o_edu_st_num text-nowrap" t-att-class="this.statusClass(m)"><t t-out="m.counted"/> de <t t-out="m.limit"/></span>
                                             </div>
+                                            <span class="o_edu_st_meter" t-att-class="this.meterClass(m)"><span t-att-style="'width: ' + m.width + '%'"/></span>
                                         </li>
                                     </ul>
-                                </section>
-
-                                <section class="o_edu_st_card">
-                                    <h2 class="o_edu_st_h2">A minha conta</h2>
-                                    <div class="o_edu_st_links">
-                                        <button type="button" class="btn btn-link" t-on-click="() => this.open('edu_portal.action_student_fees')">Propinas</button>
-                                        <button type="button" class="btn btn-link" t-on-click="() => this.open('edu_portal.action_student_profile')">Meu perfil</button>
-                                    </div>
                                 </section>
                             </div>
                         </div>

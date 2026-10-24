@@ -175,8 +175,15 @@ class EduStudentPortal(models.AbstractModel):
                     'grades': self.grades(student, enrollment),
                     'absences': self.absences(student, enrollment),
                     'next_exams': exams[:3],
+                    'exams_left': len(exams),
                 }
             )
+            fees = self.fees(student)
+            data['fees_summary'] = {
+                'count': len(fees['due']),
+                'total': fees['total_due'],
+                'overdue': fees['overdue'],
+            }
         elif page == 'grades':
             enrollments = self._enrollments(student)
             chosen = enrollments.filtered(lambda e: e.id == options.get('enrollment_id'))[:1]
@@ -379,8 +386,40 @@ class EduStudentPortal(models.AbstractModel):
 
         # Para o browser: cada nota já escrita como no secPed e marcada positiva ou negativa (pela regra de
         # arredondamento da escola: 9,5 é positiva onde se arredonda).
+        # Para o painel: a média de cada trimestre (das disciplinas com nota) e a média do ano até agora (todas as
+        # classificações dos trimestres, como no secPed).
+        data['trend'] = []
+        every = []
+        for trimester in data['trimesters']:
+            values = [r['by_trimester'][trimester['id']]['ct'] for r in rows]
+            values = [v for v in values if v is not None]
+            every += values
+            mean = sum(values) / len(values) if values else None
+            data['trend'].append(
+                {
+                    'id': trimester['id'],
+                    'name': trimester['name'],
+                    'value': round(mean, 2) if mean is not None else None,
+                    'text': f'{mean:.1f}'.replace('.', ',') if mean is not None else '',
+                    'pos': mean is not None and round(mean * 10) / 10 >= policy.pass_grade,
+                    'count': len(values),
+                }
+            )
+        year_average = sum(every) / len(every) if every else None
+        data['year_average'] = (
+            {
+                'text': f'{year_average:.1f}'.replace('.', ','),
+                'pos': round(year_average * 10) / 10 >= policy.pass_grade,
+            }
+            if year_average is not None
+            else None
+        )
+        data['scale_max'] = policy.scale_max
+
         def cell(v):
-            return None if v is None else {'text': grade_text(v), 'pos': round_fn(v) >= policy.pass_grade}
+            if v is None:
+                return None
+            return {'text': grade_text(v), 'pos': round_fn(v) >= policy.pass_grade, 'value': round(v, 2)}
 
         for row in rows:
             for item in row['by_trimester'].values():
@@ -559,7 +598,7 @@ class EduStudentPortal(models.AbstractModel):
                         if ahead == 1
                         else ('No' if day.weekday() >= 5 else 'Na') + f' {WEEKDAYS[day.weekday()]}'
                     )
-                    data['next_day'] = {'when': when, 'lesson': found[0]}
+                    data['next_day'] = {'when': when, 'lesson': found[0], 'lessons': found}
                     break
         return data
 
