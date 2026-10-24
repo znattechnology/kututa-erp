@@ -81,7 +81,7 @@
                             <section class="o_edu_th_card">
                                 <h2 class="o_edu_th_h2">Atalhos</h2>
                                 <div class="o_edu_th_links">
-                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_my_schedule')">
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_schedule')">
                                         <i class="oi me-2" data-icon="calendar_today" aria-hidden="true"/>O meu horário
                                     </button>
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_attendance.action_edu_absence_summary')">

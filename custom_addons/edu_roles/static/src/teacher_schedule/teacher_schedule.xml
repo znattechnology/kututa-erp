@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Uma aula na grelha ou na lista do dia: a disciplina e, por baixo, as horas, a turma e a sala. -->
+    <t t-name="edu_roles.TeacherSchedule.Block">
+        <button type="button" class="o_edu_ts_block" t-att-title="this.blockTitle(lesson)" t-att-style="style"
+                t-on-click="() => this.openClass(lesson)">
+            <span class="o_edu_ts_block_subject" t-out="lesson.subject"/>
+            <span class="o_edu_ts_block_detail">
+                <t t-out="this.hhmm(lesson.start)"/>–<t t-out="this.hhmm(lesson.end)"/><t t-if="this.lessonDetail(lesson)">, <t t-out="this.lessonDetail(lesson)"/></t>
+            </span>
+        </button>
+    </t>
+
+    <t t-name="edu_roles.TeacherSchedulePage">
+        <div class="o_action o_edu_teacher_schedule">
+            <Layout display="this.display">
+                <div class="o_edu_ts_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header class="o_edu_ts_head">
+                        <h1 class="o_edu_ts_title">O meu horário<t t-if="d.year">, <t t-out="d.year"/></t></h1>
+                        <div t-if="d.has_employee" class="o_edu_ts_actions">
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.openReport(true)"
+                                    t-att-disabled="!this.lessons.length" title="Ver o horário em folha A4, na aplicação">
+                                <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>Visualizar
+                            </button>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.openReport(false)"
+                                    t-att-disabled="!this.lessons.length" title="O horário em PDF (A4 horizontal)">
+                                <i class="oi me-1" data-icon="print" aria-hidden="true"/>Exportar PDF
+                            </button>
+                        </div>
+                    </header>
+
+                    <section t-if="!d.has_employee" class="o_edu_ts_card">
+                        O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
+                    </section>
+                    <t t-else="">
+                        <!-- A pergunta com que se abre esta página: o que tenho a seguir? -->
+                        <t t-set="next" t-value="this.next"/>
+                        <section t-if="!next" class="o_edu_ts_card">
+                            <h2 class="o_edu_ts_h2">Sem aulas no horário</h2>
+                            <p class="mb-0 text-muted">
+                                Ainda não tem aulas atribuídas neste ano lectivo. Os horários são feitos pelos Serviços Académicos: se faltar alguma turma, fale com eles.
+                            </p>
+                        </section>
+                        <section t-else="" class="o_edu_ts_card o_edu_ts_next" t-att-class="{'o_edu_ts_now': next.now}" aria-label="A seguir">
+                            <p class="o_edu_ts_when" t-out="this.nextWhen"/>
+                            <div class="o_edu_ts_next_body">
+                                <div class="min-w-0">
+                                    <h2 class="o_edu_ts_next_subject" t-out="next.lesson.subject"/>
+                                    <p class="mb-0 text-muted">
+                                        <span class="o_edu_ts_hours"><t t-out="this.hhmm(next.lesson.start)"/>–<t t-out="this.hhmm(next.lesson.end)"/></span>
+                                        <span class="ms-3" t-out="next.lesson.class"/>
+                                        <span t-if="next.lesson.room" class="ms-3"><i class="oi me-1" data-icon="location_on" aria-hidden="true"/><t t-out="next.lesson.room"/></span>
+                                    </p>
+                                </div>
+                                <div class="o_edu_ts_next_buttons">
+                                    <!-- A chamada faz-se no dia da aula: só aparece para as de hoje. -->
+                                    <button t-if="next.today" type="button" class="btn btn-primary" t-att-disabled="this.state.busy"
+                                            t-on-click="() => this.takeRollCall(next.lesson)">Fazer a chamada</button>
+                                    <button type="button" class="btn btn-secondary" t-on-click="() => this.openClass(next.lesson)">Abrir a turma</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="o_edu_ts_week" aria-labelledby="o_edu_ts_week_title">
+                            <h2 id="o_edu_ts_week_title" class="o_edu_ts_h2 mb-1">A semana</h2>
+                            <p class="text-muted">
+                                <span class="text-body" t-out="this.summary"/>
+                                <t t-set="load" t-value="this.load"/>
+                                <t t-if="load">
+                                    Usa <span t-att-class="load.over ? 'text-danger fw-semibold' : 'text-body'" t-out="load.text"/><t t-if="load.notes"> (<t t-out="load.notes"/>)</t><t t-if="load.over">, acima do máximo.</t><t t-else="">.</t>
+                                </t>
+                            </p>
+
+                            <!-- Telemóvel: uma lista por dia (a grelha não cabe sem encolher a letra). -->
+                            <div class="o_edu_ts_days d-md-none">
+                                <section t-foreach="this.weekDays" t-as="day" t-key="day" class="o_edu_ts_card">
+                                    <h3 class="o_edu_ts_h3">
+                                        <t t-out="this.days[day]"/>
+                                        <span t-if="day === this.state.now.day" class="o_edu_ts_today_tag">hoje</span>
+                                    </h3>
+                                    <p t-if="!this.lessonsOn(day).length" class="mb-0 text-muted small">Sem aulas.</p>
+                                    <div t-else="" class="o_edu_ts_daylist">
+                                        <t t-foreach="this.lessonsOn(day)" t-as="lesson" t-key="lesson.id">
+                                            <t t-call="edu_roles.TeacherSchedule.Block" style="''"/>
+                                        </t>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <!-- Computador: a semana toda de uma vez, em quartos de hora, com a régua das horas. -->
+                            <t t-set="grid" t-value="this.grid"/>
+                            <div class="o_edu_ts_grid d-none d-md-grid" t-att-style="grid.style">
+                                <div class="o_edu_ts_corner"/>
+                                <div t-foreach="this.weekDays" t-as="day" t-key="'h' + day" class="o_edu_ts_dayhead"
+                                     t-att-class="{'o_edu_ts_today': day === this.state.now.day}"
+                                     t-att-aria-current="day === this.state.now.day ? 'date' : false">
+                                    <t t-out="this.days[day]"/>
+                                </div>
+                                <t t-foreach="grid.rows" t-as="row" t-key="'r' + row.index">
+                                    <div class="o_edu_ts_ruler" t-att-style="this.cellStyle(1, row.index)" t-out="row.label"/>
+                                    <div t-foreach="this.weekDays" t-as="day" t-key="'c' + day + '-' + row.index" class="o_edu_ts_cell"
+                                         t-att-class="{'o_edu_ts_hourline': row.hour, 'o_edu_ts_today_cell': day === this.state.now.day}"
+                                         t-att-style="this.cellStyle(day + 2, row.index)"/>
+                                </t>
+                                <t t-foreach="this.lessons" t-as="lesson" t-key="'b' + lesson.id">
+                                    <t t-call="edu_roles.TeacherSchedule.Block" style="this.blockStyle(lesson)"/>
+                                </t>
+                            </div>
+                        </section>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+</templates>

@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
+from odoo.addons.edu_timetable.models.hr_employee import _current_year, teacher_lessons
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -148,6 +149,49 @@ class EduTeacherHome(models.AbstractModel):
             'view_mode': 'form',
             'views': [(False, 'form')],
         }
+
+    # O meu horário
+
+    @api.model
+    def schedule_data(self):
+        """«O meu horário» (acção cliente ``edu_roles.teacher_schedule``), como no secPed: as aulas da semana (as do ano
+        inteiro e as do trimestre em curso, as mesmas do PDF), a carga face ao máximo de tempos e as reduções."""
+        employee = self.env.user.employee_id
+        year = _current_year(self.env, employee.company_id) if employee else False
+        data = {'has_employee': bool(employee), 'year': year.name if year else '', 'lessons': [], 'load': None}
+        if not employee:
+            return data
+        lessons = teacher_lessons(self.env, employee, year).sorted(lambda s: (s.weekday, s.hour_from))
+        data['lessons'] = [
+            {
+                'id': lesson.id,
+                'weekday': int(lesson.weekday),  # 0 = segunda-feira
+                'start': round(lesson.hour_from * 60),
+                'end': round(lesson.hour_to * 60),
+                'subject': lesson.subject_id.name,
+                'class': lesson.class_id._editor_label(),
+                'class_id': lesson.class_id.id,
+                'subject_id': lesson.subject_id.id,
+                'room': lesson.room_id.display_name or '',
+                'trimester': lesson.trimester_id.name or '',
+            }
+            for lesson in lessons
+        ]
+        teacher = employee.sudo()
+        data['load'] = {
+            'count': teacher.edu_weekly_load,
+            'limit': teacher.edu_weekly_load_max,
+            'notes': teacher._edu_load_notes(),
+        }
+        return data
+
+    @api.model
+    def schedule_report(self, preview=True):
+        """O horário do professor em folha A4 horizontal: na aplicação (Visualizar) ou em PDF (Exportar)."""
+        employee = self._employee()
+        public = self.env['hr.employee.public'].browse(employee.id)
+        report = self.env.ref('edu_documents.action_report_teacher_schedule')
+        return report.preview_action(public) if preview else report.report_action(public)
 
     # A conta do professor (os módulos de RH, quando instalados)
 

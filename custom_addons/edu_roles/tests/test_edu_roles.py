@@ -307,6 +307,15 @@ class TestEduRoles(TransactionCase):
         self.assertEqual((lesson.schedule_id, lesson.date, lesson.teacher_id), (schedule, today, self.teacher))
         self.assertEqual(Home.open_lesson(schedule.id, fields.Date.to_string(today))['res_id'], lesson.id)
         self.assertEqual(Home.home_data()['lessons'][0]['lesson_id'], lesson.id)
+        # «O meu horário»: as aulas da semana (minutos desde a meia-noite), a carga e a folha A4 na aplicação.
+        week = Home.schedule_data()
+        self.assertEqual(
+            [(w['id'], w['weekday'], w['start'], w['end'], w['class_id']) for w in week['lessons']],
+            [(schedule.id, today.weekday(), 480, 540, self.class_a.id)],
+        )
+        self.assertEqual(week['load']['count'], 1)
+        self.assertTrue(week['load']['notes'])  # director da turma B: menos 2 tempos
+        self.assertEqual(Home.schedule_report(True)['report_type'], 'qweb-html')
         self.assertEqual(Home.action_my_profile()['res_id'], self.teacher.id)
         if 'l10n_ao_payroll.payslip' in self.env:
             self.assertEqual(Home.action_my_payslips()['res_model'], 'l10n_ao_payroll.payslip')

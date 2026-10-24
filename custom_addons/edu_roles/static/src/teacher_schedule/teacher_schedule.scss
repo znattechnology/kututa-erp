@@ -1,0 +1,212 @@
+// O meu horário: a estrutura do secPed-Express (a seguir, o resumo da carga, a semana) com as cores do sistema.
+.o_edu_teacher_schedule {
+    .o_edu_ts_body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_ts_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_ts_title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ts_actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .o_edu_ts_card {
+        padding: 16px 20px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_ts_h2 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ts_h3 {
+        margin: 0 0 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    // A seguir: a barra à esquerda fica com a cor do sistema quando a aula está a decorrer.
+    .o_edu_ts_next {
+        position: relative;
+        overflow: hidden;
+        padding-left: 24px;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: $border-color;
+        }
+
+        &.o_edu_ts_now::before {
+            background: $primary;
+        }
+    }
+
+    .o_edu_ts_when {
+        margin: 0 0 4px;
+        color: $text-muted;
+        font-size: 0.875rem;
+
+        .o_edu_ts_now & {
+            color: $primary;
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_ts_next_body {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 8px 24px;
+    }
+
+    .o_edu_ts_next_subject {
+        margin: 0 0 2px;
+        font-size: 1.35rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ts_hours {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_ts_next_buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    // A semana em grelha: quartos de hora, a régua das horas à esquerda e cada aula um bloco a ocupar os seus tempos.
+    .o_edu_ts_grid {
+        display: grid;
+        gap: 1px;
+        overflow: hidden;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $border-color;
+    }
+
+    .o_edu_ts_corner,
+    .o_edu_ts_dayhead {
+        background: $gray-100;
+    }
+
+    .o_edu_ts_dayhead {
+        padding: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-align: center;
+
+        &.o_edu_ts_today {
+            background: $primary;
+            color: color-contrast($primary);
+        }
+    }
+
+    .o_edu_ts_ruler {
+        padding-right: 8px;
+        background: $o-view-background-color;
+        color: $text-muted;
+        font-size: 0.75rem;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+        text-align: right;
+    }
+
+    .o_edu_ts_cell {
+        background: $o-view-background-color;
+
+        &.o_edu_ts_hourline {
+            box-shadow: inset 0 1px 0 $gray-200;
+        }
+
+        &.o_edu_ts_today_cell {
+            background: mix($primary, $o-view-background-color, 4%);
+        }
+    }
+
+    .o_edu_ts_block {
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+        margin: 1px 2px;
+        padding: 4px 8px;
+        overflow: hidden;
+        border: 1px solid mix($primary, $o-view-background-color, 55%);
+        border-left: 3px solid $primary;
+        border-radius: $border-radius;
+        // Opaco: as linhas dos quartos de hora não atravessam a aula.
+        background: mix($primary, $o-view-background-color, 10%);
+        color: $body-color;
+        text-align: left;
+
+        &:hover,
+        &:focus-visible {
+            background: mix($primary, $o-view-background-color, 18%);
+        }
+    }
+
+    .o_edu_ts_block_subject {
+        overflow: hidden;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .o_edu_ts_block_detail {
+        overflow: hidden;
+        color: $text-muted;
+        font-size: 0.75rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    // Telemóvel: uma lista por dia.
+    .o_edu_ts_days {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .o_edu_ts_daylist {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .o_edu_ts_today_tag {
+        margin-left: 8px;
+        color: $primary;
+        font-size: 0.8125rem;
+        font-weight: 500;
+    }
+}
