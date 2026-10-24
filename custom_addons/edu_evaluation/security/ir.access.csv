@@ -24,10 +24,12 @@ access_edu_grade_appeal_user,access_edu_grade_appeal_user,edu.grade.appeal,edu_c
 access_edu_grade_appeal_teacher,access_edu_grade_appeal_teacher,edu.grade.appeal,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
 access_edu_grade_edit_permission_user,access_edu_grade_edit_permission_user,edu.grade.edit.permission,edu_core.group_edu_user,crud,
 access_edu_grade_edit_permission_teacher,access_edu_grade_edit_permission_teacher,edu.grade.edit.permission,edu_core.group_edu_teacher,r,"[('teacher_id.user_id', '=', user.id)]"
-access_edu_rdec_user,access_edu_rdec_user,edu.rdec,edu_core.group_edu_user,crud,
+access_edu_rdec_user,access_edu_rdec_user,edu.rdec,edu_core.group_edu_user,r,
+access_edu_rdec_manager,access_edu_rdec_manager,edu.rdec,edu_core.group_edu_manager,ru,
 access_edu_rdec_teacher,access_edu_rdec_teacher,edu.rdec,edu_core.group_edu_teacher,r,"['|', ('class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('class_id.director_id.user_id', '=', user.id)]"
 access_edu_rdec_director,access_edu_rdec_director,edu.rdec,edu_core.group_edu_teacher,ru,"[('class_id.director_id.user_id', '=', user.id)]"
-access_edu_rdec_line_user,access_edu_rdec_line_user,edu.rdec.line,edu_core.group_edu_user,crud,
+access_edu_rdec_line_user,access_edu_rdec_line_user,edu.rdec.line,edu_core.group_edu_user,r,
+access_edu_rdec_line_manager,access_edu_rdec_line_manager,edu.rdec.line,edu_core.group_edu_manager,ru,
 access_edu_rdec_line_teacher,access_edu_rdec_line_teacher,edu.rdec.line,edu_core.group_edu_teacher,r,"['|', ('rdec_id.class_id.assignment_ids.teacher_id.user_id', '=', user.id), ('rdec_id.class_id.director_id.user_id', '=', user.id)]"
 access_edu_rdec_line_director,access_edu_rdec_line_director,edu.rdec.line,edu_core.group_edu_teacher,ru,"[('rdec_id.class_id.director_id.user_id', '=', user.id)]"
 edu_evaluation_policy_comp_rule,edu.evaluation.policy multi-empresa,edu.evaluation.policy,,crud,"[('company_id', 'in', company_ids)]"

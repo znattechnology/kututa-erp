@@ -601,6 +601,25 @@ class TestEduEvaluation(TransactionCase):
             theirs.appreciation = 'Outra coisa'
         with self.assertRaises(AccessError):
             theirs.line_ids[0].level = 'satisfactory'
+        # A secretaria consulta e imprime, mas não escreve; a Direcção pode corrigir.
+        secretary = self.env['res.users'].create(
+            {'name': 'Secretaria', 'login': 'secretaria_rdec',
+             'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])]}
+        )  # fmt: skip
+        # O menu corre como acção de servidor: a secretaria, sem escrita no RDEC, também o abre.
+        menu = self.env.ref('edu_evaluation.action_edu_rdec_open').with_user(secretary).run()
+        self.assertEqual(menu['res_model'], 'edu.rdec')
+        desk = report.with_user(secretary)
+        self.assertFalse(desk.can_edit)
+        self.assertEqual(desk.state, 'done')
+        with self.assertRaises(AccessError):
+            desk.appreciation = 'Outra coisa'
+        direction = self.env['res.users'].create(
+            {'name': 'Direcção', 'login': 'direccao_rdec',
+             'group_ids': [Command.set([self.env.ref('edu_core.group_edu_manager').id])]}
+        )  # fmt: skip
+        self.assertTrue(report.with_user(direction).can_edit)
+        report.with_user(direction).line_ids[0].observations = 'Revisto pela Direcção.'
 
         # As faltas do trimestre: justificadas e injustificadas, nas aulas dadas.
         lesson = self.env['edu.lesson'].create(

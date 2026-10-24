@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="action_report_rdec" model="ir.actions.report">
-        <field name="name">RDEC (iniciação)</field>
+        <field name="name">Descarregar RDEC (PDF)</field>
         <field name="model">edu.rdec</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">edu_documents.report_rdec</field>

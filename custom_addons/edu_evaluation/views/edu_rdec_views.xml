@@ -101,10 +101,12 @@
         </field>
     </record>
 
-    <!-- O menu prepara os relatórios das turmas da iniciação do ano (as crianças e as áreas) e abre-os no trimestre corrente. -->
+    <!-- O menu prepara os relatórios das turmas da iniciação do ano (as crianças e as áreas) e abre-os no trimestre corrente.
+         Com os grupos, a secretaria (só leitura no RDEC) também a corre: sem eles, o Odoo exige escrita no modelo. -->
     <record id="action_edu_rdec_open" model="ir.actions.server">
         <field name="name">RDEC (iniciação)</field>
         <field name="model_id" ref="model_edu_rdec"/>
+        <field name="group_ids" eval="[(6, 0, [ref('edu_core.group_edu_user'), ref('edu_core.group_edu_teacher')])]"/>
         <field name="state">code</field>
         <field name="code">action = model.action_open_rdec()</field>
     </record>

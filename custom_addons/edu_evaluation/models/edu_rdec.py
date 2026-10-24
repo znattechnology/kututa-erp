@@ -16,7 +16,8 @@ class EduRdec(models.Model):
     """Relatório de Desempenho Escolar da Criança (iniciação): avaliação qualitativa e descritiva, sem notas e sem
     retenção (Dec. Exec. 424/25, arts. 19.º e 20.º). Um por criança e por trimestre, como no secPed: cada área de
     desenvolvimento (as disciplinas da matrícula) tem um nível e observações, e a criança tem uma apreciação global.
-    Escreve-o o(a) educador(a), director(a) da turma; os outros professores e a secretaria consultam e imprimem."""
+    Escreve-o o(a) educador(a), director(a) da turma; os outros professores e a secretaria consultam e imprimem, e a
+    Direcção pode corrigir."""
 
     _name = 'edu.rdec'
     _description = 'RDEC (iniciação)'
@@ -97,9 +98,10 @@ class EduRdec(models.Model):
     @api.depends_context('uid')
     @api.depends('class_id.director_id.user_id')
     def _compute_can_edit(self):
-        staff = self.env.user.has_group('edu_core.group_edu_user')
+        # Como no secPed: escreve o(a) educador(a); a secretaria consulta e imprime. A Direcção pode corrigir.
+        manager = self.env.user.has_group('edu_core.group_edu_manager')
         for rdec in self:
-            rdec.can_edit = staff or rdec.sudo().class_id.director_id.user_id == self.env.user
+            rdec.can_edit = manager or rdec.sudo().class_id.director_id.user_id == self.env.user
 
     @api.constrains('enrollment_id', 'trimester_id')
     def _check_iniciacao(self):
