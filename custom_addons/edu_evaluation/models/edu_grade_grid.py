@@ -1,6 +1,7 @@
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
+from ..tools import grading
 from .edu_assessment import check_grade_entry
 
 # Nos anos passados as matrículas já estão concluídas ou retidas: contam como alunos da pauta.
@@ -261,8 +262,12 @@ class EduGradeGrid(models.AbstractModel):
 
         students = []
         summary = {'positives': 0, 'negatives': 0, 'without_final': 0, 'total': 0.0}
+        # Durante o ano: as positivas e as negativas de cada trimestre (a classificação do trimestre).
+        by_term = {trimester.id: [0, 0] for trimester in trimesters}
+        round_fn = grading.rounder(policy.rounding)
         for enrollment in enrollments:
             terms_row = {}
+            running = None  # CT do técnico: engloba os trimestres anteriores
             for trimester in trimesters:
                 term = term_by_key.get((enrollment.id, trimester.id))
                 test = assessments.filtered(
@@ -275,6 +280,12 @@ class EduGradeGrid(models.AbstractModel):
                 npt_grade = grade_by_key.get((enrollment.id, test.id)) if test else None
                 npp_grade = grade_by_key.get((enrollment.id, npp.id)) if npp else None
                 excused, absent = absences.get((enrollment.id, trimester.id), (0, 0))
+                mt = value(term, 'mt', 'has_mt')
+                if mt is not None and technical:
+                    running = round_fn(mt) if running is None else round_fn((running + mt) / 2)
+                classification = (running if technical else mt) if mt is not None else None
+                if classification is not None and enrollment.state in ENROLLED:
+                    by_term[trimester.id][0 if classification >= policy.pass_grade else 1] += 1
                 terms_row[str(trimester.id)] = {
                     'mac': value(term, 'mac', 'has_mac'),
                     'npt': value(term, 'npt', 'has_npt'),
@@ -354,6 +365,15 @@ class EduGradeGrid(models.AbstractModel):
                 'negatives': summary['negatives'],
                 'without_final': summary['without_final'],
                 'average': round(summary['total'] / graded, 1) if graded else None,
+                # O último trimestre com classificações (antes da nota final, é o que interessa à turma).
+                'term': next(
+                    (
+                        {'name': t.name, 'positives': by_term[t.id][0], 'negatives': by_term[t.id][1]}
+                        for t in reversed(trimesters)
+                        if sum(by_term[t.id])
+                    ),
+                    None,
+                ),
             },
         }
 

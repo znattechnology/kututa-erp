@@ -4,6 +4,14 @@
         padding: 16px 24px 32px;
     }
 
+    // O caso limite é um botão (abre a votação) sem o aspecto de botão: um «btn-link» tirava-lhe o âmbar e o negrito.
+    button.o_edu_cb_votable {
+        padding: 0;
+        border: 0;
+        background: none;
+        text-decoration: underline dotted;
+    }
+
     .o_edu_cb_toolbar {
         display: flex;
         flex-wrap: wrap;

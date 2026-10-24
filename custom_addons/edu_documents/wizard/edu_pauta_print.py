@@ -1,7 +1,7 @@
 import unicodedata
 
 from odoo import api, fields, models
-from odoo.addons.edu_evaluation.tools.grading import round_units
+from odoo.addons.edu_evaluation.tools.grading import cumulative, round_units, rounder
 
 from ..models.report_helpers import Helpers
 
@@ -15,8 +15,9 @@ ABSENCE_WIDTH = 12
 FINAL_WIDTH = 19
 TAIL_WIDTH = 120
 LEGEND_TECHNICAL = (
-    'NPP - Nota do Professor; NPT - Nota da Prova Trimestral; CT1/CT2/CT3 - Classificação do Trimestre: '
-    'CT = (NPP+NPT)/2; CF - Classificação de Frequência (média das CT, atribuída pelo Conselho de Turma); '
+    'NPP - Nota do Professor; NPT - Nota da Prova Trimestral; CT - Classificação do Trimestre, que engloba os '
+    'anteriores: CT1 = (NPP+NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + média do 3.º)/2; '
+    'CF - Classificação de Frequência (o CT3, atribuída pelo Conselho de Turma); '
     'PG - Prova Global; CA - Classificação Anual: CA = 60%CF + 40%PG; CFD - Classificação Final da Disciplina '
     '(no ano terminal: média das CA dos anos em que é leccionada)'
 )
@@ -147,6 +148,20 @@ class EduPautaPrint(models.TransientModel):
             )  # fmt: skip
         return {(t.enrollment_id.id, t.subject_id.id): t for t in found}
 
+    def _technical_cts(self, trimester):
+        """O CT do técnico no trimestre, por (matrícula, disciplina): engloba os trimestres anteriores (Despacho 60/08,
+        art. 17.º, n.º 5, e o resumo do regime): CT1 = média do 1.º, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + média
+        do 3.º)/2. Sem nota no trimestre, sem CT."""
+        round_fn = rounder(self._policy().rounding)
+        trimesters = self.class_id.academic_year_id.trimester_ids.filtered(lambda t: t.number <= trimester.number)
+        maps = [self._terms(t) for t in trimesters.sorted('number')]
+        cts = {}
+        for key, term in (maps[-1] if maps else {}).items():
+            if term.has_mt:
+                values = [m[key].mt if key in m and m[key].has_mt else None for m in maps]
+                cts[key] = cumulative(values, round_fn)[-1]
+        return cts
+
     def _cell_mark(self, enrollment, subject):
         """«c)» na disciplina anulada, «e)» na que o aluno faz numa turma da classe anterior."""
         if 'subject_drop_ids' in enrollment._fields and subject in enrollment.subject_drop_ids.subject_id:
@@ -199,6 +214,7 @@ class EduPautaPrint(models.TransientModel):
         labels = base + tail
         pass_grade = policy.pass_grade
         terms = self._terms(trimester)
+        cts = self._technical_cts(trimester) if technical else {}
         absences = self._trimester_absences(trimester)
         year_results = self._year_results()
 
@@ -233,8 +249,10 @@ class EduPautaPrint(models.TransientModel):
                 values = [
                     grade(term.mac, show=bool(term and term.has_mac)) if term else ('', None),
                     grade(term.npt, show=bool(term and term.has_npt)) if term else ('', None),
-                    # CT/MT: classificação do trimestre, um inteiro (as importadas guardam as casas decimais).
-                    grade(round_units(term.mt), show=bool(term and term.has_mt)) if term else ('', None),
+                    # CT (técnico, engloba os trimestres anteriores) ou MT (geral): um inteiro.
+                    grade(cts.get(key) if technical else round_units(term.mt), show=bool(term and term.has_mt))
+                    if term
+                    else ('', None),
                     count(excused),
                     count(absent),
                 ]
@@ -349,9 +367,10 @@ class EduPautaPrint(models.TransientModel):
         if final:
             description = 'classificação de frequência do ano' if technical else 'classificação final do ano'
         else:
-            description = 'classificação do trimestre' if technical else 'média do trimestre'
+            description = 'classificação do trimestre, que engloba os anteriores' if technical else 'média do trimestre'
         results = self._results()
         terms = self._terms(trimester)
+        cts = self._technical_cts(trimester) if technical and not final else {}
         absences = self._trimester_absences(trimester)
         rows = []
         visitors = self._visitors()
@@ -370,7 +389,7 @@ class EduPautaPrint(models.TransientModel):
                     value = (result.cf if technical else result.final) if result and result.complete else None
                 else:
                     term = terms.get(key)
-                    value = term.mt if term and term.has_mt else None
+                    value = (cts.get(key) if technical else term.mt) if term and term.has_mt else None
                 excused, absent = absences.get(key, (0, 0))
                 shown = round_units(value) if value is not None else None
                 cells[subject.id] = (

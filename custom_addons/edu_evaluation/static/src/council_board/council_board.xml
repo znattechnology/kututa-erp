@@ -119,7 +119,7 @@
                                             <td class="o_edu_cb_name" t-out="st.name"/>
                                             <td t-foreach="st.cells" t-as="cell" t-key="cell.subject_id" class="text-center">
                                                 <button t-if="cell.borderline and this.session.state === 'open'" type="button"
-                                                        class="btn btn-link p-0" t-att-class="this.cellClass(cell)"
+                                                        t-att-class="this.cellClass(cell)"
                                                         t-att-title="'Caso limite: clique para votar ou subir a nota'"
                                                         t-on-click="() => this.onCell(st, cell)">
                                                     <t t-out="this.cellText(cell)"/><t t-if="cell.vote_id"> •</t>

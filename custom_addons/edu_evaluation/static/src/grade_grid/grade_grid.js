@@ -377,6 +377,31 @@ export class GradeGrid extends Component {
         return { value: roundUnits(term.mac * w + npt * (1 - w)), preview: true };
     }
 
+    /**
+     * A classificação do trimestre na grelha. No técnico é o CT do Despacho 60/08 (art. 17.º, n.º 5, e o resumo do
+     * regime): CT1 = (NPP + NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + média do 3.º)/2 — cada trimestre
+     * engloba os anteriores, como a CF. No geral, a MT do trimestre.
+     */
+    termClassification(student, trimester) {
+        const own = this.termAverage(student, trimester);
+        if (!this.state.data.technical || own.value === null || own.value === undefined) {
+            return own;
+        }
+        let running = null;
+        let preview = false;
+        for (const t of this.state.data.trimesters) {
+            const avg = t.id === trimester.id ? own : this.termAverage(student, t);
+            preview = preview || avg.preview;
+            if (avg.value !== null && avg.value !== undefined) {
+                running = running === null ? roundUnits(avg.value) : roundUnits((running + avg.value) / 2);
+            }
+            if (t.id === trimester.id) {
+                break;
+            }
+        }
+        return { value: running, preview };
+    }
+
     gradeClass(value, integer = true) {
         if (value === null || value === undefined) {
             return "text-muted";
@@ -482,12 +507,16 @@ export class GradeGrid extends Component {
         const data = this.state.data;
         const columns = [];
         if (data.technical) {
-            columns.push({ key: "cf", label: "CF", title: "Classificação final cumulativa", integer: true });
+            columns.push({ key: "cf", label: "CF", title: "Classificação de frequência: engloba os três trimestres", integer: true });
             if (data.subject.has_pg) {
                 columns.push({ key: "pg", label: "PG", title: "Prova global", editable: true });
             }
-            columns.push({ key: "annual", label: "CA", title: "Classificação anual", integer: true });
-            columns.push({ key: "final", label: "NF", title: "Nota final, com o conselho de turma", integer: true, strong: true });
+            // As siglas do Despacho 60/08 (art. 17.º e a pauta do anexo): CF, PG, CA e, no ano terminal, CFD.
+            columns.push({ key: "final", label: "CA", title: "Classificação anual (60% CF + 40% PG nas disciplinas com prova global), com a bonificação do conselho de turma", integer: true, strong: true });
+            if (data.subject.terminal) {
+                columns.push({ key: "cfd", label: "CFD", title: "Classificação final da disciplina (no ano terminal)", integer: true, strong: true });
+            }
+            return columns;
         } else {
             columns.push({ key: "annual", label: "CA", title: "Classificação anual (média dos trimestres)", integer: true });
             if (data.subject.has_en) {
@@ -503,7 +532,7 @@ export class GradeGrid extends Component {
 
     get legend() {
         return this.state.data.technical
-            ? "NPP é a nota do professor, NPT a prova trimestral e CT1, CT2 e CT3 a classificação de cada trimestre (a média das duas)."
+            ? "NPP é a nota do professor e NPT a prova trimestral. CT1 é a média das duas; CT2 e CT3 juntam o trimestre aos anteriores (CT2 = (CT1 + média do 2.º trimestre)/2), como manda o Despacho 60/08."
             : "MAC é a média das avaliações contínuas, NPT a prova do trimestre e MT1, MT2 e MT3 a média de cada trimestre.";
     }
 

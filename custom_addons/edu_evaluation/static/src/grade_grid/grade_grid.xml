@@ -180,7 +180,7 @@
                                                     <t t-call="edu_evaluation.GradeGrid.Cell"/>
                                                 </t>
                                                 <!-- MT / CT -->
-                                                <t t-set="avg" t-value="this.termAverage(st, t)"/>
+                                                <t t-set="avg" t-value="this.termClassification(st, t)"/>
                                                 <td class="text-center fw-bold" t-att-class="{'o_edu_gg_preview': avg.preview}"
                                                     t-att-title="avg.preview ? 'Média com as notas por guardar' : ''">
                                                     <span t-att-class="this.gradeClass(avg.value)" t-out="term.imported and !avg.preview ? this.fmtDecimal(avg.value) : this.fmtInt(avg.value)"
@@ -211,10 +211,16 @@
                                 </table>
                             </div>
 
-                            <p class="small mt-2 mb-0">
+                            <p t-if="data.summary.term" class="small mt-2 mb-0">
+                                <t t-out="data.summary.term.name"/>:
+                                <span class="text-primary"><t t-out="data.summary.term.positives"/> com positiva</span>,
+                                <span class="text-danger"><t t-out="data.summary.term.negatives"/> com negativa</span>.
+                            </p>
+                            <p class="small mb-0" t-att-class="{'mt-2': !data.summary.term}">
+                                Classificação final:
                                 <span class="text-primary"><t t-out="data.summary.positives"/> com positiva</span>,
                                 <span class="text-danger"><t t-out="data.summary.negatives"/> com negativa</span>,
-                                <span class="text-muted"><t t-out="data.summary.without_final"/> sem classificação</span>.
+                                <span class="text-muted"><t t-out="data.summary.without_final"/> sem classificação final</span>.
                                 <t t-if="data.summary.average !== null">Média da turma: <t t-out="this.fmtDecimal(data.summary.average)"/>.</t>
                             </p>
                             <p class="small text-muted">
