@@ -185,7 +185,10 @@
                             </p>
                         </div>
                         <div t-if="g and g.years and g.years.length" class="o_edu_st_row">
-                            <select t-if="g.years.length > 1" class="form-select w-auto" aria-label="Ano lectivo" t-on-change="(ev) => this.selectYear(ev)">
+                            <!-- Sempre à vista, mesmo com um só ano: os anos anteriores aparecem aqui quando os há. -->
+                            <select class="form-select w-auto" aria-label="Ano lectivo" t-att-disabled="g.years.length === 1"
+                                    t-att-title="g.years.length === 1 ? 'Só tens matrícula neste ano lectivo' : 'Escolher o ano lectivo'"
+                                    t-on-change="(ev) => this.selectYear(ev)">
                                 <option t-foreach="g.years" t-as="y" t-key="y.id" t-att-value="y.id" t-att-selected="y.id === g.enrollment_id">
                                     <t t-out="y.label"/><t t-if="y.current"> (este ano)</t>
                                 </option>
