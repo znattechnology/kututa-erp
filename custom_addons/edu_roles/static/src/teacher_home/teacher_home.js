@@ -5,9 +5,10 @@ import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
 
 /**
- * O Painel do Professor, como o do secPed-Express: primeiro o dia (as aulas de hoje pelo horário, ou as do próximo
- * dia de aulas, com a chamada a um toque), depois as turmas deste ano com a direcção de turma assinalada, e ao lado
- * as próximas vigilâncias e os atalhos.
+ * O Painel do Professor, como um quadro: em cima os números principais (a carga semanal, as aulas por registar, as
+ * notas lançadas no trimestre e os alunos em risco por faltas); depois o dia (com a chamada a um toque), as notas do
+ * trimestre em cada turma e disciplina (positivas, negativas e sem nota) e as turmas; ao lado, as presenças nas suas
+ * aulas, as vigilâncias e os atalhos.
  */
 export class TeacherHome extends Component {
     static template = "edu_roles.TeacherHome";
@@ -50,6 +51,21 @@ export class TeacherHome extends Component {
             parts.push(`director(a) de ${directs === 1 ? "uma turma" : `${directs} turmas`}`);
         }
         return parts.join(", ") + ".";
+    }
+
+    get overLoad() {
+        const load = this.state.data.dashboard.load;
+        return load.limit && load.count > load.limit;
+    }
+
+    get loadWidth() {
+        const load = this.state.data.dashboard.load;
+        return load.limit ? Math.min(100, (load.count / load.limit) * 100) : 0;
+    }
+
+    get gradedPercent() {
+        const db = this.state.data.dashboard;
+        return db.expected ? Math.round((100 * db.graded) / db.expected) : 0;
     }
 
     stateLabel(lesson) {

@@ -57,37 +57,37 @@
                         <t t-set="g" t-value="d.grades"/>
 
                         <!-- Os números principais -->
-                        <div class="o_edu_st_kpis">
-                            <button type="button" class="o_edu_st_kpi" t-on-click="() => this.open('edu_portal.action_student_grades')">
-                                <span class="o_edu_st_kpi_label">Média do ano</span>
-                                <t t-if="g.blocked"><span class="o_edu_st_kpi_value">—</span><span class="o_edu_st_kpi_detail text-danger">Notas bloqueadas pelas propinas</span></t>
+                        <div class="o_edu_kpis">
+                            <button type="button" class="o_edu_kpi" t-on-click="() => this.open('edu_portal.action_student_grades')">
+                                <span class="o_edu_kpi_label">Média do ano</span>
+                                <t t-if="g.blocked"><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail text-danger">Notas bloqueadas pelas propinas</span></t>
                                 <t t-elif="g.year_average">
-                                    <span class="o_edu_st_kpi_value" t-att-class="{'text-danger': !g.year_average.pos}" t-out="g.year_average.text"/>
-                                    <span class="o_edu_st_kpi_detail"><t t-out="g.year_average.pos ? 'Positiva' : 'Abaixo de ' + g.pass_text"/>, até agora</span>
+                                    <span class="o_edu_kpi_value" t-att-class="{'text-danger': !g.year_average.pos}" t-out="g.year_average.text"/>
+                                    <span class="o_edu_kpi_detail"><t t-out="g.year_average.pos ? 'Positiva' : 'Abaixo de ' + g.pass_text"/>, até agora</span>
                                 </t>
-                                <t t-else=""><span class="o_edu_st_kpi_value">—</span><span class="o_edu_st_kpi_detail">Ainda sem notas este ano</span></t>
+                                <t t-else=""><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail">Ainda sem notas este ano</span></t>
                             </button>
-                            <button type="button" class="o_edu_st_kpi" t-on-click="() => this.open('edu_portal.action_student_absences')">
-                                <span class="o_edu_st_kpi_label">Assiduidade</span>
+                            <button type="button" class="o_edu_kpi" t-on-click="() => this.open('edu_portal.action_student_absences')">
+                                <span class="o_edu_kpi_label">Assiduidade</span>
                                 <t t-if="d.absences.total">
-                                    <span class="o_edu_st_kpi_value" t-att-class="{'text-danger': d.absences.rate &lt; 75}"><t t-out="d.absences.rate"/>%</span>
-                                    <span class="o_edu_st_kpi_detail"><t t-out="d.absences.present"/> de <t t-out="d.absences.total"/> aulas com chamada</span>
+                                    <span class="o_edu_kpi_value" t-att-class="{'text-danger': d.absences.rate &lt; 75}"><t t-out="d.absences.rate"/>%</span>
+                                    <span class="o_edu_kpi_detail"><t t-out="d.absences.present"/> de <t t-out="d.absences.total"/> aulas com chamada</span>
                                 </t>
-                                <t t-else=""><span class="o_edu_st_kpi_value">—</span><span class="o_edu_st_kpi_detail">Ainda sem chamadas este ano</span></t>
+                                <t t-else=""><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail">Ainda sem chamadas este ano</span></t>
                             </button>
-                            <button type="button" class="o_edu_st_kpi" t-on-click="() => this.open('edu_portal.action_student_absences')">
+                            <button type="button" class="o_edu_kpi" t-on-click="() => this.open('edu_portal.action_student_absences')">
                                 <t t-set="at" t-value="this.absenceTile"/>
-                                <span class="o_edu_st_kpi_label">Faltas injustificadas</span>
-                                <span class="o_edu_st_kpi_value" t-out="at.value"/>
-                                <span class="o_edu_st_kpi_detail" t-att-class="{'text-danger': at.bad, 'text-warning': at.warn}">
+                                <span class="o_edu_kpi_label">Faltas injustificadas</span>
+                                <span class="o_edu_kpi_value" t-out="at.value"/>
+                                <span class="o_edu_kpi_detail" t-att-class="{'text-danger': at.bad, 'text-warning': at.warn}">
                                     <i t-if="at.bad or at.warn" class="oi me-1" data-icon="warning" aria-hidden="true"/><t t-out="at.detail"/>
                                 </span>
                             </button>
-                            <button type="button" class="o_edu_st_kpi" t-on-click="() => this.open('edu_portal.action_student_fees')">
+                            <button type="button" class="o_edu_kpi" t-on-click="() => this.open('edu_portal.action_student_fees')">
                                 <t t-set="ft" t-value="this.feesTile"/>
-                                <span class="o_edu_st_kpi_label">Propinas</span>
-                                <span class="o_edu_st_kpi_value o_edu_st_kpi_money" t-out="ft.value"/>
-                                <span class="o_edu_st_kpi_detail" t-att-class="{'text-danger': ft.bad}">
+                                <span class="o_edu_kpi_label">Propinas</span>
+                                <span class="o_edu_kpi_value o_edu_kpi_money" t-out="ft.value"/>
+                                <span class="o_edu_kpi_detail" t-att-class="{'text-danger': ft.bad}">
                                     <i t-if="ft.bad" class="oi me-1" data-icon="warning" aria-hidden="true"/><t t-out="ft.detail"/>
                                 </span>
                             </button>
@@ -175,16 +175,16 @@
                                 <p t-elif="!g.active" class="mb-0 text-muted">A escola ainda não tem trimestres neste ano lectivo.</p>
                                 <t t-else="">
                                     <p class="small text-muted mb-3" t-out="g.summary"/>
-                                    <div class="o_edu_st_bars" role="list">
-                                        <div t-foreach="this.gradeBars" t-as="bar" t-key="bar.id" class="o_edu_st_bar_row" role="listitem"
+                                    <div class="o_edu_hbars" role="list">
+                                        <div t-foreach="this.gradeBars" t-as="bar" t-key="bar.id" class="o_edu_hbar_row" role="listitem"
                                              t-att-title="bar.name + ': ' + (bar.grade ? bar.grade.text + ' valores' + (bar.grade.pos ? '' : ', negativa') : 'sem nota')">
-                                            <span class="o_edu_st_bar_name" t-out="bar.name"/>
-                                            <span class="o_edu_st_bar_track">
-                                                <span class="o_edu_st_bar_pass" t-att-style="'left: ' + this.passLeft + '%'"/>
-                                                <span t-if="bar.grade" class="o_edu_st_bar" t-att-class="{'o_edu_st_bar_neg': !bar.grade.pos}" t-att-style="'width: ' + bar.width + '%'"/>
+                                            <span class="o_edu_hbar_name" t-out="bar.name"/>
+                                            <span class="o_edu_hbar_track">
+                                                <span class="o_edu_hbar_pass" t-att-style="'left: ' + this.passLeft + '%'"/>
+                                                <span t-if="bar.grade" class="o_edu_hbar" t-att-class="{'o_edu_chart_neg': !bar.grade.pos}" t-att-style="'width: ' + bar.width + '%'"/>
                                             </span>
-                                            <span class="o_edu_st_bar_value">
-                                                <t t-if="bar.grade"><t t-out="bar.grade.text"/><span t-if="!bar.grade.pos" class="o_edu_st_bar_flag">negativa</span></t>
+                                            <span class="o_edu_hbar_value">
+                                                <t t-if="bar.grade"><t t-out="bar.grade.text"/><span t-if="!bar.grade.pos" class="o_edu_hbar_flag">negativa</span></t>
                                                 <span t-else="" class="text-muted small">sem nota</span>
                                             </span>
                                         </div>
@@ -201,16 +201,16 @@
                                         <t t-if="g.blocked">Indisponível enquanto as notas estiverem bloqueadas.</t>
                                         <t t-else="">Aparece quando houver notas lançadas.</t>
                                     </p>
-                                    <div t-else="" class="o_edu_st_columns" role="list">
-                                        <span class="o_edu_st_col_pass" t-att-style="'bottom: ' + this.passLeft + '%'"/>
-                                        <div t-foreach="this.trend" t-as="t" t-key="t.id" class="o_edu_st_col_slot" role="listitem"
+                                    <div t-else="" class="o_edu_cols" role="list">
+                                        <span class="o_edu_cols_pass" t-att-style="'bottom: ' + this.passLeft + '%'"/>
+                                        <div t-foreach="this.trend" t-as="t" t-key="t.id" class="o_edu_col_slot" role="listitem"
                                              t-att-title="t.name + ': ' + (t.value === null ? 'sem notas' : 'média ' + t.text + ' em ' + t.count + (t.count === 1 ? ' disciplina' : ' disciplinas'))">
-                                            <span t-if="t.value !== null" class="o_edu_st_col_value" t-out="t.text"/>
-                                            <span t-if="t.value !== null" class="o_edu_st_col" t-att-class="{'o_edu_st_bar_neg': !t.pos}" t-att-style="'height: ' + t.height + '%'"/>
-                                            <span t-else="" class="o_edu_st_col_empty small text-muted">—</span>
+                                            <span t-if="t.value !== null" class="o_edu_col_value" t-out="t.text"/>
+                                            <span t-if="t.value !== null" class="o_edu_col" t-att-class="{'o_edu_chart_neg': !t.pos}" t-att-style="'height: ' + t.height + '%'"/>
+                                            <span t-else="" class="o_edu_col_empty small text-muted">—</span>
                                         </div>
                                     </div>
-                                    <div t-if="!g.blocked and this.hasTrend" class="o_edu_st_col_labels">
+                                    <div t-if="!g.blocked and this.hasTrend" class="o_edu_cols_labels">
                                         <span t-foreach="this.trend" t-as="t" t-key="t.id" t-out="t.name"/>
                                     </div>
                                 </section>
@@ -222,13 +222,13 @@
                                         <button t-if="d.absences.total" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_absences')">Ver as faltas</button>
                                     </div>
                                     <p t-if="!this.absenceMeters.length" class="mb-0 text-muted">Ainda não há presenças registadas este ano.</p>
-                                    <ul t-else="" class="o_edu_st_meters">
+                                    <ul t-else="" class="o_edu_meters">
                                         <li t-foreach="this.absenceMeters" t-as="m" t-key="m_index" t-att-title="m.name + ': ' + m.counted + ' de ' + m.limit + ' faltas injustificadas, ' + m.status_label.toLowerCase()">
                                             <div class="d-flex justify-content-between gap-2 small">
                                                 <span t-out="m.name"/>
                                                 <span class="o_edu_st_num text-nowrap" t-att-class="this.statusClass(m)"><t t-out="m.counted"/> de <t t-out="m.limit"/></span>
                                             </div>
-                                            <span class="o_edu_st_meter" t-att-class="this.meterClass(m)"><span t-att-style="'width: ' + m.width + '%'"/></span>
+                                            <span class="o_edu_meter" t-att-class="this.meterClass(m)"><span t-att-style="'width: ' + m.width + '%'"/></span>
                                         </li>
                                     </ul>
                                 </section>

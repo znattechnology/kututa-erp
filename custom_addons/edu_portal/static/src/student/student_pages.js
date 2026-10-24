@@ -114,7 +114,7 @@ export class StudentHome extends StudentPage {
     }
 
     meterClass(subject) {
-        return { at_risk: "o_edu_st_meter_warn", failed: "o_edu_st_meter_bad" }[subject.status] || "";
+        return { at_risk: "o_edu_meter_warn", failed: "o_edu_meter_bad" }[subject.status] || "";
     }
 
     get absenceTile() {

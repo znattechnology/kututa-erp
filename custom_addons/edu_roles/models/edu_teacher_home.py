@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from odoo import api, fields, models
+from odoo.addons.edu_evaluation.tools import grading
 from odoo.addons.edu_timetable.models.hr_employee import _current_year, teacher_lessons
 from odoo.exceptions import UserError
 from odoo.tools import format_amount
@@ -74,7 +75,98 @@ class EduTeacherHome(models.AbstractModel):
             }
             for s in sessions
         ]
+        data['dashboard'] = self._dashboard(employee, today)
         return data
+
+    @api.model
+    def _dashboard(self, employee, today):
+        """Os números e os gráficos do painel: a carga semanal, as aulas por registar, as notas do trimestre em cada
+        turma e disciplina (positivas, negativas e sem nota, com a média), a assiduidade nas suas aulas e os alunos em
+        risco por faltas. Tudo do ano corrente, lido em sudo e limitado às colocações do professor."""
+        year = _current_year(self.env, employee.company_id)
+        trimester = year.trimester_ids.filtered('is_current')[:1] if year else self.env['edu.trimester']
+        teacher = employee.sudo()
+        result = {
+            'trimester': trimester.name or '',
+            'load': {'count': teacher.edu_weekly_load, 'limit': teacher.edu_weekly_load_max},
+            'pending_lessons': 0,
+            'grades': [],
+            'attendance': [],
+            'graded': 0,
+            'expected': 0,
+            'at_risk': 0,
+            'failed': 0,
+        }
+        if not year:
+            return result
+        # As aulas já passadas (ou de hoje) ainda por registar: chamada e sumário.
+        result['pending_lessons'] = (
+            self.env['edu.lesson']
+            .sudo()
+            .search_count(
+                [
+                    ('teacher_id', '=', employee.id),
+                    ('academic_year_id', '=', year.id),
+                    ('state', '=', 'scheduled'),
+                    ('date', '<=', today),
+                ]
+            )
+        )
+        assignments = (
+            self.env['edu.teaching.assignment']
+            .sudo()
+            .search([('teacher_id', '=', employee.id), ('academic_year_id', '=', year.id)])
+            .filtered(lambda a: not a.trimester_id or a.trimester_id == trimester)
+            .sorted(lambda a: (a.class_id.class_number, a.class_id.name or '', a.subject_id.name or ''))
+        )
+        trimesters = year.trimester_ids.sorted('number')
+        index = list(trimesters).index(trimester) if trimester else None
+        Result = self.env['edu.subject.result'].sudo()
+        Summary = self.env['edu.absence.summary'].sudo()
+        for assignment in assignments:
+            edu_class, subject = assignment.class_id, assignment.subject_id
+            label = f'{edu_class._editor_label()}, {subject.name}'
+            enrollments = edu_class.enrollment_ids.filtered(lambda e: e.state in ('active', 'irregular'))
+            if index is not None and enrollments:
+                policy = self.env['edu.evaluation.policy']._get(edu_class.company_id, edu_class.level_id)
+                round_fn = grading.rounder(policy.rounding)
+                results = Result.search([('enrollment_id', 'in', enrollments.ids), ('subject_id', '=', subject.id)])
+                values = []
+                for subject_result in results:
+                    value = subject_result._trimester_classifications()[index]
+                    if value is not None:
+                        values.append(value)
+                positives = sum(1 for v in values if round_fn(v) >= policy.pass_grade)
+                total = len(enrollments)
+                average = sum(values) / len(values) if values else None
+                result['grades'].append(
+                    {
+                        'id': assignment.id,
+                        'class_id': edu_class.id,
+                        'label': label,
+                        'total': total,
+                        'positives': positives,
+                        'negatives': len(values) - positives,
+                        'missing': max(0, total - len(values)),
+                        'average': f'{average:.1f}'.replace('.', ',') if average is not None else '',
+                        'average_pos': average is not None and round(average * 10) / 10 >= policy.pass_grade,
+                    }
+                )
+                result['graded'] += len(values)
+                result['expected'] += total
+            rows = Summary.search([('class_id', '=', edu_class.id), ('subject_id', '=', subject.id)])
+            lessons = sum(rows.mapped('lessons'))
+            if lessons:
+                present = sum(rows.mapped('present')) + sum(rows.mapped('late'))
+                result['attendance'].append(
+                    {'id': assignment.id, 'label': label, 'rate': round(100 * present / lessons), 'lessons': lessons}
+                )
+        # Os alunos a uma falta do limite ou que já o passaram, nas disciplinas do professor (o relatório de faltas).
+        if trimester:
+            mine = self.env['edu.attendance.page'].absence_report(trimester.id)['mine']
+            result['failed'] = sum(1 for g in mine if g['worst'] == 'failed')
+            result['at_risk'] = len(mine) - result['failed']
+        return result
 
     @api.model
     def _no_lessons_on(self, edu_class, day):

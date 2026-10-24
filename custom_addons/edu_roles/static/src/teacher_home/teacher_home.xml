@@ -18,7 +18,43 @@
                         O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
                     </div>
 
-                    <div t-else="" class="o_edu_th_grid">
+                    <t t-else="">
+                    <!-- Os números principais -->
+                    <t t-set="db" t-value="d.dashboard"/>
+                    <div class="o_edu_kpis">
+                        <button type="button" class="o_edu_kpi" t-on-click="() => this.openAction('edu_roles.action_teacher_schedule')">
+                            <span class="o_edu_kpi_label">Carga semanal</span>
+                            <span class="o_edu_kpi_value" t-att-class="{'text-danger': this.overLoad}"><t t-out="db.load.count"/><small class="fs-6 fw-normal text-muted"> de <t t-out="db.load.limit"/> tempos</small></span>
+                            <span class="o_edu_meter mt-1 w-100" t-att-class="{'o_edu_meter_bad': this.overLoad}"><span t-att-style="'width: ' + this.loadWidth + '%'"/></span>
+                        </button>
+                        <button type="button" class="o_edu_kpi" t-on-click="() => this.openAction('edu_roles.action_teacher_attendance')">
+                            <span class="o_edu_kpi_label">Aulas por registar</span>
+                            <span class="o_edu_kpi_value" t-att-class="{'text-warning': db.pending_lessons}" t-out="db.pending_lessons"/>
+                            <span class="o_edu_kpi_detail">
+                                <t t-if="db.pending_lessons"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Chamada e sumário por fazer</t>
+                                <t t-else="">Todas as aulas dadas estão registadas</t>
+                            </span>
+                        </button>
+                        <button type="button" class="o_edu_kpi" t-on-click="() => this.openAction('edu_evaluation.action_edu_grade_grid')">
+                            <span class="o_edu_kpi_label">Notas lançadas<t t-if="db.trimester"> no <t t-out="db.trimester"/></t></span>
+                            <t t-if="db.expected">
+                                <span class="o_edu_kpi_value"><t t-out="this.gradedPercent"/>%</span>
+                                <span class="o_edu_kpi_detail"><t t-out="db.graded"/> de <t t-out="db.expected"/> classificações</span>
+                            </t>
+                            <t t-else=""><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail">Sem turmas neste trimestre</span></t>
+                        </button>
+                        <button type="button" class="o_edu_kpi" t-on-click="() => this.openAction('edu_roles.action_teacher_absence_report')">
+                            <span class="o_edu_kpi_label">Alunos em risco por faltas</span>
+                            <span class="o_edu_kpi_value" t-att-class="{'text-danger': db.failed, 'text-warning': !db.failed and db.at_risk}" t-out="db.at_risk + db.failed"/>
+                            <span class="o_edu_kpi_detail">
+                                <t t-if="db.failed"><i class="oi me-1" data-icon="warning" aria-hidden="true"/><t t-out="db.failed === 1 ? '1 já passou o limite' : db.failed + ' já passaram o limite'"/></t>
+                                <t t-elif="db.at_risk">A uma falta do limite</t>
+                                <t t-else="">Nas suas disciplinas</t>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="o_edu_th_grid">
                         <div class="o_edu_th_main">
                             <!-- O dia -->
                             <section class="o_edu_th_card">
@@ -46,6 +82,44 @@
                                 </ul>
                             </section>
 
+                            <!-- As notas do trimestre por turma e disciplina -->
+                            <section class="o_edu_th_card" aria-labelledby="o_edu_th_chart_grades">
+                                <div class="d-flex flex-wrap justify-content-between gap-2">
+                                    <h2 id="o_edu_th_chart_grades" class="o_edu_th_h2">Notas do <t t-out="db.trimester or 'trimestre'"/> nas suas turmas</h2>
+                                    <button t-if="db.grades.length" type="button" class="btn btn-link p-0 align-self-start" t-on-click="() => this.openAction('edu_evaluation.action_edu_grade_grid')">Lançar notas</button>
+                                </div>
+                                <p t-if="!db.grades.length" class="mb-0 text-muted">Ainda não tem turmas com alunos neste trimestre.</p>
+                                <t t-else="">
+                                    <ul class="o_edu_chart_legend">
+                                        <li><span class="o_edu_chart_key o_edu_stack_pos"/>Positivas</li>
+                                        <li><span class="o_edu_chart_key o_edu_stack_neg"/>Negativas</li>
+                                        <li><span class="o_edu_chart_key o_edu_stack_missing"/>Sem nota</li>
+                                    </ul>
+                                    <ul class="o_edu_stacks">
+                                        <li t-foreach="db.grades" t-as="g" t-key="g.id">
+                                            <button type="button" class="o_edu_th_stack_btn" t-on-click="() => this.openGrades({ id: g.class_id })"
+                                                    t-att-title="g.label + ': ' + g.positives + ' positivas, ' + g.negatives + ' negativas, ' + g.missing + ' sem nota'">
+                                                <span class="o_edu_stack_head">
+                                                    <span t-out="g.label"/>
+                                                    <span class="text-nowrap">
+                                                        <t t-if="g.average">média <span class="fw-semibold" t-att-class="{'text-danger': !g.average_pos}" t-out="g.average"/></t>
+                                                        <span t-else="" class="text-muted">sem notas</span>
+                                                    </span>
+                                                </span>
+                                                <span class="o_edu_stack">
+                                                    <span t-if="g.positives" class="o_edu_stack_pos" t-att-style="'flex-grow: ' + g.positives"/>
+                                                    <span t-if="g.negatives" class="o_edu_stack_neg" t-att-style="'flex-grow: ' + g.negatives"/>
+                                                    <span t-if="g.missing" class="o_edu_stack_missing" t-att-style="'flex-grow: ' + g.missing"/>
+                                                </span>
+                                                <span class="small text-muted">
+                                                    <t t-out="g.positives"/> positivas, <t t-out="g.negatives"/> negativas<t t-if="g.missing">, <t t-out="g.missing"/> sem nota</t>
+                                                </span>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </t>
+                            </section>
+
                             <!-- As turmas -->
                             <section class="o_edu_th_card">
                                 <h2 class="o_edu_th_h2">As minhas turmas</h2>
@@ -69,6 +143,20 @@
                         </div>
 
                         <aside class="o_edu_th_side">
+                            <!-- A assiduidade nas suas aulas -->
+                            <section class="o_edu_th_card" aria-labelledby="o_edu_th_chart_attendance">
+                                <h2 id="o_edu_th_chart_attendance" class="o_edu_th_h2">Presenças nas suas aulas</h2>
+                                <p t-if="!db.attendance.length" class="mb-0 text-muted">Ainda não há aulas dadas com chamada este ano.</p>
+                                <ul t-else="" class="o_edu_meters">
+                                    <li t-foreach="db.attendance" t-as="a" t-key="a.id" t-att-title="a.label + ': ' + a.rate + '% de presenças em ' + a.lessons + ' marcações'">
+                                        <div class="d-flex justify-content-between gap-2 small">
+                                            <span t-out="a.label"/>
+                                            <span class="o_edu_th_num text-nowrap"><t t-out="a.rate"/>%</span>
+                                        </div>
+                                        <span class="o_edu_meter"><span t-att-style="'width: ' + a.rate + '%'"/></span>
+                                    </li>
+                                </ul>
+                            </section>
                             <section class="o_edu_th_card">
                                 <h2 class="o_edu_th_h2">Vigilâncias</h2>
                                 <p t-if="!d.supervisions.length" class="mb-0 text-muted">Não tem vigilâncias marcadas.</p>
@@ -98,6 +186,7 @@
                             </section>
                         </aside>
                     </div>
+                    </t>
                 </div>
             </Layout>
         </div>

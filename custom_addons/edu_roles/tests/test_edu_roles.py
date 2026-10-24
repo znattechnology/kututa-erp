@@ -212,6 +212,33 @@ class TestEduRoles(TransactionCase):
                 self.class_a.id, self.lp.id, {'date': fields.Date.to_string(day), 'hour_from': 8.0, 'hour_to': 9.0}
             )
 
+    def test_teacher_dashboard(self):
+        """O painel do professor: as notas do trimestre em cada turma e disciplina e os números principais."""
+        self.year.action_generate_trimesters()
+        trimester = self.year.trimester_ids.sorted('number')[0]
+        trimester.is_current = True
+        for name in ('Aluna positiva', 'Aluno negativo', 'Aluno sem nota'):
+            student = self.env['edu.student'].create({'name': name})
+            self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': self.class_a.id}).action_confirm()
+        enrollments = self.class_a.enrollment_ids.sorted('id')
+        Grid = self.env['edu.grade.grid'].with_user(self.teacher_user)
+        result = Grid.grid_save(
+            self.class_a.id,
+            self.lp.id,
+            [
+                {'enrollment_id': enrollments[0].id, 'trimester_id': trimester.id, 'column': 'npp', 'value': 14},
+                {'enrollment_id': enrollments[0].id, 'trimester_id': trimester.id, 'column': 'npt', 'value': 12},
+                {'enrollment_id': enrollments[1].id, 'trimester_id': trimester.id, 'column': 'npp', 'value': 6},
+                {'enrollment_id': enrollments[1].id, 'trimester_id': trimester.id, 'column': 'npt', 'value': 8},
+            ],
+        )
+        self.assertTrue(result['ok'], result)
+        dashboard = self.env['edu.teacher.home'].with_user(self.teacher_user).home_data()['dashboard']
+        row = next(g for g in dashboard['grades'] if g['class_id'] == self.class_a.id)
+        self.assertEqual((row['positives'], row['negatives'], row['missing']), (1, 1, 1))
+        self.assertEqual(row['average'], '10,0')
+        self.assertEqual((dashboard['graded'], dashboard['expected']), (2, 3))
+
     def test_absence_report(self):
         """«Relatório de faltas», como no secPed: o aluno que atingiu o limite nas disciplinas do professor e o mapa
         da turma que dirige."""

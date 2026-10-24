@@ -1,0 +1,304 @@
+// Os gráficos dos painéis (professor e aluno): indicadores, barras horizontais, colunas, barras empilhadas e
+// medidores, em HTML. As cores foram validadas (série azul e vermelho crítico, contraste e daltonismo) para as
+// superfícies clara e escura; o modo escuro troca os passos em edu_charts.dark.scss.
+.o_edu_kpis,
+.o_edu_hbars,
+.o_edu_cols,
+.o_edu_stacks,
+.o_edu_meters,
+.o_edu_chart_legend {
+    --edu-chart-series: #2a78d6;
+    --edu-chart-series-track: #cde2fb;
+    --edu-chart-critical: #d03b3b;
+    --edu-chart-warning: #fab219;
+    --edu-chart-empty: #{mix($text-muted, $o-view-background-color, 30%)};
+    --edu-chart-grid: #{mix($text-muted, $o-view-background-color, 35%)};
+}
+
+// Painel: os números principais
+.o_edu_kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+
+    @include media-breakpoint-down(lg) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.o_edu_kpi {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+    padding: 14px 18px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-lg;
+    background: $o-view-background-color;
+    color: inherit;
+    text-align: left;
+
+    &:hover {
+        border-color: $o-action;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $o-action;
+        outline-offset: 2px;
+    }
+}
+
+.o_edu_kpi_label {
+    color: $text-muted;
+    font-size: 0.85rem;
+}
+
+.o_edu_kpi_value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.o_edu_kpi_money {
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+}
+
+.o_edu_kpi_detail {
+    color: $text-muted;
+    font-size: 0.8rem;
+}
+
+// As notas do trimestre: barras horizontais de 0 ao máximo da escala, com a linha da positiva
+.o_edu_hbars {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.o_edu_hbar_row {
+    display: grid;
+    grid-template-columns: minmax(110px, 34%) minmax(0, 1fr) 7.5em;
+    align-items: center;
+    gap: 12px;
+    min-height: 28px;
+
+    @include media-breakpoint-down(md) {
+        grid-template-columns: minmax(90px, 40%) minmax(0, 1fr) 6.5em;
+        gap: 8px;
+    }
+}
+
+.o_edu_hbar_name {
+    overflow: hidden;
+    font-size: 0.85rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.o_edu_hbar_track {
+    position: relative;
+    height: 16px;
+    border-left: 1px solid var(--edu-chart-grid);
+}
+
+.o_edu_hbar {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 0 4px 4px 0;
+    background: var(--edu-chart-series);
+}
+
+.o_edu_chart_neg {
+    background: var(--edu-chart-critical);
+}
+
+.o_edu_hbar_pass {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    z-index: 1;
+    width: 0;
+    border-left: 1px solid $body-color;
+}
+
+.o_edu_hbar_value {
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.o_edu_hbar_flag {
+    margin-left: 6px;
+    color: $text-muted;
+    font-size: 0.75rem;
+}
+
+// A média por trimestre: colunas com a linha da positiva
+.o_edu_cols {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    height: 150px;
+    margin-top: 22px;
+    border-bottom: 1px solid var(--edu-chart-grid);
+}
+
+.o_edu_cols_pass {
+    position: absolute;
+    right: 0;
+    left: 0;
+    z-index: 1;
+    border-top: 1px solid $body-color;
+}
+
+.o_edu_col_slot {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+}
+
+.o_edu_col {
+    width: 100%;
+    max-width: 24px;
+    border-radius: 4px 4px 0 0;
+    background: var(--edu-chart-series);
+}
+
+.o_edu_col_value {
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.o_edu_cols_labels {
+    display: flex;
+    gap: 16px;
+    margin-top: 6px;
+
+    > span {
+        flex: 1 1 0;
+        color: $text-muted;
+        font-size: 0.75rem;
+        text-align: center;
+    }
+}
+
+// As faltas face ao limite: medidores com o trilho no mesmo tom
+.o_edu_meters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.o_edu_meter {
+    display: block;
+    height: 8px;
+    margin-top: 4px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--edu-chart-series-track);
+
+    > span {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+        background: var(--edu-chart-series);
+    }
+}
+
+.o_edu_meter_warn {
+    background: mix(#fab219, $o-view-background-color, 25%);
+
+    > span {
+        background: var(--edu-chart-warning);
+    }
+}
+
+.o_edu_meter_bad {
+    background: mix(#d03b3b, $o-view-background-color, 20%);
+
+    > span {
+        background: var(--edu-chart-critical);
+    }
+}
+
+// A coluna negativa (a regra da coluna vem depois da da barra e tapava a cor).
+.o_edu_col.o_edu_chart_neg {
+    background: var(--edu-chart-critical);
+}
+
+// Barras empilhadas (parte de um todo): positivas, negativas e sem nota, com 2px de superfície entre segmentos.
+.o_edu_stacks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.o_edu_stack_head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.85rem;
+}
+
+.o_edu_stack {
+    display: flex;
+    gap: 2px;
+    height: 16px;
+    margin-top: 4px;
+    overflow: hidden;
+    border-radius: 4px;
+
+    > span {
+        min-width: 4px;
+    }
+}
+
+.o_edu_stack_pos {
+    background: var(--edu-chart-series);
+}
+
+.o_edu_stack_neg {
+    background: var(--edu-chart-critical);
+}
+
+.o_edu_stack_missing {
+    background: var(--edu-chart-empty);
+}
+
+.o_edu_chart_legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin: 0 0 12px;
+    padding: 0;
+    color: $text-muted;
+    font-size: 0.8rem;
+    list-style: none;
+
+    > li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+}
+
+.o_edu_chart_key {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
