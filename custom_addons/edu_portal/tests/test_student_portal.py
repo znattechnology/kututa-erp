@@ -147,6 +147,14 @@ class TestStudentPortal(HttpCase):
         # O aluno não lê os modelos da escola nem os contactos dos outros alunos.
         with self.assertRaises(AccessError):
             self.env['edu.subject.result'].with_user(self.ana_user).search([])
+        # Os documentos de matrícula: só os seus.
+        Document = self.env['edu.enrollment.document']
+        Type = self.env['edu.enrollment.document.type']
+        doc_type = Type.search([], limit=1) or Type.create({'name': 'Cópia do BI'})
+        mine = Document.create({'enrollment_id': self.enrollments[0].id, 'type_id': doc_type.id})
+        other = Document.create({'enrollment_id': self.enrollments[1].id, 'type_id': doc_type.id})
+        visible = Document.with_user(self.ana_user).search([('id', 'in', (mine | other).ids)])
+        self.assertEqual(visible, mine)
         Partner = self.env['res.partner'].with_user(self.ana_user)
         self.assertFalse(Partner.search([('id', '=', self.bento.partner_id.id)]))
         self.assertTrue(Partner.search([('id', '=', self.ana.partner_id.id)]))
@@ -155,11 +163,16 @@ class TestStudentPortal(HttpCase):
         self.assertIn(self.env.ref('edu_portal.menu_student_root').id, roots)
         self.assertNotIn(self.env.ref('mail.menu_root_discuss').id, roots)
 
-    def test_schedule_pdf_route(self):
-        self.authenticate('ana_portal', 'ana_portal_pw_123')
-        response = self.url_open('/edu_portal/horario.pdf')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['Content-Type'], 'application/pdf')
+    def test_schedule_report(self):
+        """O horário da turma em A4, como o do professor: na aplicação ou em PDF."""
+        Portal = self.env['edu.student.portal'].with_user(self.ana_user)
+        action = Portal.schedule_report(True)
+        self.assertEqual(action['report_type'], 'qweb-html')
+        self.assertEqual(action['context']['active_ids'], self.edu_class.ids)
+        Report = self.env['ir.actions.report'].with_user(self.ana_user)
+        html = Report._render_qweb_html('edu_documents.report_class_schedule', self.edu_class.ids)[0].decode()
+        self.assertIn('HORÁRIO DA TURMA', html)
+        self.assertEqual(Portal.schedule_report(False)['report_type'], 'qweb-pdf')
 
     def test_grades_blocked_by_fees(self):
         Portal = self.env['edu.student.portal'].with_user(self.ana_user)

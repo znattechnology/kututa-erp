@@ -292,10 +292,14 @@
                             <p class="mb-0 text-muted" t-if="d.summary" t-out="d.summary"/>
                             <p class="mb-0 text-muted" t-else="">O horário da tua turma.</p>
                         </div>
-                        <button t-if="d.lessons and d.lessons.length" type="button" class="btn btn-secondary" t-on-click="() => this.openPdf()"
-                                title="O horário em folha A4, num separador novo">
-                            <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>Visualizar
-                        </button>
+                        <div t-if="d.lessons and d.lessons.length" class="o_edu_st_row">
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.openReport(true)" title="Ver o horário em folha A4, na aplicação">
+                                <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>Visualizar
+                            </button>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.openReport(false)" title="O horário em PDF (A4 horizontal)">
+                                <i class="oi me-1" data-icon="print" aria-hidden="true"/>Exportar PDF
+                            </button>
+                        </div>
                     </header>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
                     <t t-elif="!d.has_enrollment" t-call="edu_portal.StudentPage.NoEnrollment"><t t-set="what" t-value="'não há horário'"/></t>

@@ -5,6 +5,7 @@ import pytz
 from odoo import api, fields, models
 from odoo.addons.edu_attendance.models.absence_rules import TECHNICAL, absence_limit, absence_status
 from odoo.addons.edu_evaluation.tools import grading
+from odoo.exceptions import UserError
 from odoo.tools import format_amount
 
 WEEKDAYS = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo']
@@ -202,6 +203,18 @@ class EduStudentPortal(models.AbstractModel):
         elif page == 'profile':
             data['profile'] = self.profile(student, enrollment)
         return data
+
+    @api.model
+    def schedule_report(self, preview=True):
+        """O horário da turma em folha A4 horizontal, como o do professor: na aplicação (Visualizar) ou em PDF
+        (Exportar PDF)."""
+        student = self._student()
+        enrollment = self._enrollment(student) if student else None
+        if not enrollment:
+            raise UserError(self.env._('Não tens matrícula neste ano lectivo, por isso não há horário.'))
+        report = self.env.ref('edu_documents.action_report_class_schedule')
+        edu_class = enrollment.class_id
+        return report.preview_action(edu_class) if preview else report.report_action(edu_class)
 
     @api.model
     def change_password(self):

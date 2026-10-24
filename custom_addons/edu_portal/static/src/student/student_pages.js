@@ -97,8 +97,10 @@ export class StudentSchedule extends StudentPage {
         return this.state.data.lessons.filter((lesson) => lesson.weekday === day.number);
     }
 
-    openPdf() {
-        return this.action.doAction({ type: "ir.actions.act_url", url: "/edu_portal/horario.pdf", target: "new" });
+    /** A folha A4 da secretaria: na aplicação (Visualizar) ou em PDF (Exportar PDF), como no horário do professor. */
+    async openReport(preview) {
+        const action = await this.orm.call("edu.student.portal", "schedule_report", [preview]);
+        return this.action.doAction(action);
     }
 }
 
