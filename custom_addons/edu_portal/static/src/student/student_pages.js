@@ -194,24 +194,34 @@ export class StudentFees extends StudentPage {
         return this.state.data.fees[this.state.tab];
     }
 
-    get sentence() {
+    /** O que está em atraso, a vermelho na frase de cima (como no secPed). */
+    get overdueText() {
         const f = this.state.data.fees;
-        if (!f.rows.length) {
-            return "Ainda não tens facturas de propinas.";
-        }
-        if (!f.due.length) {
-            return "Não tens nada por pagar.";
-        }
         const n = f.due.length;
-        let text = `Tens ${count(n, "uma factura", "facturas")} por pagar, no total de ${f.total_due}`;
-        if (f.overdue) {
-            text += f.overdue === n ? (n === 1 ? "; está em atraso" : "; estão todas em atraso") : `; ${f.overdue} em atraso`;
+        if (!f.overdue) {
+            return "";
         }
-        text += ".";
-        if (f.has_fines) {
-            text += ` Deste valor, ${f.total_fines} são multas por atraso.`;
+        if (f.overdue === n) {
+            return n === 1 ? "está em atraso" : "estão todas em atraso";
         }
-        return text;
+        return f.overdue + " em atraso";
+    }
+
+    get dateHeader() {
+        return { due: "Vence a", paid: "Paga a", other: "Vencia a" }[this.state.tab];
+    }
+
+    /** Telemóvel: «Vence a 10 de outubro de 2026, com 1 000 Kz de multa.» */
+    whenText(row) {
+        const tab = this.state.tab;
+        const parts = [];
+        if (tab === "paid" ? row.paid_date : row.due_date) {
+            parts.push(tab === "paid" ? "Paga a " + row.paid_date : (tab === "other" ? "Vencia a " : "Vence a ") + row.due_date);
+        }
+        if (tab === "due" && row.fine) {
+            parts.push("com " + row.fine + " de multa");
+        }
+        return parts.length ? parts.join(", ") + ". " : "";
     }
 
     statusClass(row) {

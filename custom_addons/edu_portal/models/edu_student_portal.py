@@ -715,8 +715,10 @@ class EduStudentPortal(models.AbstractModel):
 
     @api.model
     def fees(self, student):
-        """As facturas escolares do aluno, só para ler (quem paga é o encarregado): por pagar, pagas e isentas ou
-        anuladas. As multas por atraso (facturas à parte no Odoo) somam-se à factura que as originou."""
+        """As facturas escolares do aluno, só para ler (quem paga é o encarregado), como no secPed: por pagar, pagas e
+        isentas ou anuladas, com o vencimento (e há quantos dias está em atraso), o valor já com a bolsa, a multa, o
+        que falta pagar e a situação. As multas por atraso (facturas à parte no Odoo) somam-se à factura que as
+        originou; as facturas isentas pela bolsa integral ficam em rascunho e aparecem com as anuladas."""
         moves = (
             self.env['account.move']
             .sudo()
@@ -724,7 +726,9 @@ class EduStudentPortal(models.AbstractModel):
                 [
                     ('edu_student_id', '=', student.id),
                     ('move_type', '=', 'out_invoice'),
+                    '|',
                     ('state', 'in', ('posted', 'cancel')),
+                    ('edu_exempt', '=', True),
                 ],
                 order='invoice_date_due, id',
             )
@@ -739,40 +743,53 @@ class EduStudentPortal(models.AbstractModel):
         rows = []
         for move in moves - late_fees:
             fines = late_fees.filtered(lambda m, o=move: m.edu_late_fee_origin_id == o and m.state == 'posted')
-            fine = sum(fines.mapped('amount_residual'))
-            due = move.amount_residual + fine if move.state == 'posted' else 0.0
+            fine_total = sum(fines.mapped('amount_total'))
+            posted = move.state == 'posted'
+            due = move.amount_residual + sum(fines.mapped('amount_residual')) if posted else 0.0
+            total = move.amount_total + fine_total
+            paid = total - due if posted else 0.0
+            late_days = 0
             if move.state == 'cancel' or move.edu_exempt:
                 tab, status, css = 'other', 'Isenta' if move.edu_exempt else 'Anulada', 'muted'
             elif due > 0.005:
                 tab = 'due'
-                overdue = move.invoice_date_due and move.invoice_date_due < today and move.amount_residual > 0.005
+                if move.invoice_date_due and move.invoice_date_due < today and move.amount_residual > 0.005:
+                    late_days = (today - move.invoice_date_due).days
                 if move.payment_state == 'partial':
                     status, css = 'Paga em parte', 'warn'
-                elif overdue:
+                elif late_days:
                     status, css = 'Em atraso', 'bad'
                 else:
                     status, css = 'Por pagar', ''
             else:
                 tab, status, css = 'paid', 'Paga', 'good'
+            # A data do pagamento: a da última reconciliação da conta a receber.
+            receivable = move.line_ids.filtered(lambda line: line.account_id.account_type == 'asset_receivable')
+            paid_on = max(receivable.matched_credit_ids.mapped('max_date'), default=False) if tab == 'paid' else False
             line = move.invoice_line_ids.filtered(lambda line: line.display_type == 'product')[:1]
+            name = line.name or move.name or ''
             rows.append(
                 {
                     'id': move.id,
                     'tab': tab,
-                    'name': line.name or move.name,
-                    'number': move.name,
-                    'due_date': move.invoice_date_due and move.invoice_date_due.strftime('%d/%m/%Y'),
+                    'name': name[:1].upper() + name[1:],
+                    'number': move.name if move.state != 'draft' else '',
+                    'due_date': long_date(move.invoice_date_due),
+                    'paid_date': long_date(paid_on),
+                    'late_days': late_days,
                     'amount': money(move.amount_total),
-                    'fine': money(fine) if fine else '',
+                    'discount': money(move.edu_discount) if move.edu_discount else '',
+                    'fine': money(fine_total) if fine_total else '',
                     'due': money(due),
+                    'total': money(total),
+                    'paid': money(paid) if tab == 'due' and paid > 0.005 else '',
                     'due_value': due,
-                    'fine_value': fine,
+                    'fine_value': sum(fines.mapped('amount_residual')),
                     'status': status,
                     'css': css,
                 }
             )
         due_rows = [r for r in rows if r['tab'] == 'due']
-        overdue = [r for r in due_rows if r['css'] == 'bad']
         return {
             'rows': rows,
             'due': due_rows,
@@ -781,7 +798,9 @@ class EduStudentPortal(models.AbstractModel):
             'total_due': money(sum(r['due_value'] for r in due_rows)),
             'total_fines': money(sum(r['fine_value'] for r in due_rows)),
             'has_fines': any(r['fine_value'] for r in due_rows),
-            'overdue': len(overdue),
+            # A coluna da multa só aparece se a escola cobra multas a este aluno.
+            'charges_fines': any(r['fine'] for r in rows),
+            'overdue': len([r for r in due_rows if r['late_days']]),
         }
 
     # Perfil

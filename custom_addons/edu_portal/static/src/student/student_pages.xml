@@ -548,65 +548,109 @@
         </div>
     </t>
 
-    <!-- As propinas, só para ler: quem paga é o encarregado. -->
+    <!-- As propinas, como no secPed: só para ler (quem paga é o encarregado). Uma frase com o que está em dívida e as
+         facturas por pagar, as pagas e as isentas ou anuladas, em separadores. -->
     <t t-name="edu_portal.StudentFees">
         <div class="o_action o_edu_student">
             <Layout display="this.display">
                 <div class="o_edu_st_body" t-if="this.state.data">
                     <t t-set="d" t-value="this.state.data"/>
-                    <header class="o_edu_st_row">
-                        <div>
-                            <h1 class="o_edu_st_title">Propinas</h1>
-                            <p class="mb-0 text-muted">As tuas propinas e facturas.</p>
-                        </div>
-                        <div t-if="d.has_student and d.fees.rows.length" class="btn-group" role="group" aria-label="Facturas">
-                            <button type="button" class="btn" t-att-class="this.state.tab === 'due' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('due')">
-                                Por pagar<t t-if="d.fees.due.length"> (<t t-out="d.fees.due.length"/>)</t>
-                            </button>
-                            <button type="button" class="btn" t-att-class="this.state.tab === 'paid' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('paid')">
-                                Pagas<t t-if="d.fees.paid.length"> (<t t-out="d.fees.paid.length"/>)</t>
-                            </button>
-                            <button t-if="d.fees.other.length" type="button" class="btn" t-att-class="this.state.tab === 'other' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('other')">
-                                Isentas ou anuladas (<t t-out="d.fees.other.length"/>)
-                            </button>
-                        </div>
+                    <header>
+                        <h1 class="o_edu_st_title">Propinas</h1>
+                        <p class="mb-0 text-muted">As tuas propinas e facturas.</p>
                     </header>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
                     <t t-else="">
                         <t t-set="f" t-value="d.fees"/>
-                        <p class="mb-0" t-att-class="{'text-danger': f.overdue}" t-out="this.sentence"/>
+                        <p class="mb-0">
+                            <t t-if="!f.rows.length">Ainda não tens facturas de propinas.</t>
+                            <t t-elif="!f.due.length">Não tens nada por pagar.</t>
+                            <t t-else="">
+                                <t t-out="'Tens ' + (f.due.length === 1 ? 'uma factura' : f.due.length + ' facturas') + ' por pagar, no total de '"/><span class="o_edu_st_num" t-out="f.total_due"/><span t-if="this.overdueText" class="text-danger" t-out="'; ' + this.overdueText"/>.
+                                <t t-if="f.has_fines"> Deste valor, <span class="o_edu_st_num" t-out="f.total_fines"/> são multas por atraso.</t>
+                            </t>
+                        </p>
+
+                        <div t-if="f.rows.length" class="btn-group align-self-start" role="tablist" aria-label="Facturas">
+                            <button type="button" role="tab" class="btn" t-att-aria-selected="this.state.tab === 'due' ? 'true' : 'false'"
+                                    t-att-class="this.state.tab === 'due' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('due')">
+                                Por pagar<t t-if="f.due.length"> (<t t-out="f.due.length"/>)</t>
+                            </button>
+                            <button type="button" role="tab" class="btn" t-att-aria-selected="this.state.tab === 'paid' ? 'true' : 'false'"
+                                    t-att-class="this.state.tab === 'paid' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('paid')">
+                                Pagas<t t-if="f.paid.length"> (<t t-out="f.paid.length"/>)</t>
+                            </button>
+                            <button t-if="f.other.length" type="button" role="tab" class="btn" t-att-aria-selected="this.state.tab === 'other' ? 'true' : 'false'"
+                                    t-att-class="this.state.tab === 'other' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('other')">
+                                Isentas ou anuladas (<t t-out="f.other.length"/>)
+                            </button>
+                        </div>
+
                         <t t-if="f.rows.length">
-                            <section t-if="!this.rows.length and this.state.tab !== 'due'" class="o_edu_st_card text-muted">
-                                Ainda não há facturas aqui.
+                            <section t-if="!this.rows.length" class="o_edu_st_card text-muted">
+                                <t t-if="this.state.tab === 'due'">Não tens nada por pagar.</t>
+                                <t t-else="">Ainda não há facturas pagas.</t>
                             </section>
-                            <div t-elif="this.rows.length" class="o_edu_st_card p-0 o_edu_st_scroll">
-                                <table class="table mb-0 o_edu_st_table">
-                                    <thead>
-                                        <tr>
-                                            <th>Factura</th>
-                                            <th>Vence a</th>
-                                            <th class="text-end">Valor</th>
-                                            <th t-if="f.has_fines and this.state.tab === 'due'" class="text-end">Multa</th>
-                                            <th class="text-end"><t t-if="this.state.tab === 'due'">Por pagar</t><t t-else="">Total</t></th>
-                                            <th>Situação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr t-foreach="this.rows" t-as="r" t-key="r.id">
-                                            <td>
-                                                <div t-out="r.name"/>
-                                                <div class="small text-muted" t-out="r.number"/>
-                                            </td>
-                                            <td class="o_edu_st_num text-nowrap" t-out="r.due_date or '—'"/>
-                                            <td class="o_edu_st_num text-end text-nowrap" t-out="r.amount"/>
-                                            <td t-if="f.has_fines and this.state.tab === 'due'" class="o_edu_st_num text-end text-nowrap text-danger" t-out="r.fine"/>
-                                            <td class="o_edu_st_num text-end text-nowrap fw-semibold" t-out="this.state.tab === 'due' ? r.due : r.amount"/>
-                                            <td t-att-class="this.statusClass(r)" t-out="r.status"/>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                            <t t-else="">
+                                <!-- Ecrãs largos: a tabela. -->
+                                <div class="o_edu_st_card p-0 o_edu_st_scroll d-none d-md-block">
+                                    <table class="table mb-0 o_edu_st_table">
+                                        <thead>
+                                            <tr>
+                                                <th>Factura</th>
+                                                <th t-out="this.dateHeader"/>
+                                                <th class="text-end">Valor</th>
+                                                <th t-if="f.charges_fines" class="text-end">Multa</th>
+                                                <th class="text-end"><t t-if="this.state.tab === 'due'">Por pagar</t><t t-else="">Total</t></th>
+                                                <th>Situação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="this.rows" t-as="r" t-key="r.id">
+                                                <td>
+                                                    <div t-out="r.name"/>
+                                                    <div t-if="r.number" class="small text-muted o_edu_st_num" t-out="r.number"/>
+                                                </td>
+                                                <td class="text-nowrap">
+                                                    <t t-if="this.state.tab === 'paid'"><span class="text-muted" t-out="r.paid_date or '—'"/></t>
+                                                    <t t-elif="this.state.tab === 'other'"><span class="text-muted" t-out="r.due_date or '—'"/></t>
+                                                    <t t-else="">
+                                                        <t t-out="r.due_date or '—'"/>
+                                                        <div t-if="r.late_days" class="small text-danger" t-out="'há ' + r.late_days + (r.late_days === 1 ? ' dia' : ' dias')"/>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end text-nowrap">
+                                                    <div class="o_edu_st_num" t-out="r.amount"/>
+                                                    <div t-if="r.discount" class="small text-muted" t-out="'com ' + r.discount + ' de desconto'"/>
+                                                </td>
+                                                <td t-if="f.charges_fines" class="text-end text-nowrap o_edu_st_num">
+                                                    <span t-if="r.fine" class="text-danger" t-out="r.fine"/>
+                                                    <span t-else="" class="text-muted">—</span>
+                                                </td>
+                                                <td class="text-end text-nowrap">
+                                                    <div class="o_edu_st_num" t-out="this.state.tab === 'due' ? r.due : r.total"/>
+                                                    <div t-if="this.state.tab === 'due' and r.paid" class="small text-muted" t-out="'já pagaste ' + r.paid"/>
+                                                </td>
+                                                <td class="text-nowrap" t-att-class="this.statusClass(r)" t-out="r.status"/>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Telemóvel: uma linha por factura. -->
+                                <ul class="o_edu_st_card o_edu_st_list d-md-none">
+                                    <li t-foreach="this.rows" t-as="r" t-key="r.id" class="flex-column align-items-stretch gap-1">
+                                        <div class="d-flex justify-content-between gap-3">
+                                            <span t-out="r.name"/>
+                                            <span class="o_edu_st_num text-nowrap" t-out="this.state.tab === 'due' ? r.due : r.total"/>
+                                        </div>
+                                        <div class="small text-muted">
+                                            <t t-out="this.whenText(r)"/><span t-att-class="this.statusClass(r)" t-out="r.status"/>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </t>
                         </t>
+
                         <p class="mb-0 small text-muted">
                             Quem paga as propinas é o teu encarregado de educação, na tesouraria da escola. Quando um pagamento é confirmado, a factura passa para «Pagas».
                         </p>
