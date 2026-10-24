@@ -36,7 +36,11 @@ export class EduMobileTabs extends Component {
     isActive(tab) {
         // `currentAction` é assíncrono no Odoo 20; o controlador actual tem a acção já carregada.
         const action = this.actionService.currentController?.action;
-        return Boolean(action && (action.tag === tab.tag || action.xml_id === tab.action));
+        if (!action) {
+            return false;
+        }
+        // As acções cliente reconhecem-se pela tag; as listas e os formulários pelo xmlid da acção.
+        return tab.tag ? action.tag === tab.tag : action.xml_id === tab.action;
     }
 
     /** Fora dos atalhos, o «Menu» fica marcado: é por lá que se chegou. */
@@ -63,5 +67,16 @@ mobileTabs.add("teacher", {
         { label: "Turmas", icon: "school", action: "edu_evaluation.action_edu_grade_grid", tag: "edu_evaluation.grade_grid" },
         { label: "Chamada", icon: "how_to_reg", action: "edu_roles.action_teacher_attendance", tag: "edu_roles.attendance" },
         { label: "Horário", icon: "calendar_month", action: "edu_roles.action_teacher_schedule", tag: "edu_roles.teacher_schedule" },
+    ],
+});
+
+// A secretaria no telemóvel (os «Serviços académicos» do secPed): o painel, as matrículas, os alunos e as pautas.
+mobileTabs.add("secretaria", {
+    app: "edu_core.menu_edu_root",
+    tabs: [
+        { label: "Painel", icon: "home", action: "edu_roles.action_secretaria_home", tag: "edu_roles.secretaria_home" },
+        { label: "Matrículas", icon: "assignment", action: "edu_enrollment.action_edu_enrollment" },
+        { label: "Alunos", icon: "groups", action: "edu_people.action_edu_student" },
+        { label: "Pautas", icon: "school", action: "edu_evaluation.action_edu_grade_grid", tag: "edu_evaluation.grade_grid" },
     ],
 });

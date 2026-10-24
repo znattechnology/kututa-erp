@@ -212,6 +212,27 @@ class TestEduRoles(TransactionCase):
                 self.class_a.id, self.lp.id, {'date': fields.Date.to_string(day), 'hour_from': 8.0, 'hour_to': 9.0}
             )
 
+    def test_secretaria_dashboard(self):
+        """O painel da secretaria: o que está por tratar (com a lista onde se resolve), os números e as turmas. O
+        professor não o abre."""
+        self.year.action_generate_trimesters()
+        self.year.trimester_ids.sorted('number')[0].is_current = True
+        student = self.env['edu.student'].create({'name': 'Aluno do painel'})
+        self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': self.class_a.id}).action_confirm()
+        Home = self.env['edu.secretaria.home'].with_user(self.clerk)
+        data = Home.home_data()
+        self.assertEqual(data['kpis']['students'], 1)
+        self.assertEqual(data['kpis']['classes'], 2)
+        pending = {p['key']: p['count'] for p in data['pending']}
+        self.assertEqual(pending.get('directors'), 2, 'as duas turmas ainda sem director de turma')
+        row = next(r for r in data['classes'] if r['id'] == self.class_a.id)
+        self.assertEqual((row['students'], row['capacity']), (1, self.class_a.capacity))
+        self.assertTrue(row['expected'])
+        self.assertEqual(Home.open('directors')['res_model'], 'edu.class')
+        self.assertEqual(Home.open('students')['res_model'], 'edu.enrollment')
+        with self.assertRaises(AccessError):
+            self.env['edu.secretaria.home'].with_user(self.teacher_user).home_data()
+
     def test_teacher_dashboard(self):
         """O painel do professor: as notas do trimestre em cada turma e disciplina e os números principais."""
         self.year.action_generate_trimesters()
