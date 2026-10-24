@@ -72,7 +72,12 @@ export class StudentGrades extends StudentPage {
     static page = "grades";
 
     selectTrimester(trimester) {
-        return this.load({ trimester_id: trimester.id });
+        return this.load({ enrollment_id: this.state.data.grades.enrollment_id, trimester_id: trimester.id });
+    }
+
+    /** Outro ano lectivo: as notas desse ano, a abrir no último trimestre com notas. */
+    selectYear(ev) {
+        return this.load({ enrollment_id: parseInt(ev.target.value, 10) });
     }
 
     get components() {

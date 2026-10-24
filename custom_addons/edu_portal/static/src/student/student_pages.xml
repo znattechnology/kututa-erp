@@ -180,17 +180,28 @@
                     <header class="o_edu_st_row">
                         <div>
                             <h1 class="o_edu_st_title">Minhas notas</h1>
-                            <p class="mb-0 text-muted">As notas por trimestre<t t-if="d.class">, <t t-out="d.class"/>, <t t-out="d.level"/></t>.</p>
+                            <p class="mb-0 text-muted" t-if="g and g.year">
+                                As notas de <t t-out="g.year"/>, <t t-out="g.class"/><t t-if="g.level">, <t t-out="g.level"/></t>.
+                            </p>
                         </div>
-                        <div t-if="g and g.active" class="btn-group" role="group" aria-label="Trimestre">
-                            <button t-foreach="g.trimesters" t-as="t" t-key="t.id" type="button" class="btn"
-                                    t-att-class="t.id === g.active.id ? 'btn-primary' : 'btn-secondary'"
-                                    t-att-aria-pressed="t.id === g.active.id ? 'true' : 'false'"
-                                    t-on-click="() => this.selectTrimester(t)" t-out="t.name"/>
+                        <div t-if="g and g.years and g.years.length" class="o_edu_st_row">
+                            <select t-if="g.years.length > 1" class="form-select w-auto" aria-label="Ano lectivo" t-on-change="(ev) => this.selectYear(ev)">
+                                <option t-foreach="g.years" t-as="y" t-key="y.id" t-att-value="y.id" t-att-selected="y.id === g.enrollment_id">
+                                    <t t-out="y.label"/><t t-if="y.current"> (este ano)</t>
+                                </option>
+                            </select>
+                            <div t-if="g.active" class="btn-group" role="group" aria-label="Trimestre">
+                                <button t-foreach="g.trimesters" t-as="t" t-key="t.id" type="button" class="btn"
+                                        t-att-class="t.id === g.active.id ? 'btn-primary' : 'btn-secondary'"
+                                        t-att-aria-pressed="t.id === g.active.id ? 'true' : 'false'"
+                                        t-on-click="() => this.selectTrimester(t)" t-out="t.name"/>
+                            </div>
                         </div>
                     </header>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
-                    <t t-elif="!d.has_enrollment" t-call="edu_portal.StudentPage.NoEnrollment"><t t-set="what" t-value="'ainda não há notas'"/></t>
+                    <section t-elif="!g.years.length" class="o_edu_st_card text-muted">
+                        Ainda não tens matrículas com notas. Se achas que é um engano, fala com a secretaria.
+                    </section>
                     <t t-elif="g.blocked" t-call="edu_portal.StudentPage.GradesBlocked"/>
                     <section t-elif="g.preschool" class="o_edu_st_card">
                         Na Iniciação a avaliação é descritiva (Decreto Executivo 424/25): os professores escrevem um relatório por trimestre, sem notas de 0 a 20.
@@ -200,6 +211,12 @@
                         <t t-call="edu_portal.StudentPage.Debt"/>
                         <t t-set="tec" t-value="g.technical"/>
                         <t t-set="a" t-value="g.active"/>
+                        <div t-if="g.year_result" class="alert mb-0" t-att-class="g.year_result.bad ? 'alert-danger' : (g.year_result.good ? 'alert-success' : 'alert-warning')">
+                            <t t-set="r" t-value="g.year_result"/>
+                            <span class="fw-semibold">Resultado do ano: <t t-out="r.status"/></span><t t-if="r.average">, com média de <t t-out="r.average"/></t>.
+                            <t t-if="r.absence"> Reprovado por faltas.</t>
+                            <t t-if="r.negatives.length"> <t t-out="r.negatives.length === 1 ? 'Negativa a' : 'Negativas a'"/> <t t-out="this.list(r.negatives)"/>.</t>
+                        </div>
                         <p class="mb-0" t-out="g.summary"/>
                         <div class="o_edu_st_card p-0 o_edu_st_scroll">
                             <table class="table table-sm mb-0 o_edu_st_table">
@@ -255,7 +272,7 @@
                             Positiva a partir de <t t-out="g.pass_text"/>.
                             <t t-if="tec">NPP é a nota do professor e NPT a prova do trimestre. O CT junta o trimestre aos anteriores (CT2 = (CT1 + média do 2.º trimestre)/2); no 3.º trimestre só há a NPP e o CT3 é a CF. A prova do fim do ano é a prova global (PG), e a CA = 60% CF + 40% PG.</t>
                             <t t-else="">MAC é a média das avaliações contínuas, NPT a prova do trimestre e MT a média do trimestre. A CA é a média dos trimestres; a CF junta o exame nacional, quando o há.</t>
-                            As notas aparecem logo que os professores as lançam e podem mudar até o trimestre fechar.
+                            <t t-if="!g.past">As notas aparecem logo que os professores as lançam e podem mudar até o trimestre fechar.</t>
                         </p>
                     </t>
                 </div>

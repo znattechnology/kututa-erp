@@ -91,6 +91,52 @@ class TestStudentPortal(HttpCase):
         self.assertFalse(grades['trimesters'][-1]['has_npt'])
         self.assertIn('média de 13', grades['summary'])
 
+    def test_grades_of_past_years(self):
+        """As notas dos anos anteriores (as migradas do secPed): escolhe-se o ano; uma matrícula de outro aluno não."""
+        past_year = self.env['edu.academic.year'].create(
+            {'name': '2025/2026', 'date_start': date(2025, 9, 1), 'date_end': date(2026, 7, 31)}
+        )
+        past_year.action_generate_trimesters()
+        past_t1 = past_year.trimester_ids.sorted('number')[0]
+        past_class = self.env['edu.class'].create(
+            {
+                'name': 'A',
+                'course_id': self.edu_class.course_id.id,
+                'curriculum_year_id': self.edu_class.curriculum_year_id.id,
+                'academic_year_id': past_year.id,
+            }
+        )
+        past = self.env['edu.enrollment'].create({'student_id': self.ana.id, 'class_id': past_class.id})
+        past.sudo().state = 'completed'
+        self.env['edu.term.result'].create(
+            {
+                'enrollment_id': past.id,
+                'subject_id': self.lp.id,
+                'trimester_id': past_t1.id,
+                'mac': 15,
+                'npt': 15,
+                'mt': 15,
+                'has_mac': True,
+                'has_npt': True,
+                'has_mt': True,
+                'imported': True,
+            }  # fmt: skip
+        )
+        self.env['edu.subject.result']._recompute_keys([(past.id, self.lp.id)])
+        Portal = self.env['edu.student.portal'].with_user(self.ana_user)
+        grades = Portal.page_data('grades')['grades']
+        self.assertEqual(grades['enrollment_id'], self.enrollments[0].id, 'abre no ano corrente')
+        self.assertEqual([y['id'] for y in grades['years']], [self.enrollments[0].id, past.id])
+        grades = Portal.page_data('grades', {'enrollment_id': past.id})['grades']
+        self.assertTrue(grades['past'])
+        self.assertEqual(grades['year'], '2025/2026')
+        row = next(r for r in grades['subjects'] if r['id'] == self.lp.id)
+        self.assertEqual(row['by_trimester'][past_t1.id]['ct']['text'], '15')
+        self.assertIn('tiveste', grades['summary'])
+        # A matrícula de outro aluno não se abre: fica o ano corrente do próprio aluno.
+        bento = Portal.page_data('grades', {'enrollment_id': self.enrollments[1].id})['grades']
+        self.assertEqual(bento['enrollment_id'], self.enrollments[0].id)
+
     def test_pages_and_privacy(self):
         Portal = self.env['edu.student.portal'].with_user(self.ana_user)
         for page in ('home', 'grades', 'schedule', 'exams', 'absences', 'fees', 'profile'):

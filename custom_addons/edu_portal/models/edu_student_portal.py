@@ -104,6 +104,17 @@ class EduStudentPortal(models.AbstractModel):
         )
 
     @api.model
+    def _enrollments(self, student):
+        """As matrículas do aluno em todos os anos (do mais recente para o mais antigo), menos as pendentes e as
+        anuladas: as dos anos migrados do secPed também, com as notas da pauta assinada."""
+        return (
+            self.env['edu.enrollment']
+            .sudo()
+            .search([('student_id', '=', student.id), ('state', 'not in', ('draft', 'dropped'))])
+            .sorted(lambda e: (e.academic_year_id.date_start, e.id), reverse=True)
+        )
+
+    @api.model
     def _now(self, student):
         """A data e a hora locais (o fuso do utilizador; por omissão o de Luanda)."""
         tz = pytz.timezone(self.env.user.tz or 'Africa/Luanda')
@@ -159,7 +170,20 @@ class EduStudentPortal(models.AbstractModel):
                 }
             )
         elif page == 'grades':
-            data['grades'] = self.grades(student, enrollment, options.get('trimester_id'))
+            enrollments = self._enrollments(student)
+            chosen = enrollments.filtered(lambda e: e.id == options.get('enrollment_id'))[:1]
+            chosen = chosen or (enrollment if enrollment in enrollments else enrollments[:1])
+            grades = self.grades(student, chosen, options.get('trimester_id'))
+            grades['years'] = [
+                {
+                    'id': e.id,
+                    'label': f'{e.academic_year_id.name}, {e.class_id._editor_label()}',
+                    'current': e.academic_year_id.is_current,
+                }
+                for e in enrollments
+            ]
+            grades['enrollment_id'] = chosen.id
+            data['grades'] = grades
         elif page == 'schedule':
             lessons = self.schedule(student, enrollment)
             data.update(
@@ -192,14 +216,22 @@ class EduStudentPortal(models.AbstractModel):
         MAC e a prova; no técnico a NPP e a NPT), a classificação do trimestre (MT ou CT, que no técnico engloba os
         anteriores) e as classificações do ano com as siglas da pauta (técnico CF, PG, CA, CFD; geral CA, EN, CF, CFD).
         As notas vêem-se logo que são lançadas. Com propinas em atraso, a escola pode escondê-las (modo «bloquear»)."""
-        data = {'blocked': False, 'preschool': False, 'trimesters': [], 'subjects': []}
+        data = {'blocked': False, 'preschool': False, 'trimesters': [], 'subjects': [], 'year_result': None}
         if not enrollment:
             return data
+        edu_class = enrollment.class_id
+        data.update(
+            {
+                'year': enrollment.academic_year_id.name,
+                'class': edu_class._editor_label(),
+                'level': edu_class.level_id.name or '',
+                'past': not enrollment.academic_year_id.is_current,
+            }
+        )
         blocked, _message = student._edu_gate('grades')
         if blocked:
             data['blocked'] = True
             return data
-        edu_class = enrollment.class_id
         if edu_class.level_id.code == 'INICIACAO':
             data['preschool'] = True
             return data
@@ -304,6 +336,7 @@ class EduStudentPortal(models.AbstractModel):
             else max((len(r['by_trimester'][active]['components']) for r in rows), default=0)
         )
         data['summary'] = self._grades_summary(data, rows, active, round_fn)
+        data['year_result'] = self._year_result(enrollment)
 
         # Para o browser: cada nota já escrita como no secPed e marcada positiva ou negativa (pela regra de
         # arredondamento da escola: 9,5 é positiva onde se arredonda).
@@ -328,16 +361,37 @@ class EduStudentPortal(models.AbstractModel):
         graded = [r for r in rows if r['by_trimester'][active]['ct'] is not None]
         name = data['active']['name']
         if not graded:
+            if data.get('past'):
+                return f'Não há notas do {name} neste ano lectivo.'
             return f'Ainda não tens notas no {name}. Aparecem aqui logo que os professores as lançam.'
         average = sum(r['by_trimester'][active]['ct'] for r in graded) / len(graded)
         negatives = [r['name'] for r in graded if round_fn(r['by_trimester'][active]['ct']) < data['pass_grade']]
         text = (
-            f'No {name} tens nota a {plural(len(graded), "uma disciplina", "disciplinas")}, '
+            f'No {name} {"tiveste" if data.get("past") else "tens"} nota a '
+            f'{plural(len(graded), "uma disciplina", "disciplinas")}, '
             f'com média de {grade_text(average)}. '
         )
         if not negatives:
+            if data.get('past'):
+                return text + ('Positiva a todas.' if len(graded) > 1 else 'Foi positiva.')
             return text + ('Positiva a todas.' if len(graded) > 1 else 'É positiva.')
         return text + (f'{plural(len(negatives), "Uma negativa", "negativas").capitalize()}: {", ".join(negatives)}.')
+
+    @api.model
+    def _year_result(self, enrollment):
+        """A decisão do ano (transita, retido, concluiu…), quando já existe: a média e as disciplinas negativas."""
+        result = self.env['edu.year.result'].sudo().search([('enrollment_id', '=', enrollment.id)], limit=1)
+        if not result or result.status == 'pending':
+            return None
+        status = dict(result._fields['status']._description_selection(self.env))[result.status]
+        return {
+            'status': status,
+            'good': result.status in ('promoted', 'graduated'),
+            'bad': result.status == 'retained',
+            'average': grade_text(result.average) if result.average else '',
+            'negatives': sorted(result.negative_subject_ids.mapped('name'), key=str.lower),
+            'absence': result.absence_excluded,
+        }
 
     # Horário
 
