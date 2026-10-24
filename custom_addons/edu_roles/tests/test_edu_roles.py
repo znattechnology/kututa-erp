@@ -146,6 +146,48 @@ class TestEduRoles(TransactionCase):
         menus = self.env['ir.ui.menu'].with_user(self.teacher_user).load_menus(False)
         self.assertEqual(menus['root']['children'][0], self.env.ref('edu_roles.menu_edu_teacher_root').id)
 
+    def test_attendance_page(self):
+        """«Presenças», como no secPed: a chamada começa com todos presentes mas só fica registada quando se guarda;
+        com o sumário, a aula fica dada. Só o director de turma justifica."""
+        self.year.action_generate_trimesters()
+        self.year.trimester_ids.sorted('number')[0].is_current = True
+        student = self.env['edu.student'].create({'name': 'Aluno da chamada'})
+        enrollment = self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': self.class_a.id})
+        enrollment.action_confirm()
+        Page = self.env['edu.attendance.page'].with_user(self.teacher_user)
+        options = Page.options()
+        self.assertIn(self.class_a.id, [c['id'] for c in options['classes']])
+        day = self.year.trimester_ids.sorted('number')[0].date_start
+        lesson = Page.new_lesson(
+            self.class_a.id, self.lp.id, {'date': fields.Date.to_string(day), 'hour_from': 8.0, 'hour_to': 9.0}
+        )
+        roll = Page.roll(lesson['id'])
+        self.assertFalse(roll['saved'])
+        row = next(r for r in roll['rows'] if r['enrollment_id'] == enrollment.id)
+        self.assertEqual((row['state'], row['can_justify']), ('present', False))
+        # Sem sumário: a chamada fica guardada, a aula ainda não está dada.
+        saved = Page.save(lesson['id'], [dict(row, state='absent')], '')
+        self.assertTrue(saved['saved'])
+        self.assertFalse(saved['done'])
+        self.assertEqual(Page.lessons(self.class_a.id, self.lp.id)[0]['roll_saved'], True)
+        # Justificar é do director de turma.
+        with self.assertRaises(AccessError):
+            Page.save(lesson['id'], [dict(row, state='excused', justification='Doença')], '')
+        done = Page.save(lesson['id'], [dict(row, state='late')], 'Revisão do capítulo 3')
+        self.assertTrue(done['done'])
+        self.assertEqual(done['lesson']['state'], 'done')
+        line = self.env['edu.lesson.attendance'].search([('enrollment_id', '=', enrollment.id)])
+        self.assertEqual(line.state, 'late')
+        # A mesma aula outra vez não se duplica.
+        self.assertTrue(
+            Page.new_lesson(
+                self.class_a.id, self.lp.id, {'date': fields.Date.to_string(day), 'hour_from': 8.0, 'hour_to': 9.0}
+            )['existed']
+        )
+        # Outra turma, onde não dá aulas nem é director: recusada.
+        with self.assertRaises(AccessError):
+            Page.lessons(self.class_b.id, self.lp.id)
+
     def test_academic_calendar(self):
         """«Calendário académico», como no secPed: os eventos do ano e o início e o fim de cada trimestre; as datas
         comemorativas do calendário nacional vêm marcadas (o professor pode escondê-las)."""
@@ -356,9 +398,11 @@ class TestEduRoles(TransactionCase):
         self.assertEqual([lesson['schedule_id'] for lesson in data['lessons']], schedule.ids)
         self.assertFalse(data['lessons'][0]['lesson_id'])
         action = Home.open_lesson(schedule.id, fields.Date.to_string(today))
-        lesson = self.env['edu.lesson'].browse(action['res_id'])
+        self.assertEqual(action['tag'], 'edu_roles.attendance')
+        lesson = self.env['edu.lesson'].browse(action['context']['attendance_lesson_id'])
         self.assertEqual((lesson.schedule_id, lesson.date, lesson.teacher_id), (schedule, today, self.teacher))
-        self.assertEqual(Home.open_lesson(schedule.id, fields.Date.to_string(today))['res_id'], lesson.id)
+        again = Home.open_lesson(schedule.id, fields.Date.to_string(today))
+        self.assertEqual(again['context']['attendance_lesson_id'], lesson.id)
         self.assertEqual(Home.home_data()['lessons'][0]['lesson_id'], lesson.id)
         # «O meu horário»: as aulas da semana (minutos desde a meia-noite), a carga e a folha A4 na aplicação.
         week = Home.schedule_data()

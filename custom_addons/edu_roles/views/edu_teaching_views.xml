@@ -8,17 +8,6 @@
         <field name="domain">['|', ('assignment_ids.teacher_id.user_id', '=', uid), ('director_id.user_id', '=', uid)]</field>
         <field name="context">{'search_default_current_year': 1, 'create': False}</field>
     </record>
-    <record id="action_my_lessons" model="ir.actions.act_window">
-        <field name="name">As minhas aulas</field>
-        <field name="res_model">edu.lesson</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">[('teacher_id.user_id', '=', uid)]</field>
-        <field name="context">{'search_default_scheduled': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Sem aulas por dar</p>
-            <p>Abra a chamada, marque as faltas, escreva o sumário e dê a aula por dada.</p>
-        </field>
-    </record>
     <record id="action_my_assessments" model="ir.actions.act_window">
         <field name="name">Avaliações contínuas (MAC)</field>
         <field name="res_model">edu.assessment</field>
@@ -97,7 +86,12 @@
     <menuitem id="menu_my_supervisions" name="Vigilâncias" action="action_teacher_supervisions" parent="menu_teacher_classes" sequence="50"/>
     <menuitem id="menu_teacher_calendar" name="Calendário académico" action="action_academic_calendar"
               parent="menu_teacher_classes" sequence="60"/>
-    <menuitem id="menu_my_lessons" name="Presenças" action="action_my_lessons" parent="menu_teacher_classes" sequence="70"/>
+    <!-- «Presenças» (acção cliente), como a página do secPed: hoje, outra aula, as aulas do ano e a chamada. -->
+    <record id="action_teacher_attendance" model="ir.actions.client">
+        <field name="name">Presenças</field>
+        <field name="tag">edu_roles.attendance</field>
+    </record>
+    <menuitem id="menu_my_lessons" name="Presenças" action="action_teacher_attendance" parent="menu_teacher_classes" sequence="70"/>
     <menuitem id="menu_teacher_absence_summary" name="Relatório de faltas" action="edu_attendance.action_edu_absence_summary"
               parent="menu_teacher_classes" sequence="80"/>
     <!-- Formação técnica (só numa escola com o ensino técnico) -->

@@ -1,11 +1,8 @@
-import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.addons.edu_timetable.models.hr_employee import _current_year, teacher_lessons
 from odoo.exceptions import UserError
-
-_logger = logging.getLogger(__name__)
 
 WEEKDAYS = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo']
 
@@ -118,7 +115,8 @@ class EduTeacherHome(models.AbstractModel):
 
     @api.model
     def open_lesson(self, schedule_id, date):
-        """A aula do horário nesse dia (criada se ainda não existe), aberta para a chamada e o sumário."""
+        """A aula do horário nesse dia (criada se ainda não existe), aberta em «Presenças» para a chamada e o
+        sumário."""
         employee = self._employee()
         schedule = self.env['edu.schedule'].sudo().browse(schedule_id).exists()
         day = fields.Date.to_date(date)
@@ -135,19 +133,12 @@ class EduTeacherHome(models.AbstractModel):
                 'date': day,
             }
         )
-        if lesson.state == 'scheduled' and not lesson.attendance_ids and day <= fields.Date.context_today(self):
-            # Um toque abre a chamada (todos presentes), como no secPed; num trimestre fechado fica só a aula.
-            try:
-                with self.env.cr.savepoint():
-                    lesson.with_user(self.env.user).action_open_roll_call()
-            except UserError as error:
-                _logger.info('Chamada não aberta para %s: %s', lesson.display_name, error)
+        # A chamada faz-se em «Presenças», como no secPed: só fica registada quando se guarda.
         return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'edu.lesson',
-            'res_id': lesson.id,
-            'view_mode': 'form',
-            'views': [(False, 'form')],
+            'type': 'ir.actions.client',
+            'tag': 'edu_roles.attendance',
+            'name': self.env._('Presenças'),
+            'context': {'attendance_lesson_id': lesson.id},
         }
 
     # O meu horário

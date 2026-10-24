@@ -1,0 +1,268 @@
+// Presenças: a estrutura da página do secPed-Express (hoje, outra aula, as aulas do ano, a chamada) com as cores do
+// sistema. Cada botão da chamada tem a sua cor quando escolhido: presente verde, atraso âmbar, falta vermelho,
+// justificada neutro.
+.o_edu_attendance {
+    .o_edu_att_body {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_att_title {
+        margin: 0 0 4px;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_att_h2 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_att_h3 {
+        margin: 0 0 4px;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .o_edu_att_card {
+        padding: 16px 20px;
+        overflow: hidden;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_att_list {
+        margin: 0;
+        padding: 0 20px;
+        list-style: none;
+
+        > li {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 16px;
+            padding: 12px 0;
+            border-top: 1px solid $border-color;
+
+            &:first-child {
+                border-top: 0;
+            }
+        }
+    }
+
+    .o_edu_att_hours {
+        min-width: 96px;
+        color: $text-muted;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_att_other {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .o_edu_att_pickers {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 12px;
+
+        > label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 240px;
+        }
+    }
+
+    .o_edu_att_form_grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+
+        > label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+    }
+
+    .o_edu_att_form_buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .o_edu_att_split {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+
+        @include media-breakpoint-down(lg) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_att_lessons {
+        max-height: 70vh;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto;
+        list-style: none;
+
+        > li + li {
+            border-top: 1px solid $border-color;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            border: 0;
+            background: none;
+            color: $body-color;
+            text-align: left;
+
+            &:hover,
+            &.active {
+                background: $gray-100;
+            }
+
+            &.active {
+                box-shadow: inset 3px 0 0 $primary;
+            }
+        }
+    }
+
+    .o_edu_att_roll {
+        scroll-margin-top: 16px;
+    }
+
+    .o_edu_att_roll_head {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid $border-color;
+    }
+
+    .o_edu_att_roll_tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        > input {
+            flex: 1 1 220px;
+        }
+    }
+
+    .o_edu_att_students {
+        max-height: 60vh;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto;
+        list-style: none;
+
+        > li {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 16px;
+            padding: 8px 20px;
+            border-top: 1px solid $border-color;
+
+            &:first-child {
+                border-top: 0;
+            }
+        }
+    }
+
+    .o_edu_att_number {
+        width: 24px;
+        color: $text-muted;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+
+    .o_edu_att_name {
+        flex: 1 1 200px;
+        min-width: 0;
+    }
+
+    .o_edu_att_marks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .o_edu_att_mark {
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+        background: $o-view-background-color;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        font-weight: 500;
+
+        &:hover:not(:disabled) {
+            background: $gray-100;
+        }
+
+        &:disabled {
+            opacity: 0.45;
+        }
+    }
+
+    $marks: (
+        present: $success,
+        late: $warning,
+        absent: $danger,
+        excused: $gray-600,
+    );
+
+    @each $name, $color in $marks {
+        .o_edu_att_on_#{$name} {
+            border-color: $color;
+            background: mix($color, $o-view-background-color, 14%);
+            color: mix($color, $body-color, 70%);
+
+            &:disabled {
+                opacity: 1;
+            }
+        }
+    }
+
+    .o_edu_att_reason {
+        flex: 1 1 100%;
+        margin-left: 40px;
+    }
+
+    .o_edu_att_summary {
+        padding: 12px 20px;
+        border-top: 1px solid $border-color;
+    }
+
+    // O rodapé fica à vista enquanto se percorre uma turma grande.
+    .o_edu_att_footer {
+        position: sticky;
+        bottom: 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 20px;
+        border-top: 1px solid $border-color;
+        background: $o-view-background-color;
+    }
+}
