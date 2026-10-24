@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_roles.TeacherProfilePage">
+        <div class="o_action o_edu_teacher_account">
+            <Layout display="this.display">
+                <div class="o_edu_ta_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_ta_title">O meu perfil</h1>
+                        <p class="mb-0 text-muted">O seu trabalho e os seus dados na escola.</p>
+                    </header>
+                    <section t-if="!d.has_employee" class="o_edu_ta_card">
+                        O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
+                    </section>
+                    <t t-else="">
+                        <p class="mb-0 fs-6" t-out="this.sentence"/>
+                        <div class="o_edu_ta_grid">
+                            <section class="o_edu_ta_card" aria-labelledby="o_edu_ta_work">
+                                <h2 id="o_edu_ta_work" class="o_edu_ta_h2">O seu trabalho este ano</h2>
+                                <dl class="o_edu_ta_fields">
+                                    <dt>Disciplinas</dt>
+                                    <dd><t t-if="d.subjects.length" t-out="this.list(d.subjects)"/><span t-else="" class="text-muted">Nenhuma atribuída</span></dd>
+                                    <dt>Turmas</dt>
+                                    <dd><t t-if="d.classes.length" t-out="this.list(d.classes)"/><span t-else="" class="text-muted">Nenhuma</span></dd>
+                                    <dt>Direcção de turma</dt>
+                                    <dd><t t-if="d.directs.length" t-out="this.list(d.directs)"/><span t-else="" class="text-muted">Não tem</span></dd>
+                                    <dt>Carga semanal</dt>
+                                    <dd t-att-class="{'text-danger fw-semibold': this.overLoad}"><t t-out="this.loadText"/><t t-if="this.overLoad">, acima do máximo</t></dd>
+                                    <t t-if="d.coordination">
+                                        <dt>Coordenação</dt>
+                                        <dd t-out="d.coordination"/>
+                                    </t>
+                                    <dt>Departamento</dt>
+                                    <dd><t t-if="d.department" t-out="d.department"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>Cargo</dt>
+                                    <dd><t t-if="d.job" t-out="d.job"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                </dl>
+                            </section>
+                            <section class="o_edu_ta_card" aria-labelledby="o_edu_ta_data">
+                                <h2 id="o_edu_ta_data" class="o_edu_ta_h2">Os seus dados</h2>
+                                <dl class="o_edu_ta_fields">
+                                    <dt>Nome</dt><dd t-out="d.name"/>
+                                    <dt>Email</dt>
+                                    <dd><t t-if="d.email" t-out="d.email"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>Telefone</dt>
+                                    <dd><t t-if="d.phone" t-out="d.phone"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>Bilhete de identidade</dt>
+                                    <dd><t t-if="d.id_number" t-out="d.id_number"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>N.º da Segurança Social</dt>
+                                    <dd><t t-if="d.inss" t-out="d.inss"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>Na escola desde</dt>
+                                    <dd><t t-if="d.since" t-out="d.since"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                </dl>
+                                <p class="mb-0 small text-muted">Se algum dado estiver errado ou em falta, peça à secretaria para o corrigir.</p>
+                            </section>
+                        </div>
+                        <section class="o_edu_ta_card" aria-labelledby="o_edu_ta_security">
+                            <h2 id="o_edu_ta_security" class="o_edu_ta_h2">Segurança</h2>
+                            <div class="o_edu_ta_row">
+                                <p class="mb-0 text-muted">Mude a palavra-passe se achar que alguém a sabe.</p>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.changePassword()">Alterar a palavra-passe</button>
+                            </div>
+                        </section>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <t t-name="edu_roles.TeacherPayslipsPage">
+        <div class="o_action o_edu_teacher_account">
+            <Layout display="this.display">
+                <div class="o_edu_ta_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_ta_title">Recibos e férias</h1>
+                        <p class="mb-0 text-muted">Os seus recibos de vencimento<t t-if="d.time_off"> e as suas férias e ausências</t>.</p>
+                    </header>
+                    <section t-if="!d.has_employee" class="o_edu_ta_card">
+                        O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
+                    </section>
+                    <t t-else="">
+                        <section t-if="d.time_off" aria-labelledby="o_edu_ta_leaves" class="o_edu_ta_section">
+                            <div class="o_edu_ta_row">
+                                <h2 id="o_edu_ta_leaves" class="o_edu_ta_h2 mb-0">Férias e ausências deste ano</h2>
+                                <button type="button" class="btn btn-primary" t-on-click="() => this.requestTimeOff()">Pedir férias ou ausência</button>
+                            </div>
+                            <p t-if="!d.time_off.length" class="o_edu_ta_card mb-0 text-muted">Ainda não pediu férias nem ausências este ano.</p>
+                            <ul t-else="" class="o_edu_ta_card o_edu_ta_list">
+                                <li t-foreach="d.time_off" t-as="leave" t-key="leave.id">
+                                    <span class="flex-grow-1">
+                                        <span class="d-block fw-semibold" t-out="leave.type"/>
+                                        <span class="d-block small text-muted"><t t-out="leave.from"/><t t-if="leave.to !== leave.from"> a <t t-out="leave.to"/></t>, <t t-out="this.days(leave)"/></span>
+                                    </span>
+                                    <span class="badge" t-att-class="this.leaveClass(leave)" t-out="leave.state_label"/>
+                                </li>
+                            </ul>
+                        </section>
+
+                        <section aria-labelledby="o_edu_ta_slips" class="o_edu_ta_section">
+                            <h2 id="o_edu_ta_slips" class="o_edu_ta_h2 mb-0">Recibos de vencimento</h2>
+                            <p t-if="!d.has_payroll" class="o_edu_ta_card mb-0 text-muted">O processamento salarial não está activo nesta escola.</p>
+                            <p t-elif="!d.payslips.length" class="o_edu_ta_card mb-0 text-muted">
+                                Ainda não há recibos fechados. Aparecem aqui quando os Recursos Humanos fecham a folha do mês.
+                            </p>
+                            <ul t-else="" class="o_edu_ta_card o_edu_ta_list">
+                                <li t-foreach="d.payslips" t-as="slip" t-key="slip.id">
+                                    <span class="flex-grow-1">
+                                        <span class="d-block fw-semibold"><t t-out="slip.period"/><t t-if="slip.final"> · contas finais</t></span>
+                                        <span class="d-block small text-muted">Bruto <t t-out="slip.gross"/>, descontos <t t-out="slip.deductions"/><t t-if="slip.number"> · n.º <t t-out="slip.number"/></t></span>
+                                    </span>
+                                    <span class="o_edu_ta_net" t-out="slip.net"/>
+                                    <button type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openPayslip(slip, true)">Ver</button>
+                                    <button type="button" class="btn btn-sm btn-secondary" title="O recibo em PDF" t-on-click="() => this.openPayslip(slip, false)">PDF</button>
+                                </li>
+                            </ul>
+                        </section>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+</templates>

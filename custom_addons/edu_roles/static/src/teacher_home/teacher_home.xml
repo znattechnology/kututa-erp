@@ -90,7 +90,7 @@
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('mail.action_discuss')">
                                         <i class="oi me-2" data-icon="forum" aria-hidden="true"/>Mensagens
                                     </button>
-                                    <button type="button" class="btn btn-link" t-on-click="() => this.openMethod('action_my_profile')">
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_profile_page')">
                                         <i class="oi me-2" data-icon="person" aria-hidden="true"/>O meu perfil
                                     </button>
                                 </div>

@@ -470,12 +470,13 @@ class TestEduRoles(TransactionCase):
         self.assertEqual(week['load']['count'], 1)
         self.assertTrue(week['load']['notes'])  # director da turma B: menos 2 tempos
         self.assertEqual(Home.schedule_report(True)['report_type'], 'qweb-html')
-        self.assertEqual(Home.action_my_profile()['res_id'], self.teacher.id)
-        if 'l10n_ao_payroll.payslip' in self.env:
-            self.assertEqual(Home.action_my_payslips()['res_model'], 'l10n_ao_payroll.payslip')
-        else:
-            with self.assertRaises(UserError):
-                Home.action_my_payslips()
+        # «Meu perfil» e «Recibos e férias», como no secPed.
+        profile = Home.profile_data()
+        self.assertEqual(profile['classes'], [self.class_a._editor_label()])
+        self.assertIn(self.class_b._editor_label(), profile['directs'])
+        payslips = Home.payslips_data()
+        self.assertEqual(payslips['has_payroll'], 'l10n_ao_payroll.payslip' in self.env)
+        self.assertEqual(payslips['payslips'], [])
         # Um tempo de outro professor não se abre.
         other = self.env['hr.employee'].create({'name': 'Outro', 'edu_is_teacher': True})
         schedule.teacher_id = other

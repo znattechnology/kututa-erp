@@ -41,27 +41,6 @@
         <field name="name">Calendário académico</field>
         <field name="tag">edu_roles.academic_calendar</field>
     </record>
-    <record id="action_teacher_profile" model="ir.actions.server">
-        <field name="group_ids" eval="[(4, ref('edu_core.group_edu_teacher'))]"/>
-        <field name="name">O meu perfil</field>
-        <field name="model_id" ref="model_edu_teacher_home"/>
-        <field name="state">code</field>
-        <field name="code">action = model.action_my_profile()</field>
-    </record>
-    <record id="action_teacher_payslips" model="ir.actions.server">
-        <field name="group_ids" eval="[(4, ref('edu_core.group_edu_teacher'))]"/>
-        <field name="name">Os meus recibos</field>
-        <field name="model_id" ref="model_edu_teacher_home"/>
-        <field name="state">code</field>
-        <field name="code">action = model.action_my_payslips()</field>
-    </record>
-    <record id="action_teacher_time_off" model="ir.actions.server">
-        <field name="group_ids" eval="[(4, ref('edu_core.group_edu_teacher'))]"/>
-        <field name="name">Férias e ausências</field>
-        <field name="model_id" ref="model_edu_teacher_home"/>
-        <field name="state">code</field>
-        <field name="code">action = model.action_my_time_off()</field>
-    </record>
 
     <menuitem id="menu_edu_teacher_root" name="Painel do Professor" sequence="2" groups="edu_core.group_edu_teacher"
               action="action_teacher_home" web_icon="edu_roles,static/description/icon_teacher.png"/>
@@ -108,9 +87,17 @@
     <menuitem id="menu_teacher_messages" name="Mensagens" action="mail.action_discuss" parent="menu_teacher_communication" sequence="10"/>
     <!-- Conta -->
     <menuitem id="menu_teacher_account" name="Conta" parent="menu_edu_teacher_root" sequence="50"/>
-    <menuitem id="menu_teacher_profile" name="Meu perfil" action="action_teacher_profile" parent="menu_teacher_account" sequence="10"/>
-    <menuitem id="menu_teacher_payslips" action="action_teacher_payslips" parent="menu_teacher_account" sequence="20"/>
-    <menuitem id="menu_teacher_time_off" action="action_teacher_time_off" parent="menu_teacher_account" sequence="30"/>
+    <!-- «Meu perfil» e «Recibos e férias» (acções cliente), como as páginas do secPed. -->
+    <record id="action_teacher_profile_page" model="ir.actions.client">
+        <field name="name">O meu perfil</field>
+        <field name="tag">edu_roles.teacher_profile</field>
+    </record>
+    <record id="action_teacher_payslips_page" model="ir.actions.client">
+        <field name="name">Recibos e férias</field>
+        <field name="tag">edu_roles.teacher_payslips</field>
+    </record>
+    <menuitem id="menu_teacher_profile" name="Meu perfil" action="action_teacher_profile_page" parent="menu_teacher_account" sequence="10"/>
+    <menuitem id="menu_teacher_payslips" name="Recibos e férias" action="action_teacher_payslips_page" parent="menu_teacher_account" sequence="20"/>
     <!-- O conselho de turma (menu do módulo das avaliações) deixa o menu do professor: abre-se na turma. -->
     <record id="edu_evaluation.menu_edu_council_session" model="ir.ui.menu">
         <field name="parent_id" ref="edu_evaluation.menu_edu_evaluation"/>

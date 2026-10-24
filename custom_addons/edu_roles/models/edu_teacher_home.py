@@ -3,7 +3,12 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.addons.edu_timetable.models.hr_employee import _current_year, teacher_lessons
 from odoo.exceptions import UserError
+from odoo.tools import format_amount
 
+MONTHS = [
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+]  # fmt: skip
 WEEKDAYS = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo']
 
 
@@ -361,31 +366,133 @@ class EduTeacherHome(models.AbstractModel):
 
     # A conta do professor (os módulos de RH, quando instalados)
 
-    @api.model
-    def action_my_profile(self):
-        employee = self._employee()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': self.env._('O meu perfil'),
-            'res_model': 'hr.employee.public',
-            'res_id': employee.id,
-            'view_mode': 'form',
-            'views': [(False, 'form')],
-        }
+    # O meu perfil e os meus recibos (como as páginas do secPed)
 
     @api.model
-    def action_my_payslips(self):
-        if 'l10n_ao_payroll.payslip' not in self.env:
-            raise UserError(self.env._('O processamento salarial não está instalado.'))
-        return {
-            'type': 'ir.actions.act_window',
-            'name': self.env._('Os meus recibos'),
-            'res_model': 'l10n_ao_payroll.payslip',
-            'view_mode': 'list,form',
-            'views': [(False, 'list'), (False, 'form')],
-            'domain': [('employee_id.user_id', '=', self.env.uid), ('state', '=', 'done')],
-            'context': {'create': False, 'edit': False, 'delete': False},
+    def profile_data(self):
+        """«Meu perfil» (acção cliente ``edu_roles.teacher_profile``), como no secPed: o trabalho deste ano
+        (disciplinas, turmas, direcção de turma, carga, departamento e cargo) e os dados da ficha. Os dados
+        corrigem-se na secretaria; aqui só se muda a palavra-passe."""
+        employee = self.env.user.employee_id
+        data = {'has_employee': bool(employee), 'name': self.env.user.name}
+        if not employee:
+            return data
+        teacher = employee.sudo()
+        year = _current_year(self.env, teacher.company_id)
+        assignments = (
+            self.env['edu.teaching.assignment']
+            .sudo()
+            .search([('teacher_id', '=', teacher.id), ('academic_year_id', '=', year.id)])
+            if year
+            else self.env['edu.teaching.assignment']
+        )
+        subjects = assignments.subject_id.sorted(lambda s: s.name or '')
+        classes = assignments.class_id.sorted(lambda c: (c.class_number, c.name or ''))
+        directed = (
+            self.env['edu.class'].sudo().search([('director_id', '=', teacher.id), ('academic_year_id', '=', year.id)])
+            if year
+            else self.env['edu.class']
+        )
+
+        def field(name):
+            return teacher[name] if name in teacher._fields else False
+
+        since = field('l10n_ao_admission_date') or field('first_contract_date')
+        data.update(
+            {
+                'year': year.name if year else '',
+                'subjects': subjects.mapped('name'),
+                'classes': [c._editor_label() for c in classes],
+                'directs': [c._editor_label() for c in directed],
+                'load': {
+                    'count': teacher.edu_weekly_load,
+                    'limit': teacher.edu_weekly_load_max,
+                    'notes': teacher._edu_load_notes(),
+                },
+                'department': teacher.department_id.name or '',
+                'job': teacher.job_title or teacher.job_id.name or '',
+                'coordination': field('edu_coordination_id').name if field('edu_coordination_id') else '',
+                'email': teacher.work_email or self.env.user.email or '',
+                'phone': teacher.mobile_phone or teacher.work_phone or '',
+                'id_number': field('identification_id') or '',
+                'inss': field('l10n_ao_inss_number') or '',
+                'since': f'{MONTHS[since.month - 1]} de {since.year}' if since else '',
+            }
+        )
+        return data
+
+    @api.model
+    def change_password(self):
+        """O assistente do Odoo para mudar a palavra-passe do próprio utilizador."""
+        return self.env.user.preference_change_password()
+
+    @api.model
+    def payslips_data(self):
+        """«Recibos e férias» (acção cliente ``edu_roles.teacher_payslips``), como no secPed: os recibos fechados e,
+        para quem tem acesso às ausências, as férias e as faltas pedidas este ano."""
+        employee = self.env.user.employee_id
+        data = {
+            'has_employee': bool(employee),
+            'has_payroll': 'l10n_ao_payroll.payslip' in self.env,
+            'payslips': [],
+            'time_off': None,
         }
+        if not employee:
+            return data
+        if data['has_payroll']:
+            # A procura é a do próprio (só os seus recibos fechados); a folha do mês lê-se em sudo.
+            payslips = (
+                self.env['l10n_ao_payroll.payslip']
+                .search([('employee_id', '=', employee.id), ('state', '=', 'done')])
+                .sudo()
+                .sorted(lambda slip: (slip.run_id.year, int(slip.run_id.month or 0), slip.id), reverse=True)
+            )
+            data['payslips'] = [
+                {
+                    'id': slip.id,
+                    'period': slip.run_id.name,
+                    'number': slip.number or '',
+                    'final': slip.kind == 'final',
+                    'gross': format_amount(self.env, slip.gross, slip.currency_id),
+                    'deductions': format_amount(self.env, slip.deductions, slip.currency_id),
+                    'net': format_amount(self.env, slip.net, slip.currency_id),
+                }
+                for slip in payslips
+            ]
+        group = self.env.ref('hr_holidays.group_hr_holidays_employee', raise_if_not_found=False)
+        if 'hr.leave' in self.env and group and group in self.env.user.all_group_ids:
+            today = fields.Date.context_today(self)
+            leaves = (
+                self.env['hr.leave']
+                .sudo()
+                .search(
+                    [('employee_id', '=', employee.id), ('request_date_from', '>=', today.replace(month=1, day=1))],
+                    order='request_date_from desc',
+                )
+            )
+            states = dict(self.env['hr.leave']._fields['state']._description_selection(self.env))
+            data['time_off'] = [
+                {
+                    'id': leave.id,
+                    'type': leave.holiday_status_id.name,
+                    'from': leave.request_date_from.strftime('%d/%m/%Y'),
+                    'to': leave.request_date_to.strftime('%d/%m/%Y'),
+                    'days': leave.number_of_days,
+                    'state': leave.state,
+                    'state_label': states.get(leave.state, leave.state),
+                }
+                for leave in leaves
+            ]
+        return data
+
+    @api.model
+    def payslip_report(self, payslip_id, preview=True):
+        """O recibo de vencimento em folha A4: na aplicação (Ver) ou em PDF (Descarregar)."""
+        payslip = self.env['l10n_ao_payroll.payslip'].browse(payslip_id).exists()
+        if not payslip or payslip.employee_id.user_id != self.env.user or payslip.state != 'done':
+            raise UserError(self.env._('Este recibo não é seu.'))
+        report = self.env.ref('l10n_ao_payroll.action_report_payslip')
+        return report.preview_action(payslip) if preview else report.report_action(payslip)
 
     @api.model
     def action_my_time_off(self):

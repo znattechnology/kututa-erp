@@ -8,11 +8,8 @@ TECHNICAL_MENUS = ('edu_roles.menu_teacher_training',)
 # O professor tem só o seu painel, como no secPed: as mensagens abrem-se em «Comunicação» e o calendário da escola em
 # «Calendário académico». As aplicações do Odoo com o mesmo papel ficam escondidas.
 TEACHER_HIDDEN_APPS = ('mail.menu_root_discuss', 'calendar.mail_menu_calendar')
-# A conta mostra os recibos e as férias só com os módulos de RH instalados.
-OPTIONAL_MENUS = {
-    'edu_roles.menu_teacher_payslips': 'l10n_ao_payroll.payslip',
-    'edu_roles.menu_teacher_time_off': 'hr.leave',
-}
+# A conta mostra «Recibos e férias» com o processamento salarial ou as ausências instalados.
+OPTIONAL_MENUS = {'edu_roles.menu_teacher_payslips': ('l10n_ao_payroll.payslip', 'hr.leave')}
 
 
 class IrUiMenu(models.Model):
@@ -37,12 +34,8 @@ class IrUiMenu(models.Model):
         xmlids = (
             (PRESCHOOL_MENUS if not preschool else ())
             + (TECHNICAL_MENUS if not technical else ())
-            + tuple(xmlid for xmlid, model in OPTIONAL_MENUS.items() if model not in self.env)
+            + tuple(xmlid for xmlid, models_ in OPTIONAL_MENUS.items() if not any(m in self.env for m in models_))
         )
-        # As férias só para quem tem o acesso de funcionário às ausências (os Recursos Humanos dão-no).
-        time_off = self.env.ref('hr_holidays.group_hr_holidays_employee', raise_if_not_found=False)
-        if time_off and time_off not in self.env.user.all_group_ids:
-            xmlids += ('edu_roles.menu_teacher_time_off',)
         user = self.env.user
         if user.has_group('edu_core.group_edu_teacher') and not (
             user.has_group('edu_core.group_edu_user') or user.has_group('base.group_system')
