@@ -53,6 +53,11 @@ def long_date(day):
     return f'{day.day} de {MONTHS[day.month - 1]} de {day.year}' if day else ''
 
 
+def day_label(day):
+    """«Quarta-feira, 9 de Dezembro», como no calendário de provas do secPed."""
+    return f'{WEEKDAYS[day.weekday()].capitalize()}, {day.day} de {MONTHS[day.month - 1].capitalize()}'
+
+
 def grade_text(value):
     """As notas como no secPed: no máximo uma casa decimal, com vírgula (13,5; 14)."""
     if value is None:
@@ -162,7 +167,7 @@ class EduStudentPortal(models.AbstractModel):
         )
         if page == 'home':
             lessons = self.schedule(student, enrollment)
-            exams = [row for period in self.exams(student, enrollment) for row in period['rows'] if not row['done']]
+            exams = [row for row in self.exams(student, enrollment)['rows'] if not row['done']]
             data.update(
                 {
                     'today': self.today(student, enrollment, lessons),
@@ -197,7 +202,7 @@ class EduStudentPortal(models.AbstractModel):
                 }
             )
         elif page == 'exams':
-            data['periods'] = self.exams(student, enrollment)
+            data['exams'] = self.exams(student, enrollment)
         elif page == 'absences':
             data['absences'] = self.absences(student, enrollment)
         elif page == 'fees':
@@ -562,10 +567,12 @@ class EduStudentPortal(models.AbstractModel):
 
     @api.model
     def exams(self, student, enrollment):
-        """As provas da turma (e as que o aluno tem marcadas noutras sessões, como os exames especiais), por época:
-        o dia, a hora, a disciplina, a sala e quem vigia (as mesmas que o professor vê nas «Vigilâncias»)."""
+        """As provas da turma (e as que o aluno tem marcadas noutras sessões, como os exames especiais), como no
+        secPed: uma tabela por época, com o dia (só na primeira prova desse dia), a hora, a disciplina, a sala e quem
+        vigia; e a frase de cima com quantas provas há, em quantos dias, e a próxima."""
+        data = {'periods': [], 'rows': [], 'count': 0, 'days': 0, 'next': None}
         if not enrollment:
-            return []
+            return data
         sessions = (
             self.env['edu.exam.session']
             .sudo()
@@ -580,13 +587,15 @@ class EduStudentPortal(models.AbstractModel):
             )
             .sorted(lambda s: (s.date, s.hour_from, s.id))
         )
-        today = self._now(student).date()
+        now = self._now(student)
+        today, minute = now.date(), now.hour + now.minute / 60
         periods = {}
         for session in sessions:
             period = session.period_id
             group = periods.setdefault(
                 period.id,
                 {
+                    'id': period.id,
                     'name': period.name,
                     'span': f'{period.date_start.strftime("%d/%m")} a {period.date_end.strftime("%d/%m/%Y")}',
                     'start': fields.Date.to_string(period.date_start),
@@ -595,36 +604,57 @@ class EduStudentPortal(models.AbstractModel):
             )
             seat = session.seat_ids.filtered(lambda s: s.enrollment_id == enrollment)[:1]
             rooms = seat.room_id or session.room_ids
-            group['rows'].append(
-                {
-                    'id': session.id,
-                    'date': fields.Date.to_string(session.date),
-                    'day': f'{WEEKDAYS[session.date.weekday()].capitalize()}, {session.date.strftime("%d/%m")}',
-                    'hours': f'{hhmm(session.hour_from)}–{hhmm(session.hour_to)}',
-                    'subject': session.subject_id.name,
-                    'rooms': ', '.join(rooms.room_id.mapped('display_name')),
-                    'supervisors': ', '.join(rooms.supervisor_ids.mapped('name')),
-                    'done': session.state == 'done' or session.date < today,
-                }
-            )
-        return sorted(periods.values(), key=lambda p: p['start'])
+            row = {
+                'id': session.id,
+                'date': fields.Date.to_string(session.date),
+                'day': day_label(session.date),
+                'first_of_day': not group['rows'] or group['rows'][-1]['date'] != fields.Date.to_string(session.date),
+                'start': hhmm(session.hour_from),
+                'hours': f'{hhmm(session.hour_from)}–{hhmm(session.hour_to)}',
+                'subject': session.subject_id.name,
+                'rooms': ', '.join(rooms.room_id.mapped('display_name')),
+                'supervisors': ', '.join(rooms.supervisor_ids.mapped('name')),
+                'today': session.date == today,
+                'done': session.state == 'done'
+                or session.date < today
+                or (session.date == today and session.hour_to <= minute),
+            }
+            group['rows'].append(row)
+            data['rows'].append(row)
+        data['periods'] = sorted(periods.values(), key=lambda p: p['start'])
+        data['count'] = len(data['rows'])
+        data['days'] = len({row['date'] for row in data['rows']})
+        data['next'] = next((row for row in data['rows'] if not row['done']), None)
+        return data
+
+    @api.model
+    def exams_report(self):
+        """«Imprimir»: o calendário de provas da turma (o documento da secretaria, uma folha por época), visualizado na
+        aplicação, como a escala de vigilância do professor."""
+        student = self._student()
+        enrollment = self._enrollment(student) if student else None
+        periods = self.exams(student, enrollment)['periods'] if enrollment else []
+        if not periods:
+            raise UserError(self.env._('Ainda não há provas marcadas para a tua turma.'))
+        Print = self.env['edu.exam.calendar.print'].sudo()
+        documents = Print.browse()
+        for period in periods:
+            documents |= Print.create({'period_id': period['id'], 'class_id': enrollment.class_id.id})
+        return self.env.ref('edu_documents.action_report_exam_calendar').preview_action(documents.with_env(self.env))
 
     # Faltas
 
     @api.model
     def absences(self, student, enrollment):
-        """As faltas pela regra que conta (a mesma do relatório do director de turma): no técnico, o limite anual de
-        faltas injustificadas, o triplo dos tempos semanais; no geral, 3, 4 ou 5 por trimestre (o corrente)."""
-        data = {'subjects': [], 'total': 0, 'present': 0, 'regime': None, 'window': ''}
+        """As faltas pela regra que conta, como no secPed: no técnico, o limite anual de faltas injustificadas, o triplo
+        dos tempos semanais; no geral, 3, 4 ou 5 por trimestre, contadas no pior trimestre de cada disciplina."""
+        data = {'subjects': [], 'total': 0, 'present': 0, 'regime': None}
         if not enrollment:
             return data
         rows = self.env['edu.absence.summary'].sudo().search([('enrollment_id', '=', enrollment.id)])
         edu_class = enrollment.class_id
         regime = edu_class._edu_regime()
-        trimesters = enrollment.academic_year_id.trimester_ids.sorted('number')
-        window = trimesters.filtered('is_current')[:1] or rows.trimester_id.sorted('number')[-1:]
         data['regime'] = regime
-        data['window'] = window.name or ''
         subjects = {}
         for row in rows:
             item = subjects.setdefault(
@@ -638,7 +668,7 @@ class EduStudentPortal(models.AbstractModel):
                     'late': 0,
                     'absent': 0,
                     'excused': 0,
-                    'window_absent': 0,
+                    'by_trimester': {},
                 },
             )
             item['total'] += row.lessons
@@ -646,15 +676,23 @@ class EduStudentPortal(models.AbstractModel):
             item['late'] += row.late
             item['absent'] += row.absent
             item['excused'] += row.excused
-            if row.trimester_id == window:
-                item['window_absent'] += row.absent
+            trimester = row.trimester_id
+            item['by_trimester'][trimester] = item['by_trimester'].get(trimester, 0) + row.absent
         for item in subjects.values():
             subject_class = item.pop('class')
             limit = absence_limit(subject_class._edu_weekly_hours(item.pop('subject')), regime)
-            counted = item['absent'] if regime == TECHNICAL else item['window_absent']
+            by_trimester = item.pop('by_trimester')
+            window = ''
+            if regime == TECHNICAL:
+                counted = item['absent']
+            else:
+                worst = max(by_trimester, key=lambda t: (by_trimester[t], -t.number), default=None)
+                counted = by_trimester[worst] if worst else 0
+                window = worst.name.replace('Trimestre', 'trimestre') if worst and counted else ''
             status = absence_status(counted, limit, regime)
             item.update(
                 {
+                    'window': window,
                     'limit': limit,
                     'counted': counted,
                     'status': status,

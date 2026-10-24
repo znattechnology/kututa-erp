@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import patch
 
 from odoo import Command
@@ -175,6 +175,82 @@ class TestStudentPortal(HttpCase):
         html = Report._render_qweb_html('edu_documents.report_class_schedule', self.edu_class.ids)[0].decode()
         self.assertIn('HORÁRIO DA TURMA', html)
         self.assertEqual(Portal.schedule_report(False)['report_type'], 'qweb-pdf')
+
+    def test_exams(self):
+        """As provas da turma, como no secPed: por época, o dia só na primeira prova desse dia, e o calendário em A4 da
+        sua turma (o de outra turma não)."""
+        period = self.env['edu.exam.period'].create(
+            {'name': 'Provas do I Trimestre', 'date_start': date(2027, 7, 1), 'date_end': date(2027, 7, 20)}
+        )
+        for day, hour in ((5, 8), (5, 10), (6, 8)):
+            self.env['edu.exam.session'].create(
+                {
+                    'period_id': period.id,
+                    'subject_id': self.lp.id,
+                    'class_ids': [Command.set(self.edu_class.ids)],
+                    'date': date(2027, 7, day),
+                    'hour_from': hour,
+                    'hour_to': hour + 1.5,
+                }
+            )
+        Portal = self.env['edu.student.portal'].with_user(self.ana_user)
+        exams = Portal.page_data('exams')['exams']
+        self.assertEqual((exams['count'], exams['days']), (3, 2))
+        self.assertEqual([r['first_of_day'] for r in exams['rows']], [True, False, True])
+        self.assertTrue(exams['rows'][0]['day'].endswith('5 de Julho'))
+        action = Portal.exams_report()
+        self.assertEqual(action['report_type'], 'qweb-html')
+        Report = self.env['ir.actions.report'].with_user(self.ana_user)
+        documents = self.env['edu.exam.calendar.print'].browse(action['context']['active_ids'])
+        html = Report._render_qweb_html('edu_documents.report_exam_calendar', documents.ids)[0].decode()
+        self.assertIn('CALENDÁRIO DE PROVAS', html)
+        other_class = self.edu_class.copy({'name': 'Z'})
+        other = (
+            self.env['edu.exam.calendar.print']
+            .with_user(self.ana_user)
+            .sudo()
+            .create({'period_id': period.id, 'class_id': other_class.id})
+        )
+        with self.assertRaises(AccessError):
+            Report._render_qweb_html('edu_documents.report_exam_calendar', other.ids)
+
+    def test_absences_worst_trimester(self):
+        """No ensino geral o limite é por trimestre e conta o pior trimestre de cada disciplina (como no secPed)."""
+        course = self.env['edu.course'].create(
+            {'name': 'Ensino secundário I ciclo', 'code': 'SEC1', 'level_id': self.env.ref('edu_core.level_sec1').id}
+        )
+        seventh = course.curriculum_id.year_ids.filtered(lambda y: y.class_number == 7)
+        edu_class = self.env['edu.class'].create(
+            {'name': 'A', 'course_id': course.id, 'curriculum_year_id': seventh.id}
+        )
+        subject = edu_class.subject_line_ids.subject_id.filtered(lambda s: s.code == 'LP')
+        student = self.env['edu.student'].create({'name': 'Carla Geral'})
+        enrollment = self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': edu_class.id})
+        enrollment.action_confirm()
+        t1, t2 = self.year.trimester_ids.sorted('number')[:2]
+        for trimester, absences in ((t1, 1), (t2, 2)):
+            for index in range(absences):
+                lesson = self.env['edu.lesson'].create(
+                    {'class_id': edu_class.id, 'subject_id': subject.id, 'summary': 'Aula', 'hour_from': 8.0,
+                     'hour_to': 9.0, 'date': trimester.date_start + timedelta(days=index)}
+                )  # fmt: skip
+                lesson.action_open_roll_call()
+                lesson.attendance_ids.state = 'absent'
+                # O 2.º trimestre ainda não chegou: a aula dá-se por dada como o sistema faz.
+                lesson.with_context(edu_lesson_system=True).state = 'done'
+        user = self.env['res.users'].create(
+            {
+                'name': 'Carla Geral',
+                'login': 'carla_geral',
+                'partner_id': student.partner_id.id,
+                'group_ids': [Command.set([self.env.ref('edu_portal.group_edu_student').id])],
+            }
+        )
+        absences = self.env['edu.student.portal'].with_user(user).page_data('absences')['absences']
+        self.assertEqual(absences['regime'], 'general')
+        row = next(r for r in absences['subjects'] if r['name'] == subject.name)
+        self.assertEqual((row['absent'], row['counted']), (3, 2), 'as do ano; contam as do pior trimestre')
+        self.assertEqual(row['window'], t2.name.replace('Trimestre', 'trimestre'))
 
     def test_grades_blocked_by_fees(self):
         Portal = self.env['edu.student.portal'].with_user(self.ana_user)

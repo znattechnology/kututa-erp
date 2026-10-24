@@ -115,6 +115,27 @@ export class StudentSchedule extends StudentPage {
 export class StudentExams extends StudentPage {
     static template = "edu_portal.StudentExams";
     static page = "exams";
+
+    /** «3 provas em 2 dias. A próxima: hoje, às 08:00, Matemática, Sala 3.», como no secPed. */
+    get sentence() {
+        const e = this.state.data.exams;
+        let text = `${count(e.count, "Uma prova", "provas")} em ${count(e.days, "um dia", "dias")}.`;
+        const next = e.next;
+        if (next) {
+            const day = next.today ? "hoje" : next.day.charAt(0).toLowerCase() + next.day.slice(1);
+            // Sem template literals aninhados: o empacotador do Odoo comia o espaço depois da vírgula.
+            const room = next.rooms ? ", " + next.rooms : "";
+            text += ` A próxima: ${day}, às ${next.start}, ${next.subject}${room}.`;
+        } else {
+            text += " Já não há provas por fazer.";
+        }
+        return text;
+    }
+
+    async print() {
+        const action = await this.orm.call("edu.student.portal", "exams_report", []);
+        return this.action.doAction(action);
+    }
 }
 
 const ABSENCE_RULES = {
@@ -141,7 +162,8 @@ export class StudentAbsences extends StudentPage {
             text += `Faltaste a ${a.absent + a.excused}: ${count(a.absent, "uma injustificada", "injustificadas")} e ${count(a.excused, "uma justificada", "justificadas")}.`;
         }
         if (a.late) {
-            text += ` Chegaste atrasado ${a.late === 1 ? "uma vez" : `${a.late} vezes`}.`;
+            const times = a.late === 1 ? "uma vez" : a.late + " vezes";
+            text += ` Chegaste atrasado ${times}.`;
         }
         return text;
     }
@@ -151,7 +173,7 @@ export class StudentAbsences extends StudentPage {
     }
 
     statusClass(subject) {
-        return { at_risk: "text-warning", failed: "text-danger" }[subject.status] || "";
+        return { at_risk: "text-warning", failed: "text-danger" }[subject.status] || "text-muted";
     }
 }
 

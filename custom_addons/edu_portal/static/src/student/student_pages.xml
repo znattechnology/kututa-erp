@@ -405,41 +405,64 @@
         </div>
     </t>
 
-    <!-- As provas da turma por época, como as «Vigilâncias» do professor. -->
+    <!-- As provas da turma, como no secPed: uma frase, uma tabela por época (o dia só na primeira prova desse dia) e o
+         calendário em A4 para imprimir. -->
     <t t-name="edu_portal.StudentExams">
         <div class="o_action o_edu_student">
             <Layout display="this.display">
                 <div class="o_edu_st_body" t-if="this.state.data">
                     <t t-set="d" t-value="this.state.data"/>
-                    <header>
-                        <h1 class="o_edu_st_title">Provas</h1>
-                        <p class="mb-0 text-muted">As provas da tua turma, com a sala e quem vigia.</p>
+                    <header class="o_edu_st_row">
+                        <div>
+                            <h1 class="o_edu_st_title">Provas</h1>
+                            <p class="mb-0 text-muted">As provas da turma<t t-if="d.class"> <t t-out="d.class"/></t>.</p>
+                        </div>
+                        <button t-if="d.exams and d.exams.count" type="button" class="btn btn-secondary" t-on-click="() => this.print()"
+                                title="O calendário de provas em folha A4, na aplicação">
+                            <i class="oi me-1" data-icon="print" aria-hidden="true"/>Imprimir
+                        </button>
                     </header>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
-                    <t t-elif="!d.has_enrollment" t-call="edu_portal.StudentPage.NoEnrollment"><t t-set="what" t-value="'não há provas'"/></t>
-                    <section t-elif="!d.periods.length" class="o_edu_st_card text-muted">
+                    <section t-elif="!d.has_enrollment" class="o_edu_st_card text-muted">Não tens matrícula neste ano lectivo, por isso não há provas.</section>
+                    <section t-elif="!d.exams.count" class="o_edu_st_card text-muted">
                         Ainda não há provas marcadas para a tua turma. Aparecem aqui quando a secretaria as marcar.
                     </section>
                     <t t-else="">
                         <t t-call="edu_portal.StudentPage.Debt"/>
-                        <section t-foreach="d.periods" t-as="period" t-key="period_index" class="o_edu_st_section">
-                            <div class="o_edu_st_row">
+                        <p class="mb-0" t-out="this.sentence"/>
+                        <section t-foreach="d.exams.periods" t-as="period" t-key="period.id" class="o_edu_st_section" t-att-aria-label="period.name">
+                            <div t-if="d.exams.periods.length > 1" class="o_edu_st_row">
                                 <h2 class="o_edu_st_h2 mb-0" t-out="period.name"/>
                                 <span class="small text-muted" t-out="period.span"/>
                             </div>
-                            <div class="o_edu_st_card p-0 o_edu_st_scroll">
+                            <!-- Ecrãs largos: a tabela. -->
+                            <div class="o_edu_st_card p-0 o_edu_st_scroll d-none d-md-block">
                                 <table class="table mb-0 o_edu_st_table">
-                                    <thead><tr><th>Dia</th><th>Hora</th><th>Disciplina</th><th>Sala</th><th>Vigilância</th></tr></thead>
+                                    <thead><tr><th>Dia</th><th>Hora</th><th>Disciplina</th><th>Sala</th><th>Vigilante</th></tr></thead>
                                     <tbody>
-                                        <tr t-foreach="period.rows" t-as="row" t-key="row.id" t-att-class="{'text-muted': row.done}">
-                                            <td class="text-nowrap" t-out="row.day"/>
+                                        <tr t-foreach="period.rows" t-as="row" t-key="row.id"
+                                            t-att-class="{'o_edu_st_day_start': row.first_of_day and row_index > 0, 'text-muted': row.done}">
+                                            <td class="text-nowrap fw-semibold"><t t-if="row.first_of_day" t-out="row.day"/></td>
                                             <td class="o_edu_st_num text-nowrap" t-out="row.hours"/>
-                                            <td t-out="row.subject"/>
-                                            <td t-out="row.rooms or '—'"/>
-                                            <td t-out="row.supervisors or '—'"/>
+                                            <td class="fw-semibold" t-out="row.subject"/>
+                                            <td><t t-if="row.rooms" t-out="row.rooms"/><span t-else="" class="text-muted">Por definir</span></td>
+                                            <td><t t-if="row.supervisors" t-out="row.supervisors"/><span t-else="" class="text-muted">Por definir</span></td>
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                            <!-- Telemóvel: o dia por cima, uma linha por prova. -->
+                            <div class="o_edu_st_card d-md-none">
+                                <t t-foreach="period.rows" t-as="row" t-key="row.id">
+                                    <h3 t-if="row.first_of_day" class="small fw-semibold mt-2 mb-1" t-out="row.day"/>
+                                    <div class="o_edu_st_exam_row" t-att-class="{'text-muted': row.done}">
+                                        <span class="o_edu_st_time" t-out="row.hours"/>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold" t-out="row.subject"/>
+                                            <div class="small text-muted"><t t-out="row.rooms or 'Sala por definir'"/><t t-if="row.supervisors">, <t t-out="row.supervisors"/></t></div>
+                                        </div>
+                                    </div>
+                                </t>
                             </div>
                         </section>
                     </t>
@@ -448,7 +471,7 @@
         </div>
     </t>
 
-    <!-- As faltas pela regra que conta: o limite de faltas injustificadas de cada disciplina. -->
+    <!-- As faltas, como no secPed: pela regra que conta, o limite de faltas injustificadas de cada disciplina. -->
     <t t-name="edu_portal.StudentAbsences">
         <div class="o_action o_edu_student">
             <Layout display="this.display">
@@ -456,10 +479,10 @@
                     <t t-set="d" t-value="this.state.data"/>
                     <header>
                         <h1 class="o_edu_st_title">Faltas</h1>
-                        <p class="mb-0 text-muted">As tuas presenças e faltas neste ano lectivo.</p>
+                        <p class="mb-0 text-muted">As minhas faltas<t t-if="d.year">, <t t-out="d.year"/></t>.</p>
                     </header>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
-                    <t t-elif="!d.has_enrollment" t-call="edu_portal.StudentPage.NoEnrollment"><t t-set="what" t-value="'não há faltas a contar'"/></t>
+                    <section t-elif="!d.has_enrollment" class="o_edu_st_card text-muted">Não tens matrícula neste ano lectivo, por isso não há faltas a contar.</section>
                     <section t-elif="!d.absences.total" class="o_edu_st_card text-muted">
                         Ainda não há presenças registadas este ano. As faltas aparecem aqui assim que os professores fizerem a chamada.
                     </section>
@@ -473,7 +496,8 @@
                         <div t-if="a.at_risk.length" class="alert alert-warning mb-0">
                             Estás a uma falta injustificada do limite a <t t-out="this.list(a.at_risk)"/>.
                         </div>
-                        <div class="o_edu_st_card p-0 o_edu_st_scroll">
+                        <!-- Ecrãs largos: a tabela. -->
+                        <div class="o_edu_st_card p-0 o_edu_st_scroll d-none d-md-block">
                             <table class="table mb-0 o_edu_st_table">
                                 <thead>
                                     <tr>
@@ -489,13 +513,13 @@
                                 <tbody>
                                     <tr t-foreach="a.subjects" t-as="s" t-key="s_index">
                                         <td t-out="s.name"/>
-                                        <td class="text-center o_edu_st_num text-nowrap"><t t-out="s.present"/> de <t t-out="s.total"/> <span class="text-muted">(<t t-out="s.rate"/>%)</span></td>
+                                        <td class="text-center o_edu_st_num text-nowrap"><t t-out="s.present"/> de <t t-out="s.total"/><span t-if="s.rate !== null" class="text-muted"> (<t t-out="s.rate"/>%)</span></td>
                                         <td class="text-center o_edu_st_num" t-att-class="s.absent ? 'text-danger' : 'text-muted'" t-out="s.absent"/>
                                         <td class="text-center o_edu_st_num text-muted" t-out="s.excused"/>
                                         <td class="text-center o_edu_st_num text-muted" t-out="s.late"/>
                                         <td t-if="s.limit === null" class="text-muted">Sem limite no plano</td>
                                         <td t-else="" class="o_edu_st_num" t-att-class="this.statusClass(s)">
-                                            <t t-out="s.counted"/> de <t t-out="s.limit"/><t t-if="a.regime !== 'technical' and a.window"> (<t t-out="a.window"/>)</t>
+                                            <t t-out="s.counted"/> de <t t-out="s.limit"/><t t-if="s.window"> (<t t-out="s.window"/>)</t>
                                         </td>
                                         <td t-if="s.limit === null" class="text-muted">—</td>
                                         <td t-else="" t-att-class="this.statusClass(s)" t-out="s.status_label"/>
@@ -503,6 +527,20 @@
                                 </tbody>
                             </table>
                         </div>
+                        <!-- Telemóvel: uma linha por disciplina. -->
+                        <ul class="o_edu_st_card o_edu_st_list d-md-none">
+                            <li t-foreach="a.subjects" t-as="s" t-key="s_index">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between gap-3">
+                                        <span t-out="s.name"/>
+                                        <span class="small text-muted o_edu_st_num text-nowrap"><t t-out="s.present"/> de <t t-out="s.total"/></span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <t t-if="!s.absent">Sem injustificadas</t><t t-else="" t-out="s.absent === 1 ? '1 injustificada' : s.absent + ' injustificadas'"/><t t-if="s.excused">, <t t-out="s.excused === 1 ? '1 justificada' : s.excused + ' justificadas'"/></t><t t-if="s.limit !== null">, <span t-att-class="this.statusClass(s)">limite <t t-out="s.counted"/> de <t t-out="s.limit"/></span></t>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
                         <p t-if="this.rule" class="mb-0 small text-muted" t-out="this.rule"/>
                     </t>
                 </div>

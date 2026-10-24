@@ -207,4 +207,14 @@
             }
         }
     }
+
+    .o_edu_st_table tr.o_edu_st_day_start > td {
+        border-top: 2px solid $border-color;
+    }
+
+    .o_edu_st_exam_row {
+        display: flex;
+        gap: 12px;
+        padding: 6px 0;
+    }
 }
