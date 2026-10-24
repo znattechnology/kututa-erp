@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 
 import pytz
 
 from odoo import api, fields, models
 from odoo.addons.edu_attendance.models.absence_rules import TECHNICAL, absence_limit, absence_status
 from odoo.addons.edu_evaluation.tools import grading
+from odoo.addons.edu_exam.models.edu_exam import SPECIAL
 from odoo.exceptions import UserError
 from odoo.tools import format_amount
 
@@ -35,17 +37,18 @@ RELATIONSHIPS = {
 }
 # As bandas da escala de 0 a 20 que o secPed usa na «Situação» da pauta do aluno (a sua GradeScale).
 SCALE_BANDS = [(0, 9.99, 'Insuficiente'), (10, 13.99, 'Suficiente'), (14, 16.99, 'Bom'), (17, 20, 'Excelente')]
+# Os nomes da regra que conta: no técnico reprova-se ao passar o limite (em risco quando o atinge); no geral, ao
+# atingi-lo (em risco a uma falta).
 ABSENCE_STATUS = {
-    'ok': 'Dentro do limite',
-    'at_risk': 'A uma falta do limite',
-    'failed': 'Limite ultrapassado',
+    TECHNICAL: {'ok': 'Dentro do limite', 'at_risk': 'No limite', 'failed': 'Limite ultrapassado'},
+    'general': {'ok': 'Dentro do limite', 'at_risk': 'A uma falta do limite', 'failed': 'Limite atingido'},
 }
 
 
 def hhmm(value):
     """8.5 → «08:30»."""
-    hours = int(value)
-    return f'{hours:02d}:{round((value - hours) * 60):02d}'
+    minutes = round(value * 60)
+    return f'{minutes // 60:02d}:{minutes % 60:02d}'
 
 
 def long_date(day):
@@ -58,11 +61,16 @@ def day_label(day):
     return f'{WEEKDAYS[day.weekday()].capitalize()}, {day.day} de {MONTHS[day.month - 1].capitalize()}'
 
 
+def one_decimal(value):
+    """Uma casa decimal, com vírgula e arredondada para cima a partir de 5 (12,25 → «12,3»)."""
+    return str(Decimal(str(value)).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)).replace('.', ',')
+
+
 def grade_text(value):
     """As notas como no secPed: no máximo uma casa decimal, com vírgula (13,5; 14)."""
     if value is None:
         return '—'
-    text = f'{round(value, 1):.1f}'.replace('.', ',')
+    text = one_decimal(value)
     return text[:-2] if text.endswith(',0') else text
 
 
@@ -133,7 +141,7 @@ class EduStudentPortal(models.AbstractModel):
         """O aviso das propinas em atraso (sem isenção), como no secPed: o valor, desde quando e se bloqueia."""
         if not student.edu_in_debt or student.edu_gate_exempt:
             return None
-        cutoff = fields.Date.context_today(self) - timedelta(days=student.company_id.edu_gate_grace_days or 0)
+        cutoff = self._now(student).date() - timedelta(days=student.company_id.edu_gate_grace_days or 0)
         overdue = student._edu_open_invoices().filtered(lambda m: m.invoice_date_due and m.invoice_date_due < cutoff)
         oldest = min(overdue.mapped('invoice_date_due')) if overdue else False
         return {
@@ -241,6 +249,7 @@ class EduStudentPortal(models.AbstractModel):
 
     # Notas
 
+    @api.private
     @api.model
     def grades(self, student, enrollment, trimester_id=None):
         """A pauta do aluno por trimestre, como a do secPed: as notas que formam o trimestre (no geral as contínuas, a
@@ -284,7 +293,10 @@ class EduStudentPortal(models.AbstractModel):
                 order='id',
             )
         )
-        subjects = (enrollment.subject_ids | results.subject_id).sorted(lambda s: (s.name or '').lower())
+        # As disciplinas anuladas não contam (nem nas médias), como na grelha e na decisão do ano.
+        dropped = enrollment._dropped_subjects()
+        subjects = (enrollment.subject_ids | results.subject_id) - dropped
+        subjects = subjects.sorted(lambda s: (s.name or '').lower())
 
         def value(record, field, flag):
             return record[field] if record and record[flag] else None
@@ -323,6 +335,9 @@ class EduStudentPortal(models.AbstractModel):
                     'annual': result.annual if complete else None,
                     'final': result.final if complete else None,
                     'cfd': result.cfd if complete and result.terminal_subject and len(span_terminal[0]) > 1 else None,
+                    # A que conta na decisão do ano (a CFD no ano terminal de uma disciplina plurianual) e se aprova.
+                    'transition': result.transition_grade if complete else None,
+                    'passed': result.passed if complete else None,
                 }
             )
         data.update(
@@ -378,9 +393,10 @@ class EduStudentPortal(models.AbstractModel):
             last_ct = row['by_trimester'][last_id]['ct'] if last_id else None
             if active != last_id or last_ct is None:
                 continue
-            value = next(v for v in (row['final'], row['cfd'], last_ct) if v is not None)
+            # Fechada a disciplina, conta o que conta na decisão do ano: a nota para a transição e se aprova.
+            value = row['transition'] if row['transition'] is not None else last_ct
             rounded = round_fn(value)
-            positive = rounded >= policy.pass_grade
+            positive = row['passed'] if row['passed'] is not None else rounded >= policy.pass_grade
             label = 'Positiva' if positive else 'Negativa'
             if policy.scale_max == 20:
                 label = next((band for low, high, band in SCALE_BANDS if low <= rounded <= high), label)
@@ -404,16 +420,16 @@ class EduStudentPortal(models.AbstractModel):
                     'id': trimester['id'],
                     'name': trimester['name'],
                     'value': round(mean, 2) if mean is not None else None,
-                    'text': f'{mean:.1f}'.replace('.', ',') if mean is not None else '',
-                    'pos': mean is not None and round(mean * 10) / 10 >= policy.pass_grade,
+                    'text': one_decimal(mean) if mean is not None else '',
+                    'pos': mean is not None and round_fn(mean) >= policy.pass_grade,
                     'count': len(values),
                 }
             )
         year_average = sum(every) / len(every) if every else None
         data['year_average'] = (
             {
-                'text': f'{year_average:.1f}'.replace('.', ','),
-                'pos': round(year_average * 10) / 10 >= policy.pass_grade,
+                'text': one_decimal(year_average),
+                'pos': round_fn(year_average) >= policy.pass_grade,
             }
             if year_average is not None
             else None
@@ -433,6 +449,7 @@ class EduStudentPortal(models.AbstractModel):
                     component['value'] = cell(component['value'])
             for key in ('cf', 'pg', 'national', 'annual', 'final', 'cfd'):
                 row[key] = cell(row[key])
+            del row['transition'], row['passed']
         return data
 
     @api.model
@@ -448,9 +465,6 @@ class EduStudentPortal(models.AbstractModel):
                 f'Não há notas do {name} neste ano lectivo.' if data.get('past') else f'Ainda não há notas do {name}.'
             )
             return {'text': text, 'empty': True}
-
-        def one_decimal(value):
-            return f'{value:.1f}'.replace('.', ',')
 
         def mean(trimester_id):
             values = [r['by_trimester'][trimester_id]['ct'] for r in rows]
@@ -469,7 +483,8 @@ class EduStudentPortal(models.AbstractModel):
                 for r in rows
             )
             if comparable:
-                now, then = round(average * 10), round(mean(before['id']) * 10)
+                now, then = one_decimal(average), one_decimal(mean(before['id']))
+                now, then = float(now.replace(',', '.')), float(then.replace(',', '.'))
                 previous = {
                     'trend': 'subiu face aos' if now > then else ('desceu face aos' if now < then else 'igual ao'),
                     'average': one_decimal(mean(before['id'])),
@@ -486,8 +501,8 @@ class EduStudentPortal(models.AbstractModel):
             'empty': False,
             'trimester': name,
             'average': one_decimal(average),
-            # Compara-se o número que se mostra (9,95 aparece 10,0 e não está abaixo de 10).
-            'average_pos': round(average * 10) / 10 >= data['pass_grade'],
+            # Positiva pela regra de arredondamento da escola, como as notas de cada disciplina.
+            'average_pos': round_fn(average) >= data['pass_grade'],
             'previous': previous,
             'tail': tail,
         }
@@ -513,6 +528,7 @@ class EduStudentPortal(models.AbstractModel):
 
     # Horário
 
+    @api.private
     @api.model
     def schedule(self, student, enrollment):
         """O horário da turma que está a decorrer (os tempos do ano e os do trimestre em curso)."""
@@ -533,6 +549,7 @@ class EduStudentPortal(models.AbstractModel):
             for entry in entries
         ]
 
+    @api.private
     @api.model
     def schedule_summary(self, lessons):
         """«28 aulas por semana, de segunda a sexta, em 11 disciplinas.»"""
@@ -542,7 +559,7 @@ class EduStudentPortal(models.AbstractModel):
         if len(names) > 2 and consecutive:
             span = f'de {names[0]} a {names[-1]}'
         elif len(names) == 1:
-            span = f'à {names[0]}'
+            span = f'{"ao" if days[0] >= 5 else "à"} {names[0]}'
         else:
             span = f'{", ".join(names[:-1])} e {names[-1]}'
         subjects = len({lesson['subject'] for lesson in lessons})
@@ -551,19 +568,26 @@ class EduStudentPortal(models.AbstractModel):
             f'em {plural(subjects, "uma disciplina", "disciplinas")}.'
         ).capitalize()
 
+    @api.private
     @api.model
     def schedule_grid(self, lessons):
-        """A semana em colunas (os dias com aulas), com cada aula numa linha por hora de início."""
+        """A semana em colunas (os dias com aulas), com cada aula na linha do seu tempo (início e fim)."""
         days = sorted({lesson['weekday'] for lesson in lessons} | {0, 1, 2, 3, 4})
         starts = sorted({(lesson['start'], lesson['end']) for lesson in lessons})
         rows = []
         for start, end in starts:
             cells = {
-                d: [lesson for lesson in lessons if lesson['weekday'] == d and lesson['start'] == start] for d in days
+                d: [
+                    lesson
+                    for lesson in lessons
+                    if lesson['weekday'] == d and lesson['start'] == start and lesson['end'] == end
+                ]
+                for d in days
             }
             rows.append({'hours': f'{hhmm(start)}–{hhmm(end)}', 'cells': cells})
         return {'days': [{'number': d, 'name': WEEKDAYS[d]} for d in days], 'rows': rows}
 
+    @api.private
     @api.model
     def today(self, student, enrollment, lessons):
         """«Hoje»: a aula a decorrer ou a seguinte, e o resto das de hoje; sem aulas por dar, a primeira do próximo dia
@@ -572,12 +596,28 @@ class EduStudentPortal(models.AbstractModel):
         today = now.date()
         minute = now.hour + now.minute / 60
         edu_class = enrollment.class_id
-        Calendar = self.env['edu.calendar.event'].sudo()
+        # Como no painel do professor: os feriados e as pausas do calendário escolar, as aulas sem realização, os
+        # limites do trimestre e do ano, e o professor substituto nesse dia.
+        holidays = (
+            self.env['edu.calendar.event']
+            .sudo()
+            ._days_without_lessons(edu_class.company_id, edu_class.level_id, today, today + timedelta(days=14))
+            if edu_class
+            else set()
+        )
+        entries = {entry.id: entry for entry in self.env['edu.schedule'].sudo().browse([x['id'] for x in lessons])}
 
         def lessons_on(day):
-            if edu_class and day in Calendar._days_without_lessons(edu_class.company_id, edu_class.level_id, day, day):
+            if day in holidays:
                 return []
-            return [lesson for lesson in lessons if lesson['weekday'] == day.weekday()]
+            found = []
+            for lesson in lessons:
+                entry = entries[lesson['id']]
+                if lesson['weekday'] != day.weekday() or not entry._occurs_on(day):
+                    continue
+                teacher = entry._teacher_on(day)
+                found.append({**lesson, 'teacher': teacher.name or '', 'replacement': teacher != entry.teacher_id})
+            return found
 
         todays = lessons_on(today)
         following = next((lesson for lesson in todays if lesson['end'] > minute), None)
@@ -608,6 +648,7 @@ class EduStudentPortal(models.AbstractModel):
 
     # Provas
 
+    @api.private
     @api.model
     def exams(self, student, enrollment):
         """As provas da turma (e as que o aluno tem marcadas noutras sessões, como os exames especiais), como no
@@ -616,17 +657,34 @@ class EduStudentPortal(models.AbstractModel):
         data = {'periods': [], 'rows': [], 'count': 0, 'days': 0, 'next': None}
         if not enrollment:
             return data
+        # As provas da turma nas disciplinas que o aluno faz nela (sem as anuladas e as feitas numa turma da classe
+        # anterior, que contam nessa turma); os recursos, os extraordinários, as melhorias e a época de conclusão só
+        # para quem foi convocado (o lugar pode estar numa matrícula de um ano anterior, nas disciplinas em atraso).
+        own = enrollment.subject_ids - enrollment._dropped_subjects() - enrollment.lower_subject_ids.subject_id
+        pairs = {(enrollment.class_id.id, subject.id) for subject in own} | {
+            (lower.class_id.id, lower.subject_id.id)
+            for lower in enrollment.lower_subject_ids
+            if lower.subject_id not in enrollment._dropped_subjects()
+        }
         sessions = (
             self.env['edu.exam.session']
             .sudo()
             .search(
                 [
                     '|',
-                    ('class_ids', 'in', enrollment.class_id.ids),
-                    ('seat_ids.enrollment_id', '=', enrollment.id),
+                    '&',
+                    ('class_ids', 'in', [class_id for class_id, _subject in pairs]),
+                    ('kind', 'not in', SPECIAL),
+                    ('seat_ids.student_id', '=', student.id),
                     ('state', '!=', 'cancelled'),
                     ('academic_year_id', '=', enrollment.academic_year_id.id),
                 ]
+            )
+            .filtered(
+                lambda s: (
+                    s.seat_ids.filtered(lambda seat: seat.student_id == student)
+                    or any((c.id, s.subject_id.id) in pairs for c in s.class_ids)
+                )
             )
             .sorted(lambda s: (s.date, s.hour_from, s.id))
         )
@@ -645,7 +703,7 @@ class EduStudentPortal(models.AbstractModel):
                     'rows': [],
                 },
             )
-            seat = session.seat_ids.filtered(lambda s: s.enrollment_id == enrollment)[:1]
+            seat = session.seat_ids.filtered(lambda s: s.student_id == student)[:1]
             rooms = seat.room_id or session.room_ids
             row = {
                 'id': session.id,
@@ -687,17 +745,25 @@ class EduStudentPortal(models.AbstractModel):
 
     # Faltas
 
+    @api.private
     @api.model
     def absences(self, student, enrollment):
         """As faltas pela regra que conta, como no secPed: no técnico, o limite anual de faltas injustificadas, o triplo
         dos tempos semanais; no geral, 3, 4 ou 5 por trimestre, contadas no pior trimestre de cada disciplina."""
-        data = {'subjects': [], 'total': 0, 'present': 0, 'regime': None}
+        data = {'subjects': [], 'total': 0, 'present': 0, 'regime': None, 'preschool': False}
         if not enrollment:
             return data
-        rows = self.env['edu.absence.summary'].sudo().search([('enrollment_id', '=', enrollment.id)])
+        rows = (
+            self.env['edu.absence.summary']
+            .sudo()
+            .search(
+                [('enrollment_id', '=', enrollment.id), ('subject_id', 'not in', enrollment._dropped_subjects().ids)]
+            )
+        )
         edu_class = enrollment.class_id
         regime = edu_class._edu_regime()
         data['regime'] = regime
+        data['preschool'] = edu_class.level_id.code == 'INICIACAO'
         subjects = {}
         for row in rows:
             item = subjects.setdefault(
@@ -739,7 +805,9 @@ class EduStudentPortal(models.AbstractModel):
                     'limit': limit,
                     'counted': counted,
                     'status': status,
-                    'status_label': ABSENCE_STATUS[status],
+                    'status_label': ABSENCE_STATUS.get(regime, ABSENCE_STATUS['general'])[status]
+                    if limit
+                    else 'Sem limite',
                     'rate': round(100 * item['present'] / item['total']) if item['total'] else None,
                 }
             )
@@ -756,6 +824,7 @@ class EduStudentPortal(models.AbstractModel):
 
     # Propinas
 
+    @api.private
     @api.model
     def fees(self, student):
         """As facturas escolares do aluno, só para ler (quem paga é o encarregado), como no secPed: por pagar, pagas e
@@ -776,8 +845,11 @@ class EduStudentPortal(models.AbstractModel):
                 order='invoice_date_due, id',
             )
         )
-        late_fees = moves.filtered(lambda m: m.edu_category == 'late_fee' and m.edu_late_fee_origin_id in moves)
-        today = fields.Date.context_today(self)
+        # A multa soma-se à factura que a originou enquanto essa factura conta (emitida e não anulada por nota de
+        # crédito); a de uma factura anulada fica na sua própria linha, para não desaparecer o que falta pagar.
+        live = moves.filtered(lambda m: m.state == 'posted' and m.payment_state != 'reversed' and not m.edu_exempt)
+        late_fees = moves.filtered(lambda m: m.edu_category == 'late_fee' and m.edu_late_fee_origin_id in live)
+        today = self._now(student).date()
         currency = student.edu_currency_id
 
         def money(amount):
@@ -792,16 +864,23 @@ class EduStudentPortal(models.AbstractModel):
             total = move.amount_total + fine_total
             paid = total - due if posted else 0.0
             late_days = 0
-            if move.state == 'cancel' or move.edu_exempt:
+            if move.state == 'cancel' or move.edu_exempt or move.payment_state == 'reversed':
                 tab, status, css = 'other', 'Isenta' if move.edu_exempt else 'Anulada', 'muted'
+                due = paid = 0.0
             elif due > 0.005:
                 tab = 'due'
-                if move.invoice_date_due and move.invoice_date_due < today and move.amount_residual > 0.005:
-                    late_days = (today - move.invoice_date_due).days
-                if move.payment_state == 'partial':
-                    status, css = 'Paga em parte', 'warn'
-                elif late_days:
+                # O atraso conta desde o vencimento do que ainda está por pagar: a factura, ou a multa quando a factura
+                # já foi paga.
+                open_dues = [
+                    m.invoice_date_due for m in move | fines if m.invoice_date_due and m.amount_residual > 0.005
+                ]
+                oldest = min(open_dues, default=False)
+                if oldest and oldest < today:
+                    late_days = (today - oldest).days
+                if late_days:
                     status, css = 'Em atraso', 'bad'
+                elif move.payment_state == 'partial':
+                    status, css = 'Paga em parte', 'warn'
                 else:
                     status, css = 'Por pagar', ''
             else:
@@ -843,7 +922,8 @@ class EduStudentPortal(models.AbstractModel):
             'has_fines': any(r['fine_value'] for r in due_rows),
             # A coluna da multa só aparece se a escola cobra multas a este aluno.
             'charges_fines': any(r['fine'] for r in rows),
-            'overdue': len([r for r in due_rows if r['late_days']]),
+            # Em atraso como no aviso das propinas: depois dos dias de tolerância da escola.
+            'overdue': len([r for r in due_rows if r['late_days'] > (student.company_id.edu_gate_grace_days or 0)]),
         }
 
     # Formação técnica
@@ -862,12 +942,14 @@ class EduStudentPortal(models.AbstractModel):
         )
 
     @api.model
-    def _graded(self, record, final_states):
-        """A nota de um estágio ou de uma PAP, quando já foi lançada (aprovado, reprovado ou com classificação)."""
-        if record.state not in final_states and not record.grade:
+    def _graded(self, record, final_states, blocked=False):
+        """A nota de um estágio ou de uma PAP, quando já foi lançada e o resultado está fechado (a de um estágio
+        reaberto não conta). Com as notas escondidas pelas propinas em atraso, também esta fica escondida."""
+        if blocked or record.state not in final_states or not record.grade:
             return None
         return {'text': grade_text(record.grade), 'pos': record.grade >= 10}
 
+    @api.private
     @api.model
     def internships(self, student):
         """O estágio curricular, só para ler, como no secPed: a entidade, quem o acompanha na escola e na entidade, o
@@ -879,26 +961,34 @@ class EduStudentPortal(models.AbstractModel):
             .sorted(lambda i: (i.academic_year_id.date_start or fields.Date.today(), i.id), reverse=True)
         )
         states = dict(records._fields['state']._description_selection(self.env))
+        blocked = student._edu_gate('grades')[0]
+        today = self._now(student).date()
         rows = []
         for internship in records:
             start, end = long_date(internship.date_start), long_date(internship.date_end)
             hours = '1 hora' if internship.hours == 1 else f'{internship.hours} horas'
             # A entidade está no título do cartão: a frase não a repete (o artigo dependia do nome).
-            grade = self._graded(internship, ('passed', 'failed'))
+            grade = self._graded(internship, ('passed', 'failed'), blocked)
             if internship.state == 'planned':
-                sentence = (
-                    f'O estágio começa a {start}.'
-                    if start
-                    else 'O estágio está registado; a data de início ainda não foi marcada.'
-                )
+                if not start:
+                    sentence = 'O estágio está registado; a data de início ainda não foi marcada.'
+                elif internship.date_start > today:
+                    sentence = f'O estágio começa a {start}.'
+                else:
+                    sentence = (
+                        f'O estágio estava marcado para começar a {start}; a secretaria ainda não o deu como iniciado.'
+                    )
             elif internship.state == 'ongoing':
-                sentence = f'Estás a estagiar{f" desde {start}" if start else ""}. Já cumpriste {hours}.'
+                sentence = f'Estás a estagiar{f" desde {start}" if start else ""}.'
+                if internship.hours:
+                    sentence += f' Já cumpriste {hours}.'
             elif internship.state == 'passed':
-                sentence = (
-                    f'Concluíste o estágio com {grade["text"]} valores.'
-                    if grade
-                    else 'Concluíste o estágio. A nota ainda não foi lançada.'
-                )
+                if grade:
+                    sentence = f'Concluíste o estágio com {grade["text"]} valores.'
+                elif blocked:
+                    sentence = 'Concluíste o estágio. A nota está escondida enquanto houver propinas em atraso.'
+                else:
+                    sentence = 'Concluíste o estágio. A nota ainda não foi lançada.'
             else:
                 sentence = 'Não tiveste aprovação no estágio. Fala com o teu tutor ou com a secretaria.'
             rows.append(
@@ -925,6 +1015,7 @@ class EduStudentPortal(models.AbstractModel):
             )
         return rows
 
+    @api.private
     @api.model
     def projects(self, student):
         """A Prova de Aptidão Profissional, só para ler, como no secPed: o tema, o orientador, o júri, a entrega, a
@@ -936,11 +1027,12 @@ class EduStudentPortal(models.AbstractModel):
             .sorted(lambda p: (p.academic_year_id.date_start or fields.Date.today(), p.id), reverse=True)
         )
         states = dict(records._fields['state']._description_selection(self.env))
+        blocked = student._edu_gate('grades')[0]
         rows = []
         for project in records:
             defense = long_date(project.defense_date)
             advisor = project.advisor_id.name or ''
-            grade = self._graded(project, ('passed', 'failed'))
+            grade = self._graded(project, ('passed', 'failed'), blocked)
             if project.state in ('proposed', 'ongoing'):
                 if not advisor:
                     sentence = 'O tema está registado; ainda não tens orientador atribuído.'
@@ -957,7 +1049,12 @@ class EduStudentPortal(models.AbstractModel):
             elif project.state == 'defended':
                 sentence = 'Já defendeste o trabalho. A nota ainda não foi lançada.'
             elif project.state == 'passed':
-                sentence = f'Foste aprovado na PAP com {grade["text"]} valores.' if grade else 'Foste aprovado na PAP.'
+                if grade:
+                    sentence = f'Tiveste aprovação na PAP com {grade["text"]} valores.'
+                elif blocked:
+                    sentence = 'Tiveste aprovação na PAP. A nota está escondida enquanto houver propinas em atraso.'
+                else:
+                    sentence = 'Tiveste aprovação na PAP. A nota ainda não foi lançada.'
             else:
                 sentence = 'Não tiveste aprovação na PAP. Fala com o teu orientador ou com a secretaria.'
             rows.append(
@@ -987,6 +1084,7 @@ class EduStudentPortal(models.AbstractModel):
 
     # Perfil
 
+    @api.private
     @api.model
     def profile(self, student, enrollment):
         """A matrícula, os dados pessoais (com os que faltam para os certificados) e os encarregados."""
@@ -1024,7 +1122,9 @@ class EduStudentPortal(models.AbstractModel):
                 'level': edu_class.level_id.name or '',
                 'state': ENROLLMENT_STATES.get(enrollment.state, ''),
                 'irregular': enrollment.state == 'irregular',
-                'subjects': sorted(enrollment.subject_ids.mapped('name'), key=str.lower),
+                'subjects': sorted(
+                    (enrollment.subject_ids - enrollment._dropped_subjects()).mapped('name'), key=str.lower
+                ),
             }
             if enrollment
             else None,

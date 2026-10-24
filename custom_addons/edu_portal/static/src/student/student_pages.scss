@@ -281,3 +281,8 @@
         white-space: pre-line;
     }
 }
+
+// As provas já feitas, acinzentadas (o Bootstrap põe a cor em cada célula, não na linha).
+.o_edu_st_table tr.o_edu_st_done > td {
+    opacity: 0.55;
+}

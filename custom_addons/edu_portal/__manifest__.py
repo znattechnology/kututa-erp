@@ -18,11 +18,12 @@ Secretaria Express: a área do estudante, como a do secPed-Express, no Odoo como
     'author': 'Kututa ERP',
     'countries': ['ao'],
     'category': 'Education',
-    'depends': ['edu_roles'],
+    'depends': ['edu_roles', 'calendar'],
     'data': [
         'security/edu_portal_security.xml',
         'security/ir.access.csv',
         'data/student_menus.xml',
+        'data/student_discuss.xml',
     ],
     'assets': {
         'web.assets_backend': [

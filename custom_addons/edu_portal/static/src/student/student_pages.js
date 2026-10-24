@@ -20,7 +20,7 @@ class StudentPage extends Component {
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
-        this.state = proxy({ data: null, busy: false });
+        this.state = proxy({ data: null });
         this.list = list;
         this.count = count;
         onWillStart(() => this.load());
@@ -38,7 +38,7 @@ class StudentPage extends Component {
         return this.action.doAction(xmlid);
     }
 
-    /** Uma nota a azul se é positiva e a vermelho se é negativa (a cor do sistema, como na grelha do professor). */
+    /** Uma nota com a cor primária se é positiva e a vermelho se é negativa, como na grelha do professor. */
     gradeClass(grade, strong = false) {
         if (!grade) {
             return "text-muted";
@@ -59,11 +59,6 @@ export class StudentHome extends StudentPage {
         const hour = new Date().getHours();
         const hello = hour < 12 ? "Bom dia" : hour < 19 ? "Boa tarde" : "Boa noite";
         return `${hello}, ${this.state.data.first_name}`;
-    }
-
-    get missed() {
-        const a = this.state.data.absences;
-        return a.total - a.present;
     }
 
     /** As notas do trimestre por disciplina, em barras de 0 ao máximo da escala (as sem nota ficam sem barra). */
@@ -122,10 +117,16 @@ export class StudentHome extends StudentPage {
         if (!a.total) {
             return { value: "—", detail: "Ainda sem chamadas este ano" };
         }
+        if (a.regime === "primary") {
+            return { value: String(a.absent), detail: a.preschool ? "Sem limite na Iniciação" : "Sem limite por disciplina no primário" };
+        }
+        // No técnico reprova-se ao passar o limite; no geral, ao atingi-lo (os nomes da página das faltas).
+        const technical = a.regime === "technical";
+        const subjects = (n) => count(n, "uma disciplina", "disciplinas");
         const detail = a.failed.length
-            ? `Limite passado a ${count(a.failed.length, "uma disciplina", "disciplinas")}`
+            ? `${technical ? "Limite ultrapassado" : "Limite atingido"} a ${subjects(a.failed.length)}`
             : a.at_risk.length
-              ? `A uma falta do limite a ${count(a.at_risk.length, "uma disciplina", "disciplinas")}`
+              ? `${technical ? "No limite" : "A uma falta do limite"} a ${subjects(a.at_risk.length)}`
               : "Dentro do limite em todas as disciplinas";
         return { value: String(a.absent), detail, bad: a.failed.length > 0, warn: !a.failed.length && a.at_risk.length > 0 };
     }
@@ -232,11 +233,10 @@ export class StudentAbsences extends StudentPage {
         } else if (!a.absent) {
             text += `Faltaste a ${count(a.excused, "uma aula", "aulas")}, com justificação.`;
         } else {
-            text += `Faltaste a ${a.absent + a.excused}: ${count(a.absent, "uma injustificada", "injustificadas")} e ${count(a.excused, "uma justificada", "justificadas")}.`;
+            text += `Faltaste a ${a.absent + a.excused} aulas: ${count(a.absent, "uma injustificada", "injustificadas")} e ${count(a.excused, "uma justificada", "justificadas")}.`;
         }
         if (a.late) {
-            const times = a.late === 1 ? "uma vez" : a.late + " vezes";
-            text += ` Chegaste atrasado ${times}.`;
+            text += ` Chegaste tarde ${a.late === 1 ? "uma vez" : a.late + " vezes"}.`;
         }
         return text;
     }
@@ -256,15 +256,21 @@ export class StudentFees extends StudentPage {
 
     setup() {
         super.setup();
-        this.state.tab = "due";
+        this.state.tab = null;
     }
 
     setTab(tab) {
         this.state.tab = tab;
     }
 
+    /** O separador escolhido; por omissão o das facturas por pagar, ou o das pagas quando não há nada por pagar. */
+    get tab() {
+        const f = this.state.data.fees;
+        return this.state.tab || (f.due.length || !f.rows.length ? "due" : f.paid.length ? "paid" : "other");
+    }
+
     get rows() {
-        return this.state.data.fees[this.state.tab];
+        return this.state.data.fees[this.tab];
     }
 
     /** O que está em atraso, a vermelho na frase de cima (como no secPed). */
@@ -281,15 +287,23 @@ export class StudentFees extends StudentPage {
     }
 
     get dateHeader() {
-        return { due: "Vence a", paid: "Paga a", other: "Vencia a" }[this.state.tab];
+        return { due: "Vence a", paid: "Paga a", other: "Vencia a" }[this.tab];
     }
 
-    /** Telemóvel: «Vence a 10 de outubro de 2026, com 1 000 Kz de multa.» */
+    /** Telemóvel: «Vence a 10 de outubro de 2026 (há 3 dias), com 1 000 Kz de multa.» */
     whenText(row) {
-        const tab = this.state.tab;
+        const tab = this.tab;
         const parts = [];
         if (tab === "paid" ? row.paid_date : row.due_date) {
             parts.push(tab === "paid" ? "Paga a " + row.paid_date : (tab === "other" ? "Vencia a " : "Vence a ") + row.due_date);
+        }
+        if (tab === "due" && row.late_days) {
+            const late = row.late_days === 1 ? "há 1 dia" : "há " + row.late_days + " dias";
+            if (parts.length) {
+                parts[0] += " (" + late + ")";
+            } else {
+                parts.push("Em atraso " + late);
+            }
         }
         if (tab === "due" && row.fine) {
             parts.push("com " + row.fine + " de multa");
@@ -313,7 +327,9 @@ export class StudentProfile extends StudentPage {
             return `${d.first_name}, não tens matrícula activa neste ano lectivo. Se for engano, fala com a secretaria.`;
         }
         const course = p.enrollment.course ? ` (${p.enrollment.course})` : "";
-        return `${d.first_name}, estás na turma ${p.enrollment.class}${course} no ano lectivo ${p.enrollment.year}, com ${count(p.enrollment.subjects.length, "uma disciplina", "disciplinas")}.`;
+        const n = p.enrollment.subjects.length;
+        const subjects = n ? `, com ${count(n, "uma disciplina", "disciplinas")}` : "";
+        return `${d.first_name}, estás na turma ${p.enrollment.class}${course} no ano lectivo ${p.enrollment.year}${subjects}.`;
     }
 
     async changePassword() {

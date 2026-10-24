@@ -4,7 +4,7 @@
     <!-- Em todas as páginas: sem ficha de aluno, a frase para a secretaria; com propinas em atraso, o aviso do secPed. -->
     <t t-name="edu_portal.StudentPage.NoStudent">
         <section class="o_edu_st_card">
-            O seu utilizador ainda não está ligado a uma ficha de aluno. Peça à secretaria para o associar.
+            O teu utilizador ainda não está ligado a uma ficha de aluno. Pede à secretaria para o associar.
         </section>
     </t>
 
@@ -61,6 +61,7 @@
                             <button type="button" class="o_edu_kpi" t-on-click="() => this.open('edu_portal.action_student_grades')">
                                 <span class="o_edu_kpi_label">Média do ano</span>
                                 <t t-if="g.blocked"><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail text-danger">Notas bloqueadas pelas propinas</span></t>
+                                <t t-elif="g.preschool"><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail">Avaliação descritiva, sem notas</span></t>
                                 <t t-elif="g.year_average">
                                     <span class="o_edu_kpi_value" t-att-class="{'text-danger': !g.year_average.pos}" t-out="g.year_average.text"/>
                                     <span class="o_edu_kpi_detail"><t t-out="g.year_average.pos ? 'Positiva' : 'Abaixo de ' + g.pass_text"/>, até agora</span>
@@ -109,12 +110,12 @@
                                     <div class="text-muted">
                                         <span class="o_edu_st_num" t-out="next.hours"/>
                                         <t t-if="next.room">, <t t-out="next.room"/></t>
-                                        <t t-if="next.teacher">, com <t t-out="next.teacher"/></t>
+                                        <t t-if="next.teacher">, com <t t-out="next.teacher"/><t t-if="next.replacement"> (a substituir)</t></t>
                                     </div>
                                 </div>
                                 <div t-else="">
                                     <p class="mb-1" t-if="!d.has_schedule">O horário da tua turma ainda não foi publicado. Aparece aqui quando a escola o publicar.</p>
-                                    <p class="mb-1" t-elif="d.today.holiday">Hoje não há aulas: é feriado ou pausa no calendário escolar.</p>
+                                    <p class="mb-1" t-elif="d.today.holiday">Hoje não há aulas: é feriado, pausa no calendário escolar ou as aulas foram canceladas.</p>
                                     <p class="mb-1" t-elif="d.today.had_lessons">As aulas de hoje já acabaram.</p>
                                     <p class="mb-1" t-else="">Hoje não tens aulas.</p>
                                     <t t-if="d.today.next_day">
@@ -215,13 +216,16 @@
                                     </div>
                                 </section>
 
-                                <!-- As faltas face ao limite -->
+                                <!-- As faltas face ao limite (no primário e na iniciação não há limite por disciplina) -->
                                 <section class="o_edu_st_card" aria-labelledby="o_edu_st_chart_absences">
                                     <div class="o_edu_st_row mb-2">
-                                        <h2 id="o_edu_st_chart_absences" class="o_edu_st_h2 mb-0">Faltas face ao limite</h2>
+                                        <h2 id="o_edu_st_chart_absences" class="o_edu_st_h2 mb-0" t-out="d.absences.regime === 'primary' ? 'Frequência' : 'Faltas face ao limite'"/>
                                         <button t-if="d.absences.total" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_absences')">Ver as faltas</button>
                                     </div>
-                                    <p t-if="!this.absenceMeters.length" class="mb-0 text-muted">Ainda não há presenças registadas este ano.</p>
+                                    <p t-if="!d.absences.total" class="mb-0 text-muted">Ainda não há chamadas registadas este ano.</p>
+                                    <p t-elif="d.absences.preschool" class="mb-0 text-muted">Estiveste em <t t-out="d.absences.rate"/>% das aulas. Na Iniciação as faltas não contam para passar de ano.</p>
+                                    <p t-elif="d.absences.regime === 'primary'" class="mb-0 text-muted">Estiveste em <t t-out="d.absences.rate"/>% das aulas. No primário não há limite de faltas por disciplina: conta a frequência do ano, que tem de chegar a dois terços das aulas.</p>
+                                    <p t-elif="!this.absenceMeters.length" class="mb-0 text-muted">As disciplinas não têm limite de faltas no plano curricular.</p>
                                     <ul t-else="" class="o_edu_meters">
                                         <li t-foreach="this.absenceMeters" t-as="m" t-key="m_index" t-att-title="m.name + ': ' + m.counted + ' de ' + m.limit + ' faltas injustificadas, ' + m.status_label.toLowerCase()">
                                             <div class="d-flex justify-content-between gap-2 small">
@@ -271,6 +275,8 @@
                             </div>
                         </div>
                     </header>
+                    <!-- O aviso das propinas também nas páginas sem dados. -->
+                    <t t-call="edu_portal.StudentPage.Debt"/>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
                     <section t-elif="!g.years.length" class="o_edu_st_card text-muted">
                         Ainda não tens matrículas com notas. Se achas que é um engano, fala com a secretaria.
@@ -281,7 +287,6 @@
                     </section>
                     <section t-elif="!g.active" class="o_edu_st_card text-muted">A escola ainda não tem trimestres neste ano lectivo.</section>
                     <t t-else="">
-                        <t t-call="edu_portal.StudentPage.Debt"/>
                         <t t-set="tec" t-value="g.technical"/>
                         <t t-set="a" t-value="g.active"/>
                         <div t-if="g.year_result" class="alert mb-0" t-att-class="g.year_result.bad ? 'alert-danger' : (g.year_result.good ? 'alert-success' : 'alert-warning')">
@@ -383,7 +388,7 @@
                             <div t-if="a.has_npt"><dt t-out="this.examLabel"/><dd>prova trimestral</dd></div>
                             <div>
                                 <dt><t t-if="tec">CT</t><t t-else="">MT</t><t t-out="a.number"/></dt>
-                                <dd t-if="tec">classificação do <t t-out="sp.trimester or 'trimestre'"/><t t-if="a.has_npt">: (NPP + NPT) ÷ 2, juntando os trimestres anteriores</t><t t-else="">: no último trimestre só há a NPP, e o CT3 é a CF</t></dd>
+                                <dd t-if="tec">classificação do <t t-out="sp.trimester or 'trimestre'"/><t t-if="a.has_npt">: (NPP + NPT) ÷ 2, juntando os trimestres anteriores</t><t t-else="">: no último trimestre só há a NPP, e o CT do trimestre é a CF</t></dd>
                                 <dd t-else="">média do <t t-out="sp.trimester or 'trimestre'"/></dd>
                             </div>
                             <t t-if="tec">
@@ -425,13 +430,14 @@
                             </button>
                         </div>
                     </header>
+                    <!-- O aviso das propinas também nas páginas sem dados. -->
+                    <t t-call="edu_portal.StudentPage.Debt"/>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
                     <t t-elif="!d.has_enrollment" t-call="edu_portal.StudentPage.NoEnrollment"><t t-set="what" t-value="'não há horário'"/></t>
                     <section t-elif="!d.lessons.length" class="o_edu_st_card text-muted">
                         O horário da tua turma ainda não foi publicado. Aparece aqui quando a escola o fizer.
                     </section>
                     <t t-else="">
-                        <t t-call="edu_portal.StudentPage.Debt"/>
                         <div class="o_edu_st_card p-0 o_edu_st_scroll d-none d-md-block">
                             <table class="table mb-0 o_edu_st_table o_edu_st_week">
                                 <thead>
@@ -492,13 +498,14 @@
                             <i class="oi me-1" data-icon="print" aria-hidden="true"/>Imprimir
                         </button>
                     </header>
+                    <!-- O aviso das propinas também nas páginas sem dados. -->
+                    <t t-call="edu_portal.StudentPage.Debt"/>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
                     <section t-elif="!d.has_enrollment" class="o_edu_st_card text-muted">Não tens matrícula neste ano lectivo, por isso não há provas.</section>
                     <section t-elif="!d.exams.count" class="o_edu_st_card text-muted">
                         Ainda não há provas marcadas para a tua turma. Aparecem aqui quando a secretaria as marcar.
                     </section>
                     <t t-else="">
-                        <t t-call="edu_portal.StudentPage.Debt"/>
                         <p class="mb-0" t-out="this.sentence"/>
                         <section t-foreach="d.exams.periods" t-as="period" t-key="period.id" class="o_edu_st_section" t-att-aria-label="period.name">
                             <div t-if="d.exams.periods.length > 1" class="o_edu_st_row">
@@ -511,7 +518,7 @@
                                     <thead><tr><th>Dia</th><th>Hora</th><th>Disciplina</th><th>Sala</th><th>Vigilante</th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="period.rows" t-as="row" t-key="row.id"
-                                            t-att-class="{'o_edu_st_day_start': row.first_of_day and row_index > 0, 'text-muted': row.done}">
+                                            t-att-class="{'o_edu_st_day_start': row.first_of_day and row_index > 0, 'o_edu_st_done': row.done}">
                                             <td class="text-nowrap fw-semibold"><t t-if="row.first_of_day" t-out="row.day"/></td>
                                             <td class="o_edu_st_num text-nowrap" t-out="row.hours"/>
                                             <td class="fw-semibold" t-out="row.subject"/>
@@ -551,6 +558,8 @@
                         <h1 class="o_edu_st_title">Faltas</h1>
                         <p class="mb-0 text-muted">As minhas faltas<t t-if="d.year">, <t t-out="d.year"/></t>.</p>
                     </header>
+                    <!-- O aviso das propinas também nas páginas sem dados. -->
+                    <t t-call="edu_portal.StudentPage.Debt"/>
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
                     <section t-elif="!d.has_enrollment" class="o_edu_st_card text-muted">Não tens matrícula neste ano lectivo, por isso não há faltas a contar.</section>
                     <section t-elif="!d.absences.total" class="o_edu_st_card text-muted">
@@ -558,7 +567,6 @@
                     </section>
                     <t t-else="">
                         <t t-set="a" t-value="d.absences"/>
-                        <t t-call="edu_portal.StudentPage.Debt"/>
                         <p class="mb-0" t-out="this.sentence"/>
                         <div t-if="a.failed.length" class="alert alert-danger mb-0" role="alert">
                             Passaste o limite de faltas injustificadas a <t t-out="this.list(a.failed)"/>. Fala com o director de turma: as faltas que tenham justificação ainda podem ser justificadas.
@@ -641,24 +649,24 @@
                             </t>
                         </p>
 
-                        <div t-if="f.rows.length" class="btn-group align-self-start" role="tablist" aria-label="Facturas">
-                            <button type="button" role="tab" class="btn" t-att-aria-selected="this.state.tab === 'due' ? 'true' : 'false'"
-                                    t-att-class="this.state.tab === 'due' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('due')">
+                        <div t-if="f.rows.length" class="btn-group align-self-start" role="group" aria-label="Facturas">
+                            <button type="button" class="btn" t-att-aria-pressed="this.tab === 'due' ? 'true' : 'false'"
+                                    t-att-class="this.tab === 'due' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('due')">
                                 Por pagar<t t-if="f.due.length"> (<t t-out="f.due.length"/>)</t>
                             </button>
-                            <button type="button" role="tab" class="btn" t-att-aria-selected="this.state.tab === 'paid' ? 'true' : 'false'"
-                                    t-att-class="this.state.tab === 'paid' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('paid')">
+                            <button type="button" class="btn" t-att-aria-pressed="this.tab === 'paid' ? 'true' : 'false'"
+                                    t-att-class="this.tab === 'paid' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('paid')">
                                 Pagas<t t-if="f.paid.length"> (<t t-out="f.paid.length"/>)</t>
                             </button>
-                            <button t-if="f.other.length" type="button" role="tab" class="btn" t-att-aria-selected="this.state.tab === 'other' ? 'true' : 'false'"
-                                    t-att-class="this.state.tab === 'other' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('other')">
+                            <button t-if="f.other.length" type="button" class="btn" t-att-aria-pressed="this.tab === 'other' ? 'true' : 'false'"
+                                    t-att-class="this.tab === 'other' ? 'btn-primary' : 'btn-secondary'" t-on-click="() => this.setTab('other')">
                                 Isentas ou anuladas (<t t-out="f.other.length"/>)
                             </button>
                         </div>
 
                         <t t-if="f.rows.length">
                             <section t-if="!this.rows.length" class="o_edu_st_card text-muted">
-                                <t t-if="this.state.tab === 'due'">Não tens nada por pagar.</t>
+                                <t t-if="this.tab === 'due'">Não tens nada por pagar.</t>
                                 <t t-else="">Ainda não há facturas pagas.</t>
                             </section>
                             <t t-else="">
@@ -671,7 +679,7 @@
                                                 <th t-out="this.dateHeader"/>
                                                 <th class="text-end">Valor</th>
                                                 <th t-if="f.charges_fines" class="text-end">Multa</th>
-                                                <th class="text-end"><t t-if="this.state.tab === 'due'">Por pagar</t><t t-else="">Total</t></th>
+                                                <th class="text-end"><t t-if="this.tab === 'due'">Por pagar</t><t t-else="">Total</t></th>
                                                 <th>Situação</th>
                                             </tr>
                                         </thead>
@@ -682,8 +690,8 @@
                                                     <div t-if="r.number" class="small text-muted o_edu_st_num" t-out="r.number"/>
                                                 </td>
                                                 <td class="text-nowrap">
-                                                    <t t-if="this.state.tab === 'paid'"><span class="text-muted" t-out="r.paid_date or '—'"/></t>
-                                                    <t t-elif="this.state.tab === 'other'"><span class="text-muted" t-out="r.due_date or '—'"/></t>
+                                                    <t t-if="this.tab === 'paid'"><span class="text-muted" t-out="r.paid_date or '—'"/></t>
+                                                    <t t-elif="this.tab === 'other'"><span class="text-muted" t-out="r.due_date or '—'"/></t>
                                                     <t t-else="">
                                                         <t t-out="r.due_date or '—'"/>
                                                         <div t-if="r.late_days" class="small text-danger" t-out="'há ' + r.late_days + (r.late_days === 1 ? ' dia' : ' dias')"/>
@@ -698,8 +706,8 @@
                                                     <span t-else="" class="text-muted">—</span>
                                                 </td>
                                                 <td class="text-end text-nowrap">
-                                                    <div class="o_edu_st_num" t-out="this.state.tab === 'due' ? r.due : r.total"/>
-                                                    <div t-if="this.state.tab === 'due' and r.paid" class="small text-muted" t-out="'já pagaste ' + r.paid"/>
+                                                    <div class="o_edu_st_num" t-out="this.tab === 'due' ? r.due : r.total"/>
+                                                    <div t-if="this.tab === 'due' and r.paid" class="small text-muted" t-out="'já pagaste ' + r.paid"/>
                                                 </td>
                                                 <td class="text-nowrap" t-att-class="this.statusClass(r)" t-out="r.status"/>
                                             </tr>
@@ -711,7 +719,7 @@
                                     <li t-foreach="this.rows" t-as="r" t-key="r.id" class="flex-column align-items-stretch gap-1">
                                         <div class="d-flex justify-content-between gap-3">
                                             <span t-out="r.name"/>
-                                            <span class="o_edu_st_num text-nowrap" t-out="this.state.tab === 'due' ? r.due : r.total"/>
+                                            <span class="o_edu_st_num text-nowrap" t-out="this.tab === 'due' ? r.due : r.total"/>
                                         </div>
                                         <div class="small text-muted">
                                             <t t-out="this.whenText(r)"/><span t-att-class="this.statusClass(r)" t-out="r.status"/>
@@ -878,7 +886,7 @@
                                     </t>
                                 </dl>
                                 <t t-if="p.enrollment and p.enrollment.subjects.length">
-                                    <h3 class="small text-muted mb-1">As tuas <t t-out="p.enrollment.subjects.length"/> disciplinas</h3>
+                                    <h3 class="small text-muted mb-1"><t t-out="p.enrollment.subjects.length === 1 ? 'A tua disciplina' : 'As tuas ' + p.enrollment.subjects.length + ' disciplinas'"/></h3>
                                     <p class="mb-0"><t t-out="this.list(p.enrollment.subjects)"/>.</p>
                                 </t>
                             </section>

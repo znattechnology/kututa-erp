@@ -1,7 +1,9 @@
 from odoo import api, models
-from odoo.addons.edu_roles.models.ir_ui_menu import OTHER_ROLES, TEACHER_HIDDEN_APPS
+from odoo.addons.edu_roles.models.ir_ui_menu import TEACHER_HIDDEN_APPS
 
 STUDENT_TRAINING_MENU = 'edu_portal.menu_student_training'
+# As Ausências são dos funcionários: o aluno não tem ficha de funcionário.
+STUDENT_HIDDEN_APPS = (*TEACHER_HIDDEN_APPS, 'hr_holidays.menu_hr_holidays_root')
 
 
 class IrUiMenu(models.Model):
@@ -9,15 +11,12 @@ class IrUiMenu(models.Model):
 
     @api.model
     def _load_menus_blacklist(self):
-        """O aluno (sem outro papel na escola) só tem a sua área, como o professor: sem Discussões nem Calendário, e
-        sem a formação técnica se não for do ensino técnico."""
+        """O aluno (sem outro papel na escola) só tem a sua área, como o professor: sem Discussões, Calendário nem
+        Ausências, e sem a formação técnica se não for do ensino técnico."""
         hidden = super()._load_menus_blacklist()
         user = self.env.user
-        roles = [
-            self.env.ref(xmlid, raise_if_not_found=False) for xmlid in (*OTHER_ROLES, 'edu_core.group_edu_teacher')
-        ]
-        if user.has_group('edu_portal.group_edu_student') and not any(g in user.all_group_ids for g in roles if g):
-            hidden_xmlids = list(TEACHER_HIDDEN_APPS)
+        if user._edu_student_only():
+            hidden_xmlids = list(STUDENT_HIDDEN_APPS)
             # A formação técnica (o estágio e a PAP) é do ensino técnico, como no secPed.
             Portal = self.env['edu.student.portal']
             if not Portal._is_technical(Portal._student(user)):

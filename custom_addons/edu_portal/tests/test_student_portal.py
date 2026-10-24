@@ -165,6 +165,53 @@ class TestStudentPortal(HttpCase):
         self.assertIn(self.env.ref('edu_portal.menu_student_root').id, roots)
         self.assertNotIn(self.env.ref('mail.menu_root_discuss').id, roots)
 
+    def test_student_lockdown(self):
+        """O aluno é utilizador interno, mas não muda os seus dados (são da secretaria), não lista os outros
+        utilizadores, não entra nas conversas nem no calendário do pessoal e só abre o horário da sua turma."""
+        ana = self.ana_user.with_user(self.ana_user)
+        with self.assertRaises(AccessError):
+            ana.partner_id.write({'name': 'Outro nome'})
+        with self.assertRaises(AccessError):
+            ana.write({'email': 'outro@example.com'})
+        # A palavra-passe muda-se (o assistente escreve como o próprio utilizador, em sudo).
+        ana.env.user._change_password('ana_portal_pw_456')
+        Users = self.env['res.users'].with_user(self.ana_user)
+        self.assertTrue(Users.search([('id', '=', self.ana_user.id)]), 'o seu utilizador lê-se')
+        bento_user = self.env['res.users'].create(
+            {
+                'name': 'Bento Vizinho',
+                'login': 'bento_portal',
+                'partner_id': self.bento.partner_id.id,
+                'group_ids': [Command.set([self.env.ref('edu_portal.group_edu_student').id])],
+            }
+        )
+        self.assertFalse(Users.search([('id', '=', bento_user.id)]), 'os outros alunos não se listam')
+        self.assertTrue(Users.search([('login', '=', 'prof_portal')]), 'o pessoal sim')
+        # Nem as conversas (o «General» junta os internos), nem o calendário, nem as notas internas dos registos.
+        general = self.env['discuss.channel'].create(
+            {'name': 'Geral', 'group_ids': [Command.link(self.env.ref('base.group_user').id)]}
+        )
+        self.assertNotIn(self.ana.partner_id, general.channel_member_ids.partner_id)
+        self.assertIn(self.env.user.partner_id, general.channel_member_ids.partner_id)
+        self.assertFalse(self.env['discuss.channel'].with_user(self.ana_user).search([]))
+        self.assertFalse(self.env['calendar.event'].with_user(self.ana_user).search([]))
+        with self.assertRaises(AccessError):
+            self.env['calendar.event'].with_user(self.ana_user).create({'name': 'Festa'})
+        note = self.edu_class.message_post(body='Nota interna da turma', message_type='comment')
+        self.assertFalse(self.env['mail.message'].with_user(self.ana_user).search([('id', '=', note.id)]))
+        # Os relatórios: o horário da sua turma sim; o de outra turma e a lista dos professores não.
+        Report = self.env['ir.actions.report'].with_user(self.ana_user)
+        other_class = self.edu_class.copy({'name': 'Z'})
+        with self.assertRaises(AccessError):
+            Report._render_qweb_html('edu_documents.report_class_schedule', other_class.ids)
+        teachers = self.env['hr.employee.public'].search([], limit=1)
+        with self.assertRaises(AccessError):
+            Report._render_qweb_html('edu_documents.report_teachers', teachers.ids)
+        # Os auxiliares do portal não se chamam por RPC: só as páginas.
+        Portal = type(self.env['edu.student.portal'])
+        for name in ('grades', 'exams', 'absences', 'fees', 'profile', 'internships', 'projects'):
+            self.assertTrue(getattr(getattr(Portal, name), '_api_private', False), name)
+
     def test_schedule_report(self):
         """O horário da turma em A4, como o do professor: na aplicação ou em PDF."""
         Portal = self.env['edu.student.portal'].with_user(self.ana_user)
@@ -193,9 +240,26 @@ class TestStudentPortal(HttpCase):
                     'hour_to': hour + 1.5,
                 }
             )
+        # O recurso marcado para a turma só aparece a quem foi convocado.
+        resit = self.env['edu.exam.period'].create(
+            {'name': 'Recurso', 'kind': 'resit', 'date_start': date(2027, 7, 21), 'date_end': date(2027, 7, 25)}
+        )
+        resit_session = self.env['edu.exam.session'].create(
+            {
+                'period_id': resit.id,
+                'subject_id': self.lp.id,
+                'class_ids': [Command.set(self.edu_class.ids)],
+                'date': date(2027, 7, 22),
+                'hour_from': 8,
+                'hour_to': 9.5,
+            }
+        )
         Portal = self.env['edu.student.portal'].with_user(self.ana_user)
         exams = Portal.page_data('exams')['exams']
         self.assertEqual((exams['count'], exams['days']), (3, 2))
+        self.env['edu.exam.seat'].create({'session_id': resit_session.id, 'enrollment_id': self.enrollments[0].id})
+        self.assertEqual(Portal.page_data('exams')['exams']['count'], 4)
+        resit.unlink()
         self.assertEqual([r['first_of_day'] for r in exams['rows']], [True, False, True])
         self.assertTrue(exams['rows'][0]['day'].endswith('5 de Julho'))
         action = Portal.exams_report()
