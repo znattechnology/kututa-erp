@@ -113,6 +113,16 @@ def secped_final(cf, pg, points, scale_max=20):
     return min(scale_max, ca + (points or 0))
 
 
+def secped_general_final(cf, signed_final, points, scale_max=20):
+    """Classificação do ano no geral, como o secPed a mostra: na classe de exame a MF assinada (MFED), arredondada;
+    nas outras a CF assinada (MFD), arredondada e com a bonificação do conselho."""
+    if signed_final is not None:
+        return round_half_up(signed_final)
+    if cf is None:
+        return None
+    return min(scale_max, round_half_up(cf) + (points or 0))
+
+
 def full_name(user):
     return re.sub(r'\s+', ' ', f'{user.get("firstName") or ""} {user.get("lastName") or ""}').strip()
 
@@ -275,7 +285,19 @@ class EduMigrationSecped(models.AbstractModel):
             vals['primary_color'] = school['primaryColor']
         if school.get('secondaryColor'):
             vals['secondary_color'] = school['secondaryColor']
+        levels = self.env['edu.level'].search([('code', 'in', school.get('educationLevels') or [])])
+        if levels:
+            vals['edu_level_ids'] = [fields.Command.set(levels.ids)]
+        # Escola privada: os documentos com notas saem em nome da escola pública de tutela (edu_documents).
+        documents = {
+            'edu_supervisor_school': school.get('tutelaSchoolName'),
+            'edu_supervisor_director': school.get('tutelaDirectorName'),
+            'edu_document_city': school.get('municipality'),
+        }
+        vals.update({name: value for name, value in documents.items() if value and name in run.company._fields})
         run.company.write(vals)
+        if school.get('tutelaCreationDecree'):
+            run.issue('escola', f'Diploma da escola de tutela por registar: {school["tutelaCreationDecree"]}')
         if school.get('taxNumber') and run.company.vat != school['taxNumber']:
             try:
                 with self.env.cr.savepoint():
@@ -356,24 +378,31 @@ class EduMigrationSecped(models.AbstractModel):
                 for d in src.rows('departments')
             ],
         )
-        run.upsert(
-            'school_shifts',
-            'edu.shift',
-            [
+        # O turno cobre os tempos que a escola tem nele (no secPed um tempo pode passar do fim do turno).
+        bounds = defaultdict(list)
+        for slot in src.rows('time_slots'):
+            bounds[slot['shiftId']] += [slot['startTime'], slot['endTime']]
+        shifts = []
+        for s in src.rows('school_shifts'):
+            start = min([s['startTime'], *bounds[s['id']]])
+            end = max([s['endTime'], *bounds[s['id']]])
+            if (start, end) != (s['startTime'], s['endTime']):
+                run.issue('tempos', f'{s["name"]}: alargado aos tempos da escola ({start // 60:02d}:{start % 60:02d}–'
+                                    f'{end // 60:02d}:{end % 60:02d})')  # fmt: skip
+            shifts.append(
                 (
                     s['id'],
                     {
                         'name': s['name'],
                         'company_id': cid,
                         'shift_type': SHIFT_TYPES.get(s.get('type'), 'morning'),
-                        'hour_from': minutes(s['startTime']),
-                        'hour_to': minutes(s['endTime']),
+                        'hour_from': minutes(start),
+                        'hour_to': minutes(end),
                         'active': s.get('isActive', True),
                     },
                 )
-                for s in src.rows('school_shifts')
-            ],
-        )
+            )
+        run.upsert('school_shifts', 'edu.shift', shifts)
         # Tempos lectivos: o Odoo não aceita tempos sobrepostos no mesmo turno (há duas grelhas de tarde no secPed).
         # Fica a primeira grelha; as aulas guardam as suas horas mesmo sem tempo associado.
         slots = []
@@ -565,7 +594,9 @@ class EduMigrationSecped(models.AbstractModel):
                 # No técnico a frequência não conta (faltas pelos tempos lectivos); no secPed o valor nem se aplicava.
                 vals['min_attendance'] = number(policy_row.get('minAttendanceRate')) or policy.min_attendance
             rule = rules.get(policy_row.get('level'))
-            if rule and rule.get('maxNegatives') is not None:
+            # No geral fica a do RAA (art. 25.º: transita com até duas negativas), que é a que as escolas aplicam; o
+            # secPed tem 0 por omissão no Secundário e marca esses alunos para recurso.
+            if rule and rule.get('maxNegatives') is not None and policy.regime == 'technical':
                 vals['conditional_max'] = rule['maxNegatives']
             policy.write(vals)
 
@@ -581,6 +612,11 @@ class EduMigrationSecped(models.AbstractModel):
             if k.get('courseId') and run.ref('curricula', k['id']):
                 curricula[k['courseId']].append(k)
         years = self.env['edu.curriculum.year']
+        enrolled = defaultdict(set)  # (turma, ano) → disciplinas inscritas
+        by_enrollment = {e['id']: (e['classId'], e['academicYearId']) for e in src.rows('enrollments')}
+        for row in src.rows('enrollment_subjects'):
+            if row['enrollmentId'] in by_enrollment:
+                enrolled[by_enrollment[row['enrollmentId']]].add(row['subjectId'])
         rooms_taken = set()
         items = []
         for offering in src.rows('class_offerings'):
@@ -599,7 +635,17 @@ class EduMigrationSecped(models.AbstractModel):
             curriculum_year = years.search(
                 [('curriculum_id', '=', curriculum_id), ('class_number', '=', school_class['classNumber'])], limit=1
             )
-            letter = re.sub(r'^\s*\d+\s*[ªº.]?\s*', '', school_class['name']).strip() or school_class['name']
+            extra = {
+                sid
+                for sid in enrolled[(offering['classId'], offering['academicYearId'])]
+                if run.ref('subjects', sid) and run.ref('subjects', sid) not in curriculum_year.line_ids.subject_id.ids
+            }
+            if curriculum_year and extra:
+                curriculum_year = self._historical_plan(run, plans[0]['id'], offering['academicYearId'],
+                                                        curriculum_year, extra)  # fmt: skip
+                curriculum_id = curriculum_year.curriculum_id.id
+            letter = re.sub(r'^\s*(\d+\s*[ªº.]?|inicia[çc][ãa]o)\s*', '', school_class['name'], flags=re.IGNORECASE)
+            letter = letter.strip() or school_class['name']
             shift_id = run.ref('school_shifts', school_class.get('shiftId')) or False
             room_id = run.ref('rooms', school_class.get('roomId')) or False
             if room_id and shift_id:
@@ -630,6 +676,76 @@ class EduMigrationSecped(models.AbstractModel):
             if not curriculum_year:
                 run.issue('turmas', f'{school_class["name"]}: o plano não tem a {school_class["classNumber"]}ª classe')
         run.upsert('class_offerings', 'edu.class', items)
+
+    def _historical_plan(self, run, curriculum_sid, year_sid, curriculum_year, extra):
+        """O plano de um ano fechado em que a pauta tinha disciplinas que já não estão no plano da escola (um plano
+        antigo): uma cópia arquivada do plano, com essas disciplinas no ano da turma, só para as turmas desse ano."""
+        key = f'{curriculum_sid}__{year_sid}'
+        base = curriculum_year.curriculum_id
+        year_name = self.env['edu.academic.year'].browse(run.ref('academic_years', year_sid)).name
+        run.upsert(
+            'curricula_history',
+            'edu.curriculum',
+            [
+                (
+                    key,
+                    {
+                        'name': f'{base.name} ({year_name})',
+                        'company_id': base.company_id.id,
+                        'course_id': base.course_id.id,
+                        'level_id': base.level_id.id,
+                        'description': self.env._('Plano da pauta assinada de %s (migração do secPed).', year_name),
+                        'active': False,
+                    },
+                )
+            ],
+        )
+        curriculum_id = run.ref('curricula_history', key)
+        run.upsert(
+            'curriculum_years_history',
+            'edu.curriculum.year',
+            [
+                (
+                    f'{key}__{year.id}',
+                    {
+                        'curriculum_id': curriculum_id,
+                        'year': year.year,
+                        'class_number': year.class_number,
+                        'name': year.name,
+                    },
+                )  # fmt: skip
+                for year in base.year_ids
+            ],
+        )
+        lines = []
+        for line in base.line_ids:
+            lines.append(
+                (
+                    f'{key}__{line.id}',
+                    {
+                        'year_id': run.ref('curriculum_years_history', f'{key}__{line.year_id.id}'),
+                        'subject_id': line.subject_id.id,
+                        'sequence': line.sequence,
+                        'weekly_hours': line.weekly_hours,
+                        'component': line.component,
+                        'is_compulsory': line.is_compulsory,
+                        'is_national_exam': line.is_national_exam,
+                    },
+                )
+            )
+        target = run.ref('curriculum_years_history', f'{key}__{curriculum_year.id}')
+        known = run.ids['curriculum_subjects_history']
+        for sid in sorted(extra):
+            subject = self.env['edu.subject'].browse(run.ref('subjects', sid))
+            if f'{key}__extra__{sid}' not in known:
+                run.issue(
+                    'planos',
+                    f'{subject.name} na {curriculum_year.class_number}ª de {year_name}: só no plano antigo (a pauta '
+                    'assinada tem-na); ficou num plano desse ano',
+                )
+            lines.append((f'{key}__extra__{sid}', {'year_id': target, 'subject_id': subject.id, 'sequence': 900}))
+        run.upsert('curriculum_subjects_history', 'edu.curriculum.line', lines)
+        return self.env['edu.curriculum.year'].browse(target)
 
     def _class_for(self, run, class_id, year_id):
         """Turma do Odoo para (turma persistente, ano lectivo) do secPed."""
@@ -769,6 +885,9 @@ class EduMigrationSecped(models.AbstractModel):
         positions = {p['userId']: (p.get('position') or '').strip() for p in run.src.rows('staff_profiles')}
         Users = self.env['res.users'].with_context(no_reset_password=True)
         internal = self.env.ref('base.group_user')
+        # Área do Estudante (edu_portal): os alunos com acesso no secPed (os do ano em curso) têm conta; os dos anos
+        # fechados ficam só com a ficha.
+        student_group = self.env.ref('edu_portal.group_edu_student', raise_if_not_found=False)
         skipped = []
         items = []
         for user in run.users.values():
@@ -776,7 +895,10 @@ class EduMigrationSecped(models.AbstractModel):
             position = positions.get(user['id'], '')
             if role == 'STAFF' and position.lower() in FINANCE_POSITIONS:
                 role = 'ADMIN_FINANCAS'
+            student_id = run.ref('students', user['id']) if role == 'STUDENT' else None
             group = self.env.ref(USER_GROUPS[role], raise_if_not_found=False) if role in USER_GROUPS else None
+            if student_id and student_group and user.get('status') == 'ACTIVE':
+                group = student_group
             if not group:
                 if role not in {'STUDENT', 'GUARDIAN'}:
                     skipped.append(user.get('email') or user['id'])
@@ -793,6 +915,10 @@ class EduMigrationSecped(models.AbstractModel):
                 'company_ids': [fields.Command.link(run.company.id)],
                 'group_ids': [fields.Command.link(internal.id), fields.Command.link(group.id)],
             }
+            if group == student_group:
+                student = self.env['edu.student'].browse(student_id)
+                vals.update({'name': student.name, 'partner_id': student.partner_id.id})
+                vals['group_ids'] = [fields.Command.link(group.id)]
             if not run.ref('users', user['id']):
                 existing = Users.with_context(active_test=False).search([('login', '=', login)], limit=1)
                 if existing and (
@@ -1045,7 +1171,7 @@ class EduMigrationSecped(models.AbstractModel):
         src = run.src
         env = self.env
         enrollments = {e['id']: e for e in src.rows('enrollments')}
-        terms, annual, global_exam = {}, {}, {}
+        terms, annual, global_exam, national, signed_final = {}, {}, {}, {}, {}
         for grade in src.rows('grades'):
             enrollment_id = run.ref('enrollments', grade.get('enrollmentId'))
             subject_id = run.ref('subjects', grade['subjectId'])
@@ -1060,6 +1186,11 @@ class EduMigrationSecped(models.AbstractModel):
                 annual[pair] = float(grade['score'])
             elif grade['type'] == 'GLOBAL':
                 global_exam[pair] = float(grade['score'])
+            elif grade['type'] == 'NACIONAL':
+                national[pair] = float(grade['score'])
+            elif grade['type'] == 'FINAL':
+                # Geral, classe de exame: a MF assinada (ou a nota do recurso, que a substitui).
+                signed_final[pair] = float(grade['score'])
             else:
                 run.issue('notas', f'Tipo de nota {grade["type"]} sem correspondência')
         by_student_year = {
@@ -1077,6 +1208,8 @@ class EduMigrationSecped(models.AbstractModel):
         run.metrics['notas_trimestrais'] = len(terms)
         run.metrics['cf_assinadas'] = len(annual)
         run.metrics['provas_globais'] = len(global_exam)
+        run.metrics['exames_nacionais'] = len(national)
+        run.metrics['mf_assinadas'] = len(signed_final)
         run.metrics['bonificacoes'] = len(points)
 
         # a) Médias de cada trimestre (as notas TRIMESTRAL do secPed: a média do trimestre, não o CT acumulado; o
@@ -1099,7 +1232,14 @@ class EduMigrationSecped(models.AbstractModel):
 
         # b) Resultado anual com a CF assinada e a bonificação do conselho.
         Result = env['edu.subject.result']
-        pairs = set(annual) | set(global_exam) | set(points) | {key[:2] for key in terms}
+        pairs = (
+            set(annual)
+            | set(global_exam)
+            | set(national)
+            | set(signed_final)
+            | set(points)
+            | {key[:2] for key in terms}
+        )
         results = {
             (r.enrollment_id.id, r.subject_id.id): r
             for r in Result.search([('enrollment_id', 'in', list({p[0] for p in pairs}))])
@@ -1110,6 +1250,8 @@ class EduMigrationSecped(models.AbstractModel):
             vals = {
                 'has_imported_cf': pair in annual,
                 'imported_cf': annual.get(pair, 0.0),
+                'has_imported_final': pair in signed_final,
+                'imported_final': signed_final.get(pair, 0.0),
                 'council_points': point,
                 'council_source': source,
             }
@@ -1143,11 +1285,25 @@ class EduMigrationSecped(models.AbstractModel):
             )
         run.metrics['linhas_com_pg_fora_da_lei'] = len(lines_outside)
 
-        # d) Prova global: uma avaliação por turma e disciplina no último trimestre, com as notas.
+        # d) Prova global e exame nacional: uma avaliação por turma e disciplina no último trimestre, com as notas. O
+        #    exame nacional entra em todas as disciplinas em que a escola o lançou (como no secPed, sem marca no plano).
+        by_class_national = defaultdict(dict)
+        for (enrollment_id, subject_id), score in national.items():
+            enrollment = Enrollment.browse(enrollment_id)
+            if subject_id not in enrollment.class_id.subject_line_ids.subject_id.ids:
+                run.issue('notas', f'EN de {enrollment.display_name}: a disciplina não está no plano da turma')
+                continue
+            by_class_national[(enrollment.class_id.id, subject_id)][enrollment_id] = score
         Assessment = env['edu.assessment']
         Grade = env['edu.grade']
         Class = env['edu.class']
-        for (class_id, subject_id), scores in by_class.items():
+        names = {'global_exam': env._('Prova global'), 'national_exam': env._('Exame nacional')}
+        exams = [
+            (assessment_type, class_id, subject_id, scores)
+            for assessment_type, grouped in (('global_exam', by_class), ('national_exam', by_class_national))
+            for (class_id, subject_id), scores in grouped.items()
+        ]
+        for assessment_type, class_id, subject_id, scores in exams:
             edu_class = Class.browse(class_id)
             last = edu_class.academic_year_id.trimester_ids.sorted('number')[-1:]
             assessment = Assessment.search(
@@ -1155,17 +1311,18 @@ class EduMigrationSecped(models.AbstractModel):
                     ('class_id', '=', class_id),
                     ('subject_id', '=', subject_id),
                     ('trimester_id', '=', last.id),
-                    ('assessment_type', '=', 'global_exam'),
+                    ('assessment_type', '=', assessment_type),
                 ],
                 limit=1,
             ) or Assessment.create(
                 {
-                    'name': env._('Prova global'),
+                    'name': names[assessment_type],
                     'class_id': class_id,
                     'subject_id': subject_id,
                     'trimester_id': last.id,
-                    'assessment_type': 'global_exam',
+                    'assessment_type': assessment_type,
                     'date': last.date_end,
+                    'max_score': self.env['edu.evaluation.policy']._get(run.company, edu_class.level_id).scale_max,
                 }
             )
             grades = {grade.enrollment_id.id: grade for grade in assessment.grade_ids}
@@ -1178,7 +1335,7 @@ class EduMigrationSecped(models.AbstractModel):
                 else:
                     new_grades.append({'assessment_id': assessment.id, 'enrollment_id': enrollment_id, 'score': score})
             Grade.create(new_grades)
-            run.counts['global_exam_grades']['created'] += len(new_grades)
+            run.counts[f'{assessment_type}_grades']['created'] += len(new_grades)
 
         # e) Recalcula a pauta anual de tudo o que se importou.
         recompute = Result.browse([r.id for r in results.values()])
@@ -1186,7 +1343,8 @@ class EduMigrationSecped(models.AbstractModel):
             recompute[start : start + 500]._recompute()
         run.migrated_pairs = {pair: results[pair].id for pair in pairs}
         run.expected = {
-            pair: (annual.get(pair), global_exam.get(pair), points.get(pair, (0, None))[0]) for pair in pairs
+            pair: (annual.get(pair), global_exam.get(pair), points.get(pair, (0, None))[0], signed_final.get(pair))
+            for pair in pairs
         }
 
     # ------------------------------------------------------------------
@@ -1452,9 +1610,13 @@ class EduMigrationSecped(models.AbstractModel):
         mismatches = []
         matched = incomplete = 0
         for pair, result_id in run.migrated_pairs.items():
-            cf, pg, points = expected[pair]
-            want = secped_final(cf, pg, points)
+            cf, pg, points, signed_final = expected[pair]
             result = Result.browse(result_id)
+            scale = result._policy().scale_max
+            if result._policy().regime == 'technical':
+                want = secped_final(cf, pg, points, scale)
+            else:
+                want = secped_general_final(cf, signed_final, points, scale)
             if want is None:
                 incomplete += 1
                 continue
@@ -1467,6 +1629,7 @@ class EduMigrationSecped(models.AbstractModel):
                         'disciplina': result.subject_id.name,
                         'cf': cf,
                         'pg': pg,
+                        'mf': signed_final,
                         'bonificacao': points,
                         'secped': want,
                         'odoo': result.final if result.complete else None,

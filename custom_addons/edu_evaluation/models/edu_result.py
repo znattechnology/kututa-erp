@@ -188,6 +188,14 @@ class EduSubjectResult(models.Model):
         help='Classificação de frequência assinada (migração), com as casas decimais todas: entra assim na CA.',
     )
     has_imported_cf = fields.Boolean(string='Com CF importada')
+    imported_final = fields.Float(
+        string='MF importada',
+        digits=(6, 4),
+        aggregator='avg',
+        help='Ensino geral, classe de exame: a média final assinada (migração), com o exame nacional ou o recurso. '
+        'Vence a MFED calculada, porque a escola pode ter aplicado outra ponderação.',
+    )
+    has_imported_final = fields.Boolean(string='Com MF importada')
     has_global_exam = fields.Boolean(string='Com prova global')
     pg = fields.Float(string='PG', digits=(4, 2), aggregator='avg')
     has_pg = fields.Boolean()
@@ -324,16 +332,23 @@ class EduSubjectResult(models.Model):
                         if national_value is not None and mts and mts[-1] is not None
                         else cf
                     )
+                if result.has_imported_final:
+                    # A MF da pauta assinada (com o exame nacional ou a nota do recurso) vence a MFED calculada.
+                    annual = round_fn(result.imported_final)
             # A CF (e a classificação do ano) fecha com a classificação do último trimestre, com os trimestres que
             # existem (CF cumulativa no técnico, média no geral). Sem o último trimestre, espera pela prova
             # extraordinária (Despacho 60/08, art. 16.º, n.º 1, a)); sem a PG (técnico) ou sem o exame nacional (classe
             # de exame), a disciplina também não está completa.
             last_graded = bool(mts) and mts[-1] is not None
-            complete = imported is not None or (
-                last_graded
-                and annual is not None
-                and (not vals['has_global_exam'] or pg_value is not None)
-                and (not national_subject or national_value is not None)
+            complete = (
+                imported is not None
+                or result.has_imported_final
+                or (
+                    last_graded
+                    and annual is not None
+                    and (not vals['has_global_exam'] or pg_value is not None)
+                    and (not national_subject or national_value is not None)
+                )
             )
             adjusted = grading.with_adjustment(annual, result.council_points, policy.scale_max)
             # O resultado do exame especial (já com a regra da melhoria) substitui a classificação do ano.

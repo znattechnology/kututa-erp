@@ -88,6 +88,8 @@
                             <field name="cf"/>
                             <field name="has_imported_cf" groups="edu_core.group_edu_manager"/>
                             <field name="imported_cf" invisible="not has_imported_cf" groups="edu_core.group_edu_manager"/>
+                            <field name="has_imported_final" invisible="1"/>
+                            <field name="imported_final" invisible="not has_imported_final" groups="edu_core.group_edu_manager"/>
                             <field name="pg" invisible="not has_global_exam"/>
                             <field name="national" invisible="not has_national"/>
                             <field name="has_global_exam" invisible="1"/>

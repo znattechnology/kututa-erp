@@ -89,7 +89,9 @@ class EduClass(models.Model):
     @api.depends('name', 'class_number', 'course_id.code', 'course_id.name', 'academic_year_id.name')
     def _compute_complete_name(self):
         for edu_class in self:
-            parts = [f'{edu_class.class_number}ª {edu_class.name or ""}'.strip()]
+            # A Iniciação não tem número de classe: «Iniciação A», não «0ª A».
+            prefix = edu_class.env._('Iniciação') if edu_class.class_number == 0 else f'{edu_class.class_number}ª'
+            parts = [f'{prefix} {edu_class.name or ""}'.strip()]
             if edu_class.course_id:
                 parts.append(edu_class.course_id.code or edu_class.course_id.name)
             if edu_class.academic_year_id:

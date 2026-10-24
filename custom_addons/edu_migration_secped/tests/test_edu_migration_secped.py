@@ -3,7 +3,7 @@ from datetime import datetime
 from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
-from ..models.edu_migration_secped import secped_final
+from ..models.edu_migration_secped import secped_final, secped_general_final
 from ..models.secped_source import MemorySource
 
 SCHOOL = {
@@ -24,8 +24,8 @@ def _row(**values):
     return {'schoolId': 'sch', 'deletedAt': None, **values}
 
 
-def _tables():
-    """Uma escola técnica com um ano fechado (2025/26, 10.ª) e o ano em curso (2026/27, 11.ª)."""
+def _calendar():
+    """2025/26 fechado e 2026/27 em curso, com o I Trimestre aberto."""
     years = [
         _row(id='y25', name='2025/2026', startDate=datetime(2025, 9, 1), endDate=datetime(2026, 7, 31), current=False),
         _row(id='y26', name='2026/2027', startDate=datetime(2026, 9, 1), endDate=datetime(2027, 7, 31), current=True),
@@ -50,6 +50,12 @@ def _tables():
                     closedAt=datetime(start + 1, 7, 31) if year == 'y25' else None,
                 )
             )
+    return years, trimesters
+
+
+def _tables():
+    """Uma escola técnica com um ano fechado (2025/26, 10.ª) e o ano em curso (2026/27, 11.ª)."""
+    years, trimesters = _calendar()
     users = [
         _row(id='u1', role='STUDENT', email='ana@escola.aluno', firstName='Ana', lastName='Lopes'),
         _row(id='u2', role='STUDENT', email='bento@escola.aluno', firstName='Bento', lastName='Sousa'),
@@ -407,3 +413,197 @@ class TestEduMigrationSecped(TransactionCase):
         self.assertEqual(report['metrics']['pauta']['diferentes'], 0)
         self.assertEqual(self._result('2025-0001', 'LP').final, 14)
         self.assertEqual(self._student('2025-0001').enrollment_ids.sorted('date')[0].state, 'completed')
+
+
+GENERAL_SCHOOL = {
+    **SCHOOL,
+    'name': 'Complexo Escolar de Teste',
+    'type': 'GERAL',
+    'educationLevels': ['INICIACAO', 'SECUNDARIO_I_CICLO'],
+    'tutelaSchoolName': 'Escola Pública N.º 1',
+    'tutelaDirectorName': 'Directora da Tutela',
+}
+
+
+def _general_tables():
+    """Uma escola do geral: a 9.ª (classe de exame) em 2025/26, fechada, e a Iniciação em 2026/27."""
+    years, trimesters = _calendar()
+
+    def grades(subject, mts, anual, national, final):
+        rows = [
+            _row(id=f'{subject}{n}', enrollmentId='e1', userId='u1', subjectId=subject, trimesterId=f'y25t{n}',
+                 type='TRIMESTRAL', score=mt)
+            for n, mt in enumerate(mts, 1)
+        ]  # fmt: skip
+        for kind, score in (('ANUAL', anual), ('NACIONAL', national), ('FINAL', final)):
+            rows.append(
+                _row(id=f'{subject}{kind}', enrollmentId='e1', userId='u1', subjectId=subject, trimesterId=None,
+                     type=kind, score=score)
+            )  # fmt: skip
+        return rows
+
+    return {
+        'users': [
+            _row(id='u1', role='STUDENT', status='PENDING', email='lbd-1@escola.aluno', firstName='Ana', lastName='G'),
+            _row(id='u2', role='STUDENT', status='ACTIVE', email='lbd-2@escola.aluno', firstName='Rui', lastName='P'),
+        ],
+        'academic_years': years,
+        'trimesters': trimesters,
+        'subjects': [
+            _row(id='lp', name='Língua Portuguesa', code='LP'),
+            _row(id='mat', name='Matemática', code='MAT'),
+            _row(id='exp', name='Expressão Plástica', code='EXP'),
+            _row(id='emc', name='Educação Moral e Cívica', code='EMC'),
+        ],
+        'courses': [
+            _row(
+                id='sec1',
+                name='I Ciclo do Ensino Secundário Geral',
+                code='SEC1',
+                level='SECUNDARIO_I_CICLO',
+                duration=3,
+            ),
+            _row(id='inic', name='Iniciação', code='INIC', level='INICIACAO', duration=1),
+        ],  # fmt: skip
+        'curricula': [
+            _row(id='k1', courseId='sec1', name='Plano — I Ciclo', level='SECUNDARIO_I_CICLO', isActive=True),
+            _row(id='k0', courseId='inic', name='Plano — Iniciação', level='INICIACAO', isActive=True),
+        ],
+        'curriculum_years': [
+            _row(id='cy9', curriculumId='k1', year=3, classNumber=9, name='9.ª classe'),
+            _row(id='cy0', curriculumId='k0', year=1, classNumber=0, name='Iniciação'),
+        ],
+        'curriculum_subjects': [
+            _row(id='l9lp', curriculumYearId='cy9', subjectId='lp', weeklyHours=5, isCompulsory=True),
+            _row(id='l9mat', curriculumYearId='cy9', subjectId='mat', weeklyHours=5, isCompulsory=True),
+            _row(id='l0exp', curriculumYearId='cy0', subjectId='exp', weeklyHours=3, isCompulsory=True),
+        ],
+        'evaluation_policies': [
+            _row(
+                id='pol',
+                level='SECUNDARIO_I_CICLO',
+                minPassGrade=10,
+                minAttendanceRate=0.667,
+                maxRetentions=2,
+                roundingMode='INTEGER',
+                isActive=True,
+            ),
+        ],  # fmt: skip
+        'promotion_rules': [_row(id='pr', level='SECUNDARIO_I_CICLO', maxNegatives=0)],
+        'school_classes': [
+            _row(id='c9', courseId='sec1', name='9ª A', classNumber=9, capacity=40),
+            _row(id='c0', courseId='inic', name='Iniciação A', classNumber=0, capacity=25),
+        ],
+        'class_offerings': [
+            _row(id='o9', classId='c9', academicYearId='y25', isActive=True),
+            _row(id='o0', classId='c0', academicYearId='y26', isActive=True),
+        ],
+        'student_profiles': [
+            _row(id='p1', userId='u1', matriculaNumber='LBD-0001', matriculaYear=2025, matriculaSeq=1),
+            _row(id='p2', userId='u2', matriculaNumber='LBD-0002', matriculaYear=2026, matriculaSeq=2),
+        ],
+        'enrollments': [
+            _row(
+                id='e1',
+                userId='u1',
+                classId='c9',
+                academicYearId='y25',
+                status='ACTIVE',
+                orderNumber=1,
+                createdAt=datetime(2025, 9, 1),
+            ),
+            _row(
+                id='e2',
+                userId='u2',
+                classId='c0',
+                academicYearId='y26',
+                status='ACTIVE',
+                orderNumber=1,
+                createdAt=datetime(2026, 9, 1),
+            ),
+        ],  # fmt: skip
+        'enrollment_subjects': [
+            _row(id='e1lp', enrollmentId='e1', subjectId='lp'),
+            _row(id='e1mat', enrollmentId='e1', subjectId='mat'),
+            # Do plano antigo: a pauta de 2025/26 tem-na, o plano actual da escola já não.
+            _row(id='e1emc', enrollmentId='e1', subjectId='emc'),
+            _row(id='e2exp', enrollmentId='e2', subjectId='exp'),
+        ],
+        'grades': (
+            # A MF da escola é 0,4 × MFD + 0,6 × NE (13 e 18,5 → 16,4; a pauta diz 16,7): vale a assinada, 17. Pelo
+            # Dec. 424/25 seria 0,6 × MT3 + 0,4 × EN = 15,8 → 16.
+            grades('lp', (12, 13, 14), 13, 18.5, 16.7)
+            + grades('mat', (10, 11, 12), 11, 9, 10.2)
+            + grades('emc', (14, 14, 15), 14, 15, 14.6)
+        ),
+        'academic_records': [
+            _row(id='ar1', userId='u1', academicYearId='y25', classId='c9', promotionStatus='GRADUATED'),
+        ],
+    }
+
+
+@tagged('post_install', '-at_install', 'edu')
+class TestEduMigrationGeneral(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.company = cls.env['res.company'].create(
+            {'name': 'Escola geral por migrar', 'country_id': cls.env.ref('base.ao').id}
+        )
+        cls.env.user.company_ids |= cls.company
+        cls.env['account.chart.template'].try_loading('ao', cls.company, install_demo=False)
+        cls.report = cls.env['edu.migration.secped']._run(MemorySource(GENERAL_SCHOOL, _general_tables()),
+                                                          company=cls.company)  # fmt: skip
+
+    def test_general_formula(self):
+        self.assertEqual(secped_general_final(13, 16.7, 0), 17)
+        self.assertEqual(secped_general_final(9.5, None, 0), 10)
+        self.assertEqual(secped_general_final(19, None, 2), 20)
+        self.assertIsNone(secped_general_final(None, None, 0))
+
+    def test_school(self):
+        company = self.company
+        self.assertEqual(company.edu_school_type, 'general')
+        self.assertEqual(sorted(company.edu_level_ids.mapped('code')), ['INICIACAO', 'SECUNDARIO_I_CICLO'])
+        self.assertEqual(company.edu_supervisor_school, 'Escola Pública N.º 1')
+        classes = self.env['edu.class'].search([('company_id', '=', company.id)])
+        self.assertEqual(
+            sorted(classes.mapped('complete_name')), ['9ª A · SEC1 · 2025/2026', 'Iniciação A · INIC · 2026/2027']
+        )
+        # A tolerância de negativas do geral fica a do RAA (2), não o 0 do secPed.
+        policy = self.env['edu.evaluation.policy']._get(
+            company, classes.level_id.filtered(lambda level: level.class_to == 9)
+        )
+        self.assertEqual(policy.conditional_max, 2)
+        # A 9.ª de 2025/26 fica com uma cópia arquivada do plano, com a disciplina do plano antigo.
+        ninth = classes.filtered(lambda c: c.class_number == 9)
+        self.assertFalse(ninth.curriculum_id.active)
+        self.assertEqual(ninth.curriculum_id.name, 'Plano — I Ciclo (2025/2026)')
+        self.assertEqual(sorted(ninth.subject_line_ids.subject_id.mapped('code')), ['EMC', 'LP', 'MAT'])
+        # O plano do curso (o das turmas novas) continua a ser o actual.
+        self.assertEqual(ninth.course_id.curriculum_id.name, 'Plano — I Ciclo')
+
+    def test_exam_class(self):
+        results = self.env['edu.subject.result'].search([('company_id', '=', self.company.id)])
+        lp = results.filtered(lambda r: r.subject_id.code == 'LP')
+        self.assertEqual((lp.cf, lp.national, lp.imported_final, lp.annual, lp.final), (13, 18.5, 16.7, 17, 17))
+        self.assertTrue(lp.complete and lp.passed)
+        self.assertEqual(results.filtered(lambda r: r.subject_id.code == 'MAT').final, 10)
+        exams = self.env['edu.assessment'].search(
+            [('class_id.company_id', '=', self.company.id), ('assessment_type', '=', 'national_exam')]
+        )
+        self.assertEqual(len(exams), 3)
+        pauta = self.report['metrics']['pauta']
+        self.assertEqual((pauta['iguais'], pauta['diferentes']), (3, 0))
+        self.assertEqual(results.filtered(lambda r: r.subject_id.code == 'EMC').final, 15)
+        decision = self.env['edu.year.result'].search([('company_id', '=', self.company.id)])
+        self.assertEqual(decision.status, 'graduated')
+
+    def test_student_accounts(self):
+        # Só o aluno com acesso no secPed (o do ano em curso) tem conta, na Área do Estudante.
+        users = self.env['res.users'].search([('login', 'like', '@escola.aluno')])
+        self.assertEqual(users.mapped('login'), ['lbd-2@escola.aluno'])
+        self.assertEqual(
+            users.partner_id, self.env['edu.student'].search([('matricula_number', '=', 'LBD-0002')]).partner_id
+        )
+        self.assertTrue(users._edu_student_only())
