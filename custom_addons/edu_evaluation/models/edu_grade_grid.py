@@ -268,6 +268,7 @@ class EduGradeGrid(models.AbstractModel):
         for enrollment in enrollments:
             terms_row = {}
             running = None  # CT do técnico: engloba os trimestres anteriores
+            skipped = 0  # trimestres sem classificação antes deste: contam 0 (grading.missing_as_zero)
             for trimester in trimesters:
                 term = term_by_key.get((enrollment.id, trimester.id))
                 test = assessments.filtered(
@@ -281,8 +282,12 @@ class EduGradeGrid(models.AbstractModel):
                 npp_grade = grade_by_key.get((enrollment.id, npp.id)) if npp else None
                 excused, absent = absences.get((enrollment.id, trimester.id), (0, 0))
                 mt = value(term, 'mt', 'has_mt')
-                if mt is not None and technical:
-                    running = round_fn(mt) if running is None else round_fn((running + mt) / 2)
+                if mt is None:
+                    skipped += 1
+                elif technical:
+                    for part in [0] * skipped + [mt]:
+                        running = round_fn(part) if running is None else round_fn((running + part) / 2)
+                    skipped = 0
                 classification = (running if technical else mt) if mt is not None else None
                 if classification is not None and enrollment.state in ENROLLED:
                     by_term[trimester.id][0 if classification >= policy.pass_grade else 1] += 1

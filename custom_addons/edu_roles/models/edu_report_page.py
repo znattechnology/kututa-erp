@@ -131,8 +131,13 @@ class EduReportPage(models.AbstractModel):
             if class_id in technical:
                 round_fn = policies[class_id][1]
                 key = (enrollment_id, row['subject_id'][0])
-                previous = running.get(key)
-                value = running[key] = round_fn(value) if previous is None else round_fn((previous + value) / 2)
+                previous, last_number = running.get(key, (None, 0))
+                current = number[row['trimester_id'][0]]
+                # Os trimestres sem classificação antes deste contam 0 (grading.missing_as_zero).
+                for part in [0] * (current - last_number - 1) + [value]:
+                    previous = round_fn(part) if previous is None else round_fn((previous + part) / 2)
+                running[key] = (previous, current)
+                value = previous
             found.append((class_id, enrollment_id, row['trimester_id'][0], value))
         return found
 

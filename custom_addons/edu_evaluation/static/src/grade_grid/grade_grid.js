@@ -380,7 +380,7 @@ export class GradeGrid extends Component {
     /**
      * A classificação do trimestre na grelha. No técnico é o CT do Despacho 60/08 (art. 17.º, n.º 5, e o resumo do
      * regime): CT1 = (NPP + NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + média do 3.º)/2 — cada trimestre
-     * engloba os anteriores, como a CF. No geral, a MT do trimestre.
+     * engloba os anteriores, como a CF; um trimestre anterior sem classificação conta 0. No geral, a MT.
      */
     termClassification(student, trimester) {
         const own = this.termAverage(student, trimester);
@@ -392,9 +392,9 @@ export class GradeGrid extends Component {
         for (const t of this.state.data.trimesters) {
             const avg = t.id === trimester.id ? own : this.termAverage(student, t);
             preview = preview || avg.preview;
-            if (avg.value !== null && avg.value !== undefined) {
-                running = running === null ? roundUnits(avg.value) : roundUnits((running + avg.value) / 2);
-            }
+            // Um trimestre anterior sem classificação conta 0 (como grading.missing_as_zero no servidor).
+            const part = avg.value === null || avg.value === undefined ? 0 : avg.value;
+            running = running === null ? roundUnits(part) : roundUnits((running + part) / 2);
             if (t.id === trimester.id) {
                 break;
             }

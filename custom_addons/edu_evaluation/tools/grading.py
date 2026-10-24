@@ -111,9 +111,18 @@ def technical_ct(npp, npt, round_fn=round_units):
     return round_fn(value) if value is not None else None
 
 
+def missing_as_zero(values):
+    """Um trimestre sem classificação antes de um trimestre com classificação conta 0: o aluno não foi avaliado
+    nele, e a fórmula não muda (a média divide pelos três; no técnico o 0 entra no acumulado). Os trimestres que
+    ainda não tiveram notas (depois do último com classificação) ficam de fora."""
+    last = max((i for i, value in enumerate(values) if value is not None), default=-1)
+    return [0 if value is None and i < last else value for i, value in enumerate(values)]
+
+
 def cumulative(cts, round_fn=round_units):
-    """CT1 = MT1, CT2 = (CT1 + MT2)/2, CF = CT3 = (CT2 + MT3)/2, arredondando em cada passo; um trimestre sem nota
-    deixa o acumulado como está."""
+    """CT1 = MT1, CT2 = (CT1 + MT2)/2, CF = CT3 = (CT2 + MT3)/2, arredondando em cada passo. Um trimestre sem
+    classificação conta 0 (missing_as_zero); os que ainda não tiveram notas deixam o acumulado como está."""
+    cts = missing_as_zero(cts)
     running = []
     acc = None
     for ct in cts:
@@ -130,7 +139,7 @@ def frequency_classification(cts, regime, round_fn=round_units, imported=None):
     if regime == TECHNICAL:
         running = cumulative(cts, round_fn)
         return running[-1] if running else None
-    return general_final(cts, round_fn)
+    return general_final(missing_as_zero(cts), round_fn)
 
 
 def technical_ca(cf, pg, eligible, round_fn=round_units, cf_weight=GLOBAL_EXAM_CF_WEIGHT):
