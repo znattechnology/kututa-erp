@@ -136,7 +136,11 @@ class EduTermResult(models.Model):
                         ('has_mt', '=', True),
                     ]
                 )
-                mt = grading.exam_class_mt3(previous.mapped('mt'), mac, round_fn)
+                # Um trimestre anterior sem classificação conta 0 (grading.missing_as_zero), como na MFD.
+                earlier = enrollment.academic_year_id.trimester_ids.filtered(lambda t: t.number < trimester.number)
+                by_trimester = {term.trimester_id.id: term.mt for term in previous}
+                previous_mts = [by_trimester.get(t.id, 0.0) for t in earlier.sorted('number')]
+                mt = grading.exam_class_mt3(previous_mts, mac, round_fn)
             else:
                 mt = grading.general_mt(mac, npt, policy.mac_weight, round_fn)
         return {
@@ -300,7 +304,9 @@ class EduSubjectResult(models.Model):
             if policy.regime == TECHNICAL:
                 precise = grading.frequency_classification(mts, TECHNICAL, (lambda v: v), imported)
                 cf = grading.frequency_classification(mts, TECHNICAL, round_fn, imported)
-                base_cf = precise if policy.technical_ca_precise else cf
+                # O arredondamento único (escolas migradas) só entra com a PG: sem ela, CA = CF (a mesma da pauta).
+                with_pg = vals['has_global_exam'] and pg_value is not None
+                base_cf = precise if policy.technical_ca_precise and with_pg else cf
                 annual = grading.technical_ca(base_cf, pg_value, vals['has_global_exam'], round_fn, policy.cf_weight)
             national_subject = policy.regime != TECHNICAL and result._is_national_exam(line)
             if policy.regime != TECHNICAL:
@@ -351,8 +357,14 @@ class EduSubjectResult(models.Model):
                 )
                 transition = cfd if approved else min(cfd, final)
                 passed = complete and approved
-            # Sem classificação em dois trimestres, sem aproveitamento no ano (Despacho 60/08, art. 16.º, n.º 1, b)).
-            if policy.regime == TECHNICAL and imported is None and graded <= len(trimesters) - 2:
+            # Sem classificação em dois trimestres, sem aproveitamento no ano (Despacho 60/08, art. 16.º, n.º 1, b)), a
+            # não ser que a prova extraordinária o resolva.
+            if (
+                policy.regime == TECHNICAL
+                and imported is None
+                and graded <= len(trimesters) - 2
+                and not result.has_special_exam
+            ):
                 passed = False
             vals.update(
                 {
@@ -371,6 +383,30 @@ class EduSubjectResult(models.Model):
                 }
             )
             result.write(vals)
+
+    def _trimester_classifications(self):
+        """A classificação de cada trimestre, como na grelha e na pauta: no técnico o CT, que engloba os anteriores
+        (um trimestre sem classificação antes de outro conta 0); no geral a MT. Sem classificação no trimestre: None."""
+        self.ensure_one()
+        trimesters = self.enrollment_id.academic_year_id.trimester_ids.sorted('number')
+        terms = (
+            self.env['edu.term.result']
+            .sudo()
+            .search(
+                [
+                    ('enrollment_id', '=', self.enrollment_id.id),
+                    ('subject_id', '=', self.subject_id.id),
+                    ('has_mt', '=', True),
+                ]
+            )
+        )
+        by_trimester = {term.trimester_id.id: term.mt for term in terms}
+        mts = [by_trimester.get(t.id) for t in trimesters]
+        policy = self._policy()
+        if policy.regime != TECHNICAL:
+            return mts
+        running = grading.cumulative(mts, grading.rounder(policy.rounding))
+        return [ct if mt is not None else None for ct, mt in zip(running, mts, strict=True)]
 
     def _is_national_exam(self, line):
         """Disciplina com exame nacional nesta classe: classe de exame e marca na linha do plano (ou na disciplina)."""

@@ -7,7 +7,7 @@
                 <div class="o_edu_ta_body" t-if="this.state.data">
                     <t t-set="d" t-value="this.state.data"/>
                     <header>
-                        <h1 class="o_edu_ta_title">O meu perfil</h1>
+                        <h1 class="o_edu_ta_title">Meu perfil</h1>
                         <p class="mb-0 text-muted">O seu trabalho e os seus dados na escola.</p>
                     </header>
                     <section t-if="!d.has_employee" class="o_edu_ta_card">

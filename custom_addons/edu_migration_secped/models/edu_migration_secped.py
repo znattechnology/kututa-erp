@@ -1079,7 +1079,8 @@ class EduMigrationSecped(models.AbstractModel):
         run.metrics['provas_globais'] = len(global_exam)
         run.metrics['bonificacoes'] = len(points)
 
-        # a) Médias trimestrais (CT1, CT2 e a CF no 3.º trimestre), importadas: não se recalculam das notas.
+        # a) Médias de cada trimestre (as notas TRIMESTRAL do secPed: a média do trimestre, não o CT acumulado; o
+        #    acumulado e a CF calculam-se a partir delas), importadas: não se recalculam das notas.
         Term = env['edu.term.result']
         existing = {
             (t.enrollment_id.id, t.subject_id.id, t.trimester_id.id): t

@@ -371,7 +371,7 @@ class EduPautaPrint(models.TransientModel):
             description = 'classificação do trimestre, que engloba os anteriores' if technical else 'média do trimestre'
         results = self._results()
         terms = self._terms(trimester)
-        cts = self._technical_cts(trimester) if technical and not final else {}
+        cts = self._technical_cts(trimester) if technical else {}
         absences = self._trimester_absences(trimester)
         rows = []
         visitors = self._visitors()
@@ -386,8 +386,15 @@ class EduPautaPrint(models.TransientModel):
                     continue
                 if final:
                     result = results.get(key)
-                    # Técnico: a CF; geral: a classificação final (com a bonificação ou o exame).
-                    value = (result.cf if technical else result.final) if result and result.complete else None
+                    if technical:
+                        # A CF assim que o último trimestre tem notas (sem esperar pela PG), como a grelha e a pauta;
+                        # a importada da pauta assinada, quando existe.
+                        value = result.cf if result and result.has_imported_cf else cts.get(key)
+                    elif result and result.complete:
+                        # Geral: a classificação final (com a bonificação ou o exame).
+                        value = result.final
+                    else:
+                        value = result.cf if result and result.trimesters_graded else None
                 else:
                     term = terms.get(key)
                     value = (cts.get(key) if technical else term.mt) if term and term.has_mt else None

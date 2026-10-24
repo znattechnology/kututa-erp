@@ -37,7 +37,8 @@
                                             <div class="small text-muted"><t t-out="l.class"/><t t-if="l.room">, <t t-out="l.room"/></t></div>
                                         </div>
                                         <span class="badge" t-att-class="this.stateClass(l)" t-out="this.stateLabel(l)"/>
-                                        <button type="button" class="btn btn-sm" t-att-class="l.state === 'scheduled' and l.today ? 'btn-primary' : 'btn-secondary'"
+                                        <!-- A chamada faz-se no dia da aula: uma aula futura ainda não se abre. -->
+                                        <button t-if="l.today or l.state !== 'scheduled'" type="button" class="btn btn-sm" t-att-class="l.state === 'scheduled' and l.today ? 'btn-primary' : 'btn-secondary'"
                                                 t-att-disabled="this.state.busy" t-on-click="() => this.openLesson(l)">
                                             <t t-out="l.state === 'scheduled' ? 'Chamada e sumário' : 'Ver a aula'"/>
                                         </button>
@@ -82,7 +83,7 @@
                                 <h2 class="o_edu_th_h2">Atalhos</h2>
                                 <div class="o_edu_th_links">
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_schedule')">
-                                        <i class="oi me-2" data-icon="calendar_today" aria-hidden="true"/>O meu horário
+                                        <i class="oi me-2" data-icon="calendar_today" aria-hidden="true"/>Meu horário
                                     </button>
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_absence_report')">
                                         <i class="oi me-2" data-icon="check_circle" aria-hidden="true"/>Relatório de faltas
@@ -91,7 +92,7 @@
                                         <i class="oi me-2" data-icon="forum" aria-hidden="true"/>Mensagens
                                     </button>
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_profile_page')">
-                                        <i class="oi me-2" data-icon="person" aria-hidden="true"/>O meu perfil
+                                        <i class="oi me-2" data-icon="person" aria-hidden="true"/>Meu perfil
                                     </button>
                                 </div>
                             </section>

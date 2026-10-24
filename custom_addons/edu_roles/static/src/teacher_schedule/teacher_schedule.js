@@ -62,7 +62,8 @@ export class TeacherSchedulePage extends Component {
         if (current) {
             return { now: true, lesson: current, left: current.end - now.minutes, today: true };
         }
-        for (let ahead = 0; ahead < 7; ahead++) {
+        // Até ao mesmo dia da semana seguinte (quem só tem aulas num dia vê a da próxima semana).
+        for (let ahead = 0; ahead <= 7; ahead++) {
             const day = (now.day + ahead) % 7;
             const lesson = this.lessons
                 .filter((l) => l.weekday === day && (ahead > 0 || l.start > now.minutes))
@@ -99,7 +100,8 @@ export class TeacherSchedulePage extends Component {
         }
         this.state.busy = true;
         try {
-            const action = await this.orm.call("edu.teacher.home", "open_lesson", [lesson.id, this.state.now.date]);
+            // O dia do servidor (o fuso do utilizador), o mesmo com que ele valida a aula.
+            const action = await this.orm.call("edu.teacher.home", "open_lesson", [lesson.id, this.state.data.today]);
             await this.action.doAction(action);
         } finally {
             this.state.busy = false;

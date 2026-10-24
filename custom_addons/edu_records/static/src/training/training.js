@@ -109,6 +109,7 @@ export class TrainingPage extends Component {
     }
 
     async load() {
+        let data;
         if (this.switchable) {
             // «Orientações»: as duas listas, uma por baixo da outra, como no secPed.
             const [internships, projects] = await Promise.all([
@@ -116,8 +117,10 @@ export class TrainingPage extends Component {
                 this.orm.call("edu.training.page", "listing", ["project"]),
             ]);
             this.state.both = { internship: internships.rows, project: projects.rows };
+            data = this.kind === "project" ? projects : internships;
+        } else {
+            data = await this.orm.call("edu.training.page", "listing", [this.kind]);
         }
-        const data = await this.orm.call("edu.training.page", "listing", [this.kind]);
         Object.assign(this.state, {
             rows: data.rows,
             years: data.years,

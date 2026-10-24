@@ -13,7 +13,12 @@ patch(ChannelInvitation.prototype, {
         this.eduChat = proxy({ groups: [] });
         onWillStart(async () => {
             if (!this.props.channel && this.store.self_user?.share === false) {
-                this.eduChat.groups = await this.orm.call("edu.teacher.home", "chat_contacts", []);
+                // Uma falha nos contactos não impede de abrir a conversa: fica a procura do Odoo.
+                try {
+                    this.eduChat.groups = await this.orm.silent.call("edu.teacher.home", "chat_contacts", []);
+                } catch {
+                    this.eduChat.groups = [];
+                }
             }
         });
     },

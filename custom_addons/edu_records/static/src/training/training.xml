@@ -425,7 +425,7 @@
 
     <t t-name="edu_records.TrainingPage.Orientations">
         <section class="o_edu_tr_orient" aria-labelledby="o_edu_tr_orient_internships">
-            <h3 id="o_edu_tr_orient_internships" class="o_edu_tr_h3">Estágios de que é tutor</h3>
+            <h3 id="o_edu_tr_orient_internships" class="o_edu_tr_h3" t-out="this.state.isStaff ? 'Estágios' : 'Estágios de que é tutor'"/>
             <p t-if="!this.state.both.internship.length" class="o_edu_tr_card mb-0 text-muted p-3">
                 Não é tutor de nenhum estágio. Os tutores são escolhidos pelos Serviços Académicos.
             </p>
@@ -454,7 +454,7 @@
             </div>
         </section>
         <section class="o_edu_tr_orient" aria-labelledby="o_edu_tr_orient_projects">
-            <h3 id="o_edu_tr_orient_projects" class="o_edu_tr_h3">PAP que orienta ou de que é júri</h3>
+            <h3 id="o_edu_tr_orient_projects" class="o_edu_tr_h3" t-out="this.state.isStaff ? 'PAP' : 'PAP que orienta ou de que é júri'"/>
             <p t-if="!this.state.both.project.length" class="o_edu_tr_card mb-0 text-muted p-3">
                 Não é orientador nem júri de nenhuma PAP. Os orientadores são escolhidos pelos Serviços Académicos.
             </p>

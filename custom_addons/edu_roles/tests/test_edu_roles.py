@@ -188,6 +188,29 @@ class TestEduRoles(TransactionCase):
         # Outra turma, onde não dá aulas nem é director: recusada.
         with self.assertRaises(AccessError):
             Page.lessons(self.class_b.id, self.lp.id)
+        # Uma aula futura não recebe chamada (a chamada faz-se no próprio dia).
+        tomorrow = fields.Date.context_today(Page) + timedelta(days=1)
+        future = None
+        if tomorrow <= self.year.date_end:
+            future = self.env['edu.lesson'].create(
+                {'class_id': self.class_a.id, 'subject_id': self.lp.id, 'date': tomorrow, 'hour_from': 8.0,
+                 'hour_to': 9.0}
+            )  # fmt: skip
+        if future:
+            self.assertTrue(Page.roll(future.id)['future'])
+            with self.assertRaises(UserError):
+                Page.save(future.id, [dict(row, state='absent')], '')
+        # Uma falta justificada não fica sem motivo (como director da turma).
+        self.class_a.director_id = self.teacher
+        Page.save(lesson['id'], [dict(row, state='excused', justification='Doença')], 'Revisão do capítulo 3')
+        with self.assertRaises(UserError):
+            Page.save(lesson['id'], [dict(row, state='excused', justification='')], 'Revisão do capítulo 3')
+        # Uma aula marcada como não realizada não se volta a registar por «Registar outra aula».
+        self.env['edu.lesson'].browse(lesson['id']).sudo().with_context(edu_lesson_system=True).state = 'cancelled'
+        with self.assertRaises(UserError):
+            Page.new_lesson(
+                self.class_a.id, self.lp.id, {'date': fields.Date.to_string(day), 'hour_from': 8.0, 'hour_to': 9.0}
+            )
 
     def test_absence_report(self):
         """«Relatório de faltas», como no secPed: o aluno que atingiu o limite nas disciplinas do professor e o mapa
@@ -363,13 +386,9 @@ class TestEduRoles(TransactionCase):
         Lesson.create({'class_id': self.class_a.id, 'subject_id': self.lp.id, 'date': date(2026, 9, 7)})
         with self.assertRaises(AccessError):
             Lesson.create({'class_id': self.class_b.id, 'subject_id': self.lp.id, 'date': date(2026, 9, 7)})
-        action = self.env.ref('edu_roles.action_my_classes')
-        mine = (
-            self.env['edu.class']
-            .with_user(self.teacher_user)
-            .search(eval(action.domain, {'uid': self.teacher_user.id}))
-        )
-        self.assertEqual(mine, self.class_a)
+        # Em «Turmas e notas» só as suas turmas.
+        grid = self.env['edu.grade.grid'].with_user(self.teacher_user).grid_classes(self.year.id)
+        self.assertEqual([c['id'] for c in grid['classes']], self.class_a.ids)
 
     def test_grade_grid_profiles(self):
         """Notas da turma: o professor vê só as turmas e disciplinas que lecciona; o director de turma vê todas as
@@ -434,10 +453,8 @@ class TestEduRoles(TransactionCase):
         """Painel do Professor, como no secPed: as aulas do dia pelo horário (a chamada a um toque cria a aula), as
         turmas com a direcção assinalada e os atalhos da conta."""
         self.year.action_generate_trimesters()
+        # O tempo do horário no dia de hoje (seja qual for): a chamada só se abre no próprio dia.
         today = fields.Date.context_today(self.env['edu.lesson'])
-        weekday = today.weekday()
-        if weekday > 4:
-            today += timedelta(days=7 - weekday)
         schedule = self.env['edu.schedule'].create(
             {
                 'class_id': self.class_a.id,
@@ -461,7 +478,7 @@ class TestEduRoles(TransactionCase):
         again = Home.open_lesson(schedule.id, fields.Date.to_string(today))
         self.assertEqual(again['context']['attendance_lesson_id'], lesson.id)
         self.assertEqual(Home.home_data()['lessons'][0]['lesson_id'], lesson.id)
-        # «O meu horário»: as aulas da semana (minutos desde a meia-noite), a carga e a folha A4 na aplicação.
+        # «Meu horário»: as aulas da semana (minutos desde a meia-noite), a carga e a folha A4 na aplicação.
         week = Home.schedule_data()
         self.assertEqual(
             [(w['id'], w['weekday'], w['start'], w['end'], w['class_id']) for w in week['lessons']],

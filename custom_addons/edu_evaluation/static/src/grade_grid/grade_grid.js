@@ -28,6 +28,11 @@ function roundUnits(value) {
     return Math.floor(value + 0.5 + 1e-9);
 }
 
+/** O arredondamento da política da escola (grading.rounder no servidor): às unidades ou a duas casas. */
+function rounder(mode) {
+    return mode === "decimal2" ? (value) => Math.floor(value * 100 + 0.5 + 1e-9) / 100 : roundUnits;
+}
+
 function mean(values) {
     const present = values.filter((v) => v !== null && v !== undefined);
     return present.length ? present.reduce((a, b) => a + b, 0) / present.length : null;
@@ -355,6 +360,10 @@ export class GradeGrid extends Component {
     }
 
     /** A MT/CT do trimestre: a do servidor, ou o cálculo com as notas escritas (o mesmo do servidor). */
+    get round() {
+        return rounder(this.state.data.policy.rounding);
+    }
+
     termAverage(student, trimester) {
         const term = student.terms[String(trimester.id)];
         const data = this.state.data;
@@ -368,13 +377,13 @@ export class GradeGrid extends Component {
         if (data.technical) {
             const npp = this.current(student, trimester, "npp", term.mac);
             const value = mean([npp, npt]);
-            return { value: value === null ? null : roundUnits(value), preview: true };
+            return { value: value === null ? null : this.round(value), preview: true };
         }
         if (term.mac === null || npt === null) {
             return { value: null, preview: true };
         }
         const w = data.policy.mac_weight;
-        return { value: roundUnits(term.mac * w + npt * (1 - w)), preview: true };
+        return { value: this.round(term.mac * w + npt * (1 - w)), preview: true };
     }
 
     /**
@@ -394,7 +403,7 @@ export class GradeGrid extends Component {
             preview = preview || avg.preview;
             // Um trimestre anterior sem classificação conta 0 (como grading.missing_as_zero no servidor).
             const part = avg.value === null || avg.value === undefined ? 0 : avg.value;
-            running = running === null ? roundUnits(part) : roundUnits((running + part) / 2);
+            running = running === null ? this.round(part) : this.round((running + part) / 2);
             if (t.id === trimester.id) {
                 break;
             }

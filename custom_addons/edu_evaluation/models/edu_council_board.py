@@ -95,7 +95,8 @@ class EduCouncilSession(models.Model):
                         'points': result.council_points,
                         'source': result.council_source,
                         'complete': result.complete,
-                        'passed': result.final >= pass_grade if result.complete else False,
+                        # O resultado da disciplina (com o art. 16.º do técnico), não só a nota.
+                        'passed': result.passed if result.complete else False,
                         'borderline': result.borderline,
                         'can_teach': subject in mine,
                         'vote_id': vote.id if vote else False,

@@ -60,7 +60,10 @@ class EduTeacherHome(models.AbstractModel):
         sessions = (
             self.env['edu.exam.session']
             .sudo()
-            .search([('room_ids.supervisor_ids', 'in', employee.ids), ('date', '>=', today)], limit=5)
+            .search(
+                [('room_ids.supervisor_ids', 'in', employee.ids), ('date', '>=', today), ('state', '!=', 'cancelled')],
+                limit=5,
+            )
         )
         data['supervisions'] = [
             {
@@ -72,6 +75,12 @@ class EduTeacherHome(models.AbstractModel):
             for s in sessions
         ]
         return data
+
+    @api.model
+    def _no_lessons_on(self, edu_class, day):
+        """Dia de feriado ou pausa no calendário escolar, para o nível da turma: não há aulas."""
+        Calendar = self.env['edu.calendar.event'].sudo()
+        return day in Calendar._days_without_lessons(edu_class.company_id, edu_class.level_id, day, day)
 
     @api.model
     def _next_lessons(self, employee, today):
@@ -89,12 +98,23 @@ class EduTeacherHome(models.AbstractModel):
         ) | replaced.schedule_id
         if not schedules:
             return False, []
+        # Os feriados e as pausas das duas semanas, lidos uma vez por escola e nível.
+        Calendar = self.env['edu.calendar.event'].sudo()
+        cache = {}
+
+        def holidays(edu_class):
+            key = (edu_class.company_id, edu_class.level_id)
+            if key not in cache:
+                cache[key] = Calendar._days_without_lessons(*key, today, today + timedelta(days=14))
+            return cache[key]
+
         Lesson = self.env['edu.lesson'].sudo()
         for offset in range(15):
             day = today + timedelta(days=offset)
-            slots = schedules.filtered(lambda s, d=day: s._occurs_on(d) and s._teacher_on(d) == employee).sorted(
-                'hour_from'
-            )
+            # Sem os feriados e as pausas do calendário escolar (como a geração das aulas).
+            slots = schedules.filtered(
+                lambda s, d=day: s._occurs_on(d) and s._teacher_on(d) == employee and d not in holidays(s.class_id)
+            ).sorted('hour_from')
             if not slots:
                 continue
             lessons = Lesson.search([('schedule_id', 'in', slots.ids), ('date', '=', day)])
@@ -129,6 +149,10 @@ class EduTeacherHome(models.AbstractModel):
             raise UserError(self.env._('Este tempo não é seu.'))
         if not schedule._occurs_on(day):
             raise UserError(self.env._('Este tempo não tem aula nesse dia.'))
+        if day > fields.Date.context_today(self):
+            raise UserError(self.env._('A aula ainda não aconteceu: a chamada faz-se no próprio dia.'))
+        if self._no_lessons_on(schedule.class_id, day):
+            raise UserError(self.env._('Nesse dia é feriado ou pausa no calendário escolar: não há aulas.'))
         Lesson = self.env['edu.lesson'].sudo()
         lesson = Lesson.search([('schedule_id', '=', schedule.id), ('date', '=', day)], limit=1) or Lesson.create(
             {
@@ -154,7 +178,13 @@ class EduTeacherHome(models.AbstractModel):
         inteiro e as do trimestre em curso, as mesmas do PDF), a carga face ao máximo de tempos e as reduções."""
         employee = self.env.user.employee_id
         year = _current_year(self.env, employee.company_id) if employee else False
-        data = {'has_employee': bool(employee), 'year': year.name if year else '', 'lessons': [], 'load': None}
+        data = {
+            'has_employee': bool(employee),
+            'year': year.name if year else '',
+            'today': fields.Date.to_string(fields.Date.context_today(self)),
+            'lessons': [],
+            'load': None,
+        }
         if not employee:
             return data
         lessons = teacher_lessons(self.env, employee, year).sorted(lambda s: (s.weekday, s.hour_from))
@@ -197,6 +227,9 @@ class EduTeacherHome(models.AbstractModel):
         dou aulas, os professores das minhas turmas, a secretaria e a direcção. Só quem tem utilizador (os alunos e
         os encarregados entram com o portal)."""
         me = self.env.user
+        if me.share:
+            # Os utilizadores do portal não vêem a lista das pessoas da escola.
+            return []
         employee = me.employee_id
         company = employee.company_id or self.env.company
         year = _current_year(self.env, company)
@@ -357,14 +390,13 @@ class EduTeacherHome(models.AbstractModel):
         """A escala de vigilância da época (a folha do secPed), visualizada na aplicação."""
         employee = self._employee()
         period = self.env['edu.exam.period'].sudo().browse(period_id).exists()
-        if not period or not period.session_ids.room_ids.filtered(lambda r: employee in r.supervisor_ids):
+        sessions = period.session_ids.filtered(lambda session: session.state != 'cancelled')
+        if not period or not sessions.room_ids.filtered(lambda r: employee in r.supervisor_ids):
             raise UserError(self.env._('Não está escalado para vigiar provas nesta época.'))
         document = (
             self.env['edu.exam.calendar.print'].sudo().create({'period_id': period.id, 'teacher_id': employee.id})
         )
         return self.env.ref('edu_documents.action_report_exam_calendar').preview_action(document.with_env(self.env))
-
-    # A conta do professor (os módulos de RH, quando instalados)
 
     # O meu perfil e os meus recibos (como as páginas do secPed)
 

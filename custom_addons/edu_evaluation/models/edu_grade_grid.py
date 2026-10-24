@@ -78,7 +78,10 @@ class EduGradeGrid(models.AbstractModel):
     def _class_links(self, edu_class, directs):
         """Os botões da turma escolhida, por ordem: ``key`` (para ``class_link_action``), ``label`` e ``icon``. Cada
         módulo acrescenta os seus; ``directs`` é o director de turma (ou a secretaria)."""
-        links = [{'key': 'council', 'label': self.env._('Conselho de turma'), 'icon': 'forum'}]
+        # Num ano passado (a grelha é só de consulta) não há conselho a reunir.
+        links = []
+        if edu_class.academic_year_id.is_current:
+            links.append({'key': 'council', 'label': self.env._('Conselho de turma'), 'icon': 'forum'})
         if edu_class.level_id.code == 'INICIACAO':
             links.append({'key': 'rdec', 'label': self.env._('RDEC'), 'icon': 'description'})
         return links
@@ -86,6 +89,8 @@ class EduGradeGrid(models.AbstractModel):
     @api.model
     def class_link_action(self, class_id, key):
         edu_class = self._class(class_id)
+        if edu_class.company_id not in self.env.companies:
+            raise AccessError(self.env._('Esta turma é de outra escola.'))
         employee = self._employee()
         directs = bool(employee) and edu_class.sudo().director_id == employee
         teaches = bool(employee) and employee in edu_class.sudo().assignment_ids.teacher_id
@@ -292,7 +297,9 @@ class EduGradeGrid(models.AbstractModel):
                     skipped = 0
                 classification = (running if technical else mt) if mt is not None else None
                 if classification is not None and enrollment.state in ENROLLED:
-                    by_term[trimester.id][0 if classification >= policy.pass_grade else 1] += 1
+                    # Como a mini-pauta: a classificação arredondada pela regra da escola (9,5 é positiva).
+                    positive = round_fn(classification) >= policy.pass_grade
+                    by_term[trimester.id][0 if positive else 1] += 1
                 terms_row[str(trimester.id)] = {
                     'mac': value(term, 'mac', 'has_mac'),
                     'npt': value(term, 'npt', 'has_npt'),
@@ -439,6 +446,11 @@ class EduGradeGrid(models.AbstractModel):
                     try:
                         if column not in allowed:
                             raise UserError(self.env._('Esta disciplina não tem a coluna %s.', COLUMN_NAMES[column]))
+                        # A mesma regra da coluna: sem prova trimestral onde a grelha não a mostra (o último
+                        # trimestre do técnico, o da classe de exame), mesmo que exista uma avaliação antiga.
+                        no_npt = {t['id'] for t in data['trimesters'] if not t['has_npt']}
+                        if column == 'npt' and trimester.id in no_npt:
+                            raise UserError(self.env._('O %s não tem prova trimestral.', trimester.name))
                         if change.get('enrollment_id') not in students:
                             raise UserError(self.env._('Este aluno já não está na turma.'))
                         assessment = self._assessment(edu_class, subject, trimester, column)

@@ -89,10 +89,6 @@ export class TeacherHome extends Component {
         return this.action.doAction(xmlid);
     }
 
-    async openMethod(method) {
-        const action = await this.orm.call("edu.teacher.home", method, []);
-        await this.action.doAction(action);
-    }
 }
 
 registry.category("actions").add("edu_roles.teacher_home", TeacherHome);

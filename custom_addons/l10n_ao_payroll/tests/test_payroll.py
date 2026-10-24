@@ -2,7 +2,7 @@ from datetime import date
 
 from odoo import Command
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import tagged
 
 
@@ -116,6 +116,19 @@ class TestL10nAoPayroll(AccountTestInvoicingCommon):
         html = self.env['ir.actions.report']._render_qweb_html('l10n_ao_payroll.report_payslip', ana.ids)[0]
         self.assertIn(b'123456789', html)
         self.assertIn('Líquido a receber'.encode(), html)
+        # O trabalhador abre o seu recibo fechado (com o cargo e a folha, que não lê); outra pessoa não o abre pela
+        # rota dos relatórios, que não verifica acessos.
+        owner, other = self.env['res.users'].create(
+            [{'name': name, 'login': name, 'group_ids': [Command.set(self.env.ref('base.group_user').ids)]}
+             for name in ('dono_recibo', 'outro_recibo')]
+        )  # fmt: skip
+        self.employee.user_id = owner
+        Report = self.env['ir.actions.report']
+        self.assertIn(
+            b'123456789', Report.with_user(owner)._render_qweb_html('l10n_ao_payroll.report_payslip', ana.ids)[0]
+        )
+        with self.assertRaises(AccessError):
+            Report.with_user(other)._render_qweb_html('l10n_ao_payroll.report_payslip', ana.ids)
 
     def test_absences_overtime_sanction_advance(self):
         unjustified = self.env.ref('l10n_ao_hr.work_entry_type_ao_injustificada')

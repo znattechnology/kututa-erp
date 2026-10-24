@@ -1,21 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- A minha docência: o espaço do professor -->
-    <record id="action_my_classes" model="ir.actions.act_window">
-        <field name="name">As minhas turmas</field>
-        <field name="res_model">edu.class</field>
-        <field name="view_mode">list,form</field>
-        <field name="domain">['|', ('assignment_ids.teacher_id.user_id', '=', uid), ('director_id.user_id', '=', uid)]</field>
-        <field name="context">{'search_default_current_year': 1, 'create': False}</field>
-    </record>
-    <record id="action_my_assessments" model="ir.actions.act_window">
-        <field name="name">Avaliações contínuas (MAC)</field>
-        <field name="res_model">edu.assessment</field>
-        <field name="view_mode">list,form</field>
-        <!-- Só o ensino geral tem MAC (DE 424/25); no técnico a NPP lança-se na grelha «Notas da turma». -->
-        <field name="domain">[('assessment_type', '=', 'continuous'), ('class_id.level_id.subsystem', '!=', 'technical'), ('class_id.assignment_ids.teacher_id.user_id', '=', uid)]</field>
-        <field name="context">{'search_default_current_year': 1, 'default_assessment_type': 'continuous'}</field>
-    </record>
 
     <!-- Painel do Professor: uma aplicação própria, como a Secretaria Express (o professor não usa os menus da
          secretaria). O conselho de turma é do director de turma. -->
@@ -53,7 +38,7 @@
               parent="menu_teacher_classes" sequence="10"/>
     <!-- «O meu horário» (acção cliente), como a página do secPed: a seguir, a carga e a semana em grelha. -->
     <record id="action_teacher_schedule" model="ir.actions.client">
-        <field name="name">O meu horário</field>
+        <field name="name">Meu horário</field>
         <field name="tag">edu_roles.teacher_schedule</field>
     </record>
     <menuitem id="menu_my_schedule" name="Meu horário" action="action_teacher_schedule" parent="menu_teacher_classes" sequence="40"/>
@@ -89,7 +74,7 @@
     <menuitem id="menu_teacher_account" name="Conta" parent="menu_edu_teacher_root" sequence="50"/>
     <!-- «Meu perfil» e «Recibos e férias» (acções cliente), como as páginas do secPed. -->
     <record id="action_teacher_profile_page" model="ir.actions.client">
-        <field name="name">O meu perfil</field>
+        <field name="name">Meu perfil</field>
         <field name="tag">edu_roles.teacher_profile</field>
     </record>
     <record id="action_teacher_payslips_page" model="ir.actions.client">

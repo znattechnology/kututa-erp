@@ -18,7 +18,7 @@
                 <div class="o_edu_ts_body" t-if="this.state.data">
                     <t t-set="d" t-value="this.state.data"/>
                     <header class="o_edu_ts_head">
-                        <h1 class="o_edu_ts_title">O meu horário<t t-if="d.year">, <t t-out="d.year"/></t></h1>
+                        <h1 class="o_edu_ts_title">Meu horário<t t-if="d.year">, <t t-out="d.year"/></t></h1>
                         <div t-if="d.has_employee" class="o_edu_ts_actions">
                             <button type="button" class="btn btn-secondary" t-on-click="() => this.openReport(true)"
                                     t-att-disabled="!this.lessons.length" title="Ver o horário em folha A4, na aplicação">

@@ -18,7 +18,10 @@ const todayKey = () => {
     const d = new Date();
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
-const toTime = (hours) => `${pad(Math.floor(hours))}:${pad(Math.round((hours % 1) * 60))}`;
+const toTime = (hours) => {
+    const minutes = Math.round(hours * 60);
+    return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
+};
 const fromTime = (text) => {
     const [h, m] = (text || "").split(":").map((part) => parseInt(part, 10));
     return Number.isFinite(h) ? h + (m || 0) / 60 : 0;
@@ -118,6 +121,9 @@ export class AttendancePage extends Component {
     // Hoje
 
     openToday(row) {
+        if (row.lesson_id && this.state.roll && this.state.roll.lesson.id === row.lesson_id) {
+            return;
+        }
         this.guard(() =>
             this.run(async () => {
                 const lesson = await this.orm.call("edu.attendance.page", "open_today", [row.schedule_id]);
@@ -217,7 +223,9 @@ export class AttendancePage extends Component {
     openForm() {
         this.guard(() => {
             this.state.roll = null;
-            this.state.form = { date: todayKey(), slotId: "", from: "07:00", to: "07:45", summary: "", slots: [] };
+            // O dia do servidor (o fuso do utilizador), o mesmo com que ele valida a aula.
+            const today = this.state.data.today_iso || todayKey();
+            this.state.form = { date: today, slotId: "", from: "07:00", to: "07:45", summary: "", slots: [] };
             return this.loadSlots();
         });
     }
@@ -255,7 +263,13 @@ export class AttendancePage extends Component {
             const lesson = await this.orm.call("edu.attendance.page", "new_lesson", [
                 s.classId,
                 s.subjectId,
-                { date: form.date, hour_from: fromTime(form.from), hour_to: fromTime(form.to), summary: form.summary },
+                {
+                    date: form.date,
+                    schedule_id: form.slotId || false,
+                    hour_from: fromTime(form.from),
+                    hour_to: fromTime(form.to),
+                    summary: form.summary,
+                },
             ]);
             if (lesson.existed) {
                 this.notification.add("Já havia uma aula desta disciplina nesse dia e hora: abrimos essa.", { type: "info" });
@@ -298,7 +312,7 @@ export class AttendancePage extends Component {
 
     get readonly() {
         const roll = this.state.roll;
-        return roll.closed || roll.lesson.state === "cancelled";
+        return roll.closed || roll.future || roll.lesson.state === "cancelled";
     }
 
     mark(row, key) {
@@ -328,7 +342,13 @@ export class AttendancePage extends Component {
     get footer() {
         const roll = this.state.roll;
         if (this.readonly) {
-            return { text: roll.reason || "A aula não se realizou.", warn: false };
+            if (roll.closed) {
+                return { text: roll.reason, warn: false };
+            }
+            if (roll.future) {
+                return { text: "A aula ainda não aconteceu: a chamada faz-se no próprio dia.", warn: false };
+            }
+            return { text: "A aula não se realizou.", warn: false };
         }
         if (!roll.saved) {
             return { text: "A chamada desta aula ainda não foi guardada.", warn: true };

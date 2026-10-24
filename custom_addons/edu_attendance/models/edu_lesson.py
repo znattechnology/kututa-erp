@@ -165,6 +165,7 @@ class EduLesson(models.Model):
             return
         employee = self.env.user.employee_id
         for lesson in self:
+            # Uma colocação só num trimestre dá as aulas desse trimestre (vazia: o ano inteiro).
             assigned = (
                 self.env['edu.teaching.assignment']
                 .sudo()
@@ -173,10 +174,15 @@ class EduLesson(models.Model):
                         ('class_id', '=', lesson.class_id.id),
                         ('subject_id', '=', lesson.subject_id.id),
                         ('teacher_id', '=', employee.id),
+                        '|',
+                        ('trimester_id', '=', False),
+                        ('trimester_id', '=', lesson.trimester_id.id),
                     ]
                 )
             )
             director = lesson.class_id.sudo().director_id == employee
+            # O professor que a secretaria pôs no tempo do horário dá essa aula.
+            scheduled = bool(lesson.schedule_id) and lesson.schedule_id.sudo().teacher_id == employee
             # Substituto só com a substituição registada para esse tempo e data (pôr-se como professor não basta).
             substitute = bool(
                 lesson.schedule_id
@@ -190,7 +196,7 @@ class EduLesson(models.Model):
                     ]
                 )
             )
-            if not (employee and (assigned or director or substitute)):
+            if not (employee and (assigned or director or scheduled or substitute)):
                 raise AccessError(self.env._('Só o professor da disciplina ou o director de turma gere esta aula.'))
 
     @api.model_create_multi
@@ -205,7 +211,7 @@ class EduLesson(models.Model):
         if self.env.context.get('edu_lesson_system'):
             return super().write(vals)
         self._check_can_manage()
-        locked = {'state', 'date', 'hour_from', 'hour_to', 'class_id', 'subject_id'} & set(vals)
+        locked = {'state', 'date', 'hour_from', 'hour_to', 'class_id', 'subject_id', 'summary'} & set(vals)
         if locked:
             self._check_open_trimester()
         result = super().write(vals)
@@ -386,6 +392,10 @@ class EduLessonAttendance(models.Model):
         self._check_can_manage()
         self.lesson_id._check_open_trimester()
         if {'state', 'justification'} & set(vals):
+            # Uma falta justificada tem sempre o motivo: apagá-lo sem mudar a presença é recusado.
+            if 'justification' in vals and not (vals['justification'] or '').strip() and 'state' not in vals:
+                if self.filtered(lambda line: line.state == 'excused'):
+                    raise UserError(self.env._('Uma falta justificada tem de ter o motivo.'))
             if vals.get('state') == 'excused':
                 self._check_can_justify()
                 if not vals.get('justification'):
@@ -400,6 +410,7 @@ class EduLessonAttendance(models.Model):
             vals = dict(vals, justified_by_id=self.env.uid, justified_date=fields.Date.context_today(self))
         elif vals.get('state') in ('present', 'late', 'absent'):
             vals = dict(vals, justified_by_id=False, justified_date=False)
+            vals.setdefault('justification', False)
         result = super().write(vals)
         if 'state' in vals:
             self.filtered(lambda line: line.lesson_state == 'done')._edu_check_limits()

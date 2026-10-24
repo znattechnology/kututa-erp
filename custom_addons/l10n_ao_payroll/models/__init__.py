@@ -4,5 +4,6 @@ from . import (
     l10n_ao_payroll_advance,
     l10n_ao_payroll_irt_bracket,
     l10n_ao_payroll_run,
+    report_payslip,
     res_company,
 )

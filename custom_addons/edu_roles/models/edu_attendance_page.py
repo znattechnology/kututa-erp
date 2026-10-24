@@ -75,6 +75,7 @@ class EduAttendancePage(models.AbstractModel):
         data = {
             'has_employee': bool(employee),
             'today': f'{WEEKDAYS[today.weekday()]}, {today.strftime("%d/%m/%Y")}',
+            'today_iso': fields.Date.to_string(today),
             'lessons': [],
             'classes': [],
         }
@@ -150,6 +151,8 @@ class EduAttendancePage(models.AbstractModel):
             raise UserError(self.env._('Este tempo não é seu.'))
         if not schedule._occurs_on(today):
             raise UserError(self.env._('Hoje não há aula neste tempo.'))
+        if self.env['edu.teacher.home']._no_lessons_on(schedule.class_id, today):
+            raise UserError(self.env._('Hoje é feriado ou pausa no calendário escolar: não há aulas.'))
         lesson = (
             self.env['edu.lesson'].sudo().search([('schedule_id', '=', schedule.id), ('date', '=', today)], limit=1)
         )
@@ -197,13 +200,13 @@ class EduAttendancePage(models.AbstractModel):
 
     @api.model
     def new_lesson(self, class_id, subject_id, values):
-        """Regista uma aula noutro dia (uma que faltou registar, uma reposição). Se já existe uma aula da turma e
-        da disciplina nesse dia e hora, abre essa (sem lhe mudar o sumário)."""
+        """Regista uma aula noutro dia (uma que faltou registar, uma reposição). ``values``: o dia (``date``), o tempo
+        do horário escolhido (``schedule_id``, opcional), as horas (``hour_from``, ``hour_to``) e o sumário
+        (``summary``). Se essa aula já existe, abre-a (sem lhe mudar o sumário)."""
         edu_class, subject = self._check_class_subject(class_id, subject_id)
-        # ``values``: o dia (``date``), as horas (``hour_from``, ``hour_to``) e o sumário (``summary``).
         day = fields.Date.to_date(values.get('date'))
         hour_from, hour_to = values.get('hour_from') or 0.0, values.get('hour_to') or 0.0
-        summary = values.get('summary') or ''
+        summary = (values.get('summary') or '').strip()
         if not day:
             raise UserError(self.env._('Escolha o dia da aula.'))
         if day > fields.Date.context_today(self):
@@ -211,31 +214,38 @@ class EduAttendancePage(models.AbstractModel):
         if not hour_to or hour_to <= hour_from:
             raise UserError(self.env._('A aula tem de acabar depois de começar.'))
         Lesson = self.env['edu.lesson']
-        existing = Lesson.sudo().search(
-            [
-                ('class_id', '=', edu_class.id),
-                ('subject_id', '=', subject.id),
-                ('date', '=', day),
-                ('hour_from', '=', hour_from),
-            ],
-            limit=1,
-        )
-        if existing:
-            return dict(self._lesson_row(existing), existed=True)
-        schedule = (
-            self.env['edu.schedule']
-            .sudo()
-            .search(
+        schedule = self.env['edu.schedule']
+        if values.get('schedule_id'):
+            # O tempo escolhido no formulário, se é mesmo desta turma e disciplina e há aula nesse dia.
+            schedule = self.env['edu.schedule'].sudo().browse(values['schedule_id']).exists()
+            if (
+                not schedule
+                or (schedule.class_id, schedule.subject_id) != (edu_class, subject)
+                or schedule.weekday != str(day.weekday())
+                or not schedule._occurs_on(day)
+            ):
+                raise UserError(self.env._('Esse tempo do horário não tem aula desta disciplina nesse dia.'))
+        if schedule:
+            existing = Lesson.sudo().search([('schedule_id', '=', schedule.id), ('date', '=', day)], limit=1)
+        else:
+            # Fora do horário: a mesma turma, disciplina, dia e hora (ao minuto) é a mesma aula.
+            existing = Lesson.sudo().search(
                 [
                     ('class_id', '=', edu_class.id),
                     ('subject_id', '=', subject.id),
-                    ('weekday', '=', str(day.weekday())),
-                    ('hour_from', '=', hour_from),
+                    ('date', '=', day),
+                    ('hour_from', '>', hour_from - 0.01),
+                    ('hour_from', '<', hour_from + 0.01),
                 ],
                 limit=1,
             )
-        )
-        vals = {'class_id': edu_class.id, 'subject_id': subject.id, 'date': day, 'summary': (summary or '').strip()}
+        if existing.state == 'cancelled':
+            raise UserError(
+                self.env._('Esta aula está marcada como não realizada. Peça à secretaria para a repor, se foi dada.')
+            )
+        if existing:
+            return dict(self._lesson_row(existing), existed=True)
+        vals = {'class_id': edu_class.id, 'subject_id': subject.id, 'date': day, 'summary': summary}
         if schedule:
             vals['schedule_id'] = schedule.id
         else:
@@ -297,6 +307,8 @@ class EduAttendancePage(models.AbstractModel):
         lesson = self._lesson(lesson_id)
         if lesson.state == 'cancelled':
             raise UserError(self.env._('A aula não se realizou.'))
+        if lesson.date > fields.Date.context_today(self):
+            raise UserError(self.env._('A aula ainda não aconteceu: a chamada faz-se no próprio dia.'))
         if not lesson.attendance_ids:
             lesson.action_open_roll_call()
         lines = {line.enrollment_id.id: line for line in lesson.attendance_ids}
@@ -362,12 +374,12 @@ class EduAttendancePage(models.AbstractModel):
             .search([('teacher_id', '=', employee.id), ('academic_year_id', '=', year.id)])
         )
         pairs = {(a.class_id.id, a.subject_id.id) for a in assignments}
-        rows = Summary.search(
-            [('trimester_id', '=', trimester.id), ('class_id', 'in', assignments.class_id.ids), ('absent', '>=', 1)]
-        ).filtered(lambda s: (s.class_id.id, s.subject_id.id) in pairs and s.status != 'ok')
+        cells = self._absence_cells([('class_id', 'in', assignments.class_id.ids)], trimester)
         students = {}
-        for summary in rows:
-            regime = summary.class_id._edu_regime()
+        for (_enrollment_id, _subject_id), cell in cells.items():
+            summary = cell['summary']
+            if (summary.class_id.id, summary.subject_id.id) not in pairs or cell['status'] == 'ok':
+                continue
             group = students.setdefault(
                 summary.enrollment_id.id,
                 {
@@ -381,14 +393,14 @@ class EduAttendancePage(models.AbstractModel):
             group['items'].append(
                 {
                     'subject': summary.subject_id.name,
-                    'counted': summary.counted,
-                    'limit': summary.limit,
-                    'annual': regime == 'technical',
-                    'excused': summary.excused,
-                    'status': summary.status,
+                    'counted': cell['counted'],
+                    'limit': cell['limit'],
+                    'annual': cell['annual'],
+                    'excused': cell['excused'],
+                    'status': cell['status'],
                 }
             )
-            if summary.status == 'failed':
+            if cell['status'] == 'failed':
                 group['worst'] = 'failed'
         data['mine'] = sorted(students.values(), key=lambda g: (g['worst'] != 'failed', (g['name'] or '').lower()))
         # A turma que dirijo: o mapa da turma inteira.
@@ -405,15 +417,41 @@ class EduAttendancePage(models.AbstractModel):
         return data
 
     @api.model
+    def _absence_cells(self, domain, trimester):
+        """As faltas por (matrícula, disciplina), como contam na lei: no geral, as do trimestre escolhido; no técnico,
+        as do ano (o limite é anual: as linhas de todos os trimestres até ao escolhido, com as justificadas somadas),
+        para que quem passou o limite no 1.º trimestre continue a aparecer nos seguintes."""
+        Summary = self.env['edu.absence.summary'].sudo()
+        year_trimesters = trimester.academic_year_id.trimester_ids.filtered(lambda t: t.number <= trimester.number)
+        rows = Summary.search([*domain, ('trimester_id', 'in', year_trimesters.ids)])
+        regimes = {}
+        cells = {}
+        for summary in rows:
+            edu_class = summary.class_id
+            if edu_class.id not in regimes:
+                regimes[edu_class.id] = edu_class._edu_regime()
+            technical = regimes[edu_class.id] == 'technical'
+            if not technical and summary.trimester_id != trimester:
+                continue
+            key = (summary.enrollment_id.id, summary.subject_id.id)
+            if key in cells:
+                cells[key]['excused'] += summary.excused
+                continue
+            cells[key] = {
+                'summary': summary,
+                'counted': summary.counted,
+                'limit': summary.limit,
+                'status': summary.status,
+                'excused': summary.excused,
+                'annual': technical,
+            }
+        return cells
+
+    @api.model
     def _absence_board(self, edu_class, trimester):
         regime = edu_class._edu_regime()
-        summaries = (
-            self.env['edu.absence.summary']
-            .sudo()
-            .search([('trimester_id', '=', trimester.id), ('enrollment_id.class_id', '=', edu_class.id)])
-        )
-        subjects = summaries.subject_id.sorted(lambda s: s.name or '')
-        by_key = {(s.enrollment_id.id, s.subject_id.id): s for s in summaries}
+        cells_by_key = self._absence_cells([('enrollment_id.class_id', '=', edu_class.id)], trimester)
+        subjects = self.env['edu.subject'].browse({key[1] for key in cells_by_key}).sorted(lambda s: s.name or '')
         enrollments = edu_class.enrollment_ids.filtered(lambda e: e.state in ('active', 'irregular')).sorted(
             lambda e: (e.order_number, e.student_id.name or '')
         )
@@ -423,17 +461,12 @@ class EduAttendancePage(models.AbstractModel):
             cells = {}
             worst = 'ok'
             for subject in subjects:
-                summary = by_key.get((enrollment.id, subject.id))
-                if not summary:
+                cell = cells_by_key.get((enrollment.id, subject.id))
+                if not cell:
                     continue
-                cells[subject.id] = {
-                    'counted': summary.counted,
-                    'excused': summary.excused,
-                    'limit': summary.limit,
-                    'status': summary.status,
-                }
-                if summary.status == 'failed' or (summary.status == 'at_risk' and worst == 'ok'):
-                    worst = summary.status
+                cells[subject.id] = {k: cell[k] for k in ('counted', 'excused', 'limit', 'status')}
+                if cell['status'] == 'failed' or (cell['status'] == 'at_risk' and worst == 'ok'):
+                    worst = cell['status']
             if worst != 'ok':
                 counts[worst] += 1
             students.append(

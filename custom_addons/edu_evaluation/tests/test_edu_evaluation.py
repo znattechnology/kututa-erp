@@ -262,6 +262,38 @@ class TestEduEvaluation(TransactionCase):
         with self.assertRaises(ValidationError):
             self._assess(self.class10, 'LP', self.t3, 'trimester_test', {ana: 12})
 
+    def test_review_fixes(self):
+        """Revisão: CA = CF sem PG mesmo com o arredondamento único; MT3 da classe de exame com um trimestre em falta
+        (conta 0); o CT acumulado do termo; nenhuma NPT no último trimestre do técnico pela grelha."""
+        ana, bento = self.students[:2]
+        # Disciplina do técnico sem prova global, com o arredondamento único (escolas migradas).
+        practical = self.class10.subject_line_ids.filtered(lambda line: not line.has_global_exam)[:1]
+        code = practical.subject_id.code
+        enrollment = self._enroll(self.class10, ana, [code])
+        policy = self.env['edu.evaluation.policy']._get(self.env.company, self.class10.level_id)
+        policy.technical_ca_precise = True
+        self._full_year(
+            self.class10, code, {self.t1: {ana: (10, 10)}, self.t2: {ana: (11, 11)}, self.t3: {ana: (10, 0)}}
+        )
+        result = self._year_subject(enrollment, code)
+        # CF: 10 → 10,5 ≈ 11 → 10,5 ≈ 11; sem arredondar seria 10,25 (CA 10, diferente da CF).
+        self.assertEqual((result.cf, result.annual), (11, 11))
+        self.assertEqual(result._trimester_classifications(), [10, 11, 11])
+        policy.technical_ca_precise = False
+        # Classe de exame do geral: sem MT1, MT3 = (0 + MT2 + MAC3)/3.
+        nine = self._enroll(self.class9, bento, ['MAT'])
+        self._full_year(self.class9, 'MAT', {self.t2: {bento: (12, 12)}})
+        self._assess(self.class9, 'MAT', self.t3, 'continuous', {bento: 14})
+        self.assertEqual(self._term(nine, 'MAT', self.t3).mt, 9)  # 26 / 3 = 8,67
+        # A grelha não grava uma NPT no último trimestre do técnico.
+        self.t3.is_current = True
+        teacher = self.class10.assignment_ids.filtered(lambda a: a.subject_id == practical.subject_id)[:1].teacher_id
+        if teacher.user_id:
+            Grid = self.env['edu.grade.grid'].with_user(teacher.user_id)
+            change = {'enrollment_id': enrollment.id, 'trimester_id': self.t3.id, 'column': 'npt', 'value': 12}
+            done = Grid.grid_save(self.class10.id, practical.subject_id.id, [change])
+            self.assertFalse(done['ok'])
+
     def test_technical_missing_trimester(self):
         """A CF fecha com o último trimestre e um trimestre sem classificação conta 0 (Despacho 60/08, art. 16.º): sem o
         3.º espera pela prova extraordinária; sem classificação em dois trimestres, sem aproveitamento."""

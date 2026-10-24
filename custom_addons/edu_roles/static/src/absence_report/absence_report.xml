@@ -101,7 +101,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <p class="mb-0 small text-muted">Os números são as faltas injustificadas<t t-if="b.regime === 'technical'"> do ano</t>; entre parênteses, as justificadas do trimestre.</p>
+                            <p class="mb-0 small text-muted">Os números são as faltas injustificadas<t t-if="b.regime === 'technical'"> do ano</t>; entre parênteses, as justificadas<t t-if="b.regime === 'technical'"> até ao trimestre escolhido</t><t t-else=""> do trimestre</t>.</p>
                         </section>
                     </t>
                 </div>
