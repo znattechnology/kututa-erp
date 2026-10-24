@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="edu_roles.MobileTabs">
+        <nav t-if="this.tabs" class="o_edu_mobile_tabs d-md-none d-print-none" aria-label="Atalhos">
+            <button t-foreach="this.tabs" t-as="tab" t-key="tab.action" type="button" class="o_edu_mobile_tab"
+                    t-att-class="{'active': this.isActive(tab)}" t-att-aria-current="this.isActive(tab) ? 'page' : false"
+                    t-on-click="() => this.open(tab)">
+                <i class="oi" t-att-data-icon="tab.icon" aria-hidden="true"/>
+                <span t-out="tab.label"/>
+            </button>
+            <button type="button" class="o_edu_mobile_tab" t-att-class="{'active': this.menuActive}"
+                    aria-label="Abrir o menu com todas as opções" t-on-click="() => this.openMenu()">
+                <i class="oi" data-icon="menu" aria-hidden="true"/>
+                <span>Menu</span>
+            </button>
+        </nav>
+    </t>
+</templates>

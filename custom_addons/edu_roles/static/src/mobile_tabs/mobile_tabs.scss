@@ -1,0 +1,42 @@
+// Barra de separadores do telemóvel (como a do secPed): fixa em baixo, por cima da página.
+.o_edu_mobile_tabs {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: $zindex-fixed;
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid $border-color;
+    background: $o-view-background-color;
+}
+
+.o_edu_mobile_tab {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: $text-muted;
+    font-size: 11px;
+    line-height: 1.2;
+
+    .oi {
+        font-size: 22px;
+    }
+
+    &.active {
+        color: $o-action;
+        font-weight: 600;
+    }
+}
+
+// A página acaba por cima da barra (no telemóvel, onde a barra se vê).
+@include media-breakpoint-down(md) {
+    body.o_edu_with_mobile_tabs .o_action_manager {
+        padding-bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+}
