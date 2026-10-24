@@ -246,6 +246,31 @@ class TestEduEvaluation(TransactionCase):
         practical.weekly_hours = 5
         self.assertFalse(practical.has_global_exam)
 
+    def test_technical_missing_trimester(self):
+        """A CF calcula-se com os trimestres que existem e fecha com o último (Despacho 60/08, art. 16.º): sem o 3.º
+        espera pela prova extraordinária; sem classificação em dois trimestres, sem aproveitamento."""
+        ana, bento, carla = self.students[:3]
+        enrollments = self._enroll(self.class10, (ana, bento, carla), ['LP'])
+        self._full_year(
+            self.class10,
+            'LP',
+            {
+                self.t1: {ana: (10, 10), carla: (12, 12)},
+                self.t2: {carla: (12, 12)},
+                self.t3: {ana: (14, 14), bento: (16, 16)},
+            },
+            pg=False,
+        )
+        self._assess(self.class10, 'LP', self.t3, 'global_exam', {ana: 10, bento: 16, carla: 12})
+        ana_result, bento_result, carla_result = (self._year_subject(e, 'LP') for e in enrollments)
+        # Sem o 2.º: CF = (10 + 14)/2 = 12; CA = 0,6 × 12 + 0,4 × 10 = 11,2 ≈ 11.
+        self.assertEqual((ana_result.cf, ana_result.annual, ana_result.complete), (12, 11, True))
+        self.assertTrue(ana_result.passed)
+        # Só o 3.º: classificação calculada, mas sem aproveitamento (dois trimestres sem classificação).
+        self.assertEqual((bento_result.annual, bento_result.complete, bento_result.passed), (16, True, False))
+        # Sem o 3.º: a disciplina fica por fechar.
+        self.assertFalse(carla_result.complete)
+
     def test_technical_imported(self):
         """Pauta migrada: médias trimestrais importadas não se recalculam e, com o arredondamento único, a PG entra
         na CA com as casas decimais."""

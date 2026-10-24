@@ -108,7 +108,7 @@
                                         <t t-else=""> Nenhum dos <t t-out="this.fmt(d.grades.students)"/> alunos com notas tem negativas.</t>
                                     </p>
                                     <p class="small text-muted">
-                                        A média do trimestre de cada disciplina, contra a nota mínima do nível. A iniciação avalia sem notas e fica de fora.
+                                        A classificação do trimestre de cada disciplina, contra a nota mínima do nível: no técnico, o CT, que engloba os trimestres anteriores; no geral, a MT. A iniciação avalia sem notas e fica de fora.
                                         <t t-if="d.group_by === 'subsystem'">Por subsistema não há média: o primário dá notas de 0 a 10 e o resto de 0 a 20.</t>
                                     </p>
                                     <div t-if="this.histogram or this.trimesterColumns" class="o_edu_rp_charts">

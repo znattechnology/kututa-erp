@@ -311,12 +311,16 @@ class EduSubjectResult(models.Model):
                             policy._national_weight(enrollment.class_number),
                             round_fn,
                         )
-                        if national_value is not None and graded == len(trimesters)
+                        if national_value is not None and mts and mts[-1] is not None
                         else cf
                     )
-            # Sem a PG (técnico) ou sem o exame nacional (classe de exame), a disciplina não está completa.
+            # A CF (e a classificação do ano) fecha com a classificação do último trimestre, com os trimestres que
+            # existem (CF cumulativa no técnico, média no geral). Sem o último trimestre, espera pela prova
+            # extraordinária (Despacho 60/08, art. 16.º, n.º 1, a)); sem a PG (técnico) ou sem o exame nacional (classe
+            # de exame), a disciplina também não está completa.
+            last_graded = bool(mts) and mts[-1] is not None
             complete = imported is not None or (
-                graded >= len(trimesters)
+                last_graded
                 and annual is not None
                 and (not vals['has_global_exam'] or pg_value is not None)
                 and (not national_subject or national_value is not None)
@@ -343,6 +347,9 @@ class EduSubjectResult(models.Model):
                 )
                 transition = cfd if approved else min(cfd, final)
                 passed = complete and approved
+            # Sem classificação em dois trimestres, sem aproveitamento no ano (Despacho 60/08, art. 16.º, n.º 1, b)).
+            if policy.regime == TECHNICAL and imported is None and graded <= len(trimesters) - 2:
+                passed = False
             vals.update(
                 {
                     'cf': cf or 0.0,

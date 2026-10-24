@@ -103,6 +103,39 @@ class EduReportPage(models.AbstractModel):
                 )
         return result
 
+    @api.model
+    def _classifications(self, trimesters, classes, policies):
+        """As classificações dos trimestres como na grelha e na pauta: no técnico, o CT, que engloba os trimestres
+        anteriores (Despacho 60/08, art. 17.º, n.º 5: CT2 = (CT1 + média do 2.º)/2); no geral, a MT do trimestre.
+        Lista de (turma, matrícula, trimestre, classificação), pela ordem dos trimestres."""
+        regimes = {
+            (p.company_id.id, p.level_id.id): p.regime
+            for p in self.env['edu.evaluation.policy']
+            .sudo()
+            .search([('company_id', 'in', classes.company_id.ids), ('level_id', 'in', classes.level_id.ids)])
+        }
+        technical = {
+            c.id for c in classes if regimes.get((c.company_id.id, c.level_id.id), c.level_id.subsystem) == 'technical'
+        }
+        number = {t.id: t.number for t in trimesters}
+        rows = self.env['edu.term.result'].search_read(
+            [('trimester_id', 'in', trimesters.ids), ('has_mt', '=', True), ('class_id', 'in', classes.ids),
+             *COUNTED_DOMAIN],
+            ['class_id', 'enrollment_id', 'subject_id', 'trimester_id', 'mt'],
+        )  # fmt: skip
+        running = {}
+        found = []
+        for row in sorted(rows, key=lambda r: number[r['trimester_id'][0]]):
+            class_id, enrollment_id = row['class_id'][0], row['enrollment_id'][0]
+            value = row['mt']
+            if class_id in technical:
+                round_fn = policies[class_id][1]
+                key = (enrollment_id, row['subject_id'][0])
+                previous = running.get(key)
+                value = running[key] = round_fn(value) if previous is None else round_fn((previous + value) / 2)
+            found.append((class_id, enrollment_id, row['trimester_id'][0], value))
+        return found
+
     # Quadros
 
     @api.model
@@ -147,35 +180,32 @@ class EduReportPage(models.AbstractModel):
             'trimester_id': trimester.id or False,
             'trimester': trimester.name or '',
         }
+        policies = self._policies(classes)
         results = (
-            TermResult.search_read(
-                [
-                    ('trimester_id', '=', trimester.id),
-                    ('has_mt', '=', True),
-                    ('class_id', 'in', classes.ids),
-                    *COUNTED_DOMAIN,
-                ],
-                ['class_id', 'enrollment_id', 'mt'],
-            )
+            [
+                found
+                for found in self._classifications(
+                    trimesters.filtered(lambda t: t.number <= trimester.number), classes, policies
+                )
+                if found[2] == trimester.id
+            ]
             if trimester
             else []
         )
-        policies = self._policies(classes)
         per_class = defaultdict(lambda: {'grades': 0, 'positive': 0, 'sum': 0.0})
         negative = defaultdict(set)
         students = defaultdict(set)
-        for result in results:
-            class_id = result['class_id'][0]
+        for class_id, enrollment_id, _trimester_id, value in results:
             row = per_class[class_id]
             row['grades'] += 1
-            row['sum'] += result['mt']
-            students[class_id].add(result['enrollment_id'][0])
+            row['sum'] += value
+            students[class_id].add(enrollment_id)
             pass_grade, round_fn, _scale = policies[class_id]
             # Como na grelha e na pauta: a nota arredondada pela regra da escola (9,5 é 10, positiva).
-            if round_fn(result['mt']) >= pass_grade:
+            if round_fn(value) >= pass_grade:
                 row['positive'] += 1
             else:
-                negative[class_id].add(result['enrollment_id'][0])
+                negative[class_id].add(enrollment_id)
         for class_id, row in per_class.items():
             row['students'] = len(students[class_id])
             row['with_negative'] = len(negative[class_id])
@@ -195,10 +225,10 @@ class EduReportPage(models.AbstractModel):
         # às unidades; a linha e a cor seguem a nota mínima mais comum nessas turmas.
         histogram = [0] * 21
         pass_marks = defaultdict(int)
-        for result in results:
-            pass_grade, _round_fn, scale = policies[result['class_id'][0]]
+        for class_id, _enrollment_id, _trimester_id, value in results:
+            pass_grade, _round_fn, scale = policies[class_id]
             if scale == 20:
-                histogram[min(20, max(0, grading.round_units(result['mt'])))] += 1
+                histogram[min(20, max(0, grading.round_units(value)))] += 1
                 pass_marks[pass_grade] += 1
         data.update(
             {
@@ -218,19 +248,11 @@ class EduReportPage(models.AbstractModel):
     def _grades_by_trimester(self, trimesters, classes, policies):
         """A percentagem de positivas em cada trimestre do ano: a evolução ao longo do ano."""
         counts = defaultdict(lambda: [0, 0])
-        for result in self.env['edu.term.result'].search_read(
-            [
-                ('trimester_id', 'in', trimesters.ids),
-                ('has_mt', '=', True),
-                ('class_id', 'in', classes.ids),
-                *COUNTED_DOMAIN,
-            ],
-            ['class_id', 'trimester_id', 'mt'],
-        ):
-            pass_grade, round_fn, _scale = policies[result['class_id'][0]]
-            count = counts[result['trimester_id'][0]]
+        for class_id, _enrollment_id, trimester_id, value in self._classifications(trimesters, classes, policies):
+            pass_grade, round_fn, _scale = policies[class_id]
+            count = counts[trimester_id]
             count[0] += 1
-            count[1] += round_fn(result['mt']) >= pass_grade
+            count[1] += round_fn(value) >= pass_grade
         return [
             {'name': t.name, 'grades': counts[t.id][0], 'pct': _pct(counts[t.id][1], counts[t.id][0])}
             for t in trimesters
