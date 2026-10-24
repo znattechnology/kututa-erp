@@ -322,6 +322,36 @@ export class StudentProfile extends StudentPage {
     }
 }
 
+const TRAINING_STATE_CLASS = {
+    planned: "text-bg-light",
+    proposed: "text-bg-light",
+    ongoing: "text-bg-info",
+    submitted: "text-bg-info",
+    defended: "text-bg-info",
+    passed: "text-bg-success",
+    failed: "text-bg-danger",
+};
+
+/** «O Meu Estágio», como no secPed: o estágio curricular do aluno do técnico, só para ler. */
+export class StudentInternship extends StudentPage {
+    static template = "edu_portal.StudentInternship";
+    static page = "internship";
+
+    stateClass(record) {
+        return TRAINING_STATE_CLASS[record.state] || "text-bg-light";
+    }
+}
+
+/** «A Minha PAP», como no secPed: a Prova de Aptidão Profissional do aluno do técnico, só para ler. */
+export class StudentProject extends StudentPage {
+    static template = "edu_portal.StudentProject";
+    static page = "project";
+
+    stateClass(record) {
+        return TRAINING_STATE_CLASS[record.state] || "text-bg-light";
+    }
+}
+
 const actions = registry.category("actions");
 actions.add("edu_portal.student_home", StudentHome);
 actions.add("edu_portal.student_grades", StudentGrades);
@@ -330,3 +360,5 @@ actions.add("edu_portal.student_exams", StudentExams);
 actions.add("edu_portal.student_absences", StudentAbsences);
 actions.add("edu_portal.student_fees", StudentFees);
 actions.add("edu_portal.student_profile", StudentProfile);
+actions.add("edu_portal.student_internship", StudentInternship);
+actions.add("edu_portal.student_project", StudentProject);

@@ -21,6 +21,14 @@
         <field name="name">Faltas</field>
         <field name="tag">edu_portal.student_absences</field>
     </record>
+    <record id="action_student_internship" model="ir.actions.client">
+        <field name="name">O Meu Estágio</field>
+        <field name="tag">edu_portal.student_internship</field>
+    </record>
+    <record id="action_student_project" model="ir.actions.client">
+        <field name="name">A Minha PAP</field>
+        <field name="tag">edu_portal.student_project</field>
+    </record>
     <record id="action_student_fees" model="ir.actions.client">
         <field name="name">Propinas</field>
         <field name="tag">edu_portal.student_fees</field>
@@ -38,6 +46,10 @@
     <menuitem id="menu_student_schedule" name="Horário" action="action_student_schedule" parent="menu_student_academic" sequence="20"/>
     <menuitem id="menu_student_exams" name="Provas" action="action_student_exams" parent="menu_student_academic" sequence="30"/>
     <menuitem id="menu_student_absences" name="Faltas" action="action_student_absences" parent="menu_student_academic" sequence="40"/>
+    <!-- A formação técnica só aparece aos alunos do ensino técnico (ir.ui.menu._load_menus_blacklist). -->
+    <menuitem id="menu_student_training" name="Formação Técnica" parent="menu_student_root" sequence="15"/>
+    <menuitem id="menu_student_internship" name="O Meu Estágio" action="action_student_internship" parent="menu_student_training" sequence="10"/>
+    <menuitem id="menu_student_project" name="A Minha PAP" action="action_student_project" parent="menu_student_training" sequence="20"/>
     <menuitem id="menu_student_finance" name="Finanças" parent="menu_student_root" sequence="20"/>
     <menuitem id="menu_student_fees" name="Propinas" action="action_student_fees" parent="menu_student_finance" sequence="10"/>
     <menuitem id="menu_student_account" name="Conta" parent="menu_student_root" sequence="30"/>

@@ -216,6 +216,10 @@ class EduStudentPortal(models.AbstractModel):
             data['fees'] = self.fees(student)
         elif page == 'profile':
             data['profile'] = self.profile(student, enrollment)
+        elif page == 'internship':
+            data['internships'] = self.internships(student)
+        elif page == 'project':
+            data['projects'] = self.projects(student)
         return data
 
     @api.model
@@ -841,6 +845,145 @@ class EduStudentPortal(models.AbstractModel):
             'charges_fines': any(r['fine'] for r in rows),
             'overdue': len([r for r in due_rows if r['late_days']]),
         }
+
+    # Formação técnica
+
+    @api.model
+    def _is_technical(self, student):
+        """Aluno do ensino técnico (numa matrícula de qualquer ano) ou com estágio ou PAP registados."""
+        if not student:
+            return False
+        enrollments = self._enrollments(student)
+        if enrollments.filtered(lambda e: e.class_id.level_id.subsystem == 'technical'):
+            return True
+        return bool(
+            self.env['edu.internship'].sudo().search_count([('student_id', '=', student.id)], limit=1)
+            or self.env['edu.final.project'].sudo().search_count([('student_id', '=', student.id)], limit=1)
+        )
+
+    @api.model
+    def _graded(self, record, final_states):
+        """A nota de um estágio ou de uma PAP, quando já foi lançada (aprovado, reprovado ou com classificação)."""
+        if record.state not in final_states and not record.grade:
+            return None
+        return {'text': grade_text(record.grade), 'pos': record.grade >= 10}
+
+    @api.model
+    def internships(self, student):
+        """O estágio curricular, só para ler, como no secPed: a entidade, quem o acompanha na escola e na entidade, o
+        período, as horas, a nota, a apreciação e os relatórios entregues (registados pelo tutor ou pela secretaria)."""
+        records = (
+            self.env['edu.internship']
+            .sudo()
+            .search([('student_id', '=', student.id), ('state', '!=', 'cancelled')])
+            .sorted(lambda i: (i.academic_year_id.date_start or fields.Date.today(), i.id), reverse=True)
+        )
+        states = dict(records._fields['state']._description_selection(self.env))
+        rows = []
+        for internship in records:
+            start, end = long_date(internship.date_start), long_date(internship.date_end)
+            hours = '1 hora' if internship.hours == 1 else f'{internship.hours} horas'
+            # A entidade está no título do cartão: a frase não a repete (o artigo dependia do nome).
+            grade = self._graded(internship, ('passed', 'failed'))
+            if internship.state == 'planned':
+                sentence = (
+                    f'O estágio começa a {start}.'
+                    if start
+                    else 'O estágio está registado; a data de início ainda não foi marcada.'
+                )
+            elif internship.state == 'ongoing':
+                sentence = f'Estás a estagiar{f" desde {start}" if start else ""}. Já cumpriste {hours}.'
+            elif internship.state == 'passed':
+                sentence = (
+                    f'Concluíste o estágio com {grade["text"]} valores.'
+                    if grade
+                    else 'Concluíste o estágio. A nota ainda não foi lançada.'
+                )
+            else:
+                sentence = 'Não tiveste aprovação no estágio. Fala com o teu tutor ou com a secretaria.'
+            rows.append(
+                {
+                    'id': internship.id,
+                    'entity': internship.entity or '',
+                    'year': internship.academic_year_id.name or '',
+                    'state': internship.state,
+                    'state_label': states.get(internship.state, ''),
+                    'sentence': sentence,
+                    'tutor': internship.tutor_id.name or '',
+                    'supervisor': internship.supervisor or '',
+                    'supervisor_contact': internship.supervisor_contact or '',
+                    'period': f'{start or "?"} a {end or "?"}' if start or end else '',
+                    'hours': internship.hours,
+                    'grade': grade,
+                    'appraisal': internship.appraisal or '',
+                    'note': internship.note or '',
+                    'reports': [
+                        {'id': report.id, 'name': report.name, 'date': long_date(report.date)}
+                        for report in internship.report_ids.sorted('date', reverse=True)
+                    ],
+                }
+            )
+        return rows
+
+    @api.model
+    def projects(self, student):
+        """A Prova de Aptidão Profissional, só para ler, como no secPed: o tema, o orientador, o júri, a entrega, a
+        defesa e a nota (registados pela secretaria)."""
+        records = (
+            self.env['edu.final.project']
+            .sudo()
+            .search([('student_id', '=', student.id)])
+            .sorted(lambda p: (p.academic_year_id.date_start or fields.Date.today(), p.id), reverse=True)
+        )
+        states = dict(records._fields['state']._description_selection(self.env))
+        rows = []
+        for project in records:
+            defense = long_date(project.defense_date)
+            advisor = project.advisor_id.name or ''
+            grade = self._graded(project, ('passed', 'failed'))
+            if project.state in ('proposed', 'ongoing'):
+                if not advisor:
+                    sentence = 'O tema está registado; ainda não tens orientador atribuído.'
+                elif defense:
+                    sentence = f'Estás a trabalhar com {advisor}. A defesa está marcada para {defense}.'
+                else:
+                    sentence = f'Estás a trabalhar com {advisor}. A data da defesa ainda não foi marcada.'
+            elif project.state == 'submitted':
+                sentence = (
+                    f'Entregaste o trabalho. A defesa está marcada para {defense}.'
+                    if defense
+                    else 'Entregaste o trabalho. A data da defesa ainda não foi marcada.'
+                )
+            elif project.state == 'defended':
+                sentence = 'Já defendeste o trabalho. A nota ainda não foi lançada.'
+            elif project.state == 'passed':
+                sentence = f'Foste aprovado na PAP com {grade["text"]} valores.' if grade else 'Foste aprovado na PAP.'
+            else:
+                sentence = 'Não tiveste aprovação na PAP. Fala com o teu orientador ou com a secretaria.'
+            rows.append(
+                {
+                    'id': project.id,
+                    'title': project.name,
+                    'context': ', '.join(
+                        p
+                        for p in [
+                            project.course_id.name,
+                            project.academic_year_id.name and f'ano lectivo {project.academic_year_id.name}',
+                        ]
+                        if p
+                    ),
+                    'state': project.state,
+                    'state_label': states.get(project.state, ''),
+                    'sentence': sentence,
+                    'advisor': advisor,
+                    'jury': ', '.join(project.jury_ids.mapped('name')),
+                    'submitted': long_date(project.submitted_date),
+                    'defense': defense,
+                    'grade': grade,
+                    'description': project.description or '',
+                }
+            )
+        return rows
 
     # Perfil
 

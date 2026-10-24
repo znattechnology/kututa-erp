@@ -248,4 +248,36 @@
     .o_edu_st_grid_even {
         align-items: stretch;
     }
+
+    // O estágio e a PAP: um cartão com cabeça, corpo e pé
+    .o_edu_st_card_head {
+        padding: 16px 20px;
+        border-bottom: 1px solid $border-color;
+    }
+
+    .o_edu_st_card_body {
+        padding: 16px 20px;
+    }
+
+    .o_edu_st_card_foot {
+        padding: 16px 20px;
+        border-top: 1px solid $border-color;
+    }
+
+    .o_edu_st_fields_grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+
+        @include media-breakpoint-down(md) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        dt {
+            font-size: 0.8rem;
+        }
+    }
+
+    .o_edu_st_pre {
+        white-space: pre-line;
+    }
 }

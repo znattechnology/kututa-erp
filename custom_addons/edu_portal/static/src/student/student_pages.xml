@@ -730,6 +730,118 @@
         </div>
     </t>
 
+    <!-- «O Meu Estágio», como no secPed: a entidade, quem acompanha, o período, as horas, a nota e os relatórios. -->
+    <t t-name="edu_portal.StudentInternship">
+        <div class="o_action o_edu_student">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">O Meu Estágio</h1>
+                        <p class="mb-0 text-muted">O teu estágio curricular.</p>
+                    </header>
+                    <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
+                    <section t-elif="!d.internships.length" class="o_edu_st_card text-muted">
+                        Ainda não tens um estágio atribuído. O estágio curricular faz-se no último ano do curso técnico; quando a secretaria o registar, aparece aqui com a entidade, o tutor e as horas.
+                    </section>
+                    <section t-foreach="d.internships or []" t-as="e" t-key="e.id" class="o_edu_st_card p-0">
+                        <div class="o_edu_st_row o_edu_st_card_head">
+                            <div>
+                                <h2 class="o_edu_st_h2 mb-0"><t t-if="e.entity" t-out="e.entity"/><t t-else="">Entidade por definir</t></h2>
+                                <div t-if="e.year" class="small text-muted">Ano lectivo <t t-out="e.year"/></div>
+                            </div>
+                            <span class="badge" t-att-class="this.stateClass(e)" t-out="e.state_label"/>
+                        </div>
+                        <div class="o_edu_st_card_body">
+                            <p class="fs-6" t-out="e.sentence"/>
+                            <dl class="o_edu_st_fields o_edu_st_fields_grid">
+                                <div><dt>Tutor da escola</dt><dd><t t-if="e.tutor" t-out="e.tutor"/><span t-else="" class="text-muted">Por atribuir</span></dd></div>
+                                <div>
+                                    <dt>Supervisor na entidade</dt>
+                                    <dd>
+                                        <t t-if="e.supervisor" t-out="e.supervisor"/><span t-else="" class="text-muted">Por indicar</span>
+                                        <span t-if="e.supervisor_contact" class="d-block small text-muted" t-out="e.supervisor_contact"/>
+                                    </dd>
+                                </div>
+                                <div><dt>Período</dt><dd><t t-if="e.period" t-out="e.period"/><span t-else="" class="text-muted">Por marcar</span></dd></div>
+                                <div><dt>Horas cumpridas</dt><dd class="o_edu_st_num" t-out="e.hours"/></div>
+                                <div>
+                                    <dt>Nota final</dt>
+                                    <dd><span t-if="e.grade" class="fw-semibold" t-att-class="e.grade.pos ? 'text-primary' : 'text-danger'" t-out="e.grade.text"/><span t-else="" class="text-muted">Por lançar</span></dd>
+                                </div>
+                            </dl>
+                            <div t-if="e.appraisal" class="mt-3">
+                                <h3 class="small text-muted mb-1">Apreciação</h3>
+                                <p class="mb-0 o_edu_st_pre" t-out="e.appraisal"/>
+                            </div>
+                            <div t-if="e.note" class="mt-3">
+                                <h3 class="small text-muted mb-1">Observações</h3>
+                                <p class="mb-0 o_edu_st_pre" t-out="e.note"/>
+                            </div>
+                        </div>
+                        <div class="o_edu_st_card_foot">
+                            <h3 class="small text-muted mb-2">Relatórios entregues</h3>
+                            <p t-if="!e.reports.length" class="mb-0 text-muted">Ainda não há relatórios. O tutor regista-os à medida que os entregas.</p>
+                            <ul t-else="" class="o_edu_st_list">
+                                <li t-foreach="e.reports" t-as="r" t-key="r.id">
+                                    <span class="flex-grow-1" t-out="r.name"/>
+                                    <span class="small text-muted" t-out="r.date"/>
+                                </li>
+                            </ul>
+                        </div>
+                    </section>
+                    <p t-if="d.has_student" class="mb-0 small text-muted">Para mudar alguma coisa no estágio, fala com o teu tutor ou com a secretaria.</p>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- «A Minha PAP», como no secPed: o tema, o orientador, a defesa e a nota. -->
+    <t t-name="edu_portal.StudentProject">
+        <div class="o_action o_edu_student">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">A Minha PAP</h1>
+                        <p class="mb-0 text-muted">A tua Prova de Aptidão Profissional.</p>
+                    </header>
+                    <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
+                    <section t-elif="!d.projects.length" class="o_edu_st_card text-muted">
+                        Ainda não tens a PAP registada. A Prova de Aptidão Profissional faz-se no último ano do curso técnico; quando a secretaria registar o tema, aparece aqui com o orientador e a data da defesa.
+                    </section>
+                    <section t-foreach="d.projects or []" t-as="p" t-key="p.id" class="o_edu_st_card p-0">
+                        <div class="o_edu_st_row o_edu_st_card_head">
+                            <div>
+                                <h2 class="o_edu_st_h2 mb-0" t-out="p.title"/>
+                                <div t-if="p.context" class="small text-muted" t-out="p.context"/>
+                            </div>
+                            <span class="badge" t-att-class="this.stateClass(p)" t-out="p.state_label"/>
+                        </div>
+                        <div class="o_edu_st_card_body">
+                            <p class="fs-6" t-out="p.sentence"/>
+                            <dl class="o_edu_st_fields o_edu_st_fields_grid">
+                                <div><dt>Orientador</dt><dd><t t-if="p.advisor" t-out="p.advisor"/><span t-else="" class="text-muted">Por atribuir</span></dd></div>
+                                <div><dt>Júri</dt><dd><t t-if="p.jury" t-out="p.jury"/><span t-else="" class="text-muted">Por nomear</span></dd></div>
+                                <div><dt>Entregue em</dt><dd><t t-if="p.submitted" t-out="p.submitted"/><span t-else="" class="text-muted">Por entregar</span></dd></div>
+                                <div><dt>Defesa</dt><dd><t t-if="p.defense" t-out="p.defense"/><span t-else="" class="text-muted">Por marcar</span></dd></div>
+                                <div>
+                                    <dt>Nota</dt>
+                                    <dd><span t-if="p.grade" class="fw-semibold" t-att-class="p.grade.pos ? 'text-primary' : 'text-danger'" t-out="p.grade.text"/><span t-else="" class="text-muted">Por lançar</span></dd>
+                                </div>
+                            </dl>
+                            <div t-if="p.description" class="mt-3">
+                                <h3 class="small text-muted mb-1">Resumo do trabalho</h3>
+                                <p class="mb-0 o_edu_st_pre" t-out="p.description"/>
+                            </div>
+                        </div>
+                    </section>
+                    <p t-if="d.has_student" class="mb-0 small text-muted">Para mudar alguma coisa na PAP, fala com o teu orientador ou com a secretaria.</p>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
     <!-- «Meu perfil», como o do professor: numa frase, onde estuda este ano; a matrícula e os dados (que se corrigem na
          secretaria); os encarregados; e a palavra-passe. -->
     <t t-name="edu_portal.StudentProfile">

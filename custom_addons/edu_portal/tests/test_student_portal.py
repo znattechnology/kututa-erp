@@ -251,6 +251,30 @@ class TestStudentPortal(HttpCase):
         row = next(r for r in absences['subjects'] if r['name'] == subject.name)
         self.assertEqual((row['absent'], row['counted']), (3, 2), 'as do ano; contam as do pior trimestre')
         self.assertEqual(row['window'], t2.name.replace('Trimestre', 'trimestre'))
+        # Do ensino geral: sem a formação técnica no menu.
+        hidden = self.env['ir.ui.menu'].with_user(user)._load_menus_blacklist()
+        self.assertIn(self.env.ref('edu_portal.menu_student_training').id, hidden)
+
+    def test_internship_and_project(self):
+        """«O Meu Estágio» e «A Minha PAP», como no secPed: só para ler e só do próprio aluno; o menu da formação
+        técnica aparece ao aluno do técnico."""
+        self.edu_class.course_id.write({'requires_internship': True, 'requires_final_project': True})
+        tutor = self.env['hr.employee'].create({'name': 'Tutora do estágio', 'edu_is_teacher': True})
+        self.env['edu.internship'].create(
+            {'student_id': self.ana.id, 'entity': 'Hospital Geral', 'tutor_id': tutor.id, 'hours': 120}
+        )
+        self.env['edu.internship'].create({'student_id': self.bento.id, 'entity': 'Clínica do vizinho'})
+        self.env['edu.final.project'].create({'student_id': self.ana.id, 'name': 'Higiene hospitalar'})
+        Portal = self.env['edu.student.portal'].with_user(self.ana_user)
+        internships = Portal.page_data('internship')['internships']
+        self.assertEqual([i['entity'] for i in internships], ['Hospital Geral'])
+        self.assertEqual((internships[0]['tutor'], internships[0]['hours']), ('Tutora do estágio', 120))
+        self.assertIn('a data de início ainda não foi marcada', internships[0]['sentence'])
+        projects = Portal.page_data('project')['projects']
+        self.assertEqual(projects[0]['title'], 'Higiene hospitalar')
+        self.assertIn('ainda não tens orientador', projects[0]['sentence'])
+        menus = self.env['ir.ui.menu'].with_user(self.ana_user)._load_menus_blacklist()
+        self.assertNotIn(self.env.ref('edu_portal.menu_student_training').id, menus)
 
     def test_grades_blocked_by_fees(self):
         Portal = self.env['edu.student.portal'].with_user(self.ana_user)
