@@ -89,7 +89,9 @@ class TestStudentPortal(HttpCase):
         self.assertTrue(cell['ct']['pos'])
         # No técnico, o último trimestre não tem NPT.
         self.assertFalse(grades['trimesters'][-1]['has_npt'])
-        self.assertIn('média de 13', grades['summary'])
+        self.assertIn('a média é 13,0, com positiva a uma disciplina', grades['summary'])
+        self.assertFalse(grades['show_situation'], 'a situação só aparece no último trimestre')
+        self.assertFalse(grades['show_pg'], 'PG e CA só depois de lançada a prova global')
 
     def test_grades_of_past_years(self):
         """As notas dos anos anteriores (as migradas do secPed): escolhe-se o ano; uma matrícula de outro aluno não."""
@@ -132,7 +134,7 @@ class TestStudentPortal(HttpCase):
         self.assertEqual(grades['year'], '2025/2026')
         row = next(r for r in grades['subjects'] if r['id'] == self.lp.id)
         self.assertEqual(row['by_trimester'][past_t1.id]['ct']['text'], '15')
-        self.assertIn('tiveste', grades['summary'])
+        self.assertIn('a média é 15,0', grades['summary'])
         # A matrícula de outro aluno não se abre: fica o ano corrente do próprio aluno.
         bento = Portal.page_data('grades', {'enrollment_id': self.enrollments[1].id})['grades']
         self.assertEqual(bento['enrollment_id'], self.enrollments[0].id)

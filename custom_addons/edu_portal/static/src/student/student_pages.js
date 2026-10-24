@@ -80,6 +80,14 @@ export class StudentGrades extends StudentPage {
         return this.load({ enrollment_id: parseInt(ev.target.value, 10) });
     }
 
+    get macLabel() {
+        return this.state.data.grades.technical ? "NPP" : "MAC";
+    }
+
+    get examLabel() {
+        return this.state.data.grades.technical ? "NPT" : "Prova";
+    }
+
     get components() {
         return [...Array(this.state.data.grades.components).keys()];
     }

@@ -33,6 +33,8 @@ RELATIONSHIPS = {
     'legal_guardian': 'Encarregado legal',
     'other': 'Familiar',
 }
+# As bandas da escala de 0 a 20 que o secPed usa na «Situação» da pauta do aluno (a sua GradeScale).
+SCALE_BANDS = [(0, 9.99, 'Insuficiente'), (10, 13.99, 'Suficiente'), (14, 16.99, 'Bom'), (17, 20, 'Excelente')]
 ABSENCE_STATUS = {
     'ok': 'Dentro do limite',
     'at_risk': 'A uma falta do limite',
@@ -348,7 +350,26 @@ class EduStudentPortal(models.AbstractModel):
             if technical or not active
             else max((len(r['by_trimester'][active]['components']) for r in rows), default=0)
         )
-        data['summary'] = self._grades_summary(data, rows, active, round_fn)
+        summary = self._grades_summary(data, rows, active, round_fn)
+        data['summary'] = summary['text']
+        data['summary_parts'] = summary
+        # A situação, como no secPed: no último trimestre, a banda da escala da nota com que o aluno fecha a disciplina
+        # (a final, ou a do último trimestre enquanto não há final).
+        last_id = data['trimesters'][-1]['id'] if data['trimesters'] else None
+        data['show_situation'] = False
+        for row in rows:
+            row['situation'] = None
+            last_ct = row['by_trimester'][last_id]['ct'] if last_id else None
+            if active != last_id or last_ct is None:
+                continue
+            value = next(v for v in (row['final'], row['cfd'], last_ct) if v is not None)
+            rounded = round_fn(value)
+            positive = rounded >= policy.pass_grade
+            label = 'Positiva' if positive else 'Negativa'
+            if policy.scale_max == 20:
+                label = next((band for low, high, band in SCALE_BANDS if low <= rounded <= high), label)
+            row['situation'] = {'label': label, 'pos': positive}
+            data['show_situation'] = True
         data['year_result'] = self._year_result(enrollment)
 
         # Para o browser: cada nota já escrita como no secPed e marcada positiva ou negativa (pela regra de
@@ -368,27 +389,63 @@ class EduStudentPortal(models.AbstractModel):
 
     @api.model
     def _grades_summary(self, data, rows, active, round_fn):
-        """A frase de cima: quantas disciplinas têm nota no trimestre, a média e as negativas."""
+        """A frase de cima, como no secPed: a média do trimestre (com uma casa decimal), se subiu ou desceu face ao
+        anterior (só quando os dois têm nota nas mesmas disciplinas) e quantas negativas há."""
         if not active:
-            return ''
+            return {'text': '', 'empty': True}
+        name = data['active']['name'].replace('Trimestre', 'trimestre')
         graded = [r for r in rows if r['by_trimester'][active]['ct'] is not None]
-        name = data['active']['name']
         if not graded:
-            if data.get('past'):
-                return f'Não há notas do {name} neste ano lectivo.'
-            return f'Ainda não tens notas no {name}. Aparecem aqui logo que os professores as lançam.'
-        average = sum(r['by_trimester'][active]['ct'] for r in graded) / len(graded)
-        negatives = [r['name'] for r in graded if round_fn(r['by_trimester'][active]['ct']) < data['pass_grade']]
-        text = (
-            f'No {name} {"tiveste" if data.get("past") else "tens"} nota a '
-            f'{plural(len(graded), "uma disciplina", "disciplinas")}, '
-            f'com média de {grade_text(average)}. '
-        )
+            text = (
+                f'Não há notas do {name} neste ano lectivo.' if data.get('past') else f'Ainda não há notas do {name}.'
+            )
+            return {'text': text, 'empty': True}
+
+        def one_decimal(value):
+            return f'{value:.1f}'.replace('.', ',')
+
+        def mean(trimester_id):
+            values = [r['by_trimester'][trimester_id]['ct'] for r in rows]
+            values = [v for v in values if v is not None]
+            return sum(values) / len(values) if values else None
+
+        average = mean(active)
+        negatives = [r for r in graded if round_fn(r['by_trimester'][active]['ct']) < data['pass_grade']]
+        ids = [t['id'] for t in data['trimesters']]
+        index = ids.index(active)
+        previous = None
+        if index > 0:
+            before = data['trimesters'][index - 1]
+            comparable = all(
+                (r['by_trimester'][active]['ct'] is None) == (r['by_trimester'][before['id']]['ct'] is None)
+                for r in rows
+            )
+            if comparable:
+                now, then = round(average * 10), round(mean(before['id']) * 10)
+                previous = {
+                    'trend': 'subiu face aos' if now > then else ('desceu face aos' if now < then else 'igual ao'),
+                    'average': one_decimal(mean(before['id'])),
+                    'name': before['name'].replace('Trimestre', 'trimestre'),
+                }
+        n = len(graded)
         if not negatives:
-            if data.get('past'):
-                return text + ('Positiva a todas.' if len(graded) > 1 else 'Foi positiva.')
-            return text + ('Positiva a todas.' if len(graded) > 1 else 'É positiva.')
-        return text + (f'{plural(len(negatives), "Uma negativa", "negativas").capitalize()}: {", ".join(negatives)}.')
+            tail = f'com positiva a {"uma disciplina" if n == 1 else f"todas as {n} disciplinas"}'
+        else:
+            k = len(negatives)
+            subjects = 'disciplina' if n == 1 else 'disciplinas'
+            tail = f'com {"uma negativa" if k == 1 else f"{k} negativas"} em {n} {subjects}'
+        parts = {
+            'empty': False,
+            'trimester': name,
+            'average': one_decimal(average),
+            # Compara-se o número que se mostra (9,95 aparece 10,0 e não está abaixo de 10).
+            'average_pos': round(average * 10) / 10 >= data['pass_grade'],
+            'previous': previous,
+            'tail': tail,
+        }
+        trend = f' ({previous["trend"]} {previous["average"]} do {previous["name"]})' if previous else ''
+        parts['text'] = f'No {name} a média é {parts["average"]}{trend}, {tail}.'
+        return parts
 
     @api.model
     def _year_result(self, enrollment):
