@@ -223,6 +223,28 @@ class TestEduRoles(TransactionCase):
         self.assertEqual(row['cells'][self.lp.id]['status'], 'failed')
         self.assertEqual(board['failed'], 1)
 
+    def test_chat_contacts(self):
+        """«Nova conversa» das Mensagens, por grupos, como no secPed: o director da turma onde dou aulas, os colegas
+        das minhas turmas, a secretaria e a direcção (só quem tem utilizador; o próprio professor não aparece)."""
+        director_user = self.env['res.users'].create(
+            {
+                'name': 'Directora Turma',
+                'login': 'dir_turma',
+                'group_ids': [Command.set(self.teacher_user.group_ids.ids)],
+            }
+        )
+        director = self.env['hr.employee'].create(
+            {'name': 'Directora Turma', 'user_id': director_user.id, 'edu_is_teacher': True}
+        )
+        self.class_a.director_id = director
+        groups = {g['key']: g for g in self.env['edu.teacher.home'].with_user(self.teacher_user).chat_contacts()}
+        self.assertIn(director_user.partner_id.id, [c['partner_id'] for c in groups['directors']['contacts']])
+        self.assertIn(self.clerk.partner_id.id, [c['partner_id'] for c in groups['office']['contacts']])
+        self.assertIn(self.director.partner_id.id, [c['partner_id'] for c in groups['direction']['contacts']])
+        everyone = [c['partner_id'] for g in groups.values() for c in g['contacts']]
+        self.assertNotIn(self.teacher_user.partner_id.id, everyone)
+        self.assertEqual(len(everyone), len(set(everyone)))
+
     def test_academic_calendar(self):
         """«Calendário académico», como no secPed: os eventos do ano e o início e o fim de cada trimestre; as datas
         comemorativas do calendário nacional vêm marcadas (o professor pode escondê-las)."""

@@ -1,0 +1,51 @@
+// «Nova conversa» das Mensagens: os contactos por grupos, por cima da procura do Odoo.
+.o-discuss-ChannelInvitation {
+    .o_edu_chat_groups {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 50vh;
+        padding: 12px 4px 8px;
+        overflow-y: auto;
+        border-bottom: 1px solid $border-color;
+    }
+
+    .o_edu_chat_group_title {
+        margin: 0 0 4px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+
+    .o_edu_chat_contact {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        padding: 6px 8px;
+        border: 0;
+        border-radius: $border-radius;
+        background: none;
+        color: $body-color;
+        text-align: left;
+
+        &:hover,
+        &:focus-visible {
+            background: $gray-100;
+        }
+    }
+
+    .o_edu_chat_name {
+        font-weight: 500;
+    }
+
+    .o_edu_chat_detail {
+        color: $text-muted;
+        font-size: 0.8125rem;
+    }
+
+    .o_edu_chat_hint {
+        margin: 0;
+        color: $text-muted;
+        font-size: 0.8125rem;
+    }
+}

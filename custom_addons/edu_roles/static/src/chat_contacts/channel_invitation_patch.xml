@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="discuss.ChannelInvitation.main" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('position-relative')]" position="after">
+            <div t-if="this.eduChatGroups.length" class="o_edu_chat_groups">
+                <section t-foreach="this.eduChatGroups" t-as="group" t-key="group.key" class="o_edu_chat_group" t-att-aria-label="group.label">
+                    <h3 class="o_edu_chat_group_title" t-out="group.label"/>
+                    <button t-foreach="group.contacts" t-as="contact" t-key="contact.partner_id" type="button" class="o_edu_chat_contact"
+                            t-on-click="() => this.eduOpenChat(contact)">
+                        <span class="o_edu_chat_name" t-out="contact.name"/>
+                        <span t-if="contact.detail" class="o_edu_chat_detail" t-out="contact.detail"/>
+                    </button>
+                </section>
+                <p class="o_edu_chat_hint">Para outro colega, procure-o pelo nome.</p>
+            </div>
+        </xpath>
+    </t>
+</templates>

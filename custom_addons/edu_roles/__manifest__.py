@@ -32,6 +32,7 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
             'edu_roles/static/src/academic_calendar/*',
             'edu_roles/static/src/attendance/*',
             'edu_roles/static/src/absence_report/*',
+            'edu_roles/static/src/chat_contacts/*',
             'edu_roles/static/src/guardians/*',
             'edu_roles/static/src/reports/reports.js',
             'edu_roles/static/src/reports/reports.xml',

@@ -184,6 +184,73 @@ class EduTeacherHome(models.AbstractModel):
         report = self.env.ref('edu_documents.action_report_teacher_schedule')
         return report.preview_action(public) if preview else report.report_action(public)
 
+    # Mensagens: a «Nova conversa» do secPed
+
+    @api.model
+    def chat_contacts(self):
+        """Os contactos da «Nova conversa» das Mensagens, por grupos, como no secPed: os directores das turmas onde
+        dou aulas, os professores das minhas turmas, a secretaria e a direcção. Só quem tem utilizador (os alunos e
+        os encarregados entram com o portal)."""
+        me = self.env.user
+        employee = me.employee_id
+        company = employee.company_id or self.env.company
+        year = _current_year(self.env, company)
+        Users = self.env['res.users'].sudo()
+        groups = []
+        seen = set()
+
+        def contact(user, detail):
+            seen.add(user.id)
+            return {'partner_id': user.partner_id.id, 'name': user.name, 'detail': detail}
+
+        if employee and year:
+            Assignment = self.env['edu.teaching.assignment'].sudo()
+            mine = Assignment.search([('teacher_id', '=', employee.id), ('academic_year_id', '=', year.id)])
+            directed = (
+                self.env['edu.class']
+                .sudo()
+                .search([('director_id', '=', employee.id), ('academic_year_id', '=', year.id)])
+            )
+            classes = (mine.class_id | directed).sorted(lambda c: (c.class_number, c.name or ''))
+            directors = [
+                contact(c.director_id.user_id, self.env._('Director(a) de turma da %s', c._editor_label()))
+                for c in mine.class_id.sorted(lambda c: (c.class_number, c.name or ''))
+                if c.director_id.user_id and c.director_id != employee and c.director_id.user_id.id not in seen
+            ]
+            if directors:
+                groups.append({'key': 'directors', 'label': self.env._('Director de turma'), 'contacts': directors})
+            colleagues = {}
+            for assignment in Assignment.search([('class_id', 'in', classes.ids), ('teacher_id', '!=', employee.id)]):
+                user = assignment.teacher_id.user_id
+                if not user or user.id in seen:
+                    continue
+                colleagues.setdefault(user, []).append(
+                    f'{assignment.subject_id.name} na {assignment.class_id._editor_label()}'
+                )
+            teachers = [
+                contact(user, ', '.join(details[:2]) + ('…' if len(details) > 2 else ''))
+                for user, details in sorted(colleagues.items(), key=lambda item: item[0].name or '')
+            ]
+            if teachers:
+                groups.append(
+                    {'key': 'teachers', 'label': self.env._('Professores das suas turmas'), 'contacts': teachers}
+                )
+        clerks = Users.search(
+            [('share', '=', False), ('company_ids', 'in', company.ids), ('id', '!=', me.id)], order='name'
+        ).filtered(lambda u: u.has_group('edu_core.group_edu_user'))
+        for key, label, members in (
+            (
+                'office',
+                self.env._('Secretaria'),
+                clerks.filtered(lambda u: not u.has_group('edu_core.group_edu_manager')),
+            ),
+            ('direction', self.env._('Direcção'), clerks.filtered(lambda u: u.has_group('edu_core.group_edu_manager'))),
+        ):
+            contacts = [contact(user, '') for user in members if user.id not in seen]
+            if contacts:
+                groups.append({'key': key, 'label': label, 'contacts': contacts})
+        return groups
+
     # Calendário académico
 
     @api.model
