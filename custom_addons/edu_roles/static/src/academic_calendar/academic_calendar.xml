@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_roles.AcademicCalendarPage">
+        <div class="o_action o_edu_academic_calendar">
+            <Layout display="this.display">
+                <div class="o_edu_ca_body" t-if="this.state.data">
+                    <header>
+                        <h1 class="o_edu_ca_title">Calendário académico<t t-if="this.state.data.year">, <t t-out="this.state.data.year"/></t></h1>
+                        <p class="mb-0 text-muted">Os eventos, as provas e os prazos da escola.</p>
+                    </header>
+
+                    <!-- O mês e a navegação -->
+                    <div class="o_edu_ca_toolbar">
+                        <h2 class="o_edu_ca_month" aria-live="polite" t-out="this.monthTitle"/>
+                        <div class="o_edu_ca_nav">
+                            <label t-if="this.hasCommemorative" class="o_edu_ca_toggle">
+                                <input type="checkbox" class="form-check-input" t-att-checked="this.state.commemorative"
+                                       t-on-change="(ev) => this.toggleCommemorative(ev)"/>
+                                Datas comemorativas
+                            </label>
+                            <button type="button" class="btn btn-secondary" aria-label="Mês anterior" t-on-click="() => this.shift(-1)">
+                                <i class="oi" data-icon="chevron_left" aria-hidden="true"/>
+                            </button>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.goToday()">Hoje</button>
+                            <button type="button" class="btn btn-secondary" aria-label="Mês seguinte" t-on-click="() => this.shift(1)">
+                                <i class="oi" data-icon="chevron_right" aria-hidden="true"/>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="o_edu_ca_layout">
+                        <!-- O mês -->
+                        <div class="o_edu_ca_main">
+                            <div class="o_edu_ca_card o_edu_ca_grid">
+                                <div t-foreach="this.weekdays" t-as="w" t-key="w" class="o_edu_ca_weekday" t-out="w"/>
+                                <button t-foreach="this.cells" t-as="cell" t-key="cell.key" type="button" class="o_edu_ca_cell"
+                                        t-att-class="{'o_edu_ca_out': !cell.inMonth, 'o_edu_ca_sunday': cell.sunday, 'o_edu_ca_selected': cell.selected}"
+                                        t-att-aria-pressed="cell.selected ? 'true' : 'false'" t-att-aria-label="cell.label"
+                                        t-on-click="() => this.choose(cell.key)">
+                                    <span class="o_edu_ca_daynum" t-att-class="{'o_edu_ca_today': cell.today}" t-out="cell.day"/>
+                                    <t t-foreach="cell.events" t-as="event" t-key="event.id">
+                                        <span t-if="event.commemorative" class="o_edu_ca_plain" t-att-title="event.name" t-out="event.name"/>
+                                        <span t-else="" class="o_edu_ca_chip" t-att-class="this.typeClass(event)" t-att-title="event.name" t-out="event.name"/>
+                                    </t>
+                                    <span t-if="cell.more" class="o_edu_ca_plain">e mais <t t-out="cell.more"/></span>
+                                </button>
+                            </div>
+                            <ul class="o_edu_ca_legend" aria-label="Legenda">
+                                <li t-foreach="this.types" t-as="type" t-key="type.key">
+                                    <span class="o_edu_ca_dot" t-att-class="'o_edu_ca_t_' + type.key" aria-hidden="true"/>
+                                    <t t-out="type.label"/>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- O dia escolhido e os próximos -->
+                        <aside class="o_edu_ca_aside">
+                            <section aria-labelledby="o_edu_ca_day_title">
+                                <h3 id="o_edu_ca_day_title" class="o_edu_ca_h3">
+                                    <t t-out="this.selectedTitle"/>
+                                    <span t-if="this.state.selected === this.today" class="o_edu_ca_today_tag">hoje</span>
+                                </h3>
+                                <p t-if="!this.selectedEvents.length" class="o_edu_ca_card mb-0 text-muted">Nada marcado neste dia.</p>
+                                <ul t-else="" class="o_edu_ca_card o_edu_ca_list">
+                                    <li t-foreach="this.selectedEvents" t-as="event" t-key="event.id">
+                                        <div t-out="event.name"/>
+                                        <div class="o_edu_ca_meta">
+                                            <span class="o_edu_ca_dot" t-att-class="this.typeClass(event)" aria-hidden="true"/>
+                                            <t t-out="this.typeLabel(event)"/><t t-if="event.end !== event.start">, <t t-out="this.span(event)"/></t>
+                                        </div>
+                                        <div t-if="event.description" class="o_edu_ca_meta" t-out="event.description"/>
+                                    </li>
+                                </ul>
+                            </section>
+                            <section aria-labelledby="o_edu_ca_next_title">
+                                <h3 id="o_edu_ca_next_title" class="o_edu_ca_h3">Próximos eventos</h3>
+                                <p t-if="!this.upcoming.length" class="o_edu_ca_card mb-0 text-muted">Não há eventos marcados até ao fim do ano lectivo.</p>
+                                <ul t-else="" class="o_edu_ca_card o_edu_ca_list">
+                                    <li t-foreach="this.upcoming" t-as="event" t-key="event.id">
+                                        <button type="button" class="o_edu_ca_next" t-on-click="() => this.choose(event.start)">
+                                            <span class="o_edu_ca_dot mt-1" t-att-class="this.typeClass(event)" aria-hidden="true"/>
+                                            <span class="min-w-0">
+                                                <span class="d-block text-truncate" t-out="event.name"/>
+                                                <span class="o_edu_ca_meta"><t t-out="this.span(event)"/>, <t t-out="this.typeLabel(event).toLowerCase()"/></span>
+                                            </span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+</templates>

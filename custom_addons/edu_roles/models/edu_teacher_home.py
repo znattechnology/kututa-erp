@@ -193,6 +193,51 @@ class EduTeacherHome(models.AbstractModel):
         report = self.env.ref('edu_documents.action_report_teacher_schedule')
         return report.preview_action(public) if preview else report.report_action(public)
 
+    # Calendário académico
+
+    @api.model
+    def calendar_data(self):
+        """«Calendário académico» (acção cliente ``edu_roles.academic_calendar``), como no secPed: os eventos do ano
+        lectivo da escola (feriados e pausas, provas, reuniões, actividades e as datas comemorativas do calendário
+        nacional, em que há aulas) e o início e o fim de cada trimestre."""
+        company = self.env.user.employee_id.company_id or self.env.company
+        year = _current_year(self.env, company)
+        data = {'year': year.name if year else '', 'events': []}
+        if not year:
+            return data
+        events = self.env['edu.calendar.event'].sudo().search([('academic_year_id', '=', year.id)])
+        for event in events.sorted(lambda e: (e.date_start, e.id)):
+            data['events'].append(
+                {
+                    'id': f'e{event.id}',
+                    'name': event.name,
+                    'type': event.event_type,
+                    'start': fields.Date.to_string(event.date_start),
+                    'end': fields.Date.to_string(event.date_end or event.date_start),
+                    'description': event.description or '',
+                    # As datas comemorativas do calendário nacional: há aulas normalmente.
+                    'commemorative': event.is_national and event.event_type == 'other',
+                }
+            )
+        for trimester in year.trimester_ids.sorted('number'):
+            for kind, day, label in (
+                ('trimester_start', trimester.date_start, self.env._('Início do %s', trimester.name)),
+                ('trimester_end', trimester.date_end, self.env._('Fim do %s', trimester.name)),
+            ):
+                data['events'].append(
+                    {
+                        'id': f'{kind}{trimester.id}',
+                        'name': label,
+                        'type': kind,
+                        'start': fields.Date.to_string(day),
+                        'end': fields.Date.to_string(day),
+                        'description': '',
+                        'commemorative': False,
+                    }
+                )
+        data['events'].sort(key=lambda e: (e['start'], e['end']))
+        return data
+
     # As minhas vigilâncias
 
     @api.model

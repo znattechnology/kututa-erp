@@ -146,6 +146,24 @@ class TestEduRoles(TransactionCase):
         menus = self.env['ir.ui.menu'].with_user(self.teacher_user).load_menus(False)
         self.assertEqual(menus['root']['children'][0], self.env.ref('edu_roles.menu_edu_teacher_root').id)
 
+    def test_academic_calendar(self):
+        """«Calendário académico», como no secPed: os eventos do ano e o início e o fim de cada trimestre; as datas
+        comemorativas do calendário nacional vêm marcadas (o professor pode escondê-las)."""
+        self.year.action_generate_trimesters()
+        self.env['edu.calendar.event'].create(
+            {'name': 'Reunião de pais', 'event_type': 'meeting', 'academic_year_id': self.year.id,
+             'date_start': date(2026, 10, 10)}
+        )  # fmt: skip
+        data = self.env['edu.teacher.home'].with_user(self.teacher_user).calendar_data()
+        self.assertEqual(data['year'], '2026/2027')
+        types = {e['type'] for e in data['events']}
+        self.assertTrue({'meeting', 'trimester_start', 'trimester_end'} <= types)
+        meeting = next(e for e in data['events'] if e['name'] == 'Reunião de pais')
+        self.assertEqual(
+            (meeting['start'], meeting['end'], meeting['commemorative']), ('2026-10-10', '2026-10-10', False)
+        )
+        self.assertEqual([e['start'] for e in data['events']], sorted(e['start'] for e in data['events']))
+
     def test_teacher_supervisions(self):
         """«Vigilâncias», como no secPed: as provas que o professor vigia, por época, e a escala para imprimir (que ele
         abre com as provas todas, embora as regras das sessões lhas escondam)."""

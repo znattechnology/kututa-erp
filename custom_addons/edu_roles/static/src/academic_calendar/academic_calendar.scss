@@ -1,0 +1,293 @@
+// Calendário académico: a estrutura do secPed-Express (o mês, o dia escolhido, os próximos) com as cores do sistema.
+.o_edu_academic_calendar {
+    // A cor de cada tipo de evento: a mesma no ponto da legenda, na barra da etiqueta e no painel do dia.
+    $types: (
+        exam: $danger,
+        trimester_start: $success,
+        trimester_end: mix($success, $gray-900, 70%),
+        holiday: $warning,
+        meeting: $info,
+        activity: $primary,
+        other: $gray-600,
+        commemorative: $gray-400,
+    );
+
+    @each $name, $color in $types {
+        .o_edu_ca_t_#{$name} {
+            --o-edu-ca-color: #{$color};
+            --o-edu-ca-tint: #{mix($color, $o-view-background-color, 14%)};
+        }
+    }
+
+    .o_edu_ca_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_ca_title {
+        margin: 0 0 4px;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ca_toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_ca_month {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ca_nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .o_edu_ca_toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-right: 8px;
+        cursor: pointer;
+    }
+
+    .o_edu_ca_layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 24px;
+        align-items: start;
+
+        @include media-breakpoint-down(xl) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_ca_main,
+    .o_edu_ca_aside {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .o_edu_ca_aside {
+        gap: 24px;
+    }
+
+    .o_edu_ca_card {
+        padding: 16px;
+        overflow: hidden;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    // O mês: sete colunas, de segunda a domingo.
+    .o_edu_ca_grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        padding: 0;
+    }
+
+    .o_edu_ca_weekday {
+        padding: 10px 0;
+        border-bottom: 1px solid $border-color;
+        background: $gray-100;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        text-align: center;
+    }
+
+    .o_edu_ca_cell {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+        min-height: 104px;
+        padding: 6px;
+        border: 0;
+        border-right: 1px solid $border-color;
+        border-bottom: 1px solid $border-color;
+        background: $o-view-background-color;
+        color: $body-color;
+        text-align: left;
+
+        &:nth-child(7n) {
+            border-right: 0;
+        }
+
+        &:nth-last-child(-n + 7) {
+            border-bottom: 0;
+        }
+
+        &:hover {
+            background: $gray-100;
+        }
+
+        // Os dias dos meses vizinhos e o domingo (o único dia sem aulas; o sábado é lectivo) ficam em fundo neutro.
+        &.o_edu_ca_out,
+        &.o_edu_ca_sunday {
+            background: mix($gray-100, $o-view-background-color, 60%);
+        }
+
+        &.o_edu_ca_selected {
+            box-shadow: inset 0 0 0 2px $primary;
+        }
+
+        &.o_edu_ca_out .o_edu_ca_daynum {
+            color: $text-muted;
+            opacity: 0.6;
+        }
+
+        @include media-breakpoint-down(md) {
+            min-height: 64px;
+        }
+    }
+
+    .o_edu_ca_daynum {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        font-size: 0.8125rem;
+        font-variant-numeric: tabular-nums;
+
+        &.o_edu_ca_today {
+            background: $primary;
+            color: color-contrast($primary);
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_ca_chip,
+    .o_edu_ca_plain {
+        overflow: hidden;
+        font-size: 0.75rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .o_edu_ca_chip {
+        position: relative;
+        padding: 1px 4px 1px 8px;
+        border-radius: 3px;
+        background: var(--o-edu-ca-tint);
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 2px auto 2px 0;
+            width: 3px;
+            border-radius: 2px;
+            background: var(--o-edu-ca-color);
+        }
+    }
+
+    .o_edu_ca_plain {
+        padding: 0 4px;
+        color: $text-muted;
+    }
+
+    // No telemóvel, o dia mostra o número e os eventos ficam no painel do dia.
+    @include media-breakpoint-down(md) {
+        .o_edu_ca_chip,
+        .o_edu_ca_plain {
+            display: none;
+        }
+    }
+
+    .o_edu_ca_legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        margin: 0;
+        padding: 0;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        list-style: none;
+
+        > li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    }
+
+    .o_edu_ca_dot {
+        display: inline-block;
+        flex-shrink: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--o-edu-ca-color);
+    }
+
+    .o_edu_ca_h3 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ca_today_tag {
+        margin-left: 8px;
+        color: $primary;
+        font-size: 0.8125rem;
+        font-weight: 500;
+    }
+
+    .o_edu_ca_list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 10px 16px;
+            border-top: 1px solid $border-color;
+
+            &:first-child {
+                border-top: 0;
+            }
+        }
+    }
+
+    .o_edu_ca_meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+    }
+
+    .o_edu_ca_next {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: $body-color;
+        text-align: left;
+
+        &:hover .d-block {
+            text-decoration: underline;
+        }
+    }
+}

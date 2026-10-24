@@ -71,11 +71,11 @@
         margin: 0 0 4px;
         color: $text-muted;
         font-size: 0.875rem;
+    }
 
-        .o_edu_ts_now & {
-            color: $primary;
-            font-weight: 600;
-        }
+    .o_edu_ts_now .o_edu_ts_when {
+        color: $primary;
+        font-weight: 600;
     }
 
     .o_edu_ts_next_body {
