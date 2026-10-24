@@ -84,17 +84,18 @@ class TestEduRoles(TransactionCase):
 
     def test_teacher_menus(self):
         menus = self._menus(self.teacher_user)
-        # O professor tem o seu painel (como a secretaria tem a Secretaria Express), com o conselho de turma, que é do
-        # director de turma; não vê os menus da secretaria.
-        for xmlid in ('edu_roles.menu_edu_teacher_root', 'edu_roles.menu_my_lessons', 'edu_roles.menu_my_classes',
-                      'edu_roles.menu_my_assessments', 'edu_evaluation.menu_edu_council_session',
-                      'edu_roles.menu_teacher_absences'):  # fmt: skip
+        # O professor tem o seu painel, com o menu do secPed: a mini-pauta, o conselho de turma, a justificação de
+        # faltas, a MAC e o RDEC abrem-se dentro da turma, em «Turmas e notas».
+        for xmlid in ('edu_roles.menu_edu_teacher_root', 'edu_roles.menu_teacher_grade_grid',
+                      'edu_roles.menu_my_schedule', 'edu_roles.menu_my_supervisions', 'edu_roles.menu_teacher_calendar',
+                      'edu_roles.menu_my_lessons',
+                      'edu_roles.menu_teacher_absence_summary', 'edu_roles.menu_teacher_messages',
+                      'edu_roles.menu_teacher_profile'):  # fmt: skip
             self.assertIn(xmlid, menus)
         self.assertNotIn('edu_core.menu_edu_root', menus)
-        self.assertEqual(
-            self.env.ref('edu_evaluation.menu_edu_council_session').parent_id,
-            self.env.ref('edu_roles.menu_teacher_direction'),
-        )
+        self.assertNotIn('edu_evaluation.menu_edu_council_session', menus)
+        roots = self.env['ir.ui.menu'].with_user(self.teacher_user).load_menus(False)['root']['children']
+        self.assertEqual(roots, [self.env.ref('edu_roles.menu_edu_teacher_root').id], 'só o painel, sem Discussões')
         for xmlid in ('edu_enrollment.menu_edu_application', 'edu_enrollment.menu_edu_enrollment',
                       'edu_fees.menu_edu_debtors', 'edu_core.menu_edu_config', 'edu_core.menu_edu_academic_year',
                       'edu_exam.menu_edu_exam_period', 'edu_records.menu_edu_graduation', 'hr.menu_hr_root',
@@ -144,10 +145,6 @@ class TestEduRoles(TransactionCase):
         # O professor entra no Painel do Professor.
         menus = self.env['ir.ui.menu'].with_user(self.teacher_user).load_menus(False)
         self.assertEqual(menus['root']['children'][0], self.env.ref('edu_roles.menu_edu_teacher_root').id)
-        # Sem turmas de iniciação (uma escola técnica), o RDEC não aparece.
-        rdec = self.env.ref('edu_roles.menu_teacher_rdec').id
-        if not self.env['edu.class'].search_count([('level_id.code', '=', 'INICIACAO')]):
-            self.assertNotIn(rdec, menus)
 
     def test_teacher_fields_without_hr(self):
         # Sem acesso ao RH, os funcionários lêem-se pelo perfil público: os campos de professor têm de lá estar.
@@ -239,10 +236,23 @@ class TestEduRoles(TransactionCase):
         other = self.class_a.subject_line_ids.subject_id.filtered(lambda s: s.code != 'LP')[:1]
         with self.assertRaises(AccessError):
             Grid.grid_data(self.class_a.id, other.id)
+        # Dentro da turma (o menu do secPed não os tem): a mini-pauta e o conselho; justificar faltas é do director.
+        links = Grid.grid_classes()['classes'][0]['links']
+        self.assertEqual([link['key'] for link in links], ['mini_pauta', 'council'])
+        action = Grid.class_link_action(self.class_a.id, 'mini_pauta')
+        self.assertEqual(action['context']['default_class_id'], self.class_a.id)
+        with self.assertRaises(UserError):
+            Grid.class_link_action(self.class_a.id, 'absences')
+        with self.assertRaises(AccessError):
+            Grid.class_link_action(self.class_b.id, 'council')
 
         # Director da turma B, onde não dá aulas: vê todas as disciplinas, não altera nenhuma, imprime a pauta.
         self.class_b.director_id = self.teacher
         self.assertEqual([c['id'] for c in Grid.grid_classes()['classes']], (self.class_a | self.class_b).ids)
+        links = Grid.grid_classes()['classes'][1]['links']
+        self.assertEqual([link['key'] for link in links], ['mini_pauta', 'council', 'absences'])
+        action = Grid.class_link_action(self.class_b.id, 'absences')
+        self.assertIn(('enrollment_id.class_id', '=', self.class_b.id), action['domain'])
         subjects = Grid.grid_subjects(self.class_b.id)
         self.assertEqual(len(subjects), len(self.class_b.subject_line_ids.filtered('weekly_hours')))
         self.assertFalse(any(s['editable'] for s in subjects))

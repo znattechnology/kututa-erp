@@ -66,9 +66,46 @@ class EduGradeGrid(models.AbstractModel):
                     'directs': directs,
                     'mine': mine.ids,
                     'students': len(edu_class.enrollment_ids.filtered(lambda e: e.state in ENROLLED)),
+                    'links': self._class_links(edu_class, directs or staff),
                 }
             )
         return {'year': year.name, 'year_id': year.id, 'years': year_rows, 'classes': rows, 'staff': staff}
+
+    # O que se abre a partir da turma (como os botões da página da turma no secPed: o menu do professor não os repete)
+
+    @api.model
+    def _class_links(self, edu_class, directs):
+        """Os botões da turma escolhida, por ordem: ``key`` (para ``class_link_action``), ``label`` e ``icon``. Cada
+        módulo acrescenta os seus; ``directs`` é o director de turma (ou a secretaria)."""
+        links = [{'key': 'council', 'label': self.env._('Conselho de turma'), 'icon': 'forum'}]
+        if edu_class.level_id.code == 'INICIACAO':
+            links.append({'key': 'rdec', 'label': self.env._('RDEC'), 'icon': 'description'})
+        return links
+
+    @api.model
+    def class_link_action(self, class_id, key):
+        edu_class = self._class(class_id)
+        employee = self._employee()
+        directs = bool(employee) and edu_class.sudo().director_id == employee
+        teaches = bool(employee) and employee in edu_class.sudo().assignment_ids.teacher_id
+        if not (self._is_staff() or directs or teaches):
+            raise AccessError(self.env._('Esta turma não é sua.'))
+        if key not in {link['key'] for link in self._class_links(edu_class, directs or self._is_staff())}:
+            raise UserError(self.env._('Esta opção não existe para a turma.'))
+        return self._class_link_action(edu_class, key)
+
+    @api.model
+    def _class_link_action(self, edu_class, key):
+        if key == 'council':
+            action = self.env['ir.actions.actions']._for_xml_id('edu_evaluation.action_edu_council_board')
+            action['context'] = {'default_class_id': edu_class.id}
+            return action
+        if key == 'rdec':
+            action = self.env['ir.actions.actions']._for_xml_id('edu_evaluation.action_edu_rdec')
+            action['domain'] = [('class_id', '=', edu_class.id)]
+            action['name'] = self.env._('RDEC · %s', edu_class._editor_label())
+            return action
+        return False
 
     @api.model
     def grid_subjects(self, class_id):

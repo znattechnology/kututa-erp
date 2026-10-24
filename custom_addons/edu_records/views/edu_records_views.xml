@@ -124,6 +124,12 @@
         <field name="tag">edu_records.training</field>
         <field name="context">{'training_kind': 'project'}</field>
     </record>
+    <!-- «Orientações» do professor (secPed): os estágios de que é tutor e as PAP que orienta, numa só página. -->
+    <record id="action_edu_orientations" model="ir.actions.client">
+        <field name="name">Orientações</field>
+        <field name="tag">edu_records.training</field>
+        <field name="context">{'training_kind': 'internship', 'training_switch': True}</field>
+    </record>
     <record id="action_edu_internship" model="ir.actions.act_window">
         <field name="name">Estágios curriculares</field>
         <field name="res_model">edu.internship</field>

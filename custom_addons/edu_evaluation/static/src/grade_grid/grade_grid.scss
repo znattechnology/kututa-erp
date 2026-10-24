@@ -16,6 +16,13 @@
             min-width: 280px;
         }
 
+        > .o_edu_gg_links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-left: auto;
+        }
+
         > .o_edu_gg_year {
             min-width: 180px;
         }

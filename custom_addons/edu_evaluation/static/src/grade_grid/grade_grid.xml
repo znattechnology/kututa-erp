@@ -38,6 +38,12 @@
                             </t>
                         </select>
                         <span t-if="this.pastYear" class="badge text-bg-secondary">Ano passado: só consulta</span>
+                        <div t-if="this.classLinks.length" class="o_edu_gg_links">
+                            <button t-foreach="this.classLinks" t-as="link" t-key="link.key" type="button" class="btn btn-secondary"
+                                    t-on-click="() => this.openClassLink(link.key)">
+                                <i class="oi me-1" t-att-data-icon="link.icon" aria-hidden="true"/><t t-out="link.label"/>
+                            </button>
+                        </div>
                     </div>
 
                     <div t-if="!this.state.classes.length" class="o_edu_gg_empty text-muted">

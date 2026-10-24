@@ -12,12 +12,23 @@
                             <div>
                                 <h2 class="o_edu_tr_h2" t-out="this.title"/>
                                 <p class="o_edu_tr_lead">
-                                    <t t-if="this.isProject">A Prova de Aptidão Profissional (PAP) dos finalistas: o tema, o orientador, a entrega, a defesa e a nota.</t>
+                                    <t t-if="this.switchable">Os estágios de que é tutor e as PAP que orienta. Os tutores e os orientadores são escolhidos pelos Serviços Académicos.</t>
+                                    <t t-elif="this.isProject">A Prova de Aptidão Profissional (PAP) dos finalistas: o tema, o orientador, a entrega, a defesa e a nota.</t>
                                     <t t-else="">Os estágios curriculares dos finalistas: a entidade onde decorrem, o tutor da escola, as horas cumpridas e a nota.</t>
                                 </p>
                             </div>
                             <button t-if="this.state.isStaff" type="button" class="btn btn-primary" t-on-click="() => this.openNew()">
                                 <i class="oi me-1" data-icon="add" aria-hidden="true"/><t t-out="this.isProject ? 'Novo trabalho' : 'Novo estágio'"/>
+                            </button>
+                        </div>
+                        <div t-if="this.switchable" role="tablist" aria-label="Orientações" class="o_edu_tr_tabs">
+                            <button type="button" role="tab" class="btn" t-att-class="this.isProject ? 'btn-secondary' : 'btn-primary'"
+                                    t-att-aria-selected="this.isProject ? 'false' : 'true'" t-on-click="() => this.setKind('internship')">
+                                Estágios de que é tutor
+                            </button>
+                            <button type="button" role="tab" class="btn" t-att-class="this.isProject ? 'btn-primary' : 'btn-secondary'"
+                                    t-att-aria-selected="this.isProject ? 'true' : 'false'" t-on-click="() => this.setKind('project')">
+                                PAP que orienta
                             </button>
                         </div>
                         <p t-if="this.summary" class="mb-0">

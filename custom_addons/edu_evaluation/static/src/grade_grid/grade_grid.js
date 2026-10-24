@@ -115,6 +115,17 @@ export class GradeGrid extends Component {
         return Boolean(year && !year.is_current);
     }
 
+    /** O que se abre a partir da turma escolhida (mini-pauta, conselho, faltas do director, RDEC), como no secPed. */
+    get classLinks() {
+        const current = this.state.classes.find((c) => c.id === this.state.classId);
+        return (current && current.links) || [];
+    }
+
+    async openClassLink(key) {
+        const action = await this.orm.call("edu.grade.grid", "class_link_action", [this.state.classId, key]);
+        return this.action.doAction(action);
+    }
+
     toggleSubjects() {
         this.state.collapsed = !this.state.collapsed;
         remember(COLLAPSED_KEY, this.state.collapsed ? "1" : "0");

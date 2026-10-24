@@ -92,43 +92,36 @@
     <menuitem id="menu_edu_teacher_root" name="Painel do Professor" sequence="2" groups="edu_core.group_edu_teacher"
               action="action_teacher_home" web_icon="edu_roles,static/description/icon_teacher.png"/>
     <menuitem id="menu_teacher_home" name="Painel" action="action_teacher_home" parent="menu_edu_teacher_root" sequence="1"/>
+    <!-- O menu segue o do professor no secPed. A mini-pauta, o conselho de turma, a justificação de faltas (do director),
+         a MAC (ensino geral) e o RDEC (iniciação) abrem-se dentro da turma, em «Turmas e notas». -->
     <!-- Ensino -->
     <menuitem id="menu_teacher_classes" name="Ensino" parent="menu_edu_teacher_root" sequence="10"/>
     <menuitem id="menu_teacher_grade_grid" name="Turmas e notas" action="edu_evaluation.action_edu_grade_grid"
               parent="menu_teacher_classes" sequence="10"/>
-    <menuitem id="menu_my_classes" action="action_my_classes" parent="menu_teacher_classes" sequence="20"/>
-    <menuitem id="menu_my_assessments" action="action_my_assessments" parent="menu_teacher_classes" sequence="30"/>
-    <menuitem id="menu_teacher_mini_pauta" name="Mini-pauta" action="edu_documents.action_edu_mini_pauta"
-              parent="menu_teacher_classes" sequence="35"/>
-    <menuitem id="menu_my_schedule" name="O meu horário" action="action_my_schedule" parent="menu_teacher_classes" sequence="40"/>
+    <menuitem id="menu_my_schedule" name="Meu horário" action="action_my_schedule" parent="menu_teacher_classes" sequence="40"/>
     <menuitem id="menu_my_supervisions" name="Vigilâncias" action="action_my_supervisions" parent="menu_teacher_classes" sequence="50"/>
-    <menuitem id="menu_teacher_calendar" action="action_teacher_calendar" parent="menu_teacher_classes" sequence="60"/>
-    <menuitem id="menu_my_lessons" name="Presenças e sumários" action="action_my_lessons" parent="menu_teacher_classes" sequence="70"/>
+    <menuitem id="menu_teacher_calendar" name="Calendário académico" action="action_teacher_calendar"
+              parent="menu_teacher_classes" sequence="60"/>
+    <menuitem id="menu_my_lessons" name="Presenças" action="action_my_lessons" parent="menu_teacher_classes" sequence="70"/>
     <menuitem id="menu_teacher_absence_summary" name="Relatório de faltas" action="edu_attendance.action_edu_absence_summary"
               parent="menu_teacher_classes" sequence="80"/>
-    <!-- Direcção de turma -->
-    <menuitem id="menu_teacher_direction" name="Direcção de turma" parent="menu_edu_teacher_root" sequence="20"/>
-    <record id="edu_evaluation.menu_edu_council_session" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_teacher_direction"/>
-        <field name="sequence">10</field>
-    </record>
-    <menuitem id="menu_teacher_absences" name="Justificação de faltas" action="action_teacher_absences"
-              parent="menu_teacher_direction" sequence="20"/>
-    <menuitem id="menu_teacher_rdec" name="RDEC (iniciação)" action="edu_evaluation.action_edu_rdec"
-              parent="menu_teacher_direction" sequence="40"/>
     <!-- Formação técnica (só numa escola com o ensino técnico) -->
     <menuitem id="menu_teacher_training" name="Formação técnica" parent="menu_edu_teacher_root" sequence="30"/>
-    <menuitem id="menu_my_internships" name="Estágios" action="edu_records.action_edu_internships" parent="menu_teacher_training" sequence="10"/>
-    <menuitem id="menu_my_final_projects" name="Trabalhos de fim de curso" action="edu_records.action_edu_final_projects"
-              parent="menu_teacher_training" sequence="20"/>
+    <menuitem id="menu_teacher_orientations" name="Orientações" action="edu_records.action_edu_orientations"
+              parent="menu_teacher_training" sequence="10"/>
     <!-- Comunicação -->
     <menuitem id="menu_teacher_communication" name="Comunicação" parent="menu_edu_teacher_root" sequence="40"/>
     <menuitem id="menu_teacher_messages" name="Mensagens" action="mail.action_discuss" parent="menu_teacher_communication" sequence="10"/>
     <!-- Conta -->
     <menuitem id="menu_teacher_account" name="Conta" parent="menu_edu_teacher_root" sequence="50"/>
-    <menuitem id="menu_teacher_profile" action="action_teacher_profile" parent="menu_teacher_account" sequence="10"/>
+    <menuitem id="menu_teacher_profile" name="Meu perfil" action="action_teacher_profile" parent="menu_teacher_account" sequence="10"/>
     <menuitem id="menu_teacher_payslips" action="action_teacher_payslips" parent="menu_teacher_account" sequence="20"/>
     <menuitem id="menu_teacher_time_off" action="action_teacher_time_off" parent="menu_teacher_account" sequence="30"/>
+    <!-- O conselho de turma (menu do módulo das avaliações) deixa o menu do professor: abre-se na turma. -->
+    <record id="edu_evaluation.menu_edu_council_session" model="ir.ui.menu">
+        <field name="parent_id" ref="edu_evaluation.menu_edu_evaluation"/>
+        <field name="active" eval="False"/>
+    </record>
     <!-- Os grupos antigos («Aulas», «Exames») juntam-se em «Ensino», como no secPed. -->
     <menuitem id="menu_teacher_lessons" name="Aulas" parent="menu_edu_teacher_root" sequence="90" active="False"/>
     <menuitem id="menu_teacher_exams" name="Exames" parent="menu_edu_teacher_root" sequence="91" active="False"/>

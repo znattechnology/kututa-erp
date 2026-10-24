@@ -38,8 +38,11 @@ export class TrainingPage extends Component {
         this.orm = useService("orm");
         this.notification = useService("notification");
         const context = this.props.action.context || {};
-        this.kind = context.training_kind === "project" ? "project" : "internship";
+        // «Orientações» (o menu do professor, como no secPed): os estágios de que é tutor e as PAP que orienta numa só
+        // página, com a escolha entre os dois.
+        this.switchable = Boolean(context.training_switch);
         this.state = proxy({
+            kind: context.training_kind === "project" ? "project" : "internship",
             mode: "list",
             rows: [],
             years: [],
@@ -65,6 +68,15 @@ export class TrainingPage extends Component {
         });
         onWillStart(async () => {
             await this.load();
+            // Sem estágios a acompanhar, as orientações abrem nas PAP.
+            if (this.switchable && !this.state.rows.length) {
+                this.state.kind = "project";
+                await this.load();
+                if (!this.state.rows.length) {
+                    this.state.kind = "internship";
+                    await this.load();
+                }
+            }
             // «Novo estágio» no menu abre a página já no formulário.
             if (context.training_new && this.state.isStaff) {
                 await this.openNew();
@@ -76,11 +88,26 @@ export class TrainingPage extends Component {
         return { controlPanel: {} };
     }
 
+    get kind() {
+        return this.state.kind;
+    }
+
+    async setKind(kind) {
+        if (kind === this.state.kind || this.state.busy) {
+            return;
+        }
+        Object.assign(this.state, { kind, mode: "list", tab: "all", query: "", detail: null });
+        await this.load();
+    }
+
     get isProject() {
         return this.kind === "project";
     }
 
     get title() {
+        if (this.switchable) {
+            return "Orientações";
+        }
         return this.isProject ? "Trabalho de fim de curso" : "Estágios";
     }
 

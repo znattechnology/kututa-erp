@@ -32,3 +32,21 @@ class EduGradeGrid(models.AbstractModel):
             {'class_id': edu_class.id, 'kind': 'final', 'trimester_id': trimester.id}
         )
         return wizard.action_preview() if preview else wizard.action_print()
+
+    @api.model
+    def _class_links(self, edu_class, directs):
+        # A mini-pauta abre-se da turma, como no secPed (o menu do professor deixou de a ter).
+        links = super()._class_links(edu_class, directs)
+        links.insert(0, {'key': 'mini_pauta', 'label': self.env._('Mini-pauta'), 'icon': 'table_view'})
+        return links
+
+    @api.model
+    def _class_link_action(self, edu_class, key):
+        if key == 'mini_pauta':
+            action = self.env['ir.actions.actions']._for_xml_id('edu_documents.action_edu_mini_pauta')
+            action['context'] = {
+                'default_class_id': edu_class.id,
+                'default_academic_year_id': edu_class.academic_year_id.id,
+            }
+            return action
+        return super()._class_link_action(edu_class, key)
