@@ -146,6 +146,41 @@ class TestEduRoles(TransactionCase):
         menus = self.env['ir.ui.menu'].with_user(self.teacher_user).load_menus(False)
         self.assertEqual(menus['root']['children'][0], self.env.ref('edu_roles.menu_edu_teacher_root').id)
 
+    def test_teacher_supervisions(self):
+        """«Vigilâncias», como no secPed: as provas que o professor vigia, por época, e a escala para imprimir (que ele
+        abre com as provas todas, embora as regras das sessões lhas escondam)."""
+        room = self.env['edu.room'].create({'name': 'Sala 7', 'code': 'S7'})
+        period = self.env['edu.exam.period'].create(
+            {'name': 'Provas do I Trimestre', 'date_start': date(2026, 12, 9), 'date_end': date(2026, 12, 18)}
+        )
+        period.planner_mark(self.lp.id, '2026-12-09', 8.0, 10.0, self.class_a.ids)
+        session = period.session_ids
+        self.env['edu.exam.period'].planner_set_room(session.id, room.id)
+        self.env['edu.exam.period'].planner_set_supervisor(session.id, self.teacher.id)
+        Home = self.env['edu.teacher.home'].with_user(self.teacher_user)
+        data = Home.supervisions_data()
+        self.assertEqual([p['name'] for p in data['periods']], ['Provas do I Trimestre'])
+        row = data['periods'][0]['rows'][0]
+        self.assertEqual((row['id'], row['start'], row['end'], row['rooms']), (session.id, 480, 600, 'S7 · Sala 7'))
+        action = Home.supervisions_report(period.id)
+        self.assertEqual(action['report_type'], 'qweb-html')
+        document = self.env['edu.exam.calendar.print'].browse(action['context']['active_ids'])
+        html = (
+            self.env['ir.actions.report']
+            .with_user(self.teacher_user)
+            ._render_qweb_html('edu_documents.report_exam_calendar', document.ids)[0]
+            .decode()
+        )
+        self.assertIn('ESCALA DE VIGILÂNCIA', html)
+        self.assertIn('08:00–10:00', html)
+        # Outro professor não abre a escala desta época.
+        other = self.env['res.users'].create(
+            {'name': 'Outro', 'login': 'outro_prof', 'group_ids': [Command.set(self.teacher_user.group_ids.ids)]}
+        )
+        self.env['hr.employee'].create({'name': 'Outro', 'user_id': other.id, 'edu_is_teacher': True})
+        with self.assertRaises(UserError):
+            self.env['edu.teacher.home'].with_user(other).supervisions_report(period.id)
+
     def test_teacher_fields_without_hr(self):
         # Sem acesso ao RH, os funcionários lêem-se pelo perfil público: os campos de professor têm de lá estar.
         fields = ['name', 'edu_is_teacher', 'edu_specialization', 'edu_coordination_id', 'edu_subject_ids']

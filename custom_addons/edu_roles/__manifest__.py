@@ -28,6 +28,7 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
         'web.assets_backend': [
             'edu_roles/static/src/teacher_home/*',
             'edu_roles/static/src/teacher_schedule/*',
+            'edu_roles/static/src/teacher_supervisions/*',
             'edu_roles/static/src/guardians/*',
             'edu_roles/static/src/reports/reports.js',
             'edu_roles/static/src/reports/reports.xml',

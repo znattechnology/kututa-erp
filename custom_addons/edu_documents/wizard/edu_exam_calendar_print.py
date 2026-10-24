@@ -27,7 +27,9 @@ class EduExamCalendarPrint(models.TransientModel):
 
     def _sessions(self):
         self.ensure_one()
-        sessions = self.period_id.session_ids.filtered(lambda s: s.state != 'cancelled')
+        # Em sudo: o professor só abre a sua escala (o acesso ao documento é por professor) e as regras das sessões
+        # escondiam-lhe as provas da época.
+        sessions = self.period_id.sudo().session_ids.filtered(lambda s: s.state != 'cancelled')
         if self.class_id:
             sessions = sessions.filtered(lambda s: self.class_id in s.class_ids)
         else:

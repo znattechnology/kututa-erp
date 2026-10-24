@@ -193,6 +193,69 @@ class EduTeacherHome(models.AbstractModel):
         report = self.env.ref('edu_documents.action_report_teacher_schedule')
         return report.preview_action(public) if preview else report.report_action(public)
 
+    # As minhas vigilâncias
+
+    @api.model
+    def supervisions_data(self):
+        """«Vigilâncias» (acção cliente ``edu_roles.teacher_supervisions``), como as «Provas» do professor no secPed: as
+        provas do ano lectivo em que está escalado, por época, com a hora, a disciplina, a turma e as salas que vigia
+        (e quem vigia com ele)."""
+        employee = self.env.user.employee_id
+        data = {'has_employee': bool(employee), 'periods': []}
+        if not employee:
+            return data
+        sessions = (
+            self.env['edu.exam.session']
+            .sudo()
+            .search(
+                [
+                    ('room_ids.supervisor_ids', 'in', employee.ids),
+                    ('state', '!=', 'cancelled'),
+                    ('academic_year_id.is_current', '=', True),
+                ]
+            )
+            .sorted(lambda s: (s.date, s.hour_from, s.id))
+        )
+        periods = {}
+        for session in sessions:
+            period = session.period_id
+            if period.id not in periods:
+                periods[period.id] = {
+                    'id': period.id,
+                    'name': period.name,
+                    'span': f'{period.date_start.strftime("%d/%m")} a {period.date_end.strftime("%d/%m/%Y")}',
+                    'start': fields.Date.to_string(period.date_start),
+                    'rows': [],
+                }
+            rooms = session.room_ids.filtered(lambda r: employee in r.supervisor_ids)
+            periods[period.id]['rows'].append(
+                {
+                    'id': session.id,
+                    'date': fields.Date.to_string(session.date),
+                    'day': _day(session.date),
+                    'start': round(session.hour_from * 60),
+                    'end': round(session.hour_to * 60),
+                    'subject': session.subject_id.name,
+                    'classes': ', '.join(c._editor_label() for c in session.class_ids),
+                    'rooms': ', '.join(rooms.room_id.mapped('display_name')),
+                    'partners': ', '.join((rooms.supervisor_ids - employee).mapped('name')),
+                }
+            )
+        data['periods'] = sorted(periods.values(), key=lambda p: p['start'])
+        return data
+
+    @api.model
+    def supervisions_report(self, period_id):
+        """A escala de vigilância da época (a folha do secPed), visualizada na aplicação."""
+        employee = self._employee()
+        period = self.env['edu.exam.period'].sudo().browse(period_id).exists()
+        if not period or not period.session_ids.room_ids.filtered(lambda r: employee in r.supervisor_ids):
+            raise UserError(self.env._('Não está escalado para vigiar provas nesta época.'))
+        document = (
+            self.env['edu.exam.calendar.print'].sudo().create({'period_id': period.id, 'teacher_id': employee.id})
+        )
+        return self.env.ref('edu_documents.action_report_exam_calendar').preview_action(document.with_env(self.env))
+
     # A conta do professor (os módulos de RH, quando instalados)
 
     @api.model

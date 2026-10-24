@@ -1,0 +1,114 @@
+// Vigilâncias: a estrutura das «Provas» do professor no secPed-Express com as cores do sistema.
+.o_edu_teacher_supervisions {
+    .o_edu_tv_body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_tv_title {
+        margin: 0 0 4px;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_tv_card {
+        padding: 16px 20px;
+        overflow: hidden;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_tv_period {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .o_edu_tv_period_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .o_edu_tv_h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_tv_h3 {
+        margin: 0 0 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .o_edu_tv_table {
+        th {
+            background: $gray-100;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        td,
+        th {
+            padding: 10px 16px;
+            vertical-align: top;
+        }
+
+        // Um dia novo começa com uma linha mais marcada.
+        tr.o_edu_tv_newday > td {
+            border-top: 2px solid $border-color;
+        }
+    }
+
+    .o_edu_tv_day {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .o_edu_tv_hours {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    // As provas que já passaram ficam para consulta.
+    .o_edu_tv_past {
+        color: $text-muted;
+
+        .fw-semibold {
+            font-weight: 400 !important;
+        }
+    }
+
+    .o_edu_tv_days {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .o_edu_tv_list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            display: flex;
+            gap: 12px;
+            padding: 8px 0;
+            border-top: 1px solid $border-color;
+
+            &:first-child {
+                padding-top: 0;
+                border-top: 0;
+            }
+        }
+    }
+}

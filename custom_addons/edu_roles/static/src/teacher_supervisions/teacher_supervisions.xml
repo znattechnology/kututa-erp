@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_roles.TeacherSupervisionsPage">
+        <div class="o_action o_edu_teacher_supervisions">
+            <Layout display="this.display">
+                <div class="o_edu_tv_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_tv_title">As provas que vai vigiar</h1>
+                        <p t-if="this.rows.length" class="mb-0" t-out="this.summary"/>
+                    </header>
+
+                    <section t-if="!d.has_employee" class="o_edu_tv_card">
+                        O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
+                    </section>
+                    <section t-elif="!this.rows.length" class="o_edu_tv_card text-muted">
+                        Ainda não está escalado para vigiar nenhuma prova. Quando a secretaria o escalar, aparece aqui.
+                    </section>
+
+                    <section t-foreach="d.periods" t-as="period" t-key="period.id" class="o_edu_tv_period" t-att-aria-label="period.name">
+                        <div class="o_edu_tv_period_head">
+                            <div>
+                                <h2 class="o_edu_tv_h2" t-out="period.name"/>
+                                <p class="mb-0 small text-muted" t-out="period.span"/>
+                            </div>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.print(period)"
+                                    title="A escala de vigilância desta época, para imprimir">
+                                <i class="oi me-1" data-icon="print" aria-hidden="true"/>Imprimir
+                            </button>
+                        </div>
+
+                        <!-- Computador: a tabela da época, com o dia só na primeira prova de cada dia. -->
+                        <div class="o_edu_tv_card p-0 d-none d-md-block">
+                            <table class="table mb-0 o_edu_tv_table">
+                                <thead>
+                                    <tr>
+                                        <th>Dia</th>
+                                        <th>Hora</th>
+                                        <th>Disciplina</th>
+                                        <th>Turma</th>
+                                        <th>Sala</th>
+                                        <th t-if="this.hasPartners(period)">Vigia com</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="period.rows" t-as="row" t-key="row.id"
+                                        t-att-class="{'o_edu_tv_newday': this.firstOfDay(period, row_index) and row_index > 0, 'o_edu_tv_past': this.isPast(row)}">
+                                        <td class="o_edu_tv_day"><t t-if="this.firstOfDay(period, row_index)" t-out="row.day"/></td>
+                                        <td class="o_edu_tv_hours"><t t-out="this.hhmm(row.start)"/>–<t t-out="this.hhmm(row.end)"/></td>
+                                        <td class="fw-semibold" t-out="row.subject"/>
+                                        <td t-out="row.classes or '—'"/>
+                                        <td t-out="row.rooms or 'Sala por definir'"/>
+                                        <td t-if="this.hasPartners(period)" class="text-muted" t-out="row.partners or '—'"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Telemóvel: uma lista por dia. -->
+                        <div class="o_edu_tv_days d-md-none">
+                            <section t-foreach="this.days(period)" t-as="day" t-key="day.date" class="o_edu_tv_card">
+                                <h3 class="o_edu_tv_h3" t-out="day.day"/>
+                                <ul class="o_edu_tv_list">
+                                    <li t-foreach="day.rows" t-as="row" t-key="row.id" t-att-class="{'o_edu_tv_past': this.isPast(row)}">
+                                        <span class="o_edu_tv_hours"><t t-out="this.hhmm(row.start)"/>–<t t-out="this.hhmm(row.end)"/></span>
+                                        <div>
+                                            <div class="fw-semibold" t-out="row.subject"/>
+                                            <div class="small text-muted">
+                                                <t t-out="[row.classes, row.rooms or 'Sala por definir'].filter((part) => part).join(', ')"/>
+                                                <t t-if="row.partners"><br/>Vigia com <t t-out="row.partners"/></t>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </section>
+                        </div>
+                    </section>
+                </div>
+            </Layout>
+        </div>
+    </t>
+</templates>
