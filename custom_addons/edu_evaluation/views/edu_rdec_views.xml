@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- RDEC (iniciação), como no secPed: a turma e o trimestre no painel, a lista das crianças com o que falta avaliar
+         e, ao abrir uma criança, as áreas com o nível e as observações e a apreciação global. -->
+    <record id="edu_rdec_list" model="ir.ui.view">
+        <field name="name">edu.rdec.list</field>
+        <field name="model">edu.rdec</field>
+        <field name="arch" type="xml">
+            <list string="RDEC" create="0" delete="0">
+                <field name="order_number" string="N.º"/>
+                <field name="student_id" string="Criança"/>
+                <field name="matricula_number" string="Matrícula" optional="hide"/>
+                <field name="class_id" optional="show"/>
+                <field name="trimester_id" optional="hide"/>
+                <field name="absences_justified" string="Faltas just." optional="show"/>
+                <field name="absences_unjustified" string="Faltas injust." optional="show"/>
+                <field name="areas_total" column_invisible="1"/>
+                <field name="areas_done" widget="progressbar" options="{'max_value': 'areas_total'}" string="Áreas avaliadas"/>
+                <field name="has_appreciation" string="Apreciação" width="90px"/>
+                <field name="state" widget="badge" width="110px" decoration-muted="state == 'todo'" decoration-warning="state == 'progress'" decoration-success="state == 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_rdec_form" model="ir.ui.view">
+        <field name="name">edu.rdec.form</field>
+        <field name="model">edu.rdec</field>
+        <field name="arch" type="xml">
+            <form string="RDEC" create="0" delete="0">
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="student_id" readonly="1" options="{'no_open': True}"/></h1>
+                        <div class="text-muted">
+                            <field name="class_id" class="oe_inline" readonly="1" options="{'no_open': True}"/> · <field name="trimester_id" class="oe_inline" readonly="1" options="{'no_open': True}"/>
+                        </div>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="order_number"/>
+                            <field name="director_id" options="{'no_open': True}"/>
+                        </group>
+                        <group>
+                            <field name="absences_justified"/>
+                            <field name="absences_unjustified"/>
+                        </group>
+                    </group>
+                    <field name="can_edit" invisible="1"/>
+                    <div class="alert alert-info" role="status" invisible="can_edit">
+                        Só leitura: o RDEC é escrito pelo(a) educador(a), director(a) da turma.
+                    </div>
+                    <separator string="Áreas de desenvolvimento"/>
+                    <field name="line_ids" readonly="not can_edit">
+                        <list editable="bottom" create="0" delete="0">
+                            <field name="subject_id" readonly="1" width="260px"/>
+                            <field name="level" widget="badges_selection" width="440px"/>
+                            <field name="observations" placeholder="Observações (opcional)"/>
+                        </list>
+                    </field>
+                    <separator string="Apreciação global"/>
+                    <field name="appreciation" readonly="not can_edit" placeholder="Apreciação global do desenvolvimento da criança no trimestre…"/>
+                    <p class="text-muted small mt-3">
+                        Na Iniciação a avaliação é formativa, diagnóstica e qualitativa, sem notas e sem retenção (Dec. Exec. 424/25, art. 19.º).
+                    </p>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_rdec_search" model="ir.ui.view">
+        <field name="name">edu.rdec.search</field>
+        <field name="model">edu.rdec</field>
+        <field name="arch" type="xml">
+            <search string="RDEC">
+                <field name="student_id"/>
+                <field name="class_id"/>
+                <filter name="todo" string="Por avaliar" domain="[('state', '=', 'todo')]"/>
+                <filter name="progress" string="Em curso" domain="[('state', '=', 'progress')]"/>
+                <filter name="done" string="Completos" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="no_appreciation" string="Sem apreciação" domain="[('has_appreciation', '=', False)]"/>
+                <searchpanel>
+                    <field name="trimester_id" string="Trimestre" select="one" enable_counters="1"/>
+                    <field name="class_id" string="Turma" select="one" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_rdec" model="ir.actions.act_window">
+        <field name="name">RDEC (iniciação)</field>
+        <field name="res_model">edu.rdec</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="edu_rdec_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">Não há crianças nas turmas da Iniciação deste ano.</p>
+            <p>O RDEC (Relatório de Desempenho Escolar da Criança) é a avaliação da Iniciação: um por criança e por trimestre.</p>
+        </field>
+    </record>
+
+    <!-- O menu prepara os relatórios das turmas da iniciação do ano (as crianças e as áreas) e abre-os no trimestre corrente. -->
+    <record id="action_edu_rdec_open" model="ir.actions.server">
+        <field name="name">RDEC (iniciação)</field>
+        <field name="model_id" ref="model_edu_rdec"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_rdec()</field>
+    </record>
+</odoo>

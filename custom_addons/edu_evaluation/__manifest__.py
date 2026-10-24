@@ -1,6 +1,6 @@
 {
     'name': 'Secretaria Express - Avaliação',
-    'version': '20.0.1.1.0',
+    'version': '20.0.1.2.0',
     'summary': 'Notas, mini-pautas e pautas, motores do ensino geral (Dec. 424/25) e técnico (Despacho 60/08), '
     'conselho de turma, exames especiais, reapreciação e decisão de transição',
     'description': """
@@ -35,6 +35,7 @@ Secretaria Express: avaliação das aprendizagens.
         'views/edu_year_result_views.xml',
         'views/edu_council_views.xml',
         'views/edu_grade_appeal_views.xml',
+        'views/edu_rdec_views.xml',
         'views/edu_class_views.xml',
         'views/menus.xml',
         'wizard/edu_enrollment_confirmation_views.xml',

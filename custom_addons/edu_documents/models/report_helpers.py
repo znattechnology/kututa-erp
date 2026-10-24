@@ -212,6 +212,7 @@ ReportListingStudent = _document_report('report_listing_student', 'edu.student')
 ReportListingConfirmation = _document_report('report_listing_confirmation', 'edu.enrollment.confirmation')
 ReportApplicationReceipt = _document_report('report_application_receipt', 'edu.application')
 ReportListingCalendar = _document_report('report_listing_calendar', 'edu.calendar.event')
+ReportRdec = _document_report('report_rdec', 'edu.rdec')
 
 
 class ReportTerm(models.AbstractModel):

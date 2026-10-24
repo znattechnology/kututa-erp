@@ -516,6 +516,102 @@ class TestEduEvaluation(TransactionCase):
                 {'name': 'Teste', 'class_id': edu_class.id, 'subject_id': lp.id, 'trimester_id': self.t1.id}
             )
 
+    def test_rdec(self):
+        """RDEC da iniciação, como no secPed: um relatório por criança e trimestre, criado ao abrir a turma com as áreas
+        (as disciplinas da matrícula); o estado segue o que está avaliado; só o(a) educador(a), director(a) da turma,
+        escreve; as faltas são as do trimestre."""
+        initiation = self._course('Iniciação', 'INI', 'level_iniciacao', None)
+        subjects = self.env['edu.subject'].create(
+            [{'name': 'Linguagem', 'code': 'LIN'}, {'name': 'Expressão Plástica', 'code': 'EXP'}]
+        )
+        curriculum = self.env['edu.curriculum'].create(
+            {'name': 'Plano — Iniciação', 'course_id': initiation.id, 'level_id': initiation.level_id.id}
+        )
+        year_line = self.env['edu.curriculum.year'].create(
+            {
+                'curriculum_id': curriculum.id,
+                'year': 1,
+                'class_number': 0,
+                'line_ids': [Command.create({'subject_id': s.id, 'weekly_hours': 3}) for s in subjects],
+            }
+        )
+        edu_class = self.env['edu.class'].create(
+            {
+                'name': 'A',
+                'course_id': initiation.id,
+                'class_number': 0,
+                'curriculum_id': curriculum.id,
+                'curriculum_year_id': year_line.id,
+                'academic_year_id': self.year.id,
+            }
+        )
+        self.assertEqual(edu_class.complete_name, 'Iniciação A · INI · 2026/2027')
+        ana, bento = self.students[:2]
+        enrollments = self._enroll(edu_class, ana | bento, ['LIN', 'EXP'])
+        edu_class.director_id = self.teacher
+        other_user = self.env['res.users'].create(
+            {
+                'name': 'Outro',
+                'login': 'outro_prof',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_teacher').id])],
+            }
+        )
+        other = self.env['hr.employee'].create({'name': 'Outro', 'edu_is_teacher': True, 'user_id': other_user.id})
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': edu_class.id, 'subject_id': subjects[0].id, 'teacher_id': other.id}
+        )
+
+        # Abrir a turma (pelo menu ou pela grelha de notas) cria os relatórios do trimestre, com as áreas.
+        Rdec = self.env['edu.rdec']
+        action = Rdec.with_user(self.teacher_user).action_open_rdec()
+        self.assertEqual(action['context']['searchpanel_default_class_id'], edu_class.id)
+        trimester = self.env['edu.trimester'].browse(action['context']['searchpanel_default_trimester_id'])
+        reports = Rdec.search([('class_id', '=', edu_class.id), ('trimester_id', '=', trimester.id)])
+        self.assertEqual(reports.enrollment_id, enrollments)
+        report = reports.filtered(lambda r: r.student_id == ana)
+        self.assertEqual(report.line_ids.subject_id.mapped('name'), ['Expressão Plástica', 'Linguagem'])
+        self.assertEqual((report.state, report.areas_label), ('todo', '0/2'))
+        grid = self.env['edu.grade.grid'].with_user(self.teacher_user).class_link_action(edu_class.id, 'rdec')
+        self.assertEqual(grid['domain'], [('class_id', 'in', edu_class.ids)])
+        self.assertEqual(Rdec.search_count([('class_id', '=', edu_class.id)]), 2)
+
+        # O(a) educador(a) escreve; o outro professor da turma só lê.
+        mine = report.with_user(self.teacher_user)
+        self.assertTrue(mine.can_edit)
+        mine.line_ids[0].level = 'good'
+        self.assertEqual((report.state, report.areas_label), ('progress', '1/2'))
+        mine.line_ids[1].write({'level': 'very_good', 'observations': 'Desenha com gosto.'})
+        mine.appreciation = 'Criança participativa e curiosa.'
+        self.assertEqual((report.state, report.progress), ('done', 100.0))
+        theirs = report.with_user(other_user)
+        self.assertFalse(theirs.can_edit)
+        self.assertEqual(theirs.appreciation, 'Criança participativa e curiosa.')
+        with self.assertRaises(AccessError):
+            theirs.appreciation = 'Outra coisa'
+        with self.assertRaises(AccessError):
+            theirs.line_ids[0].level = 'satisfactory'
+
+        # As faltas do trimestre: justificadas e injustificadas, nas aulas dadas.
+        lesson = self.env['edu.lesson'].create(
+            {'class_id': edu_class.id, 'subject_id': subjects[0].id, 'date': trimester.date_start + timedelta(days=7)}
+        )
+        lesson.action_open_roll_call()
+        lesson.attendance_ids.filtered(lambda a: a.student_id == ana).write(
+            {'state': 'excused', 'justification': 'Doença'}
+        )
+        lesson.attendance_ids.filtered(lambda a: a.student_id == bento).state = 'absent'
+        lesson.summary = 'Cores e formas'
+        lesson.action_done()
+        report.invalidate_recordset(['absences_justified', 'absences_unjustified'])
+        self.assertEqual((report.absences_justified, report.absences_unjustified), (1, 0))
+        other_report = reports - report
+        self.assertEqual((other_report.absences_justified, other_report.absences_unjustified), (0, 1))
+
+        # Fora da iniciação não há RDEC.
+        seventh = self._enroll(self.class7, self.students[2], ['LP'])
+        with self.assertRaises(ValidationError):
+            Rdec.create({'enrollment_id': seventh.id, 'trimester_id': self.t1.id})
+
     def test_enrollment_confirmation(self):
         """Confirmação de matrículas pela escola: fecha o ano pelo resultado, cria as turmas do ano seguinte e
         confirma cada aluno na classe que lhe cabe; quem não pode fica pendente ou de fora, com o motivo."""

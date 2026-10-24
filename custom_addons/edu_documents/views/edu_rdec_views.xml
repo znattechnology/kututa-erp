@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_rdec_form_print" model="ir.ui.view">
+        <field name="name">edu.rdec.form.print</field>
+        <field name="model">edu.rdec</field>
+        <field name="inherit_id" ref="edu_evaluation.edu_rdec_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/field[@name='state']" position="before">
+                <button name="%(edu_documents.action_report_rdec_html)d" type="action" string="Ver RDEC" class="btn-primary"/>
+                <button name="%(edu_documents.action_report_rdec)d" type="action" string="Descarregar PDF" class="btn-secondary"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -84,49 +84,4 @@
         <field name="res_model">edu.grade.appeal</field>
         <field name="view_mode">list,form</field>
     </record>
-
-    <record id="edu_rdec_form" model="ir.ui.view">
-        <field name="name">edu.rdec.form</field>
-        <field name="model">edu.rdec</field>
-        <field name="arch" type="xml">
-            <form string="RDEC">
-                <header>
-                    <button name="action_fill_areas" type="object" string="Carregar as áreas"/>
-                </header>
-                <sheet>
-                    <group>
-                        <group>
-                            <field name="enrollment_id" options="{'no_create': True}"/>
-                            <field name="trimester_id" options="{'no_create': True}"/>
-                        </group>
-                    </group>
-                    <field name="line_ids">
-                        <list editable="bottom">
-                            <field name="subject_id"/>
-                            <field name="level"/>
-                            <field name="observations"/>
-                        </list>
-                    </field>
-                    <group string="Apreciação global"><field name="appreciation" nolabel="1"/></group>
-                </sheet>
-                <chatter/>
-            </form>
-        </field>
-    </record>
-    <record id="edu_rdec_list" model="ir.ui.view">
-        <field name="name">edu.rdec.list</field>
-        <field name="model">edu.rdec</field>
-        <field name="arch" type="xml">
-            <list string="RDEC">
-                <field name="class_id"/>
-                <field name="student_id"/>
-                <field name="trimester_id"/>
-            </list>
-        </field>
-    </record>
-    <record id="action_edu_rdec" model="ir.actions.act_window">
-        <field name="name">RDEC (iniciação)</field>
-        <field name="res_model">edu.rdec</field>
-        <field name="view_mode">list,form</field>
-    </record>
 </odoo>

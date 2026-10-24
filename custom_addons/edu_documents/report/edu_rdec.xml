@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_rdec" model="ir.actions.report">
+        <field name="name">RDEC (iniciação)</field>
+        <field name="model">edu.rdec</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_rdec</field>
+        <field name="print_report_name">'RDEC %s - %s' % (object.student_id.name, object.trimester_id.name)</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+        <field name="binding_model_id" ref="edu_evaluation.model_edu_rdec"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Ver o RDEC no Odoo (pré-visualização com o botão de imprimir), sem descarregar o PDF. -->
+    <record id="action_report_rdec_html" model="ir.actions.report">
+        <field name="name">Ver RDEC</field>
+        <field name="model">edu.rdec</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">edu_documents.report_rdec</field>
+        <field name="print_report_name">'RDEC %s - %s' % (object.student_id.name, object.trimester_id.name)</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+        <field name="binding_model_id" ref="edu_evaluation.model_edu_rdec"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Relatório de Desempenho Escolar da Criança, como no secPed: uma folha A4 por criança, qualitativo e descritivo,
+         com as assinaturas do(a) educador(a) e do(a) director(a) pedagógico(a). -->
+    <template id="report_rdec">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="r">
+                <t t-call="web.basic_layout">
+                    <t t-set="company" t-value="r.company_id"/>
+                    <t t-call="edu_documents.styles"/>
+                    <style>
+                        .edu-rdec .edu-rdec-id td { border: 0; padding: 2px 6px 2px 0; }
+                        .edu-rdec .edu-rdec-level { white-space: nowrap; font-weight: bold; text-align: center; width: 18%; }
+                        .edu-rdec .edu-rdec-areas td { vertical-align: top; }
+                        .edu-rdec .edu-rdec-box { border: 1px solid #000; min-height: 90px; padding: 6px 8px; white-space: pre-wrap; }
+                        .edu-rdec .edu-rdec-note { font-size: 10px; color: #444; margin-top: 18px; text-align: center; }
+                    </style>
+                    <div class="page edu-doc edu-rdec">
+                        <t t-call="edu_documents.header"/>
+                        <div class="edu-title" style="font-size: 18px; letter-spacing: 1px;">RELATÓRIO DE DESEMPENHO ESCOLAR DA CRIANÇA</div>
+                        <div class="edu-subtitle" style="font-weight: normal; font-size: 11px;">Educação Pré-Escolar / Iniciação · Avaliação qualitativa (Dec. Exec. 424/25)</div>
+                        <table class="edu-rdec-id o_ignore_layout_styling" style="width: 100%; margin: 12px 0;">
+                            <tr>
+                                <td style="width: 50%"><strong>Criança:</strong> <t t-out="r.student_id.name"/></td>
+                                <td><strong>N.º:</strong> <t t-out="r.order_number or '—'"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Matrícula:</strong> <t t-out="r.matricula_number or '—'"/></td>
+                                <td><strong>Turma:</strong> <t t-out="r.class_id.complete_name"/></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Período:</strong> <t t-out="r.trimester_id.name"/></td>
+                                <td><strong>Faltas:</strong> <t t-out="r.absences_justified"/> justificadas · <t t-out="r.absences_unjustified"/> injustificadas</td>
+                            </tr>
+                        </table>
+                        <table class="edu-table edu-rdec-areas o_ignore_layout_styling">
+                            <thead>
+                                <tr>
+                                    <th style="width: 32%; text-align: left;">Área de desenvolvimento</th>
+                                    <th>Nível</th>
+                                    <th style="text-align: left;">Observações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="r.line_ids" t-as="line">
+                                    <td t-out="line.subject_id.name"/>
+                                    <td class="edu-rdec-level"><t t-if="line.level" t-out="dict(line._fields['level']._description_selection(line.env))[line.level]"/><t t-else="">—</t></td>
+                                    <td t-out="line.observations or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="font-weight: bold; margin-top: 14px;">Apreciação global</div>
+                        <div class="edu-rdec-box" t-out="r.appreciation or ''"/>
+                        <t t-call="edu_documents.signatures" left_role="'O(A) Educador(a) / Director(a) de Turma'" left_name="r.sudo().class_id.director_id.name" right_role="h.pedagogical_title()" right_name="company.edu_pedagogical_director_name"/>
+                        <div class="edu-rdec-note">A avaliação na Iniciação é exclusivamente formativa, diagnóstica e qualitativa, sem condições de retenção (Dec. Exec. 424/25, art. 19.º).</div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

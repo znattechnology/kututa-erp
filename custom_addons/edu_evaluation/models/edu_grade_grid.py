@@ -107,10 +107,7 @@ class EduGradeGrid(models.AbstractModel):
             action['context'] = {'default_class_id': edu_class.id}
             return action
         if key == 'rdec':
-            action = self.env['ir.actions.actions']._for_xml_id('edu_evaluation.action_edu_rdec')
-            action['domain'] = [('class_id', '=', edu_class.id)]
-            action['name'] = self.env._('RDEC · %s', edu_class._editor_label())
-            return action
+            return self.env['edu.rdec']._open_classes(edu_class, self.env._('RDEC · %s', edu_class._editor_label()))
         return False
 
     @api.model

@@ -1,6 +1,6 @@
 {
     'name': 'Secretaria Express - Documentos oficiais',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Declarações, guia de transferência, termo de frequência, certificado, diploma, mini-pautas, pautas, '
     'relação nominal, horário e cartão de estudante',
     'description': """
@@ -29,6 +29,7 @@ do Despacho n.º 60/08.
         'report/edu_teachers.xml',
         'report/edu_council.xml',
         'report/edu_listings.xml',
+        'report/edu_rdec.xml',
         'report/edu_report_actions.xml',
         'wizard/edu_pauta_print_views.xml',
         'views/edu_document_views.xml',
@@ -37,6 +38,7 @@ do Despacho n.º 60/08.
         'views/edu_history_page_views.xml',
         'views/edu_graduation_page_views.xml',
         'views/edu_appeal_page_views.xml',
+        'views/edu_rdec_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
