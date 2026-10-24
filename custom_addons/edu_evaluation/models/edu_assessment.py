@@ -141,14 +141,18 @@ class EduAssessment(models.Model):
                         ),
                     )
                 )
-            if (
-                assessment.assessment_type == 'trimester_test'
-                and policy.regime != 'technical'
-                and policy._is_exam_class(assessment.class_id.class_number)
-                and assessment.trimester_id == assessment.academic_year_id.trimester_ids.sorted('number')[-1:]
-            ):
-                # Na classe de exame, a MT3 é (MT1 + MT2 + MAC3)/3: no último trimestre há o exame, não a prova.
-                raise ValidationError(self.env._('Na classe de exame, o último trimestre não tem prova trimestral.'))
+            last_trimester = assessment.trimester_id == assessment.academic_year_id.trimester_ids.sorted('number')[-1:]
+            if assessment.assessment_type == 'trimester_test' and last_trimester:
+                if policy.regime == 'technical':
+                    # Técnico: no último trimestre só a NPP; a prova do fim do ano é a prova global.
+                    raise ValidationError(
+                        self.env._('No ensino técnico, o último trimestre não tem prova trimestral: só a NPP.')
+                    )
+                if policy._is_exam_class(assessment.class_id.class_number):
+                    # Na classe de exame, a MT3 é (MT1 + MT2 + MAC3)/3: no último trimestre há o exame, não a prova.
+                    raise ValidationError(
+                        self.env._('Na classe de exame, o último trimestre não tem prova trimestral.')
+                    )
             if assessment.assessment_type in ('global_exam', 'national_exam'):
                 last = assessment.academic_year_id.trimester_ids.sorted('number')[-1:]
                 if assessment.trimester_id != last:

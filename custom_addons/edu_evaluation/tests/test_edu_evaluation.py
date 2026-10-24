@@ -108,8 +108,9 @@ class TestEduEvaluation(TransactionCase):
         last_trimester = edu_class.academic_year_id.trimester_ids.sorted('number')[-1:]
         for trimester, scores in scores_by_trimester.items():
             self._assess(edu_class, code, trimester, 'continuous', {s: v[0] for s, v in scores.items()})
-            # Na classe de exame do geral, o último trimestre não tem prova trimestral (há o exame nacional).
-            if not (exam_class and trimester == last_trimester):
+            # O último trimestre não tem prova trimestral no técnico (há a prova global) nem na classe de exame do
+            # geral (há o exame nacional).
+            if not ((exam_class or policy.regime == 'technical') and trimester == last_trimester):
                 self._assess(edu_class, code, trimester, 'trimester_test', {s: v[1] for s, v in scores.items()})
         # Técnico: a disciplina com prova global só fica completa com a PG (lança-se a nota da última prova).
         line = edu_class.subject_line_ids.filtered(lambda line: line.subject_id.code == code)
@@ -245,6 +246,21 @@ class TestEduEvaluation(TransactionCase):
         self.assertTrue(lp_line.has_global_exam)
         practical.weekly_hours = 5
         self.assertFalse(practical.has_global_exam)
+
+    def test_technical_last_trimester_npp_only(self):
+        """No técnico, o último trimestre só tem a NPP (CF = (CT2 + NPP3)/2, como nas cadernetas e no resumo do regime);
+        a prova do fim do ano é a prova global."""
+        ana = self.students[0]
+        enrollment = self._enroll(self.class10, ana, ['LP'])
+        self._full_year(
+            self.class10, 'LP', {self.t1: {ana: (10, 12)}, self.t2: {ana: (14, 14)}, self.t3: {ana: (16, 9)}}
+        )
+        # CT1 = 11; CT2 = (11 + 14)/2 = 12,5 ≈ 13; CT3 = CF = (13 + 16)/2 = 14,5 ≈ 15; a PG é 9.
+        self.assertEqual(self._term(enrollment, 'LP', self.t3).mt, 16)
+        result = self._year_subject(enrollment, 'LP')
+        self.assertEqual((result.cf, result.pg, result.annual), (15, 9, 13))  # 0,6 × 15 + 0,4 × 9 = 12,6
+        with self.assertRaises(ValidationError):
+            self._assess(self.class10, 'LP', self.t3, 'trimester_test', {ana: 12})
 
     def test_technical_missing_trimester(self):
         """A CF fecha com o último trimestre e um trimestre sem classificação conta 0 (Despacho 60/08, art. 16.º): sem o

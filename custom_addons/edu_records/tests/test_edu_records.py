@@ -41,6 +41,10 @@ class TestEduRecords(TransactionCase):
         for subject, score in zip(self.subjects, score_by_subject, strict=True):
             for trimester in self.year.trimester_ids:
                 for kind in ('continuous', 'trimester_test'):
+                    # Técnico: o último trimestre não tem prova trimestral (só a NPP; há a prova global).
+                    last = trimester == self.year.trimester_ids.sorted('number')[-1:]
+                    if kind == 'trimester_test' and last and self.edu_class.level_id.subsystem == 'technical':
+                        continue
                     assessment = self.env['edu.assessment'].create(
                         {
                             'name': kind,

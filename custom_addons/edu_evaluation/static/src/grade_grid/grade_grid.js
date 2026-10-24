@@ -379,7 +379,7 @@ export class GradeGrid extends Component {
 
     /**
      * A classificação do trimestre na grelha. No técnico é o CT do Despacho 60/08 (art. 17.º, n.º 5, e o resumo do
-     * regime): CT1 = (NPP + NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + média do 3.º)/2 — cada trimestre
+     * regime): CT1 = (NPP + NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + NPP do 3.º)/2 — cada trimestre
      * engloba os anteriores, como a CF; um trimestre anterior sem classificação conta 0. No geral, a MT.
      */
     termClassification(student, trimester) {
@@ -532,7 +532,7 @@ export class GradeGrid extends Component {
 
     get legend() {
         return this.state.data.technical
-            ? "NPP é a nota do professor e NPT a prova trimestral. CT1 é a média das duas; CT2 e CT3 juntam o trimestre aos anteriores (CT2 = (CT1 + média do 2.º trimestre)/2), como manda o Despacho 60/08."
+            ? "NPP é a nota do professor e NPT a prova trimestral. CT1 é a média das duas; CT2 e CT3 juntam o trimestre aos anteriores (CT2 = (CT1 + média do 2.º trimestre)/2), como manda o Despacho 60/08. No 3.º trimestre só há a NPP: CT3 = CF = (CT2 + NPP)/2, e a prova do fim do ano é a prova global."
             : "MAC é a média das avaliações contínuas, NPT a prova do trimestre e MT1, MT2 e MT3 a média de cada trimestre.";
     }
 

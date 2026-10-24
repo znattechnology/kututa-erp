@@ -16,7 +16,8 @@ FINAL_WIDTH = 19
 TAIL_WIDTH = 120
 LEGEND_TECHNICAL = (
     'NPP - Nota do Professor; NPT - Nota da Prova Trimestral; CT - Classificação do Trimestre, que engloba os '
-    'anteriores: CT1 = (NPP+NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + média do 3.º)/2; '
+    'anteriores: CT1 = (NPP+NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + NPP do 3.º)/2 (no 3.º trimestre '
+    'não há prova trimestral); '
     'CF - Classificação de Frequência (o CT3, atribuída pelo Conselho de Turma); '
     'PG - Prova Global; CA - Classificação Anual: CA = 60%CF + 40%PG; CFD - Classificação Final da Disciplina '
     '(no ano terminal: média das CA dos anos em que é leccionada)'

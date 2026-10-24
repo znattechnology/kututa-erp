@@ -169,7 +169,7 @@
                                                     <span t-att-class="this.gradeClass(term.mac, false)" t-out="this.fmtDecimal(term.mac)"/>
                                                 </td>
                                                 <!-- NPT -->
-                                                <td t-if="!t.has_npt" class="text-center text-muted" title="Sem prova trimestral: há exame no fim do ano">—</td>
+                                                <td t-if="!t.has_npt" class="text-center text-muted" t-att-title="data.technical ? 'Sem prova trimestral: no último trimestre só a NPP; a prova do fim do ano é a prova global' : 'Sem prova trimestral: há exame no fim do ano'">—</td>
                                                 <t t-else="">
                                                     <t t-set="column" t-value="'npt'"/>
                                                     <t t-set="sep" t-value="false"/>

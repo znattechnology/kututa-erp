@@ -252,7 +252,9 @@ class EduGradeGrid(models.AbstractModel):
                     and fields.Datetime.context_timestamp(self, permission.date_expiry).strftime('%d/%m/%Y'),
                     # Técnico: a NPP escreve-se na grelha (uma avaliação «NPP»); com várias contínuas, é a média delas.
                     'npp_editable': technical and npp_only,
-                    'has_npt': not (exam_class and trimester == last),
+                    # Sem prova trimestral no último trimestre: no técnico (a prova global é a prova do fim do ano)
+                    # e na classe de exame do geral (há o exame nacional).
+                    'has_npt': not ((technical or exam_class) and trimester == last),
                     'continuous_count': len(continuous),
                 }
             )

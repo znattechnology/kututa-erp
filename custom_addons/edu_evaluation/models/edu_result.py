@@ -120,6 +120,10 @@ class EduTermResult(models.Model):
             mac = grading.weighted_mean([(score(g), g.assessment_id.weight) for g in continuous])
         npt = score(tests[:1]) if tests else None
         if policy.regime == TECHNICAL:
+            # No último trimestre só há a NPP: a prova do fim do ano é a prova global (CF = (CT2 + NPP3)/2, como nas
+            # cadernetas das escolas e no resumo do regime: «CF = (P1 + CT2)/2»).
+            if trimester == enrollment.academic_year_id.trimester_ids.sorted('number')[-1:]:
+                npt = None
             mt = grading.technical_ct(mac, npt, round_fn)
         else:
             last = enrollment.academic_year_id.trimester_ids.sorted('number')[-1:]
