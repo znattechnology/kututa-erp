@@ -46,7 +46,7 @@ A base `lbdf` foi criada em dois passos:
 | Pendente no secPed (recurso sem matrícula seguinte, por exemplo) | 80 | A decisão calculada (44 recurso, 24 transita, 7 conclui, 5 retido) |
 | Choques de professor no horário de 2026/27 | 77 | Ficam como estão. No Primário, o horário do secPed é por classe e repete-se em todas as turmas |
 | Grelhas sobrepostas na Manhã (Primário e Secundário) | 7 tempos | As aulas ficam com as suas horas, sem tempo da grelha associado |
-| Classes de exame sem disciplinas marcadas com exame nacional no plano | todas | Para 2026/27, marcar no plano as disciplinas com exame (6.ª, 9.ª e 12.ª). Sem a marca, a MFED não se calcula |
+| Classes de exame sem disciplinas marcadas com exame nacional no plano | todas | Marcadas a 2026-10-24 as obrigatórias da 6.ª (7), da 9.ª (13) e da 12.ª (11 por área), como a escola fez nas pautas assinadas, que têm NE em todas as obrigatórias. As extracurriculares ficam sem exame. O Dec. 424/25 (art. 13.º) remete a lista para um edital anual do Ministério: confirmar com o edital de 2026/27. Os anos fechados não mudam |
 
 O resto do que está pendente do lado da escola mantém-se como no secPed: identidades duvidosas, professores em falta, fichas incompletas, datas reais dos trimestres e logótipo.
 
