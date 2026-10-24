@@ -101,7 +101,7 @@ class EduStudent(models.Model):
         )
 
     def _edu_gate(self, point):
-        """(bloqueia, aviso) para a operação: rematrícula, documentos ou exames."""
+        """(bloqueia, aviso) para a operação: rematrícula, documentos, exames ou notas (no portal)."""
         self.ensure_one()
         if not self.edu_in_debt or self.edu_gate_exempt:
             return False, False
@@ -111,7 +111,7 @@ class EduStudent(models.Model):
             amount=self.edu_currency_id.format(self.edu_overdue_amount),
         )
         flag = {'reenrollment': company.edu_gate_reenrollment, 'documents': company.edu_gate_documents,
-                'exams': company.edu_gate_exams}.get(point)  # fmt: skip
+                'exams': company.edu_gate_exams, 'grades': company.edu_gate_grades}.get(point)  # fmt: skip
         return company.edu_gate_mode == 'block' and bool(flag), message
 
     @api.model

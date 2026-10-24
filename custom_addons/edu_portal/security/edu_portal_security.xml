@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_groups_privilege_student" model="res.groups.privilege">
+        <field name="name">Área do estudante</field>
+        <field name="sequence">12</field>
+        <field name="category_id" ref="edu_core.module_category_secretaria_express"/>
+    </record>
+
+    <!-- O aluno entra no Odoo como o professor (utilizador interno) e só tem o seu painel: os modelos da escola não lhe
+         dão acesso nenhum; tudo o que vê chega pelos métodos de edu.student.portal, filtrados ao próprio aluno. -->
+    <record id="group_edu_student" model="res.groups">
+        <field name="name">Aluno</field>
+        <field name="sequence">1</field>
+        <field name="privilege_id" ref="res_groups_privilege_student"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">A área do estudante: as suas notas, o horário, as provas, as faltas, as propinas e o perfil.</field>
+    </record>
+</odoo>

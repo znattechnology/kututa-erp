@@ -24,6 +24,9 @@ class ResCompany(models.Model):
     edu_gate_reenrollment = fields.Boolean(string='Bloquear a rematrícula', default=True)
     edu_gate_documents = fields.Boolean(string='Bloquear os documentos', default=True)
     edu_gate_exams = fields.Boolean(string='Bloquear os exames', default=True)
+    edu_gate_grades = fields.Boolean(
+        string='Esconder as notas no portal', default=True, help='O aluno e o encarregado não vêem as notas no portal.'
+    )
     edu_mark_irregular = fields.Boolean(
         string='Marcar a matrícula como irregular',
         default=True,

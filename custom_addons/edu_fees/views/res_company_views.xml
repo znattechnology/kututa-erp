@@ -19,6 +19,7 @@
                         <field name="edu_gate_reenrollment"/>
                         <field name="edu_gate_documents"/>
                         <field name="edu_gate_exams"/>
+                        <field name="edu_gate_grades"/>
                     </group>
                 </group>
             </page>

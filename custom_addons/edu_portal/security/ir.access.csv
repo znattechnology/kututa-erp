@@ -1,0 +1,2 @@
+id,name,model_id,group_id/id,operation,domain
+restrict_res_partner_student,"Aluno: só o seu contacto, o da escola e os do pessoal",res.partner,,crud,"[] if not user.has_group('edu_portal.group_edu_student') else ['|', '|', ('id', '=', user.partner_id.id), ('id', 'in', user.company_ids.partner_id.ids), ('user_ids.employee_ids', '!=', False)]"
