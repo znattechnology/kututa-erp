@@ -67,6 +67,8 @@ class EduGradeGrid(models.AbstractModel):
                     'directs': directs,
                     'mine': mine.ids,
                     'students': len(edu_class.enrollment_ids.filtered(lambda e: e.state in ENROLLED)),
+                    # Na iniciação não há notas: a avaliação é o RDEC (Dec. Exec. 424/25, art. 20.º).
+                    'preschool': edu_class.level_id.code == 'INICIACAO',
                     'links': self._class_links(edu_class, directs or staff),
                 }
             )
@@ -79,11 +81,12 @@ class EduGradeGrid(models.AbstractModel):
         """Os botões da turma escolhida, por ordem: ``key`` (para ``class_link_action``), ``label`` e ``icon``. Cada
         módulo acrescenta os seus; ``directs`` é o director de turma (ou a secretaria)."""
         # Num ano passado (a grelha é só de consulta) não há conselho a reunir.
+        # Na iniciação não há notas nem conselho de turma: o RDEC.
+        if edu_class.level_id.code == 'INICIACAO':
+            return [{'key': 'rdec', 'label': self.env._('RDEC'), 'icon': 'description'}]
         links = []
         if edu_class.academic_year_id.is_current:
             links.append({'key': 'council', 'label': self.env._('Conselho de turma'), 'icon': 'forum'})
-        if edu_class.level_id.code == 'INICIACAO':
-            links.append({'key': 'rdec', 'label': self.env._('RDEC'), 'icon': 'description'})
         return links
 
     @api.model

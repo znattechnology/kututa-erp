@@ -35,7 +35,12 @@
                                 <t t-else="">Todas as aulas dadas estão registadas</t>
                             </span>
                         </button>
-                        <button type="button" class="o_edu_kpi" t-on-click="() => this.openAction('edu_evaluation.action_edu_grade_grid')">
+                        <button t-if="!db.expected and db.rdec_total" type="button" class="o_edu_kpi" t-on-click="() => this.openRdec(db.rdec[0].class_id)">
+                            <span class="o_edu_kpi_label">RDEC completos<t t-if="db.trimester"> no <t t-out="db.trimester"/></t></span>
+                            <span class="o_edu_kpi_value"><t t-out="this.rdecPercent"/>%</span>
+                            <span class="o_edu_kpi_detail"><t t-out="db.rdec_done"/> de <t t-out="db.rdec_total"/> crianças</span>
+                        </button>
+                        <button t-else="" type="button" class="o_edu_kpi" t-on-click="() => this.openAction('edu_evaluation.action_edu_grade_grid')">
                             <span class="o_edu_kpi_label">Notas lançadas<t t-if="db.trimester"> no <t t-out="db.trimester"/></t></span>
                             <t t-if="db.expected">
                                 <span class="o_edu_kpi_value"><t t-out="this.gradedPercent"/>%</span>
@@ -82,8 +87,32 @@
                                 </ul>
                             </section>
 
+                            <!-- Iniciação: o RDEC do trimestre em cada turma -->
+                            <section t-if="db.rdec.length" class="o_edu_th_card" aria-labelledby="o_edu_th_chart_rdec">
+                                <h2 id="o_edu_th_chart_rdec" class="o_edu_th_h2">RDEC do <t t-out="db.trimester or 'trimestre'"/></h2>
+                                <ul class="o_edu_chart_legend">
+                                    <li><span class="o_edu_chart_key o_edu_stack_pos"/>Completos</li>
+                                    <li><span class="o_edu_chart_key o_edu_stack_partial"/>Em curso</li>
+                                    <li><span class="o_edu_chart_key o_edu_stack_missing"/>Por avaliar</li>
+                                </ul>
+                                <ul class="o_edu_stacks">
+                                    <li t-foreach="db.rdec" t-as="r" t-key="r.class_id">
+                                        <button type="button" class="o_edu_th_stack_btn" t-on-click="() => this.openRdec(r.class_id)"
+                                                t-att-title="r.label + ': ' + r.done + ' completos, ' + r.progress + ' em curso, ' + r.todo + ' por avaliar'">
+                                            <span class="o_edu_stack_head"><span t-out="r.label"/><span class="text-nowrap text-muted"><t t-out="r.total"/> crianças</span></span>
+                                            <span class="o_edu_stack">
+                                                <span t-if="r.done" class="o_edu_stack_pos" t-att-style="'flex-grow: ' + r.done"/>
+                                                <span t-if="r.progress" class="o_edu_stack_partial" t-att-style="'flex-grow: ' + r.progress"/>
+                                                <span t-if="r.todo" class="o_edu_stack_missing" t-att-style="'flex-grow: ' + r.todo"/>
+                                            </span>
+                                            <span class="small text-muted"><t t-out="r.done"/> completos, <t t-out="r.progress"/> em curso, <t t-out="r.todo"/> por avaliar</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </section>
+
                             <!-- As notas do trimestre por turma e disciplina -->
-                            <section class="o_edu_th_card" aria-labelledby="o_edu_th_chart_grades">
+                            <section t-if="db.grades.length or !db.rdec.length" class="o_edu_th_card" aria-labelledby="o_edu_th_chart_grades">
                                 <div class="d-flex flex-wrap justify-content-between gap-2">
                                     <h2 id="o_edu_th_chart_grades" class="o_edu_th_h2">Notas do <t t-out="db.trimester or 'trimestre'"/> nas suas turmas</h2>
                                     <button t-if="db.grades.length" type="button" class="btn btn-link p-0 align-self-start" t-on-click="() => this.openAction('edu_evaluation.action_edu_grade_grid')">Lançar notas</button>
@@ -135,8 +164,9 @@
                                             </div>
                                             <div class="small text-muted"><t t-out="c.course"/>, <t t-out="c.students"/> alunos</div>
                                         </div>
-                                        <button t-if="c.mine.length" type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openGrades(c)">Notas</button>
-                                        <button t-if="c.directs" type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openCouncil(c)">Conselho de turma</button>
+                                        <button t-if="c.preschool" type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openRdec(c.id)">RDEC</button>
+                                        <button t-elif="c.mine.length" type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openGrades(c)">Notas</button>
+                                        <button t-if="c.directs and !c.preschool" type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openCouncil(c)">Conselho de turma</button>
                                     </li>
                                 </ul>
                             </section>

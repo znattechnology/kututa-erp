@@ -574,6 +574,17 @@ class TestEduEvaluation(TransactionCase):
         grid = self.env['edu.grade.grid'].with_user(self.teacher_user).class_link_action(edu_class.id, 'rdec')
         self.assertEqual(grid['domain'], [('class_id', 'in', edu_class.ids)])
         self.assertEqual(Rdec.search_count([('class_id', '=', edu_class.id)]), 2)
+        # Na grelha de notas, a turma da iniciação não tem notas, mini-pauta nem conselho de turma: o RDEC.
+        self.assertEqual(edu_class._editor_label(), 'Iniciação A · INI')
+        row = next(
+            c
+            for c in self.env['edu.grade.grid'].with_user(self.teacher_user).grid_classes()['classes']
+            if c['id'] == edu_class.id
+        )
+        self.assertTrue(row['preschool'])
+        keys = [link['key'] for link in row['links']]
+        self.assertIn('rdec', keys)
+        self.assertFalse({'council', 'mini_pauta'} & set(keys))
 
         # O(a) educador(a) escreve; o outro professor da turma só lê.
         mine = report.with_user(self.teacher_user)

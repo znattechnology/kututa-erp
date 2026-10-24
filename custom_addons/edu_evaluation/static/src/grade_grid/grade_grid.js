@@ -152,6 +152,12 @@ export class GradeGrid extends Component {
         }
         this.state.classId = classId;
         remember(LAST_CLASS_KEY, classId);
+        if (this.selectedClass?.preschool) {
+            // Na iniciação não há notas: a página mostra o caminho para o RDEC.
+            this.state.subjects = [];
+            this.state.data = null;
+            return;
+        }
         this.state.subjects = await this.orm.call("edu.grade.grid", "grid_subjects", [classId]);
         const pick =
             this.state.subjects.find((s) => s.id === subjectId) ||

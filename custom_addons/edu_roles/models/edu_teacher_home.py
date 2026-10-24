@@ -94,6 +94,9 @@ class EduTeacherHome(models.AbstractModel):
             'attendance': [],
             'graded': 0,
             'expected': 0,
+            'rdec': [],
+            'rdec_done': 0,
+            'rdec_total': 0,
             'at_risk': 0,
             'failed': 0,
         }
@@ -127,7 +130,8 @@ class EduTeacherHome(models.AbstractModel):
             edu_class, subject = assignment.class_id, assignment.subject_id
             label = f'{edu_class._editor_label()}, {subject.name}'
             enrollments = edu_class.enrollment_ids.filtered(lambda e: e.state in ('active', 'irregular'))
-            if index is not None and enrollments:
+            # Na iniciação não há notas: conta o RDEC da turma (abaixo).
+            if index is not None and enrollments and edu_class.level_id.code != 'INICIACAO':
                 policy = self.env['edu.evaluation.policy']._get(edu_class.company_id, edu_class.level_id)
                 round_fn = grading.rounder(policy.rounding)
                 results = Result.search([('enrollment_id', 'in', enrollments.ids), ('subject_id', '=', subject.id)])
@@ -161,6 +165,27 @@ class EduTeacherHome(models.AbstractModel):
                 result['attendance'].append(
                     {'id': assignment.id, 'label': label, 'rate': round(100 * present / lessons), 'lessons': lessons}
                 )
+        # Iniciação: o RDEC do trimestre em cada turma do(a) educador(a) (completos, em curso, por avaliar).
+        preschool = assignments.class_id | self.env['edu.class'].sudo().search([('director_id', '=', employee.id)])
+        preschool = preschool.filtered(lambda c: c.level_id.code == 'INICIACAO' and c.academic_year_id == year)
+        if trimester and preschool:
+            Rdec = self.env['edu.rdec'].sudo()
+            Rdec._prepare(preschool, trimester)
+            for edu_class in preschool.sorted(lambda c: c.name or ''):
+                states = Rdec.search([('class_id', '=', edu_class.id), ('trimester_id', '=', trimester.id)]).mapped(
+                    'state'
+                )
+                row = {
+                    'class_id': edu_class.id,
+                    'label': edu_class._editor_label(),
+                    'total': len(states),
+                    'done': states.count('done'),
+                    'progress': states.count('progress'),
+                    'todo': states.count('todo'),
+                }
+                result['rdec'].append(row)
+                result['rdec_done'] += row['done']
+                result['rdec_total'] += row['total']
         # Os alunos a uma falta do limite ou que já o passaram, nas disciplinas do professor (o relatório de faltas).
         if trimester:
             mine = self.env['edu.attendance.page'].absence_report(trimester.id)['mine']

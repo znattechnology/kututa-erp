@@ -55,6 +55,11 @@
                         </t>
                     </div>
 
+                    <div t-elif="this.selectedClass?.preschool" class="o_edu_gg_empty">
+                        <p class="mb-2">Na Iniciação a avaliação é descritiva: não há notas. O(a) educador(a) escreve o RDEC de cada criança, em cada trimestre.</p>
+                        <button type="button" class="btn btn-primary" t-on-click="() => this.openClassLink('rdec')">Abrir o RDEC da turma</button>
+                    </div>
+
                     <div t-elif="this.state.classId" class="o_edu_gg_main" t-att-class="{'o_edu_gg_collapsed': this.state.collapsed}">
                         <nav t-if="!this.state.collapsed" class="o_edu_gg_subjects" aria-label="Disciplinas">
                             <p t-if="!this.state.subjects.length" class="text-muted small p-2 mb-0">Esta turma ainda não tem disciplinas com tempos lectivos.</p>

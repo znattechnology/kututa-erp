@@ -153,7 +153,8 @@ class EduClass(models.Model):
     def _editor_label(self):
         """«10ª A · EST»: a turma sem o ano lectivo, que o editor de horários já mostra no topo."""
         self.ensure_one()
-        return ' · '.join(p for p in [f'{self.class_number}ª {self.name}', self.course_id.code] if p)
+        number = self.env._('Iniciação') if self.class_number == 0 else f'{self.class_number}ª'
+        return ' · '.join(p for p in [f'{number} {self.name}', self.course_id.code] if p)
 
     def action_edit_schedule(self):
         """Abre o editor de horários nesta turma."""

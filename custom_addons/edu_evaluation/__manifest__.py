@@ -45,6 +45,7 @@ Secretaria Express: avaliação das aprendizagens.
             'edu_evaluation/static/src/council_board/*',
             'edu_evaluation/static/src/grade_grid/*',
             'edu_evaluation/static/src/grade_permissions/*',
+            'edu_evaluation/static/src/rdec/*',
         ],
     },
     'license': 'OPL-1',

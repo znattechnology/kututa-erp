@@ -95,6 +95,16 @@ export class TeacherHome extends Component {
         });
     }
 
+    get rdecPercent() {
+        const db = this.state.data.dashboard;
+        return db.rdec_total ? Math.round((100 * db.rdec_done) / db.rdec_total) : 0;
+    }
+
+    async openRdec(classId) {
+        const action = await this.orm.call("edu.grade.grid", "class_link_action", [classId, "rdec"]);
+        return this.action.doAction(action);
+    }
+
     openCouncil(edu_class) {
         return this.action.doAction("edu_evaluation.action_edu_council_board", {
             additionalContext: { default_class_id: edu_class.id },

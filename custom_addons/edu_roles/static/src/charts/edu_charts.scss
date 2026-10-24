@@ -280,6 +280,11 @@
     background: var(--edu-chart-empty);
 }
 
+// RDEC em curso (iniciação): nem completo nem por avaliar.
+.o_edu_stack_partial {
+    background: var(--edu-chart-warning);
+}
+
 .o_edu_chart_legend {
     display: flex;
     flex-wrap: wrap;

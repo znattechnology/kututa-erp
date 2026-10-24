@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="edu_evaluation.RdecLevelField">
+        <div class="o_edu_rdec_level d-flex flex-wrap gap-1">
+            <t t-if="this.editable">
+                <button t-foreach="this.options" t-as="option" t-key="option[0]" type="button" class="btn btn-sm"
+                        t-att-class="option[0] === this.value ? 'btn-' + this.tone(option[0]) : 'btn-outline-secondary'"
+                        t-att-aria-pressed="option[0] === this.value ? 'true' : 'false'"
+                        t-on-click.stop="() => this.select(option[0])" t-out="option[1]"/>
+            </t>
+            <t t-elif="this.value">
+                <span class="badge" t-att-class="'text-bg-' + this.tone(this.value)" t-out="this.string"/>
+            </t>
+            <span t-else="" class="text-muted">Por avaliar</span>
+        </div>
+    </t>
+</templates>

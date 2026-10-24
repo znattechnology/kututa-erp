@@ -10,10 +10,10 @@
                 <field name="order_number" string="N.º"/>
                 <field name="student_id" string="Criança"/>
                 <field name="matricula_number" string="Matrícula" optional="hide"/>
-                <field name="class_id" optional="show"/>
+                <field name="class_id" optional="hide"/>
                 <field name="trimester_id" optional="hide"/>
-                <field name="absences_justified" string="Faltas just." optional="show"/>
-                <field name="absences_unjustified" string="Faltas injust." optional="show"/>
+                <field name="absences_justified" string="FJ" optional="show"/>
+                <field name="absences_unjustified" string="FI" optional="show"/>
                 <field name="areas_total" column_invisible="1"/>
                 <field name="areas_done" widget="progressbar" options="{'max_value': 'areas_total'}" string="Áreas avaliadas"/>
                 <field name="has_appreciation" string="Apreciação" width="90px"/>
@@ -55,7 +55,7 @@
                     <field name="line_ids" readonly="not can_edit">
                         <list editable="bottom" create="0" delete="0">
                             <field name="subject_id" readonly="1" width="260px"/>
-                            <field name="level" widget="badges_selection" width="440px"/>
+                            <field name="level" widget="edu_rdec_level" width="460px"/>
                             <field name="observations" placeholder="Observações (opcional)"/>
                         </list>
                     </field>

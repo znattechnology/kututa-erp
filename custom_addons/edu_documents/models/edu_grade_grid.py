@@ -37,7 +37,8 @@ class EduGradeGrid(models.AbstractModel):
     def _class_links(self, edu_class, directs):
         # A mini-pauta abre-se da turma, como no secPed (o menu do professor deixou de a ter).
         links = super()._class_links(edu_class, directs)
-        links.insert(0, {'key': 'mini_pauta', 'label': self.env._('Mini-pauta'), 'icon': 'table_view'})
+        if edu_class.level_id.code != 'INICIACAO':
+            links.insert(0, {'key': 'mini_pauta', 'label': self.env._('Mini-pauta'), 'icon': 'table_view'})
         return links
 
     @api.model

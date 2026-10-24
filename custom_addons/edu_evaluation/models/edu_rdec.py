@@ -190,7 +190,7 @@ class EduRdec(models.Model):
             'searchpanel_default_class_id': classes.id if len(classes) == 1 else False,
         }
         if title:
-            action['name'] = title
+            action['name'] = action['display_name'] = title
         return action
 
     @api.model
