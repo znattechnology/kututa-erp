@@ -47,7 +47,12 @@
                     </div>
 
                     <div t-if="!this.state.classes.length" class="o_edu_gg_empty text-muted">
-                        Não tem turmas neste ano lectivo. As notas lançam-se nas turmas onde dá aulas; a secretaria consulta todas.
+                        <t t-if="this.pastYear">
+                            A escola não tem registo das turmas onde deu aulas em <t t-out="this.state.year"/>. As notas desse ano consultam-se na secretaria.
+                        </t>
+                        <t t-else="">
+                            Não tem turmas neste ano lectivo. As notas lançam-se nas turmas onde dá aulas; a secretaria consulta todas.
+                        </t>
                     </div>
 
                     <div t-elif="this.state.classId" class="o_edu_gg_main" t-att-class="{'o_edu_gg_collapsed': this.state.collapsed}">
