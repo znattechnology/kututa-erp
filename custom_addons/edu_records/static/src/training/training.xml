@@ -21,16 +21,9 @@
                                 <i class="oi me-1" data-icon="add" aria-hidden="true"/><t t-out="this.isProject ? 'Novo trabalho' : 'Novo estágio'"/>
                             </button>
                         </div>
-                        <div t-if="this.switchable" role="tablist" aria-label="Orientações" class="o_edu_tr_tabs">
-                            <button type="button" role="tab" class="btn" t-att-class="this.isProject ? 'btn-secondary' : 'btn-primary'"
-                                    t-att-aria-selected="this.isProject ? 'false' : 'true'" t-on-click="() => this.setKind('internship')">
-                                Estágios de que é tutor
-                            </button>
-                            <button type="button" role="tab" class="btn" t-att-class="this.isProject ? 'btn-primary' : 'btn-secondary'"
-                                    t-att-aria-selected="this.isProject ? 'true' : 'false'" t-on-click="() => this.setKind('project')">
-                                PAP que orienta
-                            </button>
-                        </div>
+                        <!-- «Orientações» do professor: as duas listas, uma por baixo da outra, como no secPed. -->
+                        <t t-if="this.switchable" t-call="edu_records.TrainingPage.Orientations"/>
+                        <t t-else="">
                         <p t-if="this.summary" class="mb-0">
                             <t t-out="this.summary.text"/>
                             <span t-if="this.summary.alert" class="text-danger"> <t t-out="this.summary.alert"/></span>
@@ -91,6 +84,7 @@
                                 </table>
                             </div>
                         </div>
+                        </t>
                     </t>
 
                     <!-- Novo -->
@@ -98,7 +92,7 @@
                         <t t-set="o" t-value="this.state.options"/>
                         <div>
                             <button type="button" class="btn btn-link px-0" t-on-click="() => this.backToList()">
-                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/><t t-out="this.isProject ? 'Voltar aos trabalhos' : 'Voltar aos estágios'"/>
+                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/><t t-out="this.backLabel"/>
                             </button>
                             <h2 class="o_edu_tr_h2" t-out="this.isProject ? 'Novo trabalho' : 'Novo estágio'"/>
                             <p class="o_edu_tr_lead">
@@ -215,7 +209,7 @@
                         <t t-set="d" t-value="this.state.detail"/>
                         <div>
                             <button type="button" class="btn btn-link px-0" t-on-click="() => this.backToList()">
-                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/><t t-out="this.isProject ? 'Voltar aos trabalhos' : 'Voltar aos estágios'"/>
+                                <i class="oi me-1" data-icon="arrow_back" aria-hidden="true"/><t t-out="this.backLabel"/>
                             </button>
                             <h2 class="o_edu_tr_h2">
                                 <t t-out="this.isProject ? 'Trabalho de ' : 'Estágio de '"/><t t-out="d.student"/>
@@ -429,4 +423,57 @@
         </div>
     </t>
 
+    <t t-name="edu_records.TrainingPage.Orientations">
+        <section class="o_edu_tr_orient" aria-labelledby="o_edu_tr_orient_internships">
+            <h3 id="o_edu_tr_orient_internships" class="o_edu_tr_h3">Estágios de que é tutor</h3>
+            <p t-if="!this.state.both.internship.length" class="o_edu_tr_card mb-0 text-muted p-3">
+                Não é tutor de nenhum estágio. Os tutores são escolhidos pelos Serviços Académicos.
+            </p>
+            <div t-else="" class="o_edu_tr_card table-responsive">
+                <table class="table table-sm table-hover o_edu_tr_table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Aluno</th><th>Entidade</th><th>Período</th>
+                            <th class="text-end">Horas</th><th class="text-end">Nota</th><th>Situação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="this.state.both.internship" t-as="r" t-key="r.id" class="o_edu_tr_row" t-on-click="() => this.open(r, 'internship')">
+                            <td><div class="fw-semibold" t-out="r.student"/><div class="small text-muted" t-out="r.class"/></td>
+                            <td><t t-if="r.entity" t-out="r.entity"/><span t-else="" class="text-muted">Por definir</span><div t-if="r.supervisor" class="small text-muted" t-out="r.supervisor"/></td>
+                            <td class="text-nowrap">
+                                <t t-if="r.start or r.end"><t t-out="r.start or '?'"/> a <t t-out="r.end or '?'"/></t>
+                                <span t-else="" class="text-muted">—</span>
+                            </td>
+                            <td class="text-end tabular-nums" t-out="r.hours"/>
+                            <td class="text-end" t-out="this.fmtGrade(r.grade)"/>
+                            <td><span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section class="o_edu_tr_orient" aria-labelledby="o_edu_tr_orient_projects">
+            <h3 id="o_edu_tr_orient_projects" class="o_edu_tr_h3">PAP que orienta ou de que é júri</h3>
+            <p t-if="!this.state.both.project.length" class="o_edu_tr_card mb-0 text-muted p-3">
+                Não é orientador nem júri de nenhuma PAP. Os orientadores são escolhidos pelos Serviços Académicos.
+            </p>
+            <div t-else="" class="o_edu_tr_card table-responsive">
+                <table class="table table-sm table-hover o_edu_tr_table mb-0">
+                    <thead>
+                        <tr><th>Trabalho</th><th>Aluno</th><th>Defesa</th><th class="text-end">Nota</th><th>Situação</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="this.state.both.project" t-as="r" t-key="r.id" class="o_edu_tr_row" t-on-click="() => this.open(r, 'project')">
+                            <td><div class="fw-semibold" t-out="r.title"/><div class="small text-muted" t-out="r.course"/></td>
+                            <td><div t-out="r.student"/><div class="small text-muted" t-out="r.class"/></td>
+                            <td class="text-nowrap"><t t-if="r.defense" t-out="r.defense"/><span t-else="" class="text-muted">Por marcar</span></td>
+                            <td class="text-end" t-out="this.fmtGrade(r.grade)"/>
+                            <td><span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </t>
 </templates>

@@ -50,6 +50,13 @@
         font-variant-numeric: tabular-nums;
     }
 
+    // «Orientações»: os estágios e as PAP, uma secção por baixo da outra.
+    .o_edu_tr_orient {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
     .o_edu_tr_h2 {
         margin: 4px 0;
         font-size: 1.25rem;

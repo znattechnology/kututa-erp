@@ -65,18 +65,11 @@ export class TrainingPage extends Component {
             submitted: "",
             report: { name: "", date: "", file: null },
             confirmRemove: false,
+            // «Orientações»: as linhas dos estágios e das PAP.
+            both: null,
         });
         onWillStart(async () => {
             await this.load();
-            // Sem estágios a acompanhar, as orientações abrem nas PAP.
-            if (this.switchable && !this.state.rows.length) {
-                this.state.kind = "project";
-                await this.load();
-                if (!this.state.rows.length) {
-                    this.state.kind = "internship";
-                    await this.load();
-                }
-            }
             // «Novo estágio» no menu abre a página já no formulário.
             if (context.training_new && this.state.isStaff) {
                 await this.openNew();
@@ -92,13 +85,6 @@ export class TrainingPage extends Component {
         return this.state.kind;
     }
 
-    async setKind(kind) {
-        if (kind === this.state.kind || this.state.busy) {
-            return;
-        }
-        Object.assign(this.state, { kind, mode: "list", tab: "all", query: "", detail: null });
-        await this.load();
-    }
 
     get isProject() {
         return this.kind === "project";
@@ -111,11 +97,26 @@ export class TrainingPage extends Component {
         return this.isProject ? "Trabalho de fim de curso" : "Estágios";
     }
 
+    get backLabel() {
+        if (this.switchable) {
+            return "Voltar às orientações";
+        }
+        return this.isProject ? "Voltar aos trabalhos" : "Voltar aos estágios";
+    }
+
     get noun() {
         return this.isProject ? "trabalho" : "estágio";
     }
 
     async load() {
+        if (this.switchable) {
+            // «Orientações»: as duas listas, uma por baixo da outra, como no secPed.
+            const [internships, projects] = await Promise.all([
+                this.orm.call("edu.training.page", "listing", ["internship"]),
+                this.orm.call("edu.training.page", "listing", ["project"]),
+            ]);
+            this.state.both = { internship: internships.rows, project: projects.rows };
+        }
         const data = await this.orm.call("edu.training.page", "listing", [this.kind]);
         Object.assign(this.state, {
             rows: data.rows,
@@ -401,7 +402,10 @@ export class TrainingPage extends Component {
               };
     }
 
-    async open(row) {
+    async open(row, kind = false) {
+        if (kind) {
+            this.state.kind = kind;
+        }
         this.showDetail(await this.orm.call("edu.training.page", "detail", [this.kind, row.id]));
     }
 
