@@ -92,7 +92,12 @@
         <field name="tag">edu_roles.attendance</field>
     </record>
     <menuitem id="menu_my_lessons" name="Presenças" action="action_teacher_attendance" parent="menu_teacher_classes" sequence="70"/>
-    <menuitem id="menu_teacher_absence_summary" name="Relatório de faltas" action="edu_attendance.action_edu_absence_summary"
+    <!-- «Relatório de faltas» (acção cliente), como no secPed: nas minhas disciplinas e a turma que dirijo. -->
+    <record id="action_teacher_absence_report" model="ir.actions.client">
+        <field name="name">Relatório de faltas</field>
+        <field name="tag">edu_roles.absence_report</field>
+    </record>
+    <menuitem id="menu_teacher_absence_summary" name="Relatório de faltas" action="action_teacher_absence_report"
               parent="menu_teacher_classes" sequence="80"/>
     <!-- Formação técnica (só numa escola com o ensino técnico) -->
     <menuitem id="menu_teacher_training" name="Formação técnica" parent="menu_edu_teacher_root" sequence="30"/>

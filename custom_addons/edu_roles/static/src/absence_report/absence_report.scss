@@ -1,0 +1,107 @@
+// Relatório de faltas: a estrutura do secPed-Express com as cores do sistema (em risco âmbar, limite vermelho).
+.o_edu_absence_report {
+    .o_edu_ar_body {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_ar_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_ar_title {
+        margin: 0 0 4px;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ar_picker {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 220px;
+    }
+
+    .o_edu_ar_section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .o_edu_ar_h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ar_board_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .o_edu_ar_card {
+        padding: 16px 20px;
+        overflow: hidden;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_ar_scroll {
+        overflow-x: auto;
+    }
+
+    .o_edu_ar_table {
+        th {
+            background: $gray-100;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        td,
+        th {
+            padding: 10px 16px;
+            vertical-align: top;
+        }
+    }
+
+    .o_edu_ar_board td:not(:first-child),
+    .o_edu_ar_board th:not(:first-child) {
+        padding-inline: 10px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_ar_items {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_ar_status {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .o_edu_ar_at_risk {
+        color: mix($warning, $body-color, 60%);
+        font-weight: 600;
+    }
+
+    .o_edu_ar_failed {
+        color: $danger;
+        font-weight: 600;
+    }
+}

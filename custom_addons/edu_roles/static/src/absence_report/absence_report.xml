@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_roles.AbsenceReportPage">
+        <div class="o_action o_edu_absence_report">
+            <Layout display="this.display">
+                <div class="o_edu_ar_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header class="o_edu_ar_head">
+                        <div>
+                            <h1 class="o_edu_ar_title">Relatório de faltas</h1>
+                            <p class="mb-0 text-muted">Os alunos perto do limite de faltas ou que já o atingiram.</p>
+                        </div>
+                        <label t-if="d.trimesters.length" class="o_edu_ar_picker">
+                            <span class="small text-muted">Trimestre</span>
+                            <select class="form-select" t-on-change="(ev) => this.onTrimester(ev)">
+                                <option t-foreach="d.trimesters" t-as="t" t-key="t.id" t-att-value="t.id" t-att-selected="t.id === this.state.trimesterId">
+                                    <t t-out="t.name"/><t t-if="t.current"> (corrente)</t>
+                                </option>
+                            </select>
+                        </label>
+                    </header>
+
+                    <section t-if="!d.has_employee" class="o_edu_ar_card">
+                        O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
+                    </section>
+                    <section t-elif="!d.trimesters.length" class="o_edu_ar_card text-muted">
+                        A escola ainda não tem trimestres neste ano lectivo, por isso não há faltas a contar.
+                    </section>
+                    <t t-else="">
+                        <!-- Nas minhas disciplinas -->
+                        <section aria-labelledby="o_edu_ar_mine" class="o_edu_ar_section">
+                            <h2 id="o_edu_ar_mine" class="o_edu_ar_h2">Nas suas disciplinas</h2>
+                            <p class="mb-0" t-out="this.mineSentence"/>
+                            <div t-if="d.mine.length" class="o_edu_ar_card p-0">
+                                <table class="table mb-0 o_edu_ar_table">
+                                    <thead>
+                                        <tr><th>Aluno</th><th>Faltas injustificadas</th><th>Situação</th><th/></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="d.mine" t-as="g" t-key="g.id">
+                                            <td>
+                                                <div class="fw-semibold" t-out="g.name"/>
+                                                <div class="small text-muted" t-out="g.class"/>
+                                            </td>
+                                            <td>
+                                                <ul class="o_edu_ar_items">
+                                                    <li t-foreach="g.items" t-as="item" t-key="item_index"
+                                                        t-att-class="'o_edu_ar_' + item.status" t-out="this.itemText(item)"/>
+                                                </ul>
+                                            </td>
+                                            <td><span class="o_edu_ar_status" t-att-class="'o_edu_ar_' + g.worst" t-out="this.status[g.worst]"/></td>
+                                            <td class="text-end">
+                                                <button t-if="g.worst === 'failed'" type="button" class="btn btn-link p-0" t-on-click="() => this.writeToGuardian()">
+                                                    Escrever ao encarregado
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- A turma que dirijo -->
+                        <section t-if="d.board" aria-labelledby="o_edu_ar_board" class="o_edu_ar_section">
+                            <t t-set="b" t-value="d.board"/>
+                            <div class="o_edu_ar_board_head">
+                                <h2 id="o_edu_ar_board" class="o_edu_ar_h2 mb-0">A turma que dirige: <t t-out="b.class"/></h2>
+                                <select t-if="d.classes.length > 1" class="form-select w-auto" aria-label="Turma" t-on-change="(ev) => this.onClass(ev)">
+                                    <option t-foreach="d.classes" t-as="c" t-key="c.id" t-att-value="c.id" t-att-selected="c.id === b.class_id" t-out="c.name"/>
+                                </select>
+                            </div>
+                            <p class="mb-0"><t t-out="this.boardSentence"/> <span class="text-muted" t-out="this.ruleSentence"/></p>
+                            <p t-if="!b.subjects.length" class="o_edu_ar_card mb-0 text-muted">Ainda não há aulas dadas com chamada nesta turma no trimestre.</p>
+                            <div t-else="" class="o_edu_ar_card p-0 o_edu_ar_scroll">
+                                <table class="table mb-0 o_edu_ar_table o_edu_ar_board">
+                                    <thead>
+                                        <tr>
+                                            <th>Aluno</th>
+                                            <th t-foreach="b.subjects" t-as="s" t-key="s.id" class="text-center" t-att-title="s.name">
+                                                <span class="d-block" t-out="s.code"/>
+                                                <span t-if="s.limit" class="d-block fw-normal small text-muted">limite <t t-out="s.limit"/></span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="b.students" t-as="st" t-key="st.id">
+                                            <td>
+                                                <span class="text-muted me-2" t-out="st.number"/><t t-out="st.name"/>
+                                                <span t-if="st.worst !== 'ok'" class="o_edu_ar_status ms-2" t-att-class="'o_edu_ar_' + st.worst" t-out="this.status[st.worst]"/>
+                                            </td>
+                                            <td t-foreach="b.subjects" t-as="s" t-key="s.id" class="text-center">
+                                                <t t-set="c" t-value="this.cell(st, s)"/>
+                                                <t t-if="c">
+                                                    <span t-att-class="'o_edu_ar_' + c.status" t-out="c.counted"/>
+                                                    <span t-if="c.excused" class="text-muted small"> (<t t-out="c.excused"/>)</span>
+                                                </t>
+                                                <span t-else="" class="text-muted">—</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="mb-0 small text-muted">Os números são as faltas injustificadas<t t-if="b.regime === 'technical'"> do ano</t>; entre parênteses, as justificadas do trimestre.</p>
+                        </section>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+</templates>

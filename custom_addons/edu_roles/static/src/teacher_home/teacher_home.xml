@@ -84,7 +84,7 @@
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_schedule')">
                                         <i class="oi me-2" data-icon="calendar_today" aria-hidden="true"/>O meu horário
                                     </button>
-                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_attendance.action_edu_absence_summary')">
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_absence_report')">
                                         <i class="oi me-2" data-icon="check_circle" aria-hidden="true"/>Relatório de faltas
                                     </button>
                                     <button type="button" class="btn btn-link" t-on-click="() => this.openAction('mail.action_discuss')">

@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.edu_attendance.models.absence_rules import absence_limit
 from odoo.exceptions import AccessError, UserError
 
 from .edu_teacher_home import WEEKDAYS, _hour
@@ -320,3 +321,144 @@ class EduAttendancePage(models.AbstractModel):
             lesson.action_done()
             done = True
         return dict(self.roll(lesson.id), done=done)
+
+    # Relatório de faltas
+
+    @api.model
+    def absence_report(self, trimester_id=False, class_id=False):
+        """«Relatório de faltas» (acção cliente ``edu_roles.absence_report``), como no secPed: os alunos a uma falta
+        do limite ou que já o atingiram nas disciplinas do professor, por aluno; e, para o director de turma, o mapa da
+        turma (faltas injustificadas por disciplina, com as justificadas e o limite). Os limites são os da lei (geral:
+        por trimestre e disciplina; técnico: anual, o triplo dos tempos semanais)."""
+        employee = self.env.user.employee_id
+        company = employee.company_id or self.env.company
+        year = self.env['edu.academic.year'].search(
+            [('company_id', '=', company.id), ('is_current', '=', True)], limit=1
+        )
+        trimesters = year.trimester_ids.sorted('number')
+        trimester = (
+            trimesters.filtered(lambda t: t.id == trimester_id)[:1]
+            or trimesters.filtered('is_current')[:1]
+            or trimesters[:1]
+        )
+        data = {
+            'has_employee': bool(employee),
+            'year': year.name or '',
+            'trimesters': [{'id': t.id, 'name': t.name, 'current': t.is_current} for t in trimesters],
+            'trimester_id': trimester.id or False,
+            'mine': [],
+            'classes': [],
+            'board': None,
+        }
+        if not employee or not trimester:
+            return data
+        Summary = self.env['edu.absence.summary'].sudo()
+        self.env.flush_all()
+        Summary.invalidate_model()
+        # Nas minhas disciplinas: as linhas em risco ou reprovadas, agrupadas por aluno.
+        assignments = (
+            self.env['edu.teaching.assignment']
+            .sudo()
+            .search([('teacher_id', '=', employee.id), ('academic_year_id', '=', year.id)])
+        )
+        pairs = {(a.class_id.id, a.subject_id.id) for a in assignments}
+        rows = Summary.search(
+            [('trimester_id', '=', trimester.id), ('class_id', 'in', assignments.class_id.ids), ('absent', '>=', 1)]
+        ).filtered(lambda s: (s.class_id.id, s.subject_id.id) in pairs and s.status != 'ok')
+        students = {}
+        for summary in rows:
+            regime = summary.class_id._edu_regime()
+            group = students.setdefault(
+                summary.enrollment_id.id,
+                {
+                    'id': summary.enrollment_id.id,
+                    'name': summary.student_id.name,
+                    'class': summary.class_id._editor_label(),
+                    'worst': 'at_risk',
+                    'items': [],
+                },
+            )
+            group['items'].append(
+                {
+                    'subject': summary.subject_id.name,
+                    'counted': summary.counted,
+                    'limit': summary.limit,
+                    'annual': regime == 'technical',
+                    'excused': summary.excused,
+                    'status': summary.status,
+                }
+            )
+            if summary.status == 'failed':
+                group['worst'] = 'failed'
+        data['mine'] = sorted(students.values(), key=lambda g: (g['worst'] != 'failed', (g['name'] or '').lower()))
+        # A turma que dirijo: o mapa da turma inteira.
+        directed = (
+            self.env['edu.class']
+            .sudo()
+            .search([('director_id', '=', employee.id), ('academic_year_id', '=', year.id)])
+            .sorted(lambda c: (c.class_number, c.name or ''))
+        )
+        data['classes'] = [{'id': c.id, 'name': c._editor_label()} for c in directed]
+        edu_class = directed.filtered(lambda c: c.id == class_id)[:1] or directed[:1]
+        if edu_class:
+            data['board'] = self._absence_board(edu_class, trimester)
+        return data
+
+    @api.model
+    def _absence_board(self, edu_class, trimester):
+        regime = edu_class._edu_regime()
+        summaries = (
+            self.env['edu.absence.summary']
+            .sudo()
+            .search([('trimester_id', '=', trimester.id), ('enrollment_id.class_id', '=', edu_class.id)])
+        )
+        subjects = summaries.subject_id.sorted(lambda s: s.name or '')
+        by_key = {(s.enrollment_id.id, s.subject_id.id): s for s in summaries}
+        enrollments = edu_class.enrollment_ids.filtered(lambda e: e.state in ('active', 'irregular')).sorted(
+            lambda e: (e.order_number, e.student_id.name or '')
+        )
+        students = []
+        counts = {'failed': 0, 'at_risk': 0}
+        for enrollment in enrollments:
+            cells = {}
+            worst = 'ok'
+            for subject in subjects:
+                summary = by_key.get((enrollment.id, subject.id))
+                if not summary:
+                    continue
+                cells[subject.id] = {
+                    'counted': summary.counted,
+                    'excused': summary.excused,
+                    'limit': summary.limit,
+                    'status': summary.status,
+                }
+                if summary.status == 'failed' or (summary.status == 'at_risk' and worst == 'ok'):
+                    worst = summary.status
+            if worst != 'ok':
+                counts[worst] += 1
+            students.append(
+                {
+                    'id': enrollment.id,
+                    'number': enrollment.order_number or '',
+                    'name': enrollment.student_id.name,
+                    'worst': worst,
+                    'cells': cells,
+                }
+            )
+        return {
+            'class_id': edu_class.id,
+            'class': edu_class._editor_label(),
+            'regime': regime,
+            'subjects': [
+                {'id': s.id, 'name': s.name, 'code': s.code or s.name, 'limit': absence_limit_of(edu_class, s)}
+                for s in subjects
+            ],
+            'students': students,
+            'failed': counts['failed'],
+            'at_risk': counts['at_risk'],
+        }
+
+
+def absence_limit_of(edu_class, subject):
+    """O limite de faltas injustificadas da disciplina na turma (o mesmo do resumo de faltas)."""
+    return absence_limit(edu_class._edu_weekly_hours(subject), edu_class._edu_regime()) or 0

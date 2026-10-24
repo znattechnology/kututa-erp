@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from lxml import etree
 
 from odoo import Command, fields
+from odoo.addons.edu_roles.models.edu_attendance_page import absence_limit_of
 from odoo.exceptions import AccessError, UserError
 from odoo.tests import TransactionCase, tagged
 
@@ -187,6 +188,40 @@ class TestEduRoles(TransactionCase):
         # Outra turma, onde não dá aulas nem é director: recusada.
         with self.assertRaises(AccessError):
             Page.lessons(self.class_b.id, self.lp.id)
+
+    def test_absence_report(self):
+        """«Relatório de faltas», como no secPed: o aluno que atingiu o limite nas disciplinas do professor e o mapa
+        da turma que dirige."""
+        self.year.action_generate_trimesters()
+        trimester = self.year.trimester_ids.sorted('number')[0]
+        trimester.is_current = True
+        self.class_a.director_id = self.teacher
+        student = self.env['edu.student'].create({'name': 'Aluno faltoso'})
+        enrollment = self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': self.class_a.id})
+        enrollment.action_confirm()
+        limit = absence_limit_of(self.class_a, self.lp)
+        self.assertTrue(limit)
+        regime = self.class_a._edu_regime()
+        failing = limit + 1 if regime == 'technical' else limit
+        for index in range(failing):
+            day = trimester.date_start + timedelta(days=index)
+            lesson = self.env['edu.lesson'].create(
+                {'class_id': self.class_a.id, 'subject_id': self.lp.id, 'date': day, 'hour_from': 8.0, 'hour_to': 9.0,
+                 'summary': 'Aula'}
+            )  # fmt: skip
+            lesson.action_open_roll_call()
+            lesson.attendance_ids.filtered(lambda line: line.enrollment_id == enrollment).state = 'absent'
+            lesson.action_done()
+        data = self.env['edu.attendance.page'].with_user(self.teacher_user).absence_report()
+        self.assertEqual(data['trimester_id'], trimester.id)
+        mine = next(g for g in data['mine'] if g['id'] == enrollment.id)
+        self.assertEqual(mine['worst'], 'failed')
+        self.assertEqual(mine['items'][0]['counted'], failing)
+        board = data['board']
+        self.assertEqual(board['class_id'], self.class_a.id)
+        row = next(r for r in board['students'] if r['id'] == enrollment.id)
+        self.assertEqual(row['cells'][self.lp.id]['status'], 'failed')
+        self.assertEqual(board['failed'], 1)
 
     def test_academic_calendar(self):
         """«Calendário académico», como no secPed: os eventos do ano e o início e o fim de cada trimestre; as datas
