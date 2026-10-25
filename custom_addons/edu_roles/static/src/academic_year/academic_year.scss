@@ -58,3 +58,27 @@
         font-size: 0.875rem;
     }
 }
+
+// Os trimestres em cartões, uma coluna por ano lectivo: o em curso com a margem da cor de acção.
+.o_edu_term_kanban {
+    .o_edu_term_card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_term_current {
+        box-shadow: inset 4px 0 0 $o-action;
+        padding-left: 12px;
+    }
+
+    .o_edu_term_name {
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .o_edu_term_buttons:empty {
+        display: none;
+    }
+}
