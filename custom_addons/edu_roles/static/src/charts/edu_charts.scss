@@ -10,6 +10,7 @@
 .o_edu_months,
 .o_edu_scale,
 .o_edu_levels,
+.o_edu_vstacks,
 .o_edu_chart_legend {
     --edu-chart-series: #2a78d6;
     --edu-chart-series-track: #cde2fb;
@@ -424,4 +425,59 @@
 
 .o_edu_chart_key[class*="o_edu_lvl_"] {
     background: var(--edu-lvl);
+}
+
+// Colunas empilhadas (as faltas de cada mês): os segmentos de baixo para cima, com 2px de superfície entre eles; o
+// total por cima e o mês por baixo. As cores são as das barras empilhadas.
+.o_edu_vstacks {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 8px;
+    align-items: end;
+    height: 140px;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--edu-chart-grid);
+    list-style: none;
+}
+
+.o_edu_vstack_slot {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    height: 100%;
+}
+
+.o_edu_vstack {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 2px;
+    width: 28px;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 4px 4px 0 0;
+
+    > span {
+        min-height: 3px;
+    }
+}
+
+.o_edu_vstack_value {
+    margin-bottom: 2px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.o_edu_vstacks_labels {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 8px;
+    margin-top: 4px;
+    color: $text-muted;
+    font-size: 0.75rem;
+    text-align: center;
 }

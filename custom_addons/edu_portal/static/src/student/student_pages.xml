@@ -426,7 +426,8 @@
                         <div t-if="a.at_risk.length" class="alert alert-warning mb-0">
                             Estás a uma falta injustificada do limite a <t t-out="this.list(a.at_risk)"/>.
                         </div>
-                        <t t-call="edu_portal.Part.AbsenceTable"/>
+<t t-call="edu_portal.Part.AbsencesOverview"/>
+                                                <t t-call="edu_portal.Part.AbsenceTable"/>
                         <p t-if="this.rule" class="mb-0 small text-muted" t-out="this.rule"/>
                     </t>
                 </div>
@@ -916,6 +917,69 @@
                 <div class="o_edu_cols_labels">
                     <span t-foreach="this.trend" t-as="t" t-key="t.id" t-att-class="{'fw-semibold': t.id === g.active.id}" t-out="t.name"/>
                 </div>
+            </section>
+        </div>
+    </t>
+
+    <!-- O resumo das faltas por cima da tabela (o aluno e o encarregado): quatro números, as faltas face ao limite de cada
+         disciplina (ou as presenças, sem limite por disciplina) e as faltas de cada mês. Usa ``a``. -->
+    <t t-name="edu_portal.Part.AbsencesOverview">
+        <div class="o_edu_kpis">
+            <div t-foreach="this.absenceTiles" t-as="t" t-key="t.key" class="o_edu_kpi">
+                <span class="o_edu_kpi_label" t-out="t.label"/>
+                <span class="o_edu_kpi_value" t-att-class="{'text-danger': t.bad}" t-out="t.value"/>
+                <span class="o_edu_kpi_detail" t-att-class="{'text-danger': t.bad, 'text-warning': t.warn}">
+                    <i t-if="t.bad or t.warn" class="oi me-1" data-icon="warning" aria-hidden="true"/><t t-out="t.detail"/>
+                </span>
+            </div>
+        </div>
+        <div class="o_edu_st_two">
+            <section class="o_edu_st_card" aria-labelledby="o_edu_st_ab_limit">
+                <t t-set="meters" t-value="this.absenceMeters"/>
+                <h2 id="o_edu_st_ab_limit" class="o_edu_st_h2" t-out="meters.length ? 'Faltas face ao limite' : 'Presenças'"/>
+                <ul t-if="meters.length" class="o_edu_meters">
+                    <li t-foreach="meters" t-as="m" t-key="m_index" t-att-title="m.name + ': ' + m.counted + ' de ' + m.limit + ' faltas injustificadas, ' + m.status_label.toLowerCase()">
+                        <div class="d-flex justify-content-between gap-2 small">
+                            <span t-out="m.name"/>
+                            <span class="o_edu_st_num text-nowrap" t-att-class="this.statusClass(m)"><t t-out="m.counted"/> de <t t-out="m.limit"/></span>
+                        </div>
+                        <span class="o_edu_meter" t-att-class="this.meterClass(m)"><span t-att-style="'width: ' + m.width + '%'"/></span>
+                    </li>
+                </ul>
+                <t t-else="">
+                    <t t-set="parts" t-value="this.absenceParts"/>
+                    <div class="o_edu_stacks">
+                        <div class="o_edu_stack" role="img" t-att-aria-label="parts.map((p) => p.label + ' ' + p.value).join(', ')">
+                            <t t-foreach="parts" t-as="p" t-key="p.key"><span t-if="p.value" t-att-class="p.css" t-att-style="'flex: ' + p.value"/></t>
+                        </div>
+                    </div>
+                    <ul class="o_edu_chart_legend mt-2 mb-0">
+                        <li t-foreach="parts" t-as="p" t-key="p.key"><span class="o_edu_chart_key" t-att-class="p.css"/><t t-out="p.label"/> <span class="o_edu_st_num" t-out="p.value"/></li>
+                    </ul>
+                    <p class="small text-muted mb-0 mt-2" t-out="a.preschool ? 'Na Iniciação as faltas não contam para passar de ano.' : 'No primário não há limite por disciplina: conta a frequência do ano, que tem de chegar a dois terços das aulas.'"/>
+                </t>
+            </section>
+            <section class="o_edu_st_card" aria-labelledby="o_edu_st_ab_months">
+                <h2 id="o_edu_st_ab_months" class="o_edu_st_h2">Faltas por mês</h2>
+                <t t-set="months" t-value="this.absenceMonths"/>
+                <p t-if="!months.some((m) => m.total)" class="mb-0 small text-muted">Nenhuma falta nem atraso neste ano lectivo.</p>
+                <t t-else="">
+                    <ul class="o_edu_vstacks" aria-label="Faltas por mês">
+                        <li t-foreach="months" t-as="m" t-key="m.key" class="o_edu_vstack_slot"
+                            t-att-title="m.name + ': ' + m.absent + ' injustificadas, ' + m.excused + ' justificadas, ' + m.late + ' atrasos'">
+                            <span t-if="m.total" class="o_edu_vstack_value" t-out="m.total"/>
+                            <span t-if="m.total" class="o_edu_vstack" t-att-style="'height: ' + m.height + '%'">
+                                <span t-foreach="m.parts" t-as="p" t-key="p.key" t-att-class="p.css" t-att-style="'flex: ' + p.value"/>
+                            </span>
+                        </li>
+                    </ul>
+                    <div class="o_edu_vstacks_labels"><span t-foreach="months" t-as="m" t-key="m.key" t-out="m.label"/></div>
+                    <ul class="o_edu_chart_legend mt-2 mb-0">
+                        <li><span class="o_edu_chart_key o_edu_stack_neg"/>Injustificadas</li>
+                        <li><span class="o_edu_chart_key o_edu_stack_missing"/>Justificadas</li>
+                        <li><span class="o_edu_chart_key o_edu_stack_partial"/>Atrasos</li>
+                    </ul>
+                </t>
             </section>
         </div>
     </t>

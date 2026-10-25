@@ -216,6 +216,7 @@ class EduStudentPortal(models.AbstractModel):
             data['exams'] = self.exams(student, enrollment)
         elif page == 'absences':
             data['absences'] = self.absences(student, enrollment)
+            data['absence_months'] = self._absence_months(student, enrollment)
         elif page == 'fees':
             data['fees'] = self.fees(student)
         elif page == 'profile':
@@ -850,6 +851,45 @@ class EduStudentPortal(models.AbstractModel):
         data['failed'] = [s['name'] for s in data['subjects'] if s['status'] == 'failed']
         data['at_risk'] = [s['name'] for s in data['subjects'] if s['status'] == 'at_risk']
         return data
+
+    @api.model
+    def _absence_months(self, student, enrollment):
+        """As faltas e os atrasos de cada mês do ano lectivo, até ao mês corrente (nas aulas dadas, como as contas da
+        regra): injustificadas, justificadas e atrasos."""
+        year = enrollment.academic_year_id
+        if not year or not year.date_start:
+            return []
+        today = self._now(student).date()
+        end = min(year.date_end or today, today)
+        groups = (
+            self.env['edu.lesson.attendance']
+            .sudo()
+            ._read_group(
+                [
+                    ('enrollment_id', '=', enrollment.id),
+                    ('lesson_state', '!=', 'cancelled'),
+                    ('state', 'in', ('absent', 'excused', 'late')),
+                ],
+                ['date:month', 'state'],
+                ['__count'],
+            )
+        )
+        counts = {(month.year, month.month, state): count for month, state, count in groups if month}
+        months = []
+        day = year.date_start.replace(day=1)
+        while day <= end:
+            months.append(
+                {
+                    'key': f'{day.year}-{day.month:02d}',
+                    'label': MONTHS[day.month - 1][:3].capitalize(),
+                    'name': f'{MONTHS[day.month - 1]} de {day.year}',
+                    'absent': counts.get((day.year, day.month, 'absent'), 0),
+                    'excused': counts.get((day.year, day.month, 'excused'), 0),
+                    'late': counts.get((day.year, day.month, 'late'), 0),
+                }
+            )
+            day = (day + timedelta(days=32)).replace(day=1)
+        return months
 
     # Propinas
 

@@ -148,6 +148,10 @@ class TestGuardianPortal(HttpCase):
         self.assertEqual((grades['year'], grades['year_missing']), ('2026/2027', '2025/2026'))
         grades = Portal.page_data('grades', {'student_id': self.ana.id, 'academic_year_id': self.year.id})['grades']
         self.assertEqual(grades['year_missing'], '')
+        # As faltas por mês, de Setembro até ao mês corrente.
+        months = Portal.page_data('absences')['absence_months']
+        self.assertEqual(months[0]['label'], 'Set')
+        self.assertEqual({m['absent'] + m['excused'] + m['late'] for m in months}, {0})
         card = Portal.page_data('children')['card']
         self.assertEqual(card['relationship'], 'Pai')
         lurdes = {'name': 'Professora Lurdes', 'partner_id': self.teacher_user.partner_id.id}

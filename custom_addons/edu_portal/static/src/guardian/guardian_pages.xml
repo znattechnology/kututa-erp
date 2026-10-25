@@ -504,15 +504,18 @@
                             <div t-if="a.at_risk.length" class="alert alert-warning mb-0">
                                 <t t-out="a.regime === 'technical' ? 'Está no limite de faltas injustificadas' : 'Está a uma falta injustificada do limite'"/> a <t t-out="this.list(a.at_risk)"/>.
                             </div>
+                            <t t-call="edu_portal.Part.AbsencesOverview"/>
                             <t t-call="edu_portal.Part.AbsenceTable"/>
                             <p t-if="this.rule" class="mb-0 small text-muted" t-out="this.rule"/>
                             <section t-if="d.recent.length" class="o_edu_st_section" aria-labelledby="o_edu_gd_recent">
                                 <h2 id="o_edu_gd_recent" class="o_edu_st_h2 mb-0">As últimas faltas e atrasos</h2>
-                                <ul class="o_edu_st_card o_edu_st_list">
-                                    <li t-foreach="d.recent" t-as="row" t-key="row.id">
-                                        <span class="o_edu_gd_day small text-muted" t-out="row.day"/>
-                                        <span class="flex-grow-1" t-out="row.subject"/>
-                                        <span class="small" t-att-class="row.state === 'absent' ? 'text-danger' : 'text-muted'" t-out="row.kind"/>
+                                <ul class="o_edu_st_card o_edu_feed_list o_edu_feed">
+                                    <li t-foreach="d.recent" t-as="row" t-key="row.id" class="o_edu_feed_item">
+                                        <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" t-att-data-icon="row.state === 'late' ? 'schedule' : 'person_off'"/></span>
+                                        <span class="o_edu_feed_text">
+                                            <span><t t-out="row.subject"/> <span class="small ms-1" t-att-class="row.state === 'absent' ? 'text-danger' : 'text-muted'" t-out="row.kind.toLowerCase()"/></span>
+                                            <span class="small text-muted" t-out="row.day"/>
+                                        </span>
                                     </li>
                                 </ul>
                                 <p class="mb-0 small text-muted">As faltas justificam-se junto do director de turma, com o documento que as justifica.</p>

@@ -83,6 +83,78 @@ class StudentPage extends Component {
         return this.trend.some((t) => t.value !== null);
     }
 
+    /** As faltas injustificadas face ao limite de cada disciplina (só as que têm limite no plano). */
+    get absenceMeters() {
+        const a = this.state.data.absences;
+        return (a.subjects || [])
+            .filter((s) => s.limit)
+            .map((s) => ({ ...s, width: Math.min(100, (s.counted / s.limit) * 100) }))
+            .sort((x, y) => y.width - x.width || x.name.localeCompare(y.name));
+    }
+
+    statusClass(subject) {
+        return { at_risk: "text-warning", failed: "text-danger" }[subject.status] || "text-muted";
+    }
+
+    meterClass(subject) {
+        return { at_risk: "o_edu_meter_warn", failed: "o_edu_meter_bad" }[subject.status] || "";
+    }
+
+    /** Os números das faltas, por cima da tabela (o aluno e o encarregado). */
+    get absenceTiles() {
+        const a = this.state.data.absences;
+        const technical = a.regime === "technical";
+        return [
+            {
+                key: "rate",
+                label: "Assiduidade",
+                value: `${a.rate}%`,
+                detail: `${a.present} de ${a.total} aulas com chamada`,
+                bad: a.rate < 75,
+            },
+            {
+                key: "absent",
+                label: "Faltas injustificadas",
+                value: String(a.absent),
+                detail: a.failed.length
+                    ? `${technical ? "Limite ultrapassado" : "Limite atingido"} a ${count(a.failed.length, "uma disciplina", "disciplinas")}`
+                    : a.at_risk.length
+                      ? `${technical ? "No limite" : "A uma falta do limite"} a ${count(a.at_risk.length, "uma disciplina", "disciplinas")}`
+                      : a.regime === "primary" ? "Sem limite por disciplina" : "Dentro do limite",
+                bad: a.failed.length > 0,
+                warn: !a.failed.length && a.at_risk.length > 0,
+            },
+            { key: "excused", label: "Faltas justificadas", value: String(a.excused), detail: "Não contam para o limite" },
+            { key: "late", label: "Atrasos", value: String(a.late), detail: "Contam como presença" },
+        ];
+    }
+
+    /** As aulas com chamada em partes: presenças, justificadas e injustificadas. */
+    get absenceParts() {
+        const a = this.state.data.absences;
+        return [
+            { key: "present", label: "Presenças", value: a.present, css: "o_edu_stack_pos" },
+            { key: "excused", label: "Justificadas", value: a.excused, css: "o_edu_stack_missing" },
+            { key: "absent", label: "Injustificadas", value: a.absent, css: "o_edu_stack_neg" },
+        ];
+    }
+
+    /** As faltas de cada mês em colunas empilhadas, na escala do mês com mais. */
+    get absenceMonths() {
+        const months = this.state.data.absence_months || [];
+        const max = Math.max(1, ...months.map((m) => m.absent + m.excused + m.late));
+        return months.map((m) => ({
+            ...m,
+            total: m.absent + m.excused + m.late,
+            parts: [
+                { key: "absent", label: "Injustificadas", value: m.absent, css: "o_edu_stack_neg" },
+                { key: "excused", label: "Justificadas", value: m.excused, css: "o_edu_stack_missing" },
+                { key: "late", label: "Atrasos", value: m.late, css: "o_edu_stack_partial" },
+            ].filter((p) => p.value),
+            height: ((m.absent + m.excused + m.late) / max) * 100,
+        }));
+    }
+
     /** «Subiu de 14,5 no 1.º trimestre» (a comparação com o trimestre anterior, quando é possível). */
     trendText(previous) {
         if (!previous) {
@@ -141,23 +213,6 @@ export class StudentHome extends StudentPage {
         const hour = new Date().getHours();
         const hello = hour < 12 ? "Bom dia" : hour < 19 ? "Boa tarde" : "Boa noite";
         return `${hello}, ${this.state.data.first_name}`;
-    }
-
-    /** As faltas injustificadas face ao limite de cada disciplina (só as que têm limite no plano). */
-    get absenceMeters() {
-        const a = this.state.data.absences;
-        return (a.subjects || [])
-            .filter((s) => s.limit)
-            .map((s) => ({ ...s, width: Math.min(100, (s.counted / s.limit) * 100) }))
-            .sort((x, y) => y.width - x.width || x.name.localeCompare(y.name));
-    }
-
-    statusClass(subject) {
-        return { at_risk: "text-warning", failed: "text-danger" }[subject.status] || "text-muted";
-    }
-
-    meterClass(subject) {
-        return { at_risk: "o_edu_meter_warn", failed: "o_edu_meter_bad" }[subject.status] || "";
     }
 
     get absenceTile() {
@@ -293,9 +348,6 @@ export class StudentAbsences extends StudentPage {
         return ABSENCE_RULES[this.state.data.absences.regime] || "";
     }
 
-    statusClass(subject) {
-        return { at_risk: "text-warning", failed: "text-danger" }[subject.status] || "text-muted";
-    }
 }
 
 export class StudentFees extends StudentPage {

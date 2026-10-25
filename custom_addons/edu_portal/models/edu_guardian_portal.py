@@ -121,6 +121,7 @@ class EduGuardianPortal(models.AbstractModel):
             data['rdec'] = self._rdec(student, enrollment, options.get('trimester_id'))
         elif page == 'absences':
             data['absences'] = Portal.absences(student, enrollment)
+            data['absence_months'] = Portal._absence_months(student, enrollment)
             data['recent'] = self._recent_absences(enrollment)
         elif page == 'exams':
             data['exams'] = Portal.exams(student, enrollment)
