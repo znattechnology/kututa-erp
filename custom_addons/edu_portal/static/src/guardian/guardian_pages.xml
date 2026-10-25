@@ -497,7 +497,6 @@
                         <t t-else="">
                             <t t-set="a" t-value="d.absences"/>
                             <p t-if="a.preschool" class="o_edu_st_card mb-0">Na Iniciação a assiduidade é informativa: não há reprovação por faltas (Decreto Executivo 424/25).</p>
-                            <p class="mb-0" t-out="this.sentence"/>
                             <div t-if="a.failed.length" class="alert alert-danger mb-0" role="alert">
                                 <t t-out="a.regime === 'technical' ? 'Passou' : 'Atingiu'"/> o limite de faltas injustificadas a <t t-out="this.list(a.failed)"/>. Fala com o director de turma: as faltas que tenham justificação ainda podem ser justificadas.
                             </div>
@@ -507,19 +506,7 @@
                             <t t-call="edu_portal.Part.AbsencesOverview"/>
                             <t t-call="edu_portal.Part.AbsenceTable"/>
                             <p t-if="this.rule" class="mb-0 small text-muted" t-out="this.rule"/>
-                            <section t-if="d.recent.length" class="o_edu_st_section" aria-labelledby="o_edu_gd_recent">
-                                <h2 id="o_edu_gd_recent" class="o_edu_st_h2 mb-0">As últimas faltas e atrasos</h2>
-                                <ul class="o_edu_st_card o_edu_feed_list o_edu_feed">
-                                    <li t-foreach="d.recent" t-as="row" t-key="row.id" class="o_edu_feed_item">
-                                        <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" t-att-data-icon="row.state === 'late' ? 'schedule' : 'person_off'"/></span>
-                                        <span class="o_edu_feed_text">
-                                            <span><t t-out="row.subject"/> <span class="small ms-1" t-att-class="row.state === 'absent' ? 'text-danger' : 'text-muted'" t-out="row.kind.toLowerCase()"/></span>
-                                            <span class="small text-muted" t-out="row.day"/>
-                                        </span>
-                                    </li>
-                                </ul>
-                                <p class="mb-0 small text-muted">As faltas justificam-se junto do director de turma, com o documento que as justifica.</p>
-                            </section>
+                            <t t-call="edu_portal.Part.RecentAbsences"/>
                         </t>
                     </t>
                 </div>

@@ -220,6 +220,7 @@ class EduStudentPortal(models.AbstractModel):
         elif page == 'absences':
             data['absences'] = self.absences(student, enrollment)
             data['absence_months'] = self._absence_months(student, enrollment)
+            data['recent'] = self._recent_absences(enrollment)
         elif page == 'fees':
             data['fees'] = self.fees(student)
             data['months'] = self._tuition_months(student, enrollment)
@@ -894,6 +895,65 @@ class EduStudentPortal(models.AbstractModel):
             )
             day = (day + timedelta(days=32)).replace(day=1)
         return months
+
+    @api.model
+    def _recent_absences(self, enrollment, limit=10):
+        """As últimas faltas e atrasos, com o dia e a disciplina, como no secPed."""
+        if not enrollment:
+            return []
+        attendances = (
+            self.env['edu.lesson.attendance']
+            .sudo()
+            .search(
+                [
+                    ('enrollment_id', '=', enrollment.id),
+                    ('state', 'in', tuple(ABSENCE_KINDS)),
+                    ('lesson_state', '!=', 'cancelled'),
+                ],
+                order='date desc, id desc',
+                limit=limit,
+            )
+        )
+        return [
+            {
+                'id': attendance.id,
+                'day': day_label(attendance.date),
+                'subject': attendance.subject_id.name,
+                'kind': ABSENCE_KINDS[attendance.state].capitalize(),
+                'state': attendance.state,
+            }
+            for attendance in attendances
+        ]
+
+    # O calendário
+
+    @api.model
+    def calendar_data(self):
+        """O «Calendário» do encarregado: o calendário académico da escola (o mesmo do professor) e as provas de cada
+        educando, com o nome dele, para se poder ver um de cada vez."""
+        Portal = self.env['edu.student.portal']
+        data = self.env['edu.teacher.home'].calendar_data()
+        data['children'] = []
+        for student in self._children():
+            name = first_name(student.name)
+            data['children'].append({'id': student.id, 'name': name})
+            enrollment = Portal._enrollment(student)
+            for row in Portal.exams(student, enrollment)['rows']:
+                data['events'].append(
+                    {
+                        'id': f'x{student.id}-{row["id"]}',
+                        'name': f'{row["subject"]} ({name})',
+                        'type': 'child_exam',
+                        'type_label': f'Prova de {name}',
+                        'start': row['date'],
+                        'end': row['date'],
+                        'description': f'{row["hours"]}' + (f', {row["rooms"]}' if row['rooms'] else ''),
+                        'commemorative': False,
+                        'child_id': student.id,
+                    }
+                )
+        data['events'].sort(key=lambda e: (e['start'], e['end']))
+        return data
 
     # Propinas
 

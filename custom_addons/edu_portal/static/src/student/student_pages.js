@@ -108,6 +108,11 @@ class StudentPage extends Component {
         return { at_risk: "o_edu_meter_warn", failed: "o_edu_meter_bad" }[subject.status] || "";
     }
 
+    /** As disciplinas com faltas injustificadas face ao limite (sem faltas, a frase basta). */
+    get countedMeters() {
+        return this.absenceMeters.filter((m) => m.counted);
+    }
+
     /** Os números das faltas, por cima da tabela (o aluno e o encarregado). */
     get absenceTiles() {
         const a = this.state.data.absences;
@@ -362,11 +367,6 @@ export class StudentHome extends StudentPage {
             }
         }
         return out;
-    }
-
-    /** As disciplinas com faltas injustificadas face ao limite (sem faltas, a frase basta). */
-    get countedMeters() {
-        return this.absenceMeters.filter((m) => m.counted);
     }
 
     when(item) {
