@@ -50,19 +50,27 @@ class StudentPage extends Component {
         return grade ? grade.text : "—";
     }
     /** As notas do trimestre por disciplina, em barras de 0 ao máximo da escala (as sem nota ficam sem barra). */
+    /** Um ano só com as classificações do ano, sem notas por trimestre (os anos migrados das classes de exame, de que
+     * o secPed só trouxe a CA, o EN e a CF): o resumo fala da CF. */
+    get finalsOnly() {
+        const g = this.state.data.grades;
+        return Boolean(g.subjects && !(g.trend || []).some((t) => t.value !== null) && g.subjects.some((s) => s.final));
+    }
+
     get gradeBars() {
         const g = this.state.data.grades;
         if (!g.active || !g.subjects) {
             return [];
         }
         const max = g.scale_max || 20;
+        const finals = this.finalsOnly;
         return g.subjects.map((s) => {
-            const ct = s.by_trimester[g.active.id].ct;
+            const grade = finals ? s.final : s.by_trimester[g.active.id].ct;
             return {
                 id: s.id,
                 name: s.name,
-                grade: ct,
-                width: ct ? Math.max(2, Math.min(100, (ct.value / max) * 100)) : 0,
+                grade,
+                width: grade ? Math.max(2, Math.min(100, (grade.value / max) * 100)) : 0,
             };
         });
     }
@@ -222,6 +230,27 @@ class StudentPage extends Component {
         return days <= 0 ? "Hoje" : days === 1 ? "Amanhã" : `Daqui a ${days} dias`;
     }
 
+    /** O resumo de um ano só com as classificações do ano: a média e as positivas e negativas na CF, e o resultado. */
+    get finalTiles() {
+        const g = this.state.data.grades;
+        const finals = g.subjects.map((s) => s.final).filter(Boolean);
+        const negatives = g.subjects.filter((s) => s.final && !s.final.pos).map((s) => s.name);
+        const mean = finals.reduce((sum, f) => sum + f.value, 0) / finals.length;
+        const r = g.year_result;
+        return [
+            {
+                key: "average",
+                label: "Média final (CF)",
+                value: r && r.average ? r.average : mean.toFixed(1).replace(".", ","),
+                detail: `Positiva a partir de ${g.pass_text}`,
+                bad: r ? r.bad : mean < g.pass_grade,
+            },
+            { key: "positives", label: "Positivas", value: String(finals.length - negatives.length), detail: `de ${count(finals.length, "uma disciplina", "disciplinas")}, na CF` },
+            { key: "negatives", label: "Negativas", value: String(negatives.length), detail: negatives.length ? list(negatives) : "Nenhuma", bad: negatives.length > 0 },
+            { key: "result", label: "Resultado do ano", value: r ? r.status : "—", detail: r ? (g.past ? "Ano lectivo fechado" : "Decisão do fim do ano") : "Ainda por decidir", bad: r && r.bad, money: true },
+        ];
+    }
+
     /** «Subiu de 14,5 no 1.º trimestre» (a comparação com o trimestre anterior, quando é possível). */
     trendText(previous) {
         if (!previous) {
@@ -235,6 +264,9 @@ class StudentPage extends Component {
      * e a média do ano. */
     get gradeTiles() {
         const g = this.state.data.grades;
+        if (this.finalsOnly) {
+            return this.finalTiles;
+        }
         const sp = g.summary_parts || {};
         const cells = g.subjects.map((s) => s.by_trimester[g.active.id].ct);
         const graded = cells.filter(Boolean);
@@ -365,6 +397,31 @@ export class StudentHome extends StudentPage {
 export class StudentGrades extends StudentPage {
     static template = "edu_portal.StudentGrades";
     static page = "grades";
+
+    setup() {
+        super.setup();
+        this.state.showEmpty = false;
+    }
+
+    /** Uma disciplina sem nenhuma nota no ano, em nenhum regime: no trimestre (as contínuas, a MAC ou a NPP, a prova
+     * ou a NPT, a MT ou o CT, em qualquer trimestre) nem no ano (CA, EN, CF, PG, CFD, situação). */
+    isEmptySubject(s) {
+        const cells = Object.values(s.by_trimester || {});
+        const inTrimester = cells.some((c) => c.mac || c.npt || c.ct || (c.components || []).some(Boolean));
+        return !inTrimester && !s.annual && !s.national && !s.cf && !s.pg && !s.final && !s.cfd && !s.situation;
+    }
+
+    /** As disciplinas da pauta: as sem nenhuma nota ficam escondidas atrás de um botão (havendo outras com notas). */
+    get gradeRows() {
+        const subjects = this.state.data.grades.subjects;
+        const empty = subjects.filter((s) => this.isEmptySubject(s));
+        const hide = !this.state.showEmpty && empty.length < subjects.length;
+        return { rows: hide ? subjects.filter((s) => !this.isEmptySubject(s)) : subjects, hidden: hide ? empty.length : 0, empty: empty.length };
+    }
+
+    toggleEmpty() {
+        this.state.showEmpty = !this.state.showEmpty;
+    }
 
     selectTrimester(trimester) {
         return this.load({ enrollment_id: this.state.data.grades.enrollment_id, trimester_id: trimester.id });

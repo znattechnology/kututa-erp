@@ -298,7 +298,7 @@
                                     <t t-out="y.label"/><t t-if="y.current"> (este ano)</t>
                                 </option>
                             </select>
-                            <div t-if="g.active" class="btn-group" role="group" aria-label="Trimestre">
+                            <div t-if="g.active and !this.finalsOnly" class="btn-group" role="group" aria-label="Trimestre">
                                 <button t-foreach="g.trimesters" t-as="t" t-key="t.id" type="button" class="btn"
                                         t-att-class="t.id === g.active.id ? 'btn-primary' : 'btn-secondary'"
                                         t-att-aria-pressed="t.id === g.active.id ? 'true' : 'false'"
@@ -838,13 +838,16 @@
         <div class="o_edu_kpis">
             <div t-foreach="this.gradeTiles" t-as="t" t-key="t.key" class="o_edu_kpi">
                 <span class="o_edu_kpi_label" t-out="t.label"/>
-                <span class="o_edu_kpi_value" t-att-class="{'text-danger': t.bad}" t-out="t.value"/>
+                <span class="o_edu_kpi_value" t-att-class="{'text-danger': t.bad, 'o_edu_kpi_money': t.money}" t-out="t.value"/>
                 <span class="o_edu_kpi_detail" t-att-class="{'text-danger': t.bad}" t-out="t.detail"/>
             </div>
         </div>
-        <div t-if="this.gradeBars.some((b) => b.grade)" class="o_edu_st_grid">
+        <div t-if="this.gradeBars.some((b) => b.grade)" t-att-class="this.hasTrend ? 'o_edu_st_grid' : 'o_edu_st_section'">
             <section class="o_edu_st_card" aria-labelledby="o_edu_st_ov_bars">
-                <h2 id="o_edu_st_ov_bars" class="o_edu_st_h2">Notas do <t t-out="g.active.name.replace('Trimestre', 'trimestre')"/></h2>
+                <h2 id="o_edu_st_ov_bars" class="o_edu_st_h2">
+                    <t t-if="this.finalsOnly">Classificação final de cada disciplina (CF)</t>
+                    <t t-else="">Notas do <t t-out="g.active.name.replace('Trimestre', 'trimestre')"/></t>
+                </h2>
                 <div class="o_edu_hbars" role="list">
                     <div t-foreach="this.gradeBars.filter((b) => b.grade)" t-as="bar" t-key="bar.id" class="o_edu_hbar_row" role="listitem"
                          t-att-title="bar.name + ': ' + (bar.grade ? bar.grade.text + ' valores' + (bar.grade.pos ? '' : ', negativa') : 'sem nota')">
@@ -865,7 +868,7 @@
                 </p>
                 <p class="small text-muted mb-0 mt-2">A linha marca a positiva (<t t-out="g.pass_text"/> valores). Escala de 0 a <t t-out="g.scale_max"/>.</p>
             </section>
-            <section class="o_edu_st_card" aria-labelledby="o_edu_st_ov_trend">
+            <section t-if="this.hasTrend" class="o_edu_st_card" aria-labelledby="o_edu_st_ov_trend">
                 <h2 id="o_edu_st_ov_trend" class="o_edu_st_h2">Média por trimestre</h2>
                 <div class="o_edu_cols o_edu_st_cols_focus" role="list">
                     <span class="o_edu_cols_pass" t-att-style="'bottom: ' + this.passLeft + '%'"/>
@@ -1080,18 +1083,9 @@
             <t t-if="r.absence"> Reprovado por faltas.</t>
             <t t-if="r.negatives.length"> <t t-out="r.negatives.length === 1 ? 'Negativa a' : 'Negativas a'"/> <t t-out="this.list(r.negatives)"/>.</t>
         </div>
-        <!-- A frase do secPed: a média do trimestre, a evolução e as negativas. -->
+        <!-- A média do trimestre, a evolução e as negativas estão nos números de cima (o resumo). -->
         <t t-set="sp" t-value="g.summary_parts"/>
-        <p class="mb-0">
-            <t t-if="sp.empty" t-out="sp.text"/>
-            <t t-else="">
-                <!-- «No» como expressão: solto, o Odoo traduzia-o para «Não». -->
-                <t t-out="'No ' + sp.trimester + ' a média é '"/>
-                <span class="fw-semibold" t-att-class="sp.average_pos ? 'text-primary' : 'text-danger'" t-out="sp.average"/><t t-if="sp.previous"> (<t t-out="sp.previous.trend"/> <t t-out="sp.previous.average"/> do <t t-out="sp.previous.name"/>)</t>, <t t-out="sp.tail"/>.
-            </t>
-            <span class="text-muted"> Positiva a partir de <t t-out="g.pass_text"/>.</span>
-        </p>
-
+        <t t-set="gr" t-value="this.gradeRows"/>
         <section t-if="!g.subjects.length" class="o_edu_st_card text-muted">Ainda não há disciplinas na matrícula.</section>
         <t t-else="">
             <!-- Ecrãs largos: a pauta completa. -->
@@ -1100,10 +1094,10 @@
                     <thead>
                         <tr>
                             <th>Disciplina</th>
-                            <th t-foreach="this.components" t-as="i" t-key="i" class="text-center" title="Avaliação contínua">Av<t t-out="i + 1"/></th>
-                            <th class="text-center" t-att-title="tec ? 'Nota do professor' : 'Média das avaliações contínuas'" t-out="this.macLabel"/>
-                            <th t-if="a.has_npt" class="text-center" title="Prova trimestral" t-out="this.examLabel"/>
-                            <th class="text-center" t-att-title="tec ? 'Classificação do trimestre (engloba os anteriores)' : 'Média do trimestre'"><t t-if="tec">CT</t><t t-else="">MT</t><t t-out="a.number"/></th>
+                            <th t-foreach="this.finalsOnly ? [] : this.components" t-as="i" t-key="i" class="text-center" title="Avaliação contínua">Av<t t-out="i + 1"/></th>
+                            <th t-if="!this.finalsOnly" class="text-center" t-att-title="tec ? 'Nota do professor' : 'Média das avaliações contínuas'" t-out="this.macLabel"/>
+                            <th t-if="a.has_npt and !this.finalsOnly" class="text-center" title="Prova trimestral" t-out="this.examLabel"/>
+                            <th t-if="!this.finalsOnly" class="text-center" t-att-title="tec ? 'Classificação do trimestre (engloba os anteriores)' : 'Média do trimestre'"><t t-if="tec">CT</t><t t-else="">MT</t><t t-out="a.number"/></th>
                             <t t-if="tec">
                                 <th class="text-center o_edu_st_sep" title="Classificação de frequência do ano">CF</th>
                                 <th t-if="g.show_pg" class="text-center" title="Prova global">PG</th>
@@ -1119,18 +1113,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr t-foreach="g.subjects" t-as="s" t-key="s.id">
+                        <tr t-foreach="gr.rows" t-as="s" t-key="s.id">
                             <t t-set="cell" t-value="s.by_trimester[a.id]"/>
                             <td>
                                 <div t-out="s.name"/>
                                 <div t-if="s.code" class="small text-muted" t-out="s.code"/>
                             </td>
-                            <td t-foreach="this.components" t-as="i" t-key="i" class="text-center">
+                            <td t-foreach="this.finalsOnly ? [] : this.components" t-as="i" t-key="i" class="text-center">
                                 <span t-att-class="this.gradeClass(this.component(cell, i))" t-out="this.gradeText(this.component(cell, i))"/>
                             </td>
-                            <td class="text-center"><span t-att-class="this.gradeClass(cell.mac)" t-out="this.gradeText(cell.mac)"/></td>
-                            <td t-if="a.has_npt" class="text-center"><span t-att-class="this.gradeClass(cell.npt)" t-out="this.gradeText(cell.npt)"/></td>
-                            <td class="text-center"><span t-att-class="this.gradeClass(cell.ct, true)" t-out="this.gradeText(cell.ct)"/></td>
+                            <td t-if="!this.finalsOnly" class="text-center"><span t-att-class="this.gradeClass(cell.mac)" t-out="this.gradeText(cell.mac)"/></td>
+                            <td t-if="a.has_npt and !this.finalsOnly" class="text-center"><span t-att-class="this.gradeClass(cell.npt)" t-out="this.gradeText(cell.npt)"/></td>
+                            <td t-if="!this.finalsOnly" class="text-center"><span t-att-class="this.gradeClass(cell.ct, true)" t-out="this.gradeText(cell.ct)"/></td>
                             <t t-if="tec">
                                 <td class="text-center o_edu_st_sep"><span t-att-class="this.gradeClass(s.cf)" t-out="this.gradeText(s.cf)"/></td>
                                 <td t-if="g.show_pg" class="text-center"><span t-att-class="this.gradeClass(s.pg)" t-out="this.gradeText(s.pg)"/></td>
@@ -1153,25 +1147,30 @@
 
             <!-- Telemóvel: uma linha por disciplina, com a nota do trimestre à direita. -->
             <ul class="o_edu_st_card o_edu_st_list d-md-none">
-                <li t-foreach="g.subjects" t-as="s" t-key="s.id">
+                <li t-foreach="gr.rows" t-as="s" t-key="s.id">
                     <t t-set="cell" t-value="s.by_trimester[a.id]"/>
                     <div class="flex-grow-1">
                         <div t-out="s.name"/>
                         <div class="small text-muted">
-                            <t t-out="this.macLabel"/> <t t-out="this.gradeText(cell.mac)"/><t t-if="a.has_npt">, <t t-out="this.examLabel"/> <t t-out="this.gradeText(cell.npt)"/></t><t t-if="s.cfd">, CFD <t t-out="s.cfd.text"/></t><t t-if="s.situation">, <span t-att-class="s.situation.pos ? 'text-primary' : 'text-danger'" t-out="s.situation.label.toLowerCase()"/></t>
+                            <t t-if="this.finalsOnly">CA <t t-out="this.gradeText(s.annual)"/><t t-if="s.national">, EN <t t-out="s.national.text"/></t></t>
+                            <t t-else=""><t t-out="this.macLabel"/> <t t-out="this.gradeText(cell.mac)"/></t><t t-if="a.has_npt and !this.finalsOnly">, <t t-out="this.examLabel"/> <t t-out="this.gradeText(cell.npt)"/></t><t t-if="s.cfd">, CFD <t t-out="s.cfd.text"/></t><t t-if="s.situation">, <span t-att-class="s.situation.pos ? 'text-primary' : 'text-danger'" t-out="s.situation.label.toLowerCase()"/></t>
                         </div>
                     </div>
-                    <span class="fs-5" t-att-class="this.gradeClass(cell.ct, true)" t-out="this.gradeText(cell.ct)"/>
+                    <span class="fs-5" t-att-class="this.gradeClass(this.finalsOnly ? s.final : cell.ct, true)" t-out="this.gradeText(this.finalsOnly ? s.final : cell.ct)"/>
                 </li>
             </ul>
+            <button t-if="gr.empty and gr.empty &lt; g.subjects.length" type="button" class="btn btn-link p-0 align-self-start" t-on-click="() => this.toggleEmpty()">
+                <t t-if="gr.hidden" t-out="'Mostrar ' + (gr.hidden === 1 ? 'a disciplina ainda sem notas' : 'as ' + gr.hidden + ' disciplinas ainda sem notas')"/>
+                <t t-else="">Esconder as disciplinas sem notas</t>
+            </button>
         </t>
 
         <!-- A legenda das siglas, como no secPed. -->
         <dl class="o_edu_st_legend small text-muted mb-0">
-            <div t-if="!tec and g.components"><dt>Av</dt><dd>avaliações contínuas do trimestre</dd></div>
-            <div><dt t-out="this.macLabel"/><dd t-out="tec ? 'nota do professor' : 'média das avaliações contínuas'"/></div>
-            <div t-if="a.has_npt"><dt t-out="this.examLabel"/><dd>prova trimestral</dd></div>
-            <div>
+            <div t-if="!tec and g.components and !this.finalsOnly"><dt>Av</dt><dd>avaliações contínuas do trimestre</dd></div>
+            <div t-if="!this.finalsOnly"><dt t-out="this.macLabel"/><dd t-out="tec ? 'nota do professor' : 'média das avaliações contínuas'"/></div>
+            <div t-if="a.has_npt and !this.finalsOnly"><dt t-out="this.examLabel"/><dd>prova trimestral</dd></div>
+            <div t-if="!this.finalsOnly">
                 <dt><t t-if="tec">CT</t><t t-else="">MT</t><t t-out="a.number"/></dt>
                 <dd t-if="tec">classificação do <t t-out="sp.trimester or 'trimestre'"/><t t-if="a.has_npt">: (NPP + NPT) ÷ 2, juntando os trimestres anteriores</t><t t-else="">: no último trimestre só há a NPP, e o CT do trimestre é a CF</t></dd>
                 <dd t-else="">média do <t t-out="sp.trimester or 'trimestre'"/></dd>

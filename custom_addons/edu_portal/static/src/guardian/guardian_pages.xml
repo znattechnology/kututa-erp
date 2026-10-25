@@ -329,7 +329,7 @@
                                     <t t-out="y.label"/><t t-if="y.current"> (este ano)</t>
                                 </option>
                             </select>
-                            <div t-if="g.active and !g.blocked" class="btn-group" role="group" aria-label="Trimestre">
+                            <div t-if="g.active and !g.blocked and !this.finalsOnly" class="btn-group" role="group" aria-label="Trimestre">
                                 <button t-foreach="g.trimesters" t-as="t" t-key="t.id" type="button" class="btn"
                                         t-att-class="t.id === g.active.id ? 'btn-primary' : 'btn-secondary'"
                                         t-att-aria-pressed="t.id === g.active.id ? 'true' : 'false'"
