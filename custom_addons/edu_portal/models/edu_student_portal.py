@@ -925,36 +925,6 @@ class EduStudentPortal(models.AbstractModel):
             for attendance in attendances
         ]
 
-    # O calendário
-
-    @api.model
-    def calendar_data(self):
-        """O «Calendário» do encarregado: o calendário académico da escola (o mesmo do professor) e as provas de cada
-        educando, com o nome dele, para se poder ver um de cada vez."""
-        Portal = self.env['edu.student.portal']
-        data = self.env['edu.teacher.home'].calendar_data()
-        data['children'] = []
-        for student in self._children():
-            name = first_name(student.name)
-            data['children'].append({'id': student.id, 'name': name})
-            enrollment = Portal._enrollment(student)
-            for row in Portal.exams(student, enrollment)['rows']:
-                data['events'].append(
-                    {
-                        'id': f'x{student.id}-{row["id"]}',
-                        'name': f'{row["subject"]} ({name})',
-                        'type': 'child_exam',
-                        'type_label': f'Prova de {name}',
-                        'start': row['date'],
-                        'end': row['date'],
-                        'description': f'{row["hours"]}' + (f', {row["rooms"]}' if row['rooms'] else ''),
-                        'commemorative': False,
-                        'child_id': student.id,
-                    }
-                )
-        data['events'].sort(key=lambda e: (e['start'], e['end']))
-        return data
-
     # Propinas
 
     @api.private
