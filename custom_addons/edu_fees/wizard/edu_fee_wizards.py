@@ -131,3 +131,20 @@ class EduFeeService(models.TransientModel):
         line = self.fee_line_id
         move = line._create_invoice(self.enrollment_id, fields.Date.context_today(self), key, quantity=self.quantity)
         return {'type': 'ir.actions.act_window', 'res_model': 'account.move', 'res_id': move.id, 'view_mode': 'form'}
+
+
+class EduStudentCardRevoke(models.TransientModel):
+    """Revogação do cartão (perda, roubo, dados errados). A 2.ª via segue o caminho de sempre: pagar e emitir."""
+
+    _name = 'edu.student.card.revoke'
+    _description = 'Revogar o cartão de estudante'
+
+    student_id = fields.Many2one('edu.student', string='Aluno', required=True)
+    reason = fields.Char(string='Motivo', required=True)
+
+    def action_confirm(self):
+        self.ensure_one()
+        if not self.student_id.edu_card_id:
+            raise UserError(self.env._('O aluno não tem cartão activo.'))
+        self.student_id.edu_card_id.sudo()._revoke(self.reason)
+        return {'type': 'ir.actions.act_window_close'}

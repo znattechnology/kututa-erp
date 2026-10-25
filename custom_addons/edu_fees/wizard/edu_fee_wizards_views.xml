@@ -57,4 +57,23 @@
             </form>
         </field>
     </record>
+
+    <record id="edu_student_card_revoke_form" model="ir.ui.view">
+        <field name="name">edu.student.card.revoke.form</field>
+        <field name="model">edu.student.card.revoke</field>
+        <field name="arch" type="xml">
+            <form string="Revogar o cartão">
+                <p class="text-muted">O cartão deixa de valer. Para uma 2.ª via, o aluno paga de novo a taxa na tesouraria e
+                a secretaria emite o cartão novo.</p>
+                <group>
+                    <field name="student_id" readonly="1"/>
+                    <field name="reason" placeholder="Perda, roubo, dados errados…"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Revogar" class="btn-danger"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>

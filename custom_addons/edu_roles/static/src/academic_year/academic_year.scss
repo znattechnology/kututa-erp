@@ -981,3 +981,31 @@
         min-width: 0;
     }
 }
+
+// Cartão de estudante: a fotografia em destaque (sem ela não se emite) e as acções do estado no fundo do cartão.
+.o_edu_scard_kanban {
+    .o_kanban_group {
+        min-width: 300px;
+    }
+
+    .o_edu_scard_card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        height: 100%;
+        padding: 2px;
+    }
+
+    .o_edu_scard_photo img {
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .o_edu_scard_name {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-height: 1.25;
+    }
+}

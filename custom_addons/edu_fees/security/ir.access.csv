@@ -20,3 +20,8 @@ edu_fee_plan_comp_rule,edu.fee.plan multi-empresa,edu.fee.plan,,crud,"[('company
 edu_fee_plan_line_comp_rule,edu.fee.plan.line multi-empresa,edu.fee.plan.line,,crud,"[('company_id', 'in', company_ids)]"
 edu_scholarship_comp_rule,edu.scholarship multi-empresa,edu.scholarship,,crud,"[('company_id', 'in', company_ids)]"
 edu_late_fee_rule_comp_rule,edu.late.fee.rule multi-empresa,edu.late.fee.rule,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_student_card_user,access_edu_student_card_user,edu.student.card,edu_core.group_edu_user,r,
+access_edu_student_card_finance,access_edu_student_card_finance,edu.student.card,edu_fees.group_edu_finance,r,
+access_edu_student_card_manager,access_edu_student_card_manager,edu.student.card,edu_core.group_edu_manager,crud,
+access_edu_student_card_revoke_user,access_edu_student_card_revoke_user,edu.student.card.revoke,edu_core.group_edu_user,crud,
+edu_student_card_comp_rule,edu.student.card multi-empresa,edu.student.card,,crud,"[('company_id', 'in', company_ids)]"

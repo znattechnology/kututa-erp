@@ -6,6 +6,8 @@ from odoo.addons.edu_fees.models.edu_fee_plan import due_dates
 from odoo.exceptions import UserError
 from odoo.tests import tagged
 
+PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+
 
 @tagged('post_install', '-at_install', 'post_install_l10n', 'edu')
 class TestEduFees(AccountTestInvoicingCommon):
@@ -305,6 +307,47 @@ class TestEduFees(AccountTestInvoicingCommon):
             .action_confirm()['res_id']
         )
         self.assertEqual((card_move.amount_untaxed, card_move.amount_total), (3_000, 3_420))
+
+    def test_student_card(self):
+        """Cartão como no secPed: só se emite com a taxa paga e a fotografia; cada pagamento dá um cartão; a 2.ª via
+        revoga o anterior; só se imprime o cartão emitido."""
+        self._enroll(date(2026, 9, 1))
+        student = self.student
+        self.assertEqual(student.edu_card_state, 'none')
+        with self.assertRaises(UserError):
+            self.env['ir.actions.report']._render_qweb_html('edu_documents.report_student_card', student.ids)
+        card_line = self.plan.line_ids.filtered(lambda line: line.category == 'card')
+        action = student.action_edu_charge_card()
+        self.assertEqual(action['context']['default_fee_line_id'], card_line.id)
+
+        def charge_and_pay():
+            self.env['edu.fee.service'].create({'student_id': student.id, 'fee_line_id': card_line.id}).action_confirm()
+            self.assertEqual(student.edu_card_state, 'awaiting' if not student.edu_card_id else 'issued')
+            self.env['edu.fee.payment'].create(
+                {'student_id': student.id, 'amount': 3_420, 'journal_id': self.company_data['default_journal_cash'].id}
+            ).action_confirm()
+
+        charge_and_pay()
+        self.assertEqual(student.edu_card_state, 'ready')
+        with self.assertRaisesRegex(UserError, 'fotografia'):
+            student.action_edu_issue_card()
+        student.image_1920 = PIXEL
+        student.action_edu_issue_card()
+        first = student.edu_card_id
+        self.assertEqual((student.edu_card_state, first.expiry_date), ('issued', self.year.date_end))
+        # O pagamento já deu o cartão: emitir outra vez pede novo pagamento.
+        with self.assertRaisesRegex(UserError, 'não está paga'):
+            student.action_edu_issue_card()
+        self.assertIn(first.code, str(self.env['ir.actions.report']._render_qweb_html(
+            'edu_documents.report_student_card', student.ids
+        )[0]))  # fmt: skip
+        # 2.ª via: paga-se de novo e o cartão anterior fica revogado.
+        charge_and_pay()
+        student.action_edu_issue_card()
+        self.assertEqual(first.state, 'revoked')
+        self.assertNotEqual(student.edu_card_id, first)
+        self.env['edu.student.card.revoke'].create({'student_id': student.id, 'reason': 'Perda'}).action_confirm()
+        self.assertEqual((student.edu_card_state, student.edu_card_revoked), ('none', True))
 
     def test_line_category_drives_tax(self):
         """O IVA e o artigo seguem a categoria escolhida (o cartão tem IVA de 14%)."""

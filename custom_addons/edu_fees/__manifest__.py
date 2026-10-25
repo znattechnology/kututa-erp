@@ -34,6 +34,7 @@ Secretaria Express: a tesouraria da escola sobre a facturação do Odoo.
         'views/edu_fees_views.xml',
         'views/res_company_views.xml',
         'views/menus.xml',
+        'report/edu_student_card_report.xml',
     ],
     'license': 'OPL-1',
 }

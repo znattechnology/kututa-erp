@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- O cartão impresso é o cartão emitido: a validade é a do cartão (fim do ano lectivo da emissão) e o QR leva o
+         código do cartão, que a portaria verifica. -->
+    <template id="report_student_card_issued" inherit_id="edu_documents.report_student_card">
+        <xpath expr="//div[@t-if='e'][last()]" position="replace">
+            <t t-set="card" t-value="s.edu_card_id"/>
+            <div t-if="card.expiry_date">Válido até: <t t-out="card.expiry_date.strftime('%d/%m/%Y')"/></div>
+        </xpath>
+        <xpath expr="//div[@t-out='s.name']/.." position="after">
+            <img t-if="s.edu_card_id" style="width: 16mm; height: 16mm; margin-left: auto;"
+                 t-att-src="'/report/barcode/?barcode_type=QR&amp;value=%s&amp;width=160&amp;height=160' % s.edu_card_id.code"/>
+        </xpath>
+    </template>
+</odoo>
