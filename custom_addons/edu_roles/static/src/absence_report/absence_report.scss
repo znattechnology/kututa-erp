@@ -104,4 +104,64 @@
         color: $danger;
         font-weight: 600;
     }
+
+    .o_edu_ar_kpis .o_edu_kpi:hover {
+        border-color: $border-color;
+    }
+
+    // A parte do limite já gasta em cada disciplina de um aluno (cheia quando o passou).
+    .o_edu_ar_items > li + li {
+        margin-top: 6px;
+    }
+
+    .o_edu_ar_limit {
+        display: block;
+        max-width: 220px;
+        height: 4px;
+        margin-top: 2px;
+        overflow: hidden;
+        border-radius: 2px;
+        background: $gray-200;
+
+        > span {
+            display: block;
+            height: 100%;
+            border-radius: 2px;
+        }
+    }
+
+    .o_edu_ar_limit_at_risk > span {
+        background: $warning;
+    }
+
+    .o_edu_ar_limit_failed > span {
+        background: $danger;
+    }
+
+    // Por disciplina: um cartão por disciplina de cada turma, com a assiduidade em número e em medidor.
+    .o_edu_ar_subjects {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_ar_subject {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 14px 18px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_ar_rate {
+        font-size: 1.35rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+    }
 }

@@ -28,6 +28,34 @@
                         A escola ainda não tem trimestres neste ano lectivo, por isso não há faltas a contar.
                     </section>
                     <t t-else="">
+                        <!-- Os números do trimestre -->
+                        <t t-set="k" t-value="this.kpis"/>
+                        <div class="o_edu_kpis o_edu_ar_kpis">
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Reprovados por faltas</span>
+                                <span class="o_edu_kpi_value" t-att-class="{'text-danger': k.failed}" t-out="k.failed"/>
+                                <span class="o_edu_kpi_detail" t-out="k.failed ? 'Avise o encarregado' : 'Nenhum nas suas disciplinas'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Em risco</span>
+                                <span class="o_edu_kpi_value" t-att-class="{'text-warning': k.atRisk}" t-out="k.atRisk"/>
+                                <span class="o_edu_kpi_detail" t-out="k.atRisk ? 'Mais uma falta reprova' : 'Nenhum a uma falta do limite'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Assiduidade nas suas aulas</span>
+                                <t t-if="k.rate !== null">
+                                    <span class="o_edu_kpi_value"><t t-out="k.rate"/>%</span>
+                                    <span class="o_edu_meter mt-1 w-100"><span t-att-style="'width: ' + k.rate + '%'"/></span>
+                                </t>
+                                <t t-else=""><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail">Sem chamadas no trimestre</span></t>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Faltas injustificadas</span>
+                                <span class="o_edu_kpi_value" t-out="k.absent"/>
+                                <span class="o_edu_kpi_detail"><t t-out="k.excused"/> justificadas, <t t-out="k.late"/> atrasos</span>
+                            </div>
+                        </div>
+
                         <!-- Nas minhas disciplinas -->
                         <section aria-labelledby="o_edu_ar_mine" class="o_edu_ar_section">
                             <h2 id="o_edu_ar_mine" class="o_edu_ar_h2">Nas suas disciplinas</h2>
@@ -45,8 +73,10 @@
                                             </td>
                                             <td>
                                                 <ul class="o_edu_ar_items">
-                                                    <li t-foreach="g.items" t-as="item" t-key="item_index"
-                                                        t-att-class="'o_edu_ar_' + item.status" t-out="this.itemText(item)"/>
+                                                    <li t-foreach="g.items" t-as="item" t-key="item_index">
+                                                        <span t-att-class="'o_edu_ar_' + item.status" t-out="this.itemText(item)"/>
+                                                        <span class="o_edu_ar_limit" t-att-class="'o_edu_ar_limit_' + item.status" aria-hidden="true"><span t-att-style="'width: ' + this.itemWidth(item) + '%'"/></span>
+                                                    </li>
                                                 </ul>
                                             </td>
                                             <td><span class="o_edu_ar_status" t-att-class="'o_edu_ar_' + g.worst" t-out="this.status[g.worst]"/></td>
@@ -59,6 +89,33 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </section>
+
+                        <!-- Cada disciplina de cada turma: a assiduidade, as faltas e quem está perto do limite -->
+                        <section t-if="d.subjects.length" aria-labelledby="o_edu_ar_subjects" class="o_edu_ar_section">
+                            <h2 id="o_edu_ar_subjects" class="o_edu_ar_h2">Por disciplina</h2>
+                            <ul class="o_edu_ar_subjects">
+                                <li t-foreach="d.subjects" t-as="s" t-key="s.id" class="o_edu_ar_subject">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div class="min-w-0">
+                                            <div class="fw-semibold text-truncate" t-out="s.subject"/>
+                                            <div class="small text-muted text-truncate" t-out="s.class"/>
+                                        </div>
+                                        <span t-if="s.rate !== null" class="o_edu_ar_rate"><t t-out="s.rate"/>%</span>
+                                    </div>
+                                    <t t-if="s.rate !== null">
+                                        <span class="o_edu_meter w-100"><span t-att-style="'width: ' + s.rate + '%'"/></span>
+                                        <div class="small text-muted">
+                                            <t t-out="s.absent === 1 ? '1 falta' : s.absent + ' faltas'"/>, <t t-out="s.excused"/> justificadas, <t t-out="s.late === 1 ? '1 atraso' : s.late + ' atrasos'"/>
+                                        </div>
+                                        <div t-if="s.failed or s.at_risk" class="d-flex flex-wrap gap-1">
+                                            <span t-if="s.failed" class="o_edu_ar_status o_edu_ar_failed" t-out="s.failed === 1 ? '1 reprovado' : s.failed + ' reprovados'"/>
+                                            <span t-if="s.at_risk" class="o_edu_ar_status o_edu_ar_at_risk"><t t-out="s.at_risk"/> em risco</span>
+                                        </div>
+                                    </t>
+                                    <div t-else="" class="small text-muted">Ainda sem chamadas neste trimestre.</div>
+                                </li>
+                            </ul>
                         </section>
 
                         <!-- A turma que dirijo -->

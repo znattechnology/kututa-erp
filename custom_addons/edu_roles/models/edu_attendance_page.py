@@ -374,6 +374,7 @@ class EduAttendancePage(models.AbstractModel):
             'trimesters': [{'id': t.id, 'name': t.name, 'current': t.is_current} for t in trimesters],
             'trimester_id': trimester.id or False,
             'mine': [],
+            'subjects': [],
             'classes': [],
             'board': None,
         }
@@ -418,6 +419,43 @@ class EduAttendancePage(models.AbstractModel):
             if cell['status'] == 'failed':
                 group['worst'] = 'failed'
         data['mine'] = sorted(students.values(), key=lambda g: (g['worst'] != 'failed', (g['name'] or '').lower()))
+        # Cada disciplina de cada turma no trimestre: a assiduidade (das marcações), as faltas, os atrasos e quantos
+        # alunos estão em risco ou já passaram o limite.
+        status_by_pair = {}
+        for cell in cells.values():
+            summary = cell['summary']
+            pair = (summary.class_id.id, summary.subject_id.id)
+            counts = status_by_pair.setdefault(pair, {'at_risk': 0, 'failed': 0})
+            if cell['status'] in counts:
+                counts[cell['status']] += 1
+        for assignment in assignments.sorted(
+            lambda a: (a.class_id.class_number, a.class_id.name or '', a.subject_id.name or '')
+        ):
+            rows = Summary.search(
+                [
+                    ('class_id', '=', assignment.class_id.id),
+                    ('subject_id', '=', assignment.subject_id.id),
+                    ('trimester_id', '=', trimester.id),
+                ]
+            )
+            marks = sum(rows.mapped('lessons'))
+            attended = sum(rows.mapped('present')) + sum(rows.mapped('late'))
+            counts = status_by_pair.get((assignment.class_id.id, assignment.subject_id.id), {'at_risk': 0, 'failed': 0})
+            data['subjects'].append(
+                {
+                    'id': assignment.id,
+                    'subject': assignment.subject_id.name,
+                    'class': assignment.class_id._editor_label(),
+                    'marks': marks,
+                    'attended': attended,
+                    'rate': round(100 * attended / marks) if marks else None,
+                    'absent': sum(rows.mapped('absent')),
+                    'excused': sum(rows.mapped('excused')),
+                    'late': sum(rows.mapped('late')),
+                    'at_risk': counts['at_risk'],
+                    'failed': counts['failed'],
+                }
+            )
         # A turma que dirijo: o mapa da turma inteira.
         directed = (
             self.env['edu.class']

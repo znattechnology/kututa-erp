@@ -82,6 +82,27 @@ export class AbsenceReportPage extends Component {
         return text.charAt(0).toUpperCase() + text.slice(1);
     }
 
+    /** Os números do trimestre nas disciplinas do professor: os reprovados e em risco, a assiduidade e as faltas. */
+    get kpis() {
+        const d = this.state.data;
+        const subjects = d.subjects || [];
+        const marks = subjects.reduce((sum, s) => sum + s.marks, 0);
+        const attended = subjects.reduce((sum, s) => sum + s.attended, 0);
+        return {
+            failed: d.mine.filter((g) => g.worst === "failed").length,
+            atRisk: d.mine.filter((g) => g.worst === "at_risk").length,
+            rate: marks ? Math.round((100 * attended) / marks) : null,
+            absent: subjects.reduce((sum, s) => sum + s.absent, 0),
+            excused: subjects.reduce((sum, s) => sum + s.excused, 0),
+            late: subjects.reduce((sum, s) => sum + s.late, 0),
+        };
+    }
+
+    /** A parte do limite já gasta (a barra de cada disciplina de um aluno em risco). */
+    itemWidth(item) {
+        return item.limit ? Math.min(100, (100 * item.counted) / item.limit) : 100;
+    }
+
     itemText(item) {
         const limit = item.limit ? ` de ${item.limit}` : "";
         const annual = item.annual ? " no ano" : "";
