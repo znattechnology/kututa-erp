@@ -282,9 +282,30 @@ class EduExamRoom(models.Model):
         string='Lugares', compute='_compute_capacity', store=True, readonly=False, precompute=True
     )
     supervisor_ids = fields.Many2many('hr.employee', string='Vigilantes', domain="[('edu_is_teacher', '=', True)]")
+    # Os vigilantes no formulário da secretaria, que não lê a ficha dos funcionários: o perfil público (os mesmos
+    # ids). Sem isto, a coluna aparecia vazia e gravar a linha apagava os vigilantes.
+    supervisor_public_ids = fields.Many2many(
+        'hr.employee.public',
+        string='Vigilantes ',
+        compute='_compute_supervisor_public_ids',
+        inverse='_inverse_supervisor_public_ids',
+        domain="[('edu_is_teacher', '=', True)]",
+    )
     seat_ids = fields.One2many('edu.exam.seat', 'room_id', string='Alunos')
 
     _session_room_uniq = models.Constraint('UNIQUE(session_id, room_id)', 'A sala já está nesta sessão.')
+
+    @api.depends('supervisor_ids')
+    def _compute_supervisor_public_ids(self):
+        Public = self.env['hr.employee.public']
+        for room in self:
+            room.supervisor_public_ids = Public.browse(room.sudo().supervisor_ids.ids)
+
+    def _inverse_supervisor_public_ids(self):
+        if not self.env.su and not self.env.user.has_group('edu_core.group_edu_user'):
+            raise UserError(self.env._('Os vigilantes escolhe-os a secretaria.'))
+        for room in self:
+            room.sudo().supervisor_ids = self.env['hr.employee'].browse(room.supervisor_public_ids.ids)
 
     @api.depends('room_id')
     def _compute_capacity(self):

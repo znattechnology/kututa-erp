@@ -119,7 +119,7 @@
                                 <list editable="bottom">
                                     <field name="room_id" options="{'no_create': True}"/>
                                     <field name="capacity"/>
-                                    <field name="supervisor_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                                    <field name="supervisor_public_ids" widget="many2many_tags" options="{'no_create': True}"/>
                                 </list>
                             </field>
                         </page>
@@ -158,7 +158,7 @@
                 <field name="class_ids"/>
                 <field name="period_id"/>
                 <field name="room_ids" string="Sala" filter_domain="[('room_ids.room_id', 'ilike', self)]"/>
-                <field name="room_ids" string="Vigilante" filter_domain="[('room_ids.supervisor_ids', 'ilike', self)]"/>
+                <field name="supervisor_label" string="Vigilante"/>
                 <filter name="scheduled" string="Marcadas" domain="[('state', '=', 'scheduled')]"/>
                 <filter name="done" string="Realizadas" domain="[('state', '=', 'done')]"/>
                 <separator/>

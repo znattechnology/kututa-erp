@@ -355,7 +355,7 @@ class EduExamSession(models.Model):
     _inherit = 'edu.exam.session'
 
     room_label = fields.Char(string='Salas', compute='_compute_labels')
-    supervisor_label = fields.Char(string='Vigilantes', compute='_compute_labels')
+    supervisor_label = fields.Char(string='Vigilantes', compute='_compute_labels', search='_search_supervisor_label')
     incomplete = fields.Boolean(string='Sem sala ou vigilante', compute='_compute_labels', search='_search_incomplete')
 
     @api.depends('room_ids.room_id', 'room_ids.supervisor_ids')
@@ -365,6 +365,13 @@ class EduExamSession(models.Model):
             supervisors = session._supervisors()
             session.supervisor_label = ', '.join(supervisors.mapped('name')) or False
             session.incomplete = not session.room_ids or not supervisors
+
+    def _search_supervisor_label(self, operator, value):
+        """Procurar pelo vigilante (em sudo: a secretaria não lê a ficha dos funcionários)."""
+        if operator not in ('ilike', 'not ilike', '=', '!='):
+            return NotImplemented
+        found = self.sudo().search([('room_ids.supervisor_ids.name', operator, value)]).ids
+        return [('id', 'in', found)]
 
     def _search_incomplete(self, operator, value):
         if operator not in ('=', '!='):

@@ -213,6 +213,16 @@ class TestEduExam(TransactionCase):
         self.assertEqual(second.room_ids.supervisor_ids, other_teacher)
         with self.assertRaises(ValidationError):
             Period.with_user(clerk).planner_set_supervisor(second.id, self.teacher.id)
+        # No formulário da sessão: a secretaria vê o vigilante na sala, troca-o por outro e procura pelo nome.
+        room = second.room_ids.with_user(clerk)
+        self.assertEqual(room.supervisor_public_ids.ids, [other_teacher.id])
+        third = self.env['hr.employee'].create({'name': 'Terceira Vigilante', 'edu_is_teacher': True})
+        room.supervisor_public_ids = [Command.set([third.id])]
+        self.assertEqual(second.room_ids.supervisor_ids, third)
+        with self.assertRaises(ValidationError):
+            room.supervisor_public_ids = [Command.set([self.teacher.id])]
+        found = self.env['edu.exam.session'].with_user(clerk).search([('supervisor_label', 'ilike', 'Terceira')])
+        self.assertEqual(found, second)
         self.assertEqual({s['class'] for s in data['sessions']}, {'7ª A · SEC1', '7ª B · SEC1'})
         # Sem sala não há vigilante; remover uma prova sem notas.
         Period.planner_set_room(second.id, False)
