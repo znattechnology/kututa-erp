@@ -121,7 +121,9 @@ export class GuardiansPage extends Component {
         const term = this.state.query.trim();
         return {
             text:
-                `${plural(rows.length, "encarregado", "encarregados")}${term ? ` com «${term}»` : ""}.` +
+                plural(rows.length, "encarregado", "encarregados") +
+                (term ? ` com «${term}»` : "") +
+                "." +
                 (noEmail ? ` ${noEmail} sem e-mail: não poderão ter conta no portal.` : ""),
             alert: noStudent
                 ? noStudent === 1

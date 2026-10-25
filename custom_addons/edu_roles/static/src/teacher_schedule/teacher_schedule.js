@@ -173,7 +173,7 @@ export class TeacherSchedulePage extends Component {
 
     blockTitle(lesson) {
         const detail = this.lessonDetail(lesson);
-        return `${lesson.subject}, ${hhmm(lesson.start)}–${hhmm(lesson.end)}${detail ? `, ${detail}` : ""}`;
+        return [lesson.subject, `${hhmm(lesson.start)}–${hhmm(lesson.end)}`, detail].filter(Boolean).join(", ");
     }
 
     /**

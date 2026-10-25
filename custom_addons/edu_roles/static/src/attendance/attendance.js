@@ -301,7 +301,7 @@ export class AttendancePage extends Component {
             c.late ? `${c.late} ${c.late === 1 ? "atraso" : "atrasos"}` : "",
             c.excused ? `${c.excused} ${c.excused === 1 ? "justificada" : "justificadas"}` : "",
         ].filter((part) => part);
-        return `${c.present} de ${total} presentes${parts.length ? `; ${parts.join(", ")}` : ""}.`;
+        return `${c.present} de ${total} presentes` + (parts.length ? `; ${parts.join(", ")}` : "") + ".";
     }
 
     get visibleRows() {

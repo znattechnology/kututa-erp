@@ -33,7 +33,7 @@ export class TeacherProfilePage extends Component {
     get sentence() {
         const d = this.state.data;
         if (!d.subjects.length) {
-            return `${d.name}, ainda não tem disciplinas atribuídas${d.year ? ` no ano lectivo ${d.year}` : ""}.`;
+            return `${d.name}, ainda não tem disciplinas atribuídas` + (d.year ? ` no ano lectivo ${d.year}` : "") + ".";
         }
         const classes = d.classes.length === 1 ? "uma turma" : `${d.classes.length} turmas`;
         return `${d.name}, dá ${list(d.subjects)} em ${classes} no ano lectivo ${d.year}.`;

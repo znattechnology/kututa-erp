@@ -83,7 +83,7 @@ export class Graduations extends Component {
         if (!s || !s.total) {
             return "";
         }
-        const head = `${s.total} ${s.total === 1 ? "aluno concluiu" : "alunos concluíram"}${this.yearName ? ` em ${this.yearName}` : ""}`;
+        const head = `${s.total} ${s.total === 1 ? "aluno concluiu" : "alunos concluíram"}` + (this.yearName ? ` em ${this.yearName}` : "");
         if (s.signed === s.total) {
             return `${head}: todos com o diploma assinado.`;
         }
@@ -104,7 +104,11 @@ export class Graduations extends Component {
         if (this.state.courseId) {
             return "Nenhum aluno deste curso concluiu neste ano lectivo.";
         }
-        return `Ainda não há conclusões registadas${this.yearName ? ` em ${this.yearName}` : ""}. «Registar conclusões» mostra os alunos a quem o conselho de turma deu a conclusão do curso.`;
+        return (
+            "Ainda não há conclusões registadas" +
+            (this.yearName ? ` em ${this.yearName}` : "") +
+            ". «Registar conclusões» mostra os alunos a quem o conselho de turma deu a conclusão do curso."
+        );
     }
 
     toneClass(tone) {

@@ -130,9 +130,9 @@ export class AcademicCalendarPage extends Component {
                 selected: key === this.state.selected,
                 events: events.slice(0, 3),
                 more: Math.max(0, events.length - 3),
-                label: `${date.getDate()} de ${MONTHS[date.getMonth()]}${key === this.today ? ", hoje" : ""}${
-                    events.length ? `, ${events.length} ${events.length === 1 ? "evento" : "eventos"}` : ""
-                }`,
+                label:
+                    `${date.getDate()} de ${MONTHS[date.getMonth()]}${key === this.today ? ", hoje" : ""}` +
+                    (events.length ? `, ${events.length} ${events.length === 1 ? "evento" : "eventos"}` : ""),
             };
         });
     }
