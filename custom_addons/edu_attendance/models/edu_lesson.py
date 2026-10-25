@@ -269,6 +269,11 @@ class EduLesson(models.Model):
     def _generate(self, classes, date_from, date_to):
         """Cria as aulas previstas do horário entre duas datas. Salta as aulas sem realização registadas, os feriados e
         as pausas do calendário escolar e os trimestres fechados."""
+        return self.create(self._generate_vals(classes, date_from, date_to))
+
+    @api.model
+    def _generate_vals(self, classes, date_from, date_to):
+        """As aulas que ``_generate`` criaria (para dizer quantas antes de as criar)."""
         existing = {
             (lesson.schedule_id.id, lesson.date)
             for lesson in self.search(
@@ -302,7 +307,7 @@ class EduLesson(models.Model):
                         }
                     )
                 day += timedelta(days=1)
-        return self.create(vals)
+        return vals
 
 
 class EduLessonAttendance(models.Model):

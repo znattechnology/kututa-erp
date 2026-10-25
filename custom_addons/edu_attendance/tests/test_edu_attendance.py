@@ -154,8 +154,16 @@ class TestEduAttendance(TransactionCase):
         )
         self.env['edu.schedule.exception'].create({'schedule_id': schedule.id, 'date': date(2026, 9, 14)})
         wizard = self.env['edu.lesson.generate'].create(
-            {'class_ids': [(6, 0, self.class_sec.ids)], 'date_from': date(2026, 9, 1), 'date_to': date(2026, 9, 30)}
+            {
+                'period': 'custom',
+                'all_classes': False,
+                'class_ids': [(6, 0, self.class_sec.ids)],
+                'date_from': date(2026, 9, 1),
+                'date_to': date(2026, 9, 30),
+            }
         )
+        # Diz quantas aulas cria antes de as criar.
+        self.assertEqual(wizard.preview, 'Vão ser criadas 3 aulas em 1 turma.')
         wizard.action_generate()
         lessons = self.env['edu.lesson'].search([('schedule_id', '=', schedule.id)])
         # Segundas-feiras de Setembro de 2026: 7, 14 (sem aula), 21 e 28.

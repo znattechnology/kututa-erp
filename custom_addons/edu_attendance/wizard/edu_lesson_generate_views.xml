@@ -6,17 +6,31 @@
         <field name="arch" type="xml">
             <form string="Gerar aulas">
                 <group>
-                    <field name="class_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                    <field name="date_from"/>
-                    <field name="date_to"/>
+                    <group>
+                        <field name="period" widget="radio"/>
+                        <label for="date_from" string="Datas"/>
+                        <div class="o_row">
+                            <field name="date_from" readonly="period != 'custom'" force_save="1"/>
+                            <span>a</span>
+                            <field name="date_to" readonly="period != 'custom'" force_save="1"/>
+                        </div>
+                    </group>
+                    <group>
+                        <field name="all_classes"/>
+                        <field name="class_ids" widget="many2many_tags" options="{'no_create': True}"
+                               invisible="all_classes" required="not all_classes" placeholder="Escolha as turmas"/>
+                    </group>
                 </group>
-                <div class="text-muted">
+                <div class="alert alert-info mb-2" role="status" invisible="not preview">
+                    <field name="preview" nolabel="1"/>
+                </div>
+                <div class="text-muted small">
                     Cria uma aula prevista por cada tempo do horário entre as datas. Salta os feriados e as pausas do
                     calendário escolar, as aulas sem realização registadas e os trimestres fechados. As que já existem
                     não se repetem; com substituição registada, a aula fica com o substituto.
                 </div>
                 <footer>
-                    <button name="action_generate" type="object" string="Gerar" class="btn-primary"/>
+                    <button name="action_generate" type="object" string="Gerar as aulas" class="btn-primary"/>
                     <button special="cancel" string="Cancelar"/>
                 </footer>
             </form>
