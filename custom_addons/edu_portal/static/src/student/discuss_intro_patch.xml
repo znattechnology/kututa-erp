@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="mail.DiscussContent" t-inherit-mode="extension">
+        <xpath expr="//h4[hasclass('text-muted')]" position="replace">
+            <div t-if="this.eduIntro.groups.length" class="o_edu_discuss_intro">
+                <h2 class="o_edu_discuss_intro_title">Mensagens</h2>
+                <p class="text-muted">Escolha a quem quer escrever. As conversas ficam guardadas à esquerda.</p>
+                <section t-foreach="this.eduIntro.groups" t-as="group" t-key="group.key" class="o_edu_discuss_group"
+                         t-att-aria-label="group.label">
+                    <h3 class="o_edu_discuss_group_title" t-out="group.label"/>
+                    <ul class="o_edu_discuss_contacts">
+                        <li t-foreach="group.contacts" t-as="contact" t-key="contact.partner_id" class="o_edu_discuss_contact">
+                            <span class="o_edu_discuss_avatar" aria-hidden="true" t-out="this.eduInitials(contact.name)"/>
+                            <span class="o_edu_discuss_who">
+                                <span class="o_edu_discuss_name" t-out="contact.name"/>
+                                <span t-if="contact.detail" class="o_edu_discuss_detail" t-out="contact.detail"/>
+                            </span>
+                            <button type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.eduOpenChat(contact)">
+                                <i class="oi oi-filled" data-icon="chat" aria-hidden="true"/> Escrever
+                            </button>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+            <h4 t-else="" class="text-muted"><b><i>No conversation selected.</i></b></h4>
+        </xpath>
+    </t>
+</templates>

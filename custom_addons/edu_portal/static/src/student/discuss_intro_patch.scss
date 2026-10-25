@@ -1,0 +1,79 @@
+// As Mensagens sem conversa aberta (aluno e encarregado): os contactos em grelha, com quem é e o «Escrever».
+.o_edu_discuss_intro {
+    width: 100%;
+    max-width: 880px;
+    max-height: 100%;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.o_edu_discuss_intro_title {
+    margin: 0 0 4px;
+    font-size: 1.35rem;
+    font-weight: 600;
+}
+
+.o_edu_discuss_group {
+    margin-top: 20px;
+}
+
+.o_edu_discuss_group_title {
+    margin: 0 0 8px;
+    color: $text-muted;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.o_edu_discuss_contacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.o_edu_discuss_contact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-lg;
+    background: $o-view-background-color;
+}
+
+.o_edu_discuss_avatar {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba($primary, 0.12);
+    color: $primary;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.o_edu_discuss_who {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.o_edu_discuss_name {
+    overflow: hidden;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.o_edu_discuss_detail {
+    overflow: hidden;
+    color: $text-muted;
+    font-size: 0.8125rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
