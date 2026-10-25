@@ -41,7 +41,7 @@ class EduRdec(models.Model):
     line_ids = fields.One2many('edu.rdec.line', 'rdec_id', string='Áreas de desenvolvimento')
     areas_total = fields.Integer(string='Áreas', compute='_compute_progress', store=True, aggregator=False)
     areas_done = fields.Integer(string='Áreas avaliadas', compute='_compute_progress', store=True, aggregator=False)
-    areas_label = fields.Char(string='Avaliadas', compute='_compute_progress')
+    areas_label = fields.Char(string='Avaliadas', compute='_compute_areas_label')
     progress = fields.Float(string='Progresso', compute='_compute_progress', store=True, aggregator='avg')
     has_appreciation = fields.Boolean(string='Com apreciação', compute='_compute_progress', store=True)
     state = fields.Selection(RDEC_STATES, string='Estado', compute='_compute_progress', store=True, index=True)
@@ -61,7 +61,6 @@ class EduRdec(models.Model):
             appreciation = bool((rdec.appreciation or '').strip())
             rdec.areas_total = total
             rdec.areas_done = done
-            rdec.areas_label = f'{done}/{total}'
             rdec.progress = 100.0 * done / total if total else 0.0
             rdec.has_appreciation = appreciation
             if total and done == total and appreciation:
@@ -70,6 +69,11 @@ class EduRdec(models.Model):
                 rdec.state = 'progress'
             else:
                 rdec.state = 'todo'
+
+    @api.depends('areas_done', 'areas_total')
+    def _compute_areas_label(self):
+        for rdec in self:
+            rdec.areas_label = f'{rdec.areas_done}/{rdec.areas_total}'
 
     def _compute_absences(self):
         """Faltas da criança no trimestre, nas aulas realizadas (como no secPed e na pauta)."""

@@ -171,7 +171,10 @@ class TestGuardianPortal(HttpCase):
         self.assertTrue(data['applicable'])
         self.assertEqual(data['state'], 'progress')
         self.assertEqual([a['level_label'] for a in data['areas']], ['Muito bom', ''])
-        self.assertFalse(Portal.page_data('rdec', {'student_id': self.ana.id})['rdec']['applicable'])
+        # A Ana (do técnico) não tem RDEC: pedida noutra página, o RDEC abre na Carla, e só ela tem separador.
+        data = Portal.page_data('rdec', {'student_id': self.ana.id})
+        self.assertEqual(data['child_id'], carla.id)
+        self.assertEqual([c['id'] for c in data['children']], carla.ids)
         # O documento: o RDEC dos educandos sim; o de outra criança não.
         action = Portal.rdec_report(carla.id, self.t1.id)
         self.assertEqual(action['context']['active_ids'], rdec.ids)
@@ -235,4 +238,7 @@ class TestGuardianPortal(HttpCase):
         # Um professor que também é encarregado continua com o seu painel e as regras de professor.
         self.teacher_user.group_ids = [Command.link(self.env.ref('edu_portal.group_edu_guardian').id)]
         self.assertFalse(self.teacher_user._edu_guardian_only())
+        self.assertTrue(self.env['discuss.channel'].with_user(self.teacher_user).search([('id', '=', general.id)]))
+        # E o mesmo com o aluno: um professor com o perfil «Aluno» não perde os canais do pessoal.
+        self.teacher_user.group_ids = [Command.link(self.env.ref('edu_portal.group_edu_student').id)]
         self.assertTrue(self.env['discuss.channel'].with_user(self.teacher_user).search([('id', '=', general.id)]))

@@ -27,9 +27,14 @@ class ResUsers(models.Model):
         ]
         return not any(group in self.all_group_ids for group in roles if group)
 
+    # Para as regras de acesso (o safe_eval não chama métodos começados por «_»): só restringem quem tem apenas a
+    # área do aluno ou do encarregado, não um funcionário que também o seja.
+    @api.private
+    def edu_student_only(self):
+        return self._edu_student_only()
+
     @api.private
     def edu_guardian_only(self):
-        # Para as regras de acesso (o safe_eval não chama métodos começados por «_»).
         return self._edu_guardian_only()
 
     def _on_webclient_bootstrap(self):

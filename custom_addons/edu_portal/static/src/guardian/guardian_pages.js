@@ -83,13 +83,13 @@ export class GuardianHome extends GuardianPage(GuardianBase) {
         return `${hello}, ${this.state.data.first_name}`;
     }
 
-    /** «Encarregado de Ana e Bento.» */
+    /** «Os teus educandos: Ana e Bento.» (sem «encarregado de», que não diz se é encarregado ou encarregada). */
     get subtitle() {
         const children = this.state.data.children;
         if (!children.length) {
             return "Ainda sem educandos ligados à tua conta.";
         }
-        return `Encarregado de ${list(children.map((c) => c.first_name))}.`;
+        return `${children.length === 1 ? "O teu educando" : "Os teus educandos"}: ${list(children.map((c) => c.first_name))}.`;
     }
 
     /** A frase de cima: quantos, e se há propinas em atraso. */
