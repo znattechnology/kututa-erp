@@ -356,3 +356,29 @@ class TestStudentPortal(HttpCase):
             }
         )
         self.assertFalse(self.env['edu.student.portal'].with_user(user).page_data('home')['has_student'])
+
+    def test_history_notifications_and_messages(self):
+        """O Histórico (só os anos com decisão), as notificações (as notas novas, sem a nota) e as mensagens: o aluno
+        escreve aos professores da turma e à secretaria e só lê as suas conversas."""
+        Portal = self.env['edu.student.portal'].with_user(self.ana_user)
+        self.assertEqual(Portal.page_data('history')['history']['rows'], [], 'o ano em curso ainda sem decisão')
+        result = self.env['edu.year.result'].search([('enrollment_id', '=', self.enrollments[0].id)], limit=1)
+        result = result or self.env['edu.year.result'].create({'enrollment_id': self.enrollments[0].id})
+        result.write({'status': 'promoted', 'average': 13.0})
+        rows = Portal.page_data('history')['history']['rows']
+        self.assertEqual(
+            [(r['year'], r['status_label'], r['average']['text']) for r in rows], [('2026/2027', 'Transita', '13')]
+        )
+        feed = Portal.page_data('notifications')['feed']
+        self.assertIn('Notas novas de Língua Portuguesa.', [item['text'] for item in feed])
+        self.assertNotIn('Bento', str(feed))
+        # As mensagens: a conversa com o professor é sua; os canais do pessoal não.
+        teacher = self.env['res.users'].search([('login', '=', 'prof_portal')])
+        groups = {g['key']: g for g in self.env['edu.teacher.home'].with_user(self.ana_user).chat_contacts()}
+        self.assertEqual([c['partner_id'] for c in groups['teachers']['contacts']], teacher.partner_id.ids)
+        Channel = self.env['discuss.channel'].with_user(self.ana_user)
+        Channel._get_or_create_chat([teacher.partner_id.id])
+        chat = Channel.search([])
+        self.assertEqual(chat.channel_type, 'chat')
+        message = chat.message_post(body='Professor, tenho uma dúvida.', message_type='comment')
+        self.assertTrue(self.env['mail.message'].with_user(self.ana_user).search([('id', '=', message.id)]))

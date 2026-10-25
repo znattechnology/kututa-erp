@@ -280,6 +280,56 @@
     .o_edu_st_pre {
         white-space: pre-line;
     }
+
+    // As notificações e a ajuda (também as do encarregado).
+    .o_edu_st_feed {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li + li {
+            border-top: 1px solid $border-color;
+        }
+    }
+
+    .o_edu_st_feed_item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        width: 100%;
+        padding: 10px 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        text-align: start;
+
+        &:hover > span:first-child,
+        &:focus-visible > span:first-child {
+            text-decoration: underline;
+        }
+    }
+
+    .o_edu_st_faq {
+        padding-top: 4px;
+        padding-bottom: 4px;
+
+        details {
+            padding: 10px 0;
+
+            + details {
+                border-top: 1px solid $border-color;
+            }
+
+            > p {
+                margin: 8px 0 4px;
+            }
+        }
+
+        summary {
+            font-weight: 500;
+            cursor: pointer;
+        }
+    }
 }
 
 // As provas já feitas, acinzentadas (o Bootstrap põe a cor em cada célula, não na linha).

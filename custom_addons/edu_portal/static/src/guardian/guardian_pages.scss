@@ -1,5 +1,5 @@
-// Área do Encarregado: o aspecto da área do estudante, com as peças do painel do secPed (o cartão de cada educando,
-// as listas do que pede atenção e das novidades, e as perguntas da ajuda).
+// Área do Encarregado: o aspecto da área do estudante, com as peças do secPed para os educandos (o cartão do painel
+// e a ficha). As listas das novidades e as perguntas da ajuda são as da área do estudante.
 .o_edu_guardian {
     .o_edu_gd_who {
         display: flex;
@@ -55,56 +55,7 @@
         }
     }
 
-    .o_edu_gd_feed {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-
-        > li + li {
-            border-top: 1px solid $border-color;
-        }
-    }
-
-    .o_edu_gd_feed_item {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        width: 100%;
-        padding: 10px 0;
-        border: 0;
-        background: none;
-        color: inherit;
-        text-align: start;
-
-        &:hover > span:first-child,
-        &:focus-visible > span:first-child {
-            text-decoration: underline;
-        }
-    }
-
     .o_edu_gd_day {
         min-width: 13em;
-    }
-
-    .o_edu_gd_faq {
-        padding-top: 4px;
-        padding-bottom: 4px;
-
-        details {
-            padding: 10px 0;
-
-            + details {
-                border-top: 1px solid $border-color;
-            }
-
-            > p {
-                margin: 8px 0 4px;
-            }
-        }
-
-        summary {
-            font-weight: 500;
-            cursor: pointer;
-        }
     }
 }

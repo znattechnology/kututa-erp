@@ -3,7 +3,7 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
+import { feedWhen, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
 
 const list = (items) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}` : items[0] || "");
 const count = (n, one, many) => (n === 1 ? one : `${n} ${many}`);
@@ -63,19 +63,6 @@ class GuardianBase extends Component {
     open(xmlid) {
         return this.action.doAction(xmlid);
     }
-}
-
-/** «hoje», «ontem», «há 3 dias», como nas novidades do secPed. */
-function when(isoDate) {
-    const [y, m, d] = isoDate.split("-").map((part) => parseInt(part, 10));
-    const day = new Date(y, m - 1, d);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const days = Math.round((today - day) / 86400000);
-    if (days <= 0) {
-        return "Hoje";
-    }
-    return days === 1 ? "Ontem" : `Há ${days} dias`;
 }
 
 const FEED_ACTIONS = {
@@ -172,7 +159,7 @@ export class GuardianHome extends GuardianPage(GuardianBase) {
     }
 
     when(item) {
-        return when(item.date);
+        return feedWhen(item.date);
     }
 
     openItem(item) {
@@ -262,7 +249,7 @@ export class GuardianNotifications extends GuardianPage(GuardianBase) {
     static page = "notifications";
 
     when(item) {
-        return when(item.date);
+        return feedWhen(item.date);
     }
 
     openItem(item) {

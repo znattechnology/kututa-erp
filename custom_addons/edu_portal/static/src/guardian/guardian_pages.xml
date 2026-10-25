@@ -116,9 +116,9 @@
                                 <p t-if="!warnings.length" class="o_edu_st_card mb-0 text-muted">
                                     Nada por agora: propinas em dia, nenhuma disciplina no limite de faltas e nenhuma média negativa.
                                 </p>
-                                <ul t-else="" class="o_edu_st_card o_edu_gd_feed">
+                                <ul t-else="" class="o_edu_st_card o_edu_st_feed">
                                     <li t-foreach="warnings" t-as="w" t-key="w.key">
-                                        <button type="button" class="o_edu_gd_feed_item" t-on-click="() => this.openFor(w.action, w.child.id)">
+                                        <button type="button" class="o_edu_st_feed_item" t-on-click="() => this.openFor(w.action, w.child.id)">
                                             <span class="small text-muted" t-out="w.child.first_name"/>
                                             <span t-out="w.text"/>
                                         </button>
@@ -136,9 +136,9 @@
                                 <p t-if="!d.feed.length" class="o_edu_st_card mb-0 text-muted">
                                     Sem novidades nos últimos 30 dias. Aparecem aqui as notas novas, as faltas, as provas marcadas e as propinas dos teus educandos.
                                 </p>
-                                <ul t-else="" class="o_edu_st_card o_edu_gd_feed">
+                                <ul t-else="" class="o_edu_st_card o_edu_st_feed">
                                     <li t-foreach="d.feed" t-as="item" t-key="item.key">
-                                        <button type="button" class="o_edu_gd_feed_item" t-on-click="() => this.openItem(item)">
+                                        <button type="button" class="o_edu_st_feed_item" t-on-click="() => this.openItem(item)">
                                             <span t-out="item.text"/>
                                             <span class="small text-muted"><t t-out="item.first_name"/>, <t t-out="this.when(item).toLowerCase()"/></span>
                                         </button>
@@ -466,9 +466,9 @@
                     <p t-elif="!d.feed.length" class="o_edu_st_card mb-0 text-muted">
                         Ainda não há notificações. Aparecem aqui as notas novas, as faltas, as provas marcadas e as propinas dos teus educandos.
                     </p>
-                    <ul t-else="" class="o_edu_st_card o_edu_gd_feed">
+                    <ul t-else="" class="o_edu_st_card o_edu_st_feed">
                         <li t-foreach="d.feed" t-as="item" t-key="item.key">
-                            <button type="button" class="o_edu_gd_feed_item" t-on-click="() => this.openItem(item)">
+                            <button type="button" class="o_edu_st_feed_item" t-on-click="() => this.openItem(item)">
                                 <span t-out="item.text"/>
                                 <span class="small text-muted"><t t-out="item.first_name"/>, <t t-out="this.when(item).toLowerCase()"/></span>
                             </button>
@@ -551,7 +551,7 @@
                     </header>
                     <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h1">
                         <h2 id="o_edu_gd_h1" class="o_edu_st_h2 mb-0">Os teus educandos</h2>
-                        <div class="o_edu_st_card o_edu_gd_faq">
+                        <div class="o_edu_st_card o_edu_st_faq">
                             <details>
                                 <summary>Tenho mais do que um educando. Como escolho de qual vejo?</summary>
                                 <p>Nas notas, nas faltas, nas provas e nas propinas há separadores com o nome de cada educando por cima. O painel mostra todos ao mesmo tempo.</p>
@@ -570,7 +570,7 @@
                     </section>
                     <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h2">
                         <h2 id="o_edu_gd_h2" class="o_edu_st_h2 mb-0">Notas e faltas</h2>
-                        <div class="o_edu_st_card o_edu_gd_faq">
+                        <div class="o_edu_st_card o_edu_st_faq">
                             <details>
                                 <summary>Quando aparecem as notas?</summary>
                                 <p>Assim que o professor as lança. Nas notificações aparece «Notas novas», com o nome do educando e a disciplina (sem a nota, que pode mudar até o trimestre fechar).</p>
@@ -599,7 +599,7 @@
                     </section>
                     <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h3">
                         <h2 id="o_edu_gd_h3" class="o_edu_st_h2 mb-0">Propinas</h2>
-                        <div class="o_edu_st_card o_edu_gd_faq">
+                        <div class="o_edu_st_card o_edu_st_faq">
                             <details>
                                 <summary>Como pago as propinas?</summary>
                                 <p>Na tesouraria da escola. Quando o pagamento é confirmado, a factura passa para «Pagas» na página das propinas.</p>
@@ -613,7 +613,7 @@
                     </section>
                     <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h4">
                         <h2 id="o_edu_gd_h4" class="o_edu_st_h2 mb-0">Mensagens e a tua conta</h2>
-                        <div class="o_edu_st_card o_edu_gd_faq">
+                        <div class="o_edu_st_card o_edu_st_faq">
                             <details>
                                 <summary>A quem posso escrever?</summary>
                                 <p>Aos professores e ao director de turma de cada educando, e à secretaria. Em Mensagens, começa uma conversa nova e escolhe a pessoa.</p>

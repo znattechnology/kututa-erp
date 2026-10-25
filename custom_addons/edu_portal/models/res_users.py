@@ -33,8 +33,7 @@ class ResUsers(models.Model):
         return self._edu_guardian_only()
 
     def _on_webclient_bootstrap(self):
-        # O aluno não usa as Discussões; o encarregado usa-as só para falar com a escola: o OdooBot não lhes abre uma
-        # conversa.
+        # O aluno e o encarregado usam as Discussões só para falar com a escola: o OdooBot não lhes abre uma conversa.
         if (
             'odoobot_state' in self._fields
             and self.odoobot_state != 'disabled'

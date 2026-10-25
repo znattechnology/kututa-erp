@@ -35,6 +35,11 @@ RELATIONSHIPS = {
     'legal_guardian': 'Encarregado legal',
     'other': 'Familiar',
 }
+# As novidades (Notificações): o que mudou nos últimos dias (as notas lançadas, as faltas, as provas marcadas, as
+# facturas e os pagamentos e os relatórios da Iniciação completos).
+FEED_DAYS = 30
+FEED_LIMIT = 100
+ABSENCE_KINDS = {'absent': 'falta injustificada', 'excused': 'falta justificada', 'late': 'atraso'}
 # As bandas da escala de 0 a 20 que o secPed usa na «Situação» da pauta do aluno (a sua GradeScale).
 SCALE_BANDS = [(0, 9.99, 'Insuficiente'), (10, 13.99, 'Suficiente'), (14, 16.99, 'Bom'), (17, 20, 'Excelente')]
 # Os nomes da regra que conta: no técnico reprova-se ao passar o limite (em risco quando o atinge); no geral, ao
@@ -72,6 +77,10 @@ def grade_text(value):
         return '—'
     text = one_decimal(value)
     return text[:-2] if text.endswith(',0') else text
+
+
+def first_name(name):
+    return (name or '').split(' ')[0]
 
 
 def plural(n, one, many):
@@ -153,8 +162,8 @@ class EduStudentPortal(models.AbstractModel):
     @api.model
     def page_data(self, page, options=None):
         """Os dados de uma página da área do estudante (as acções cliente ``edu_portal.student_*``), sempre do aluno do
-        utilizador: ``home``, ``grades`` (com ``{'trimester_id'}``), ``schedule``, ``exams``, ``absences``, ``fees`` e
-        ``profile``."""
+        utilizador: ``home``, ``grades`` (com ``{'trimester_id'}``), ``schedule``, ``exams``, ``absences``, ``fees``,
+        ``profile``, ``internship``, ``project``, ``history`` e ``notifications``."""
         options = options or {}
         student = self._student()
         data = {'has_student': bool(student), 'page': page}
@@ -215,6 +224,10 @@ class EduStudentPortal(models.AbstractModel):
             data['internships'] = self.internships(student)
         elif page == 'project':
             data['projects'] = self.projects(student)
+        elif page == 'history':
+            data['history'] = self._history(student)
+        elif page == 'notifications':
+            data['feed'] = self._feed(student)
         return data
 
     @api.model
@@ -933,6 +946,213 @@ class EduStudentPortal(models.AbstractModel):
             'overdue': len(overdue_rows),
             'overdue_total': money(sum(r['due_value'] for r in overdue_rows)),
         }
+
+    @api.model
+    def _feed(self, students):
+        """As novidades (Notificações) dos alunos dados, o próprio aluno ou os educandos do encarregado, nos últimos
+        dias e da mais recente para a mais antiga: as notas lançadas (sem a nota, que pode mudar, como nos avisos do
+        secPed), as faltas e os atrasos, as provas marcadas, as facturas emitidas, os pagamentos e os relatórios da
+        Iniciação completos."""
+        if not students:
+            return []
+        today = self._now(students[:1]).date()
+        since = today - timedelta(days=FEED_DAYS)
+        names = {s.id: first_name(s.name) for s in students}
+        items = []
+
+        def add(key, day, student, text, page):
+            items.append(
+                {
+                    'key': key,
+                    'date': fields.Date.to_string(day),
+                    'student_id': student.id,
+                    'first_name': names[student.id],
+                    'text': text,
+                    'page': page,
+                }
+            )
+
+        grades = (
+            self.env['edu.grade']
+            .sudo()
+            .search([('student_id', 'in', students.ids), ('graded', '=', True), ('write_date', '>=', since)])
+        )
+        seen = set()
+        for grade in grades.sorted('write_date', reverse=True):
+            day = grade.write_date.date()
+            key = (grade.student_id.id, grade.subject_id.id, day)
+            if key not in seen:
+                seen.add(key)
+                add(f'g{grade.id}', day, grade.student_id, f'Notas novas de {grade.subject_id.name}.', 'grades')
+        attendances = (
+            self.env['edu.lesson.attendance']
+            .sudo()
+            .search(
+                [
+                    ('student_id', 'in', students.ids),
+                    ('state', 'in', tuple(ABSENCE_KINDS)),
+                    ('lesson_state', '!=', 'cancelled'),
+                    ('date', '>=', since),
+                ]
+            )
+        )
+        for attendance in attendances:
+            kind = ABSENCE_KINDS[attendance.state]
+            add(
+                f'a{attendance.id}',
+                attendance.date,
+                attendance.student_id,
+                f'{kind.capitalize()} a {attendance.subject_id.name}, {day_label(attendance.date).lower()}.',
+                'absences',
+            )
+        Session = self.env['edu.exam.session'].sudo()
+        for student in students:
+            enrollment = self._enrollment(student)
+            rows = [row for row in self.exams(student, enrollment)['rows'] if not row['done']]
+            for session in Session.browse([row['id'] for row in rows]):
+                if session.create_date.date() >= since:
+                    add(
+                        f'e{session.id}',
+                        session.create_date.date(),
+                        student,
+                        f'Prova de {session.subject_id.name} marcada: {day_label(session.date).lower()}, às '
+                        f'{hhmm(session.hour_from)}.',
+                        'exams',
+                    )
+        moves = (
+            self.env['account.move']
+            .sudo()
+            .search(
+                [
+                    ('edu_student_id', 'in', students.ids),
+                    ('move_type', '=', 'out_invoice'),
+                    ('state', '=', 'posted'),
+                    '|',
+                    ('invoice_date', '>=', since),
+                    ('write_date', '>=', since),
+                ]
+            )
+        )
+        for move in moves:
+            student = move.edu_student_id
+            line = move.invoice_line_ids.filtered(lambda line: line.display_type == 'product')[:1]
+            label = line.name or move.name or ''
+            amount = format_amount(self.env, move.amount_total, move.currency_id)
+            if move.invoice_date and move.invoice_date >= since:
+                add(f'i{move.id}', move.invoice_date, student, f'Nova factura: {label}, {amount}.', 'fees')
+            if move.payment_state in ('paid', 'in_payment'):
+                receivable = move.line_ids.filtered(lambda line: line.account_id.account_type == 'asset_receivable')
+                paid_on = max(receivable.matched_credit_ids.mapped('max_date'), default=False)
+                if paid_on and paid_on >= since:
+                    add(f'p{move.id}', paid_on, student, f'Pagamento confirmado: {label}.', 'fees')
+        rdecs = (
+            self.env['edu.rdec']
+            .sudo()
+            .search([('student_id', 'in', students.ids), ('state', '=', 'done'), ('write_date', '>=', since)])
+        )
+        for rdec in rdecs:
+            add(
+                f'r{rdec.id}',
+                rdec.write_date.date(),
+                rdec.student_id,
+                f'O RDEC do {rdec.trimester_id.name.replace("Trimestre", "trimestre")} está completo.',
+                'rdec',
+            )
+        items.sort(key=lambda item: (item['date'], item['key']), reverse=True)
+        return items[:FEED_LIMIT]
+
+    # Histórico
+
+    @api.model
+    def _history(self, student):
+        """O percurso do aluno, ano a ano, como no secPed: a turma, a média final, a assiduidade e a decisão do ano. Um
+        ano só entra quando a decisão está tomada (o ano em curso entra no fim). Com propinas em atraso e a escola em
+        modo «bloquear», fica escondido como as notas."""
+        if student._edu_gate('grades')[0]:
+            return {'blocked': True, 'rows': []}
+        results = (
+            self.env['edu.year.result']
+            .sudo()
+            .search([('student_id', '=', student.id), ('status', '!=', 'pending')])
+            .filtered(lambda r: r.enrollment_id.state not in ('draft', 'dropped'))
+            .sorted(lambda r: (r.academic_year_id.date_start, r.id))
+        )
+        labels = dict(results._fields['status']._description_selection(self.env))
+        rows = []
+        for result in results:
+            edu_class = result.class_id
+            policy = self.env['edu.evaluation.policy']._get(result.company_id, edu_class.level_id)
+            rows.append(
+                {
+                    'id': result.id,
+                    'year': result.academic_year_id.name,
+                    'class': edu_class._editor_label(),
+                    'course': edu_class.course_id.name or '',
+                    'average': {
+                        'text': grade_text(result.average),
+                        'pos': grading.rounder(policy.rounding)(result.average) >= policy.pass_grade,
+                    }
+                    if result.average
+                    else None,
+                    # A frequência dos anos migrados do secPed não veio: fica por mostrar.
+                    'attendance': round(100 * result.attendance_rate) if result.attendance_rate else None,
+                    'status': result.status,
+                    'status_label': labels[result.status],
+                }
+            )
+        return {'blocked': False, 'rows': rows}
+
+    @api.model
+    def _chat_contacts(self):
+        """Os contactos da «Nova conversa» das Mensagens, como no secPed: o director de turma e os professores da
+        turma, e a secretaria e a direcção. Só quem tem utilizador."""
+        student = self._student()
+        enrollment = self._enrollment(student) if student else self.env['edu.enrollment']
+        edu_class = enrollment.class_id
+        groups = []
+        seen = set()
+        director = edu_class.director_id.user_id
+        if director:
+            seen.add(director.id)
+            groups.append(
+                {
+                    'key': 'director',
+                    'label': 'Director(a) de turma',
+                    'contacts': [{'partner_id': director.partner_id.id, 'name': director.name, 'detail': ''}],
+                }
+            )
+        teachers = {}
+        for assignment in edu_class.assignment_ids:
+            user = assignment.teacher_id.user_id
+            if user:
+                teachers.setdefault(user, []).append(assignment.subject_id.name)
+        contacts = [
+            {'partner_id': user.partner_id.id, 'name': user.name, 'detail': ', '.join(subjects)}
+            for user, subjects in sorted(teachers.items(), key=lambda item: item[0].name or '')
+        ]
+        seen.update(user.id for user in teachers)
+        if contacts:
+            groups.append({'key': 'teachers', 'label': 'Professores da turma', 'contacts': contacts})
+        return groups + self._office_contacts(student.company_id or self.env.company, seen)
+
+    @api.model
+    def _office_contacts(self, companies, seen):
+        """A secretaria e a direcção da escola, para as Mensagens do aluno e do encarregado."""
+        clerks = (
+            self.env['res.users']
+            .sudo()
+            .search([('share', '=', False), ('company_ids', 'in', companies.ids)], order='name')
+            .filtered(lambda u: u.has_group('edu_core.group_edu_user') and u.id not in seen)
+        )
+        groups = []
+        for key, label, members in (
+            ('office', 'Secretaria', clerks.filtered(lambda u: not u.has_group('edu_core.group_edu_manager'))),
+            ('direction', 'Direcção', clerks.filtered(lambda u: u.has_group('edu_core.group_edu_manager'))),
+        ):
+            contacts = [{'partner_id': u.partner_id.id, 'name': u.name, 'detail': ''} for u in members]
+            if contacts:
+                groups.append({'key': key, 'label': label, 'contacts': contacts})
+        return groups
 
     # Formação técnica
 

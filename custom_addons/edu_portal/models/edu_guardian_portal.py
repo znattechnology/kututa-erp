@@ -1,21 +1,8 @@
-from datetime import timedelta
-
-from odoo import api, fields, models
+from odoo import api, models
 from odoo.addons.edu_evaluation.models.edu_rdec import RDEC_LEVELS, RDEC_STATES
 from odoo.exceptions import UserError
-from odoo.tools import format_amount
 
-from .edu_student_portal import RELATIONSHIPS, day_label, hhmm
-
-# As novidades: o que mudou nos educandos nos últimos dias (as notas lançadas, as faltas, as provas marcadas, as
-# facturas e os pagamentos e os relatórios da Iniciação completos).
-FEED_DAYS = 30
-FEED_LIMIT = 100
-ABSENCE_KINDS = {'absent': 'falta injustificada', 'excused': 'falta justificada', 'late': 'atraso'}
-
-
-def first_name(name):
-    return (name or '').split(' ')[0]
+from .edu_student_portal import ABSENCE_KINDS, RELATIONSHIPS, day_label, first_name
 
 
 class EduGuardianPortal(models.AbstractModel):
@@ -87,10 +74,10 @@ class EduGuardianPortal(models.AbstractModel):
             )
         if page == 'home':
             data['summaries'] = [self._summary(student) for student in children]
-            data['feed'] = self._feed(children)[:5]
+            data['feed'] = Portal._feed(children)[:5]
             return data
         if page == 'notifications':
-            data['feed'] = self._feed(children)
+            data['feed'] = Portal._feed(children)
             return data
         if page == 'profile':
             data['profile'] = self._profile(guardians, children)
@@ -164,120 +151,6 @@ class EduGuardianPortal(models.AbstractModel):
             'overdue': fees['overdue'],
             'overdue_total': fees['overdue_total'],
         }
-
-    @api.model
-    def _feed(self, children):
-        """As novidades dos educandos nos últimos dias, da mais recente para a mais antiga: as notas lançadas (sem a
-        nota, que pode mudar, como nos avisos do secPed), as faltas e os atrasos, as provas marcadas, as facturas
-        emitidas, os pagamentos e os relatórios da Iniciação completos."""
-        if not children:
-            return []
-        Portal = self.env['edu.student.portal']
-        today = Portal._now(children[:1]).date()
-        since = today - timedelta(days=FEED_DAYS)
-        names = {s.id: first_name(s.name) for s in children}
-        items = []
-
-        def add(key, day, student, text, page):
-            items.append(
-                {
-                    'key': key,
-                    'date': fields.Date.to_string(day),
-                    'student_id': student.id,
-                    'first_name': names[student.id],
-                    'text': text,
-                    'page': page,
-                }
-            )
-
-        grades = (
-            self.env['edu.grade']
-            .sudo()
-            .search([('student_id', 'in', children.ids), ('graded', '=', True), ('write_date', '>=', since)])
-        )
-        seen = set()
-        for grade in grades.sorted('write_date', reverse=True):
-            day = grade.write_date.date()
-            key = (grade.student_id.id, grade.subject_id.id, day)
-            if key not in seen:
-                seen.add(key)
-                add(f'g{grade.id}', day, grade.student_id, f'Notas novas de {grade.subject_id.name}.', 'grades')
-        attendances = (
-            self.env['edu.lesson.attendance']
-            .sudo()
-            .search(
-                [
-                    ('student_id', 'in', children.ids),
-                    ('state', 'in', tuple(ABSENCE_KINDS)),
-                    ('lesson_state', '!=', 'cancelled'),
-                    ('date', '>=', since),
-                ]
-            )
-        )
-        for attendance in attendances:
-            kind = ABSENCE_KINDS[attendance.state]
-            add(
-                f'a{attendance.id}',
-                attendance.date,
-                attendance.student_id,
-                f'{kind.capitalize()} a {attendance.subject_id.name}, {day_label(attendance.date).lower()}.',
-                'absences',
-            )
-        Session = self.env['edu.exam.session'].sudo()
-        for student in children:
-            enrollment = Portal._enrollment(student)
-            rows = [row for row in Portal.exams(student, enrollment)['rows'] if not row['done']]
-            for session in Session.browse([row['id'] for row in rows]):
-                if session.create_date.date() >= since:
-                    add(
-                        f'e{session.id}',
-                        session.create_date.date(),
-                        student,
-                        f'Prova de {session.subject_id.name} marcada: {day_label(session.date).lower()}, às '
-                        f'{hhmm(session.hour_from)}.',
-                        'exams',
-                    )
-        moves = (
-            self.env['account.move']
-            .sudo()
-            .search(
-                [
-                    ('edu_student_id', 'in', children.ids),
-                    ('move_type', '=', 'out_invoice'),
-                    ('state', '=', 'posted'),
-                    '|',
-                    ('invoice_date', '>=', since),
-                    ('write_date', '>=', since),
-                ]
-            )
-        )
-        for move in moves:
-            student = move.edu_student_id
-            line = move.invoice_line_ids.filtered(lambda line: line.display_type == 'product')[:1]
-            label = line.name or move.name or ''
-            amount = format_amount(self.env, move.amount_total, move.currency_id)
-            if move.invoice_date and move.invoice_date >= since:
-                add(f'i{move.id}', move.invoice_date, student, f'Nova factura: {label}, {amount}.', 'fees')
-            if move.payment_state in ('paid', 'in_payment'):
-                receivable = move.line_ids.filtered(lambda line: line.account_id.account_type == 'asset_receivable')
-                paid_on = max(receivable.matched_credit_ids.mapped('max_date'), default=False)
-                if paid_on and paid_on >= since:
-                    add(f'p{move.id}', paid_on, student, f'Pagamento confirmado: {label}.', 'fees')
-        rdecs = (
-            self.env['edu.rdec']
-            .sudo()
-            .search([('student_id', 'in', children.ids), ('state', '=', 'done'), ('write_date', '>=', since)])
-        )
-        for rdec in rdecs:
-            add(
-                f'r{rdec.id}',
-                rdec.write_date.date(),
-                rdec.student_id,
-                f'O RDEC do {rdec.trimester_id.name.replace("Trimestre", "trimestre")} está completo.',
-                'rdec',
-            )
-        items.sort(key=lambda item: (item['date'], item['key']), reverse=True)
-        return items[:FEED_LIMIT]
 
     # Os educandos
 
@@ -459,20 +332,7 @@ class EduGuardianPortal(models.AbstractModel):
                     }
                 )
         companies = self._guardians().company_id or self.env.company
-        clerks = (
-            self.env['res.users']
-            .sudo()
-            .search([('share', '=', False), ('company_ids', 'in', companies.ids)], order='name')
-            .filtered(lambda u: u.has_group('edu_core.group_edu_user') and u.id not in seen)
-        )
-        for key, label, members in (
-            ('office', 'Secretaria', clerks.filtered(lambda u: not u.has_group('edu_core.group_edu_manager'))),
-            ('direction', 'Direcção', clerks.filtered(lambda u: u.has_group('edu_core.group_edu_manager'))),
-        ):
-            contacts = [{'partner_id': u.partner_id.id, 'name': u.name, 'detail': ''} for u in members]
-            if contacts:
-                groups.append({'key': key, 'label': label, 'contacts': contacts})
-        return groups
+        return groups + Portal._office_contacts(companies, seen)
 
 
 class EduTeacherHome(models.AbstractModel):
@@ -480,7 +340,9 @@ class EduTeacherHome(models.AbstractModel):
 
     @api.model
     def chat_contacts(self):
-        # O encarregado escreve a quem acompanha os educandos e à escola.
+        # O aluno escreve aos professores da turma e à escola; o encarregado, a quem acompanha os educandos e à escola.
+        if self.env.user._edu_student_only():
+            return self.env['edu.student.portal']._chat_contacts()
         if self.env.user._edu_guardian_only():
             return self.env['edu.guardian.portal']._chat_contacts()
         return super().chat_contacts()

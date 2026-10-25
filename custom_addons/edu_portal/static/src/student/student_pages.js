@@ -368,6 +368,78 @@ export class StudentProject extends StudentPage {
     }
 }
 
+const HISTORY_STATUS_CLASS = { promoted: "text-primary", graduated: "text-primary", retained: "text-danger" };
+const HISTORY_VERBS = {
+    promoted: "transitaste",
+    graduated: "concluíste o curso",
+    conditional: "transitaste com disciplinas em atraso",
+    exam: "foste admitido a exame de recurso",
+    retained: "ficaste retido",
+};
+
+/** O Histórico, como no secPed: o percurso ano a ano, com a média final, a assiduidade e a decisão do ano. */
+export class StudentHistory extends StudentPage {
+    static template = "edu_portal.StudentHistory";
+    static page = "history";
+
+    /** «Tens 3 anos lectivos no histórico: transitaste em 2 anos e ficaste retido em um.» */
+    get sentence() {
+        const rows = this.state.data.history.rows;
+        const counts = Object.keys(HISTORY_VERBS)
+            .map((status) => [status, rows.filter((r) => r.status === status).length])
+            .filter(([, n]) => n);
+        // Com uma só decisão em todos os anos, não é preciso contar.
+        const parts = counts.map(([status, n]) =>
+            counts.length === 1 || status === "graduated" ? HISTORY_VERBS[status] : `${HISTORY_VERBS[status]} em ${count(n, "um", "anos")}`
+        );
+        return `Tens ${count(rows.length, "um ano lectivo", "anos lectivos")} no histórico: ${list(parts)}.`;
+    }
+
+    statusClass(row) {
+        return HISTORY_STATUS_CLASS[row.status] || "text-warning";
+    }
+}
+
+/** «hoje», «ontem», «há 3 dias», como nas notificações do secPed. */
+export function feedWhen(isoDate) {
+    const [y, m, d] = isoDate.split("-").map((part) => parseInt(part, 10));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Math.round((today - new Date(y, m - 1, d)) / 86400000);
+    return days <= 0 ? "Hoje" : days === 1 ? "Ontem" : `Há ${days} dias`;
+}
+
+const STUDENT_FEED_ACTIONS = {
+    grades: "edu_portal.action_student_grades",
+    rdec: "edu_portal.action_student_grades",
+    absences: "edu_portal.action_student_absences",
+    exams: "edu_portal.action_student_exams",
+    fees: "edu_portal.action_student_fees",
+};
+
+/** As notificações: as notas novas, as faltas, as provas marcadas, as facturas e os pagamentos dos últimos 30 dias. */
+export class StudentNotifications extends StudentPage {
+    static template = "edu_portal.StudentNotifications";
+    static page = "notifications";
+
+    when(item) {
+        return feedWhen(item.date);
+    }
+
+    openItem(item) {
+        return this.open(STUDENT_FEED_ACTIONS[item.page]);
+    }
+}
+
+/** A ajuda, como no secPed: perguntas por tema, com o caminho para a página que responde. */
+export class StudentHelp extends StudentPage {
+    static template = "edu_portal.StudentHelp";
+
+    async load() {
+        this.state.data = {};
+    }
+}
+
 const actions = registry.category("actions");
 actions.add("edu_portal.student_home", StudentHome);
 actions.add("edu_portal.student_grades", StudentGrades);
@@ -378,3 +450,6 @@ actions.add("edu_portal.student_fees", StudentFees);
 actions.add("edu_portal.student_profile", StudentProfile);
 actions.add("edu_portal.student_internship", StudentInternship);
 actions.add("edu_portal.student_project", StudentProject);
+actions.add("edu_portal.student_history", StudentHistory);
+actions.add("edu_portal.student_notifications", StudentNotifications);
+actions.add("edu_portal.student_help", StudentHelp);

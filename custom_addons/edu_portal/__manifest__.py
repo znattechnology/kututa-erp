@@ -12,6 +12,8 @@ Secretaria Express: a área do estudante, como a do secPed-Express, no Odoo como
 * Provas da turma por época, com a sala e a vigilância
 * Faltas pela regra que conta (Decreto Executivo 424/25 e Despacho 60/08)
 * Propinas, só para ler (quem paga é o encarregado), e o aviso das propinas em atraso
+* Histórico: o percurso ano a ano, com a média final e a decisão do ano
+* Notificações (o que mudou nos últimos 30 dias), mensagens com os professores e a secretaria, e ajuda
 * Meu perfil: matrícula, dados pessoais, encarregados e a palavra-passe
 * Com propinas em atraso e a escola em modo «bloquear», as notas ficam escondidas (como no secPed)
 

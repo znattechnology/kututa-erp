@@ -33,6 +33,18 @@
         <field name="name">Propinas</field>
         <field name="tag">edu_portal.student_fees</field>
     </record>
+    <record id="action_student_history" model="ir.actions.client">
+        <field name="name">Histórico</field>
+        <field name="tag">edu_portal.student_history</field>
+    </record>
+    <record id="action_student_notifications" model="ir.actions.client">
+        <field name="name">Notificações</field>
+        <field name="tag">edu_portal.student_notifications</field>
+    </record>
+    <record id="action_student_help" model="ir.actions.client">
+        <field name="name">Ajuda</field>
+        <field name="tag">edu_portal.student_help</field>
+    </record>
     <record id="action_student_profile" model="ir.actions.client">
         <field name="name">Meu perfil</field>
         <field name="tag">edu_portal.student_profile</field>
@@ -46,12 +58,18 @@
     <menuitem id="menu_student_schedule" name="Horário" action="action_student_schedule" parent="menu_student_academic" sequence="20"/>
     <menuitem id="menu_student_exams" name="Provas" action="action_student_exams" parent="menu_student_academic" sequence="30"/>
     <menuitem id="menu_student_absences" name="Faltas" action="action_student_absences" parent="menu_student_academic" sequence="40"/>
+    <menuitem id="menu_student_history" name="Histórico" action="action_student_history" parent="menu_student_academic" sequence="50"/>
     <!-- A formação técnica só aparece aos alunos do ensino técnico (ir.ui.menu._load_menus_blacklist). -->
     <menuitem id="menu_student_training" name="Formação Técnica" parent="menu_student_root" sequence="15"/>
     <menuitem id="menu_student_internship" name="O Meu Estágio" action="action_student_internship" parent="menu_student_training" sequence="10"/>
     <menuitem id="menu_student_project" name="A Minha PAP" action="action_student_project" parent="menu_student_training" sequence="20"/>
     <menuitem id="menu_student_finance" name="Finanças" parent="menu_student_root" sequence="20"/>
     <menuitem id="menu_student_fees" name="Propinas" action="action_student_fees" parent="menu_student_finance" sequence="10"/>
+    <!-- As mensagens são as Discussões do Odoo, como as do professor e do encarregado: só as conversas com a escola. -->
+    <menuitem id="menu_student_communication" name="Comunicação" parent="menu_student_root" sequence="25"/>
+    <menuitem id="menu_student_notifications" name="Notificações" action="action_student_notifications" parent="menu_student_communication" sequence="10"/>
+    <menuitem id="menu_student_messages" name="Mensagens" action="mail.action_discuss" parent="menu_student_communication" sequence="20"/>
     <menuitem id="menu_student_account" name="Conta" parent="menu_student_root" sequence="30"/>
     <menuitem id="menu_student_profile" name="Meu perfil" action="action_student_profile" parent="menu_student_account" sequence="10"/>
+    <menuitem id="menu_student_help" name="Ajuda" action="action_student_help" parent="menu_student_account" sequence="20"/>
 </odoo>

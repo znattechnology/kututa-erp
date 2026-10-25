@@ -677,6 +677,178 @@
             </Layout>
         </div>
     </t>
+    <!-- O Histórico, como no secPed: o percurso ano a ano (a turma, a média final, a assiduidade e a decisão do ano).
+         Um ano entra quando a decisão está tomada. -->
+    <t t-name="edu_portal.StudentHistory">
+        <div class="o_action o_edu_student">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">Histórico</h1>
+                        <p class="mb-0 text-muted">O meu percurso na escola, ano a ano.</p>
+                    </header>
+                    <t t-call="edu_portal.StudentPage.Debt"/>
+                    <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
+                    <section t-elif="d.history.blocked" class="o_edu_st_card border-danger" role="alert">
+                        O histórico está indisponível enquanto houver propinas em atraso.
+                        <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.open('edu_portal.action_student_fees')">Ver as propinas</button>
+                    </section>
+                    <section t-elif="!d.history.rows.length" class="o_edu_st_card text-muted">
+                        Ainda não tens anos no histórico. Cada ano entra aqui quando a escola toma a decisão do fim do ano.
+                    </section>
+                    <t t-else="">
+                        <p class="mb-0"><t t-out="this.sentence"/> <span class="text-muted">O ano em curso entra quando a escola tomar a decisão do fim do ano.</span></p>
+                        <!-- Ecrãs largos: a tabela. -->
+                        <div class="o_edu_st_card p-0 o_edu_st_scroll d-none d-md-block">
+                            <table class="table mb-0 o_edu_st_table">
+                                <thead>
+                                    <tr><th>Ano lectivo</th><th>Turma</th><th class="text-center">Média final</th><th class="text-center">Assiduidade</th><th>Resultado</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d.history.rows" t-as="r" t-key="r.id">
+                                        <td class="text-nowrap" t-out="r.year"/>
+                                        <td><span class="fw-semibold" t-out="r.class"/><span t-if="r.course" class="text-muted" t-out="', ' + r.course"/></td>
+                                        <td class="text-center o_edu_st_num">
+                                            <span t-if="r.average" t-att-class="r.average.pos ? 'text-primary' : 'text-danger'" t-out="r.average.text"/>
+                                            <span t-else="" class="text-muted">—</span>
+                                        </td>
+                                        <td class="text-center o_edu_st_num"><t t-if="r.attendance !== null"><t t-out="r.attendance"/>%</t><span t-else="" class="text-muted">—</span></td>
+                                        <td class="text-nowrap" t-att-class="this.statusClass(r)" t-out="r.status_label"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Telemóvel: uma linha por ano. -->
+                        <ul class="o_edu_st_card o_edu_st_list d-md-none">
+                            <li t-foreach="d.history.rows" t-as="r" t-key="r.id">
+                                <div class="flex-grow-1">
+                                    <div><t t-out="r.year"/>, <t t-out="r.class"/></div>
+                                    <div class="small" t-att-class="this.statusClass(r)" t-out="r.status_label"/>
+                                </div>
+                                <span t-if="r.average" class="fs-5 o_edu_st_num" t-att-class="r.average.pos ? 'text-primary' : 'text-danger'" t-out="r.average.text"/>
+                            </li>
+                        </ul>
+                        <p class="mb-0 small text-muted">
+                            As notas de cada ano estão em <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.open('edu_portal.action_student_grades')">Minhas notas</button>, escolhendo o ano lectivo. Os certificados e as declarações com as notas pedem-se à secretaria.
+                        </p>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- As notificações: o que mudou nos últimos 30 dias (as notas novas, as faltas, as provas marcadas, as facturas e
+         os pagamentos), cada uma com o caminho para a página. -->
+    <t t-name="edu_portal.StudentNotifications">
+        <div class="o_action o_edu_student">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">Notificações</h1>
+                        <p class="mb-0 text-muted">O que mudou nos últimos 30 dias.</p>
+                    </header>
+                    <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
+                    <p t-elif="!d.feed.length" class="o_edu_st_card mb-0 text-muted">
+                        Ainda não tens notificações. Aparecem aqui as notas novas, as faltas, as provas marcadas e as propinas.
+                    </p>
+                    <t t-else="">
+                        <ul class="o_edu_st_card o_edu_st_feed">
+                            <li t-foreach="d.feed" t-as="item" t-key="item.key">
+                                <button type="button" class="o_edu_st_feed_item" t-on-click="() => this.openItem(item)">
+                                    <span t-out="item.text"/>
+                                    <span class="small text-muted" t-out="this.when(item)"/>
+                                </button>
+                            </li>
+                        </ul>
+                        <p class="mb-0 small text-muted">As notificações das notas não dizem a nota, que pode mudar até o trimestre fechar: abre a página para a ver.</p>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- A ajuda, como a do secPed: o que a área faz pelo aluno, por temas, com o caminho para cada página. -->
+    <t t-name="edu_portal.StudentHelp">
+        <div class="o_action o_edu_student">
+            <Layout display="this.display">
+                <div class="o_edu_st_body">
+                    <header>
+                        <h1 class="o_edu_st_title">Ajuda</h1>
+                        <p class="mb-0 text-muted">Respostas às dúvidas mais comuns sobre a área do estudante.</p>
+                    </header>
+                    <section class="o_edu_st_section" aria-labelledby="o_edu_st_h1">
+                        <h2 id="o_edu_st_h1" class="o_edu_st_h2 mb-0">Notas e faltas</h2>
+                        <div class="o_edu_st_card o_edu_st_faq">
+                            <details>
+                                <summary>Quando aparecem as notas?</summary>
+                                <p>Assim que o professor as lança. Nas notificações aparece «Notas novas» da disciplina (sem a nota, que pode mudar até o trimestre fechar). O mínimo para a positiva está escrito por baixo da pauta.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_grades')">Ver as notas</button>
+                            </details>
+                            <details>
+                                <summary>O que querem dizer NPP, NPT, CT, MAC e MT?</summary>
+                                <p>No ensino técnico, NPP é a nota do professor e NPT a da prova do trimestre; a classificação do trimestre (CT) junta as duas. No ensino geral, MAC é a média das avaliações contínuas e MT a média do trimestre. A legenda completa está por baixo da pauta.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_grades')">Ver as notas</button>
+                            </details>
+                            <details>
+                                <summary>Como se conta a minha assiduidade?</summary>
+                                <p>Só contam as aulas dadas em que o professor fez a chamada. Chegar atrasado conta como presença e como atraso. Cada disciplina tem um limite de faltas injustificadas, que depende dos tempos semanais; no painel e nas faltas vês quando estás perto dele.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_absences')">Ver as faltas</button>
+                            </details>
+                            <details>
+                                <summary>Onde vejo o horário, as provas e os anos anteriores?</summary>
+                                <p>O horário da turma está em Horário, as provas marcadas em Provas e o resultado de cada ano em Histórico. Se a escola ainda não publicou o horário, a página diz isso.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_history')">Ver o histórico</button>
+                            </details>
+                        </div>
+                    </section>
+                    <section class="o_edu_st_section" aria-labelledby="o_edu_st_h2">
+                        <h2 id="o_edu_st_h2" class="o_edu_st_h2 mb-0">Propinas</h2>
+                        <div class="o_edu_st_card o_edu_st_faq">
+                            <details>
+                                <summary>Quem paga as propinas?</summary>
+                                <p>O teu encarregado de educação, na tesouraria da escola. Aqui vês as facturas e o que está por pagar; quando um pagamento é confirmado, a factura passa para «Pagas».</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_fees')">Ver as propinas</button>
+                            </details>
+                            <details>
+                                <summary>Porque é que o valor de uma propina aumentou?</summary>
+                                <p class="mb-0">Se a escola cobra multa por atraso, ela é somada à propina depois do período de tolerância. Na página das propinas a multa aparece numa coluna própria, factura a factura.</p>
+                            </details>
+                            <details>
+                                <summary>O que acontece se houver propinas em atraso?</summary>
+                                <p class="mb-0">Depende da escola: ou vês só um aviso, ou algumas páginas, como as notas e o histórico, ficam fechadas até as propinas vencidas serem pagas. A tua matrícula continua activa e continuas a ter aulas.</p>
+                            </details>
+                        </div>
+                    </section>
+                    <section class="o_edu_st_section" aria-labelledby="o_edu_st_h3">
+                        <h2 id="o_edu_st_h3" class="o_edu_st_h2 mb-0">Mensagens e a tua conta</h2>
+                        <div class="o_edu_st_card o_edu_st_faq">
+                            <details>
+                                <summary>A quem posso escrever?</summary>
+                                <p>Aos professores da tua turma, ao director de turma e à secretaria. Em Mensagens, começa uma conversa nova e escolhe a pessoa.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('mail.action_discuss')">Abrir as mensagens</button>
+                            </details>
+                            <details>
+                                <summary>Como peço uma declaração ou um certificado?</summary>
+                                <p class="mb-0">Na secretaria da escola. Antes, vê em Meu perfil se os teus dados estão completos: são os que vão nos documentos.</p>
+                            </details>
+                            <details>
+                                <summary>Os meus dados estão errados ou em falta. O que faço?</summary>
+                                <p>Vê-os em Meu perfil. Para os corrigir ou completar, fala com a secretaria.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_profile')">Ver o perfil</button>
+                            </details>
+                            <details>
+                                <summary>Esqueci-me da palavra-passe.</summary>
+                                <p class="mb-0">Pede à secretaria uma palavra-passe nova. Depois de entrares, podes mudá-la em Meu perfil, em Segurança.</p>
+                            </details>
+                        </div>
+                    </section>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
     <!-- Partes comuns à área do estudante e à do encarregado, que mostra as mesmas tabelas (como no secPed). -->
 
     <!-- A pauta de um ano: o resultado, a frase do trimestre, a tabela (no telemóvel uma lista) e a legenda das siglas. Usa

@@ -16,24 +16,16 @@ class DiscussChannel(models.Model):
 
     @api.model
     def _edu_remove_family(self, users=None):
-        """Os alunos saem de todas as conversas; os encarregados, dos canais do pessoal (ficam as suas conversas com a
-        escola)."""
-        self._edu_remove_students(users)
+        """Os alunos e os encarregados saem dos canais do pessoal (o «General» junta todos os internos); ficam as suas
+        conversas com a escola."""
         if users is None:
-            group = self.env.ref('edu_portal.group_edu_guardian', raise_if_not_found=False)
-            users = group.sudo().all_user_ids if group else self.env['res.users']
-        guardians = users.sudo().filtered(lambda u: u._edu_guardian_only())
-        if guardians:
+            groups = [
+                self.env.ref(xmlid, raise_if_not_found=False)
+                for xmlid in ('edu_portal.group_edu_student', 'edu_portal.group_edu_guardian')
+            ]
+            users = self.env['res.users'].union(*(g.sudo().all_user_ids for g in groups if g))
+        family = users.sudo().filtered(lambda u: u._edu_student_only() or u._edu_guardian_only())
+        if family:
             self.env['discuss.channel.member'].sudo().search(
-                [('partner_id', 'in', guardians.partner_id.ids), ('channel_id.channel_type', '=', 'channel')]
+                [('partner_id', 'in', family.partner_id.ids), ('channel_id.channel_type', '=', 'channel')]
             ).unlink()
-
-    @api.model
-    def _edu_remove_students(self, users=None):
-        """Os alunos saem das conversas (as dos canais em que entraram antes de serem alunos, e as do OdooBot)."""
-        if users is None:
-            group = self.env.ref('edu_portal.group_edu_student', raise_if_not_found=False)
-            users = group.sudo().all_user_ids if group else self.env['res.users']
-        students = users.sudo().filtered(lambda u: u._edu_student_only())
-        if students:
-            self.env['discuss.channel.member'].sudo().search([('partner_id', 'in', students.partner_id.ids)]).unlink()
