@@ -944,3 +944,40 @@
         border-left-color: $success;
     }
 }
+
+// Falta confirmar: o aluno, a última turma, o resultado do ano e o encarregado a quem ligar.
+.o_edu_unconf_kanban {
+    .o_kanban_record {
+        min-width: 280px;
+    }
+
+    .o_edu_unconf_card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        height: 100%;
+        padding: 2px;
+    }
+
+    .o_edu_unconf_avatar img {
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .o_edu_unconf_name {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-height: 1.25;
+    }
+
+    .o_edu_unconf_foot {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 12px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        min-width: 0;
+    }
+}

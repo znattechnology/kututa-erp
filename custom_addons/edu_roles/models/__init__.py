@@ -10,6 +10,7 @@ from . import (
     edu_report_page,
     edu_secretaria_home,
     edu_shift,
+    edu_student,
     edu_teacher_home,
     edu_transfer,
     ir_http,

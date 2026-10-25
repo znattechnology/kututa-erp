@@ -9,6 +9,9 @@
         <field name="arch" type="xml">
             <kanban class="o_edu_transfer_kanban" default_group_by="state" default_order="effective_date desc, id desc"
                     records_draggable="0" quick_create="0" group_create="0" group_delete="0" group_edit="0">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
                 <field name="state"/>
                 <field name="transfer_type"/>
                 <field name="edu_student_name"/>

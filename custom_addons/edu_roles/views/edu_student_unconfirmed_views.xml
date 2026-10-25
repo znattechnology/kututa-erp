@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Falta confirmar: os alunos de anos anteriores que continuam na escola mas não têm matrícula no ano em curso,
+         em cartões. Cada cartão mostra a última turma, o resultado desse ano e o encarregado a quem ligar, com
+         «Matricular» para abrir a nova matrícula já preenchida. À esquerda, o último ano lectivo. -->
+    <record id="view_edu_student_unconfirmed_kanban" model="ir.ui.view">
+        <field name="name">edu.student.kanban.unconfirmed</field>
+        <field name="model">edu.student</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_unconf_kanban" create="false" default_order="name">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
+                <field name="name"/>
+                <field name="matricula_number"/>
+                <field name="edu_last_state"/>
+                <field name="edu_guardian_name"/>
+                <field name="edu_guardian_phone"/>
+                <field name="phone"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_unconf_card">
+                            <div class="d-flex align-items-center gap-2">
+                                <field name="avatar_128" widget="image" options="{'size': [36, 36]}" class="o_edu_unconf_avatar"/>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold o_edu_unconf_name" t-out="record.name.raw_value"/>
+                                    <div class="small text-muted" t-out="record.matricula_number.raw_value"/>
+                                </div>
+                            </div>
+                            <div class="small">
+                                <span class="text-muted">Última turma:</span> <field name="edu_last_class_id"/>
+                            </div>
+                            <div>
+                                <span t-if="record.edu_last_state.raw_value === 'retained'" class="badge text-bg-warning">Não transitou: repete a classe</span>
+                                <span t-elif="record.edu_last_state.raw_value === 'completed'" class="badge text-bg-success">Transitou</span>
+                                <span t-else="" class="badge text-bg-light"><field name="edu_last_state"/></span>
+                            </div>
+                            <t t-set="phone" t-value="record.edu_guardian_phone.raw_value or record.phone.raw_value"/>
+                            <div t-if="record.edu_guardian_name.raw_value or phone" class="o_edu_unconf_foot">
+                                <span t-if="record.edu_guardian_name.raw_value" class="text-truncate"><i class="oi me-1" data-icon="person" aria-hidden="true"/><t t-out="record.edu_guardian_name.raw_value"/></span>
+                                <a t-if="phone" t-att-href="'tel:' + phone" class="text-reset"><i class="oi me-1" data-icon="phone" aria-hidden="true"/><t t-out="phone"/></a>
+                            </div>
+                            <div class="text-end mt-auto">
+                                <button name="action_edu_enroll_again" type="object" class="btn btn-sm btn-primary">Matricular</button>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_edu_student_unconfirmed_search" model="ir.ui.view">
+        <field name="name">edu.student.search.unconfirmed</field>
+        <field name="model">edu.student</field>
+        <field name="mode">primary</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Aluno" filter_domain="['|', '|', ('name', 'ilike', self), ('matricula_number', 'ilike', self), ('id_number', 'ilike', self)]"/>
+                <field name="primary_guardian_id"/>
+                <searchpanel view_types="kanban,list">
+                    <field name="last_academic_year_id" string="Último ano lectivo" select="one" icon="calendar_today" enable_counters="1"/>
+                </searchpanel>
+            </search>
+        </field>
+    </record>
+
+    <record id="edu_evaluation.action_edu_student_unconfirmed" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_edu_student_unconfirmed_kanban')})]"/>
+        <field name="search_view_id" ref="view_edu_student_unconfirmed_search"/>
+        <field name="context">{'create': False, 'edu_listing_status': 'former'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Não falta confirmar ninguém</p>
+            <p>Todos os alunos de anos anteriores que continuam na escola têm matrícula no ano em curso. Para confirmar
+            a escola inteira de uma vez, use «Confirmação de matrículas».</p>
+        </field>
+    </record>
+</odoo>
