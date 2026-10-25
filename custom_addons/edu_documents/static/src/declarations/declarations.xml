@@ -5,120 +5,122 @@
         <div class="o_action o_edu_declarations">
             <Layout display="this.display">
                 <div class="o_edu_dc_body">
-                    <div class="o_edu_dc_intro">
-                        <p class="o_edu_dc_lead">
-                            Declaração de frequência, com as notas do ano, de matrícula ou para transferência, pronta a
-                            imprimir e assinar. Os dados de identificação que faltarem completam-se aqui e ficam guardados
-                            na ficha do aluno.
-                        </p>
-                        <button type="button" class="btn btn-link" t-on-click="() => this.openRegistry()">
-                            <i class="oi me-1" data-icon="list_alt" aria-hidden="true"/>Registo das declarações
-                        </button>
-                    </div>
+                    <div class="o_edu_dc_layout">
+                        <StudentPanel onPick="(row) => this.choose(row)" studentId="this.state.pick ? this.state.pick.student_id : false"
+                                      storageKey="'edu_documents.declarations.class'"/>
 
-                    <!-- Escolher o aluno -->
-                    <section class="o_edu_dc_card">
-                        <div t-if="this.state.pick" class="o_edu_dc_picked">
-                            <div class="flex-grow-1">
-                                <strong t-out="this.state.pick.name"/>
-                                <div class="small text-muted">
-                                    <t t-out="this.state.pick.class"/><t t-if="this.state.pick.number">, n.º <t t-out="this.state.pick.number"/></t>
+                        <section class="o_edu_dc_main">
+                            <div t-if="!this.state.data" class="o_edu_dc_empty">
+                                <p class="mb-1 fw-semibold">Escolha o aluno à esquerda</p>
+                                <p class="mb-2">
+                                    Declaração de frequência, com as notas do ano, de matrícula ou para transferência, pronta a
+                                    imprimir e assinar. Os dados de identificação que faltarem completam-se aqui e ficam
+                                    guardados na ficha do aluno.
+                                </p>
+                                <button type="button" class="btn btn-link px-0" t-on-click="() => this.openRegistry()">
+                                    <i class="oi me-1" data-icon="list_alt" aria-hidden="true"/>Registo das declarações
+                                </button>
+                            </div>
+
+                            <t t-else="">
+                                <t t-set="d" t-value="this.state.data"/>
+                                <header class="o_edu_dc_card o_edu_dc_student">
+                                    <div class="flex-grow-1 min-w-0">
+                                        <h2 class="o_edu_dc_name" t-out="d.student.name"/>
+                                        <div class="small text-muted">
+                                            <t t-out="d.enrollment.class"/><t t-if="d.enrollment.course">, <t t-out="d.enrollment.course"/></t><t t-if="d.enrollment.number">, n.º <t t-out="d.enrollment.number"/></t>
+                                            · regime <t t-out="d.enrollment.regime"/> · <t t-out="d.enrollment.year"/>
+                                            <span class="badge text-bg-light ms-1" t-out="'Matrícula ' + d.enrollment.state.toLowerCase()"/>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-link" t-on-click="() => this.openRegistry()">
+                                        <i class="oi me-1" data-icon="list_alt" aria-hidden="true"/>Registo das declarações
+                                    </button>
+                                </header>
+
+                                <div role="tablist" aria-label="Tipo de declaração" class="o_edu_dc_tabs">
+                                    <button t-foreach="this.state.types" t-as="t" t-key="t.key" type="button" role="tab" class="btn btn-sm"
+                                            t-att-class="t.key === this.state.type ? 'btn-primary' : 'btn-secondary'"
+                                            t-att-aria-selected="t.key === this.state.type ? 'true' : 'false'"
+                                            t-on-click="() => this.selectType(t.key)" t-out="t.name"/>
                                 </div>
-                            </div>
-                            <button type="button" class="btn btn-secondary" t-on-click="() => this.otherStudent()">
-                                <i class="oi me-1" data-icon="close" aria-hidden="true"/>Outro aluno
-                            </button>
-                        </div>
-                        <StudentPicker t-else="" onPick="(row) => this.choose(row)"/>
-                    </section>
+                                <div t-if="d.blocked" class="alert alert-warning" role="alert" t-out="d.blocked"/>
 
-                    <!-- A declaração -->
-                    <section t-if="this.state.pick and this.state.data" class="o_edu_dc_card">
-                        <t t-set="d" t-value="this.state.data"/>
-                        <div role="tablist" aria-label="Tipo de declaração" class="o_edu_dc_tabs">
-                            <button t-foreach="this.state.types" t-as="t" t-key="t.key" type="button" role="tab" class="btn"
-                                    t-att-class="t.key === this.state.type ? 'btn-primary' : 'btn-secondary'"
-                                    t-att-aria-selected="t.key === this.state.type ? 'true' : 'false'"
-                                    t-on-click="() => this.selectType(t.key)" t-out="t.name"/>
-                        </div>
+                                <section class="o_edu_dc_card">
+                                    <div class="o_edu_dc_card_head">
+                                        <h3 class="o_edu_dc_h3">Dados de identificação</h3>
+                                        <span class="badge" t-att-class="this.missing.length ? 'text-bg-warning' : 'text-bg-success'"
+                                              t-out="this.missing.length ? (this.missing.length === 1 ? 'Falta 1 dado' : 'Faltam ' + this.missing.length + ' dados') : 'Completos'"/>
+                                    </div>
+                                    <p t-if="this.missing.length" class="small text-muted mb-3">
+                                        O que ficar vazio sai na declaração como linha para preencher à mão.
+                                    </p>
+                                    <div class="o_edu_dc_fields">
+                                        <label t-foreach="this.state.fields" t-as="f" t-key="f.key" class="o_edu_dc_field"
+                                               t-att-class="{ o_edu_dc_missing: !this.state.identity[f.key] }">
+                                            <span t-out="f.label"/>
+                                            <select t-if="f.key === 'birth_state_id'" class="form-select" t-on-change="(ev) => this.onIdentity(f.key, ev)">
+                                                <option value="" t-att-selected="!this.state.identity[f.key]">—</option>
+                                                <option t-foreach="this.state.states" t-as="p" t-key="p.id" t-att-value="p.id"
+                                                        t-att-selected="p.id === this.state.identity[f.key]" t-out="p.name"/>
+                                            </select>
+                                            <input t-else="" class="form-control" t-att-type="f.key.endsWith('date') ? 'date' : 'text'"
+                                                   t-att-value="this.state.identity[f.key] or ''" t-on-input="(ev) => this.onIdentity(f.key, ev)"/>
+                                        </label>
+                                        <label class="o_edu_dc_field o_edu_dc_wide">
+                                            <span>Destina-se a</span>
+                                            <input class="form-control" placeholder="Vazio: sai uma linha para preencher à mão"
+                                                   t-att-value="this.state.purpose" t-on-input="(ev) => this.onPurpose(ev)"/>
+                                        </label>
+                                    </div>
 
-                        <p class="mb-0">
-                            <t t-out="d.enrollment.class"/><t t-if="d.enrollment.course">, <t t-out="d.enrollment.course"/></t><t t-if="d.enrollment.number">, n.º <t t-out="d.enrollment.number"/></t>,
-                            regime <t t-out="d.enrollment.regime"/>, <t t-out="d.enrollment.year"/> (matrícula <t t-out="d.enrollment.state.toLowerCase()"/>).
-                        </p>
-                        <div t-if="d.blocked" class="alert alert-warning mb-0" role="alert" t-out="d.blocked"/>
-
-                        <div>
-                            <h2 class="o_edu_dc_h2">Dados de identificação</h2>
-                            <p class="small mb-2" t-att-class="this.missing.length ? 'text-warning' : 'text-success'">
-                                <t t-if="!this.missing.length">Estão todos preenchidos.</t>
-                                <t t-else="">
-                                    <t t-out="this.missing.length === 1 ? 'Falta 1 dado' : 'Faltam ' + this.missing.length + ' dados'"/>:
-                                    na declaração <t t-out="this.missing.length === 1 ? 'sai' : 'saem'"/> como linha para preencher à mão.
-                                </t>
-                            </p>
-                            <div class="o_edu_dc_fields">
-                                <label t-foreach="this.state.fields" t-as="f" t-key="f.key" class="o_edu_dc_field">
-                                    <span t-out="f.label"/>
-                                    <select t-if="f.key === 'birth_state_id'" class="form-select" t-on-change="(ev) => this.onIdentity(f.key, ev)">
-                                        <option value="" t-att-selected="!this.state.identity[f.key]">—</option>
-                                        <option t-foreach="this.state.states" t-as="p" t-key="p.id" t-att-value="p.id"
-                                                t-att-selected="p.id === this.state.identity[f.key]" t-out="p.name"/>
-                                    </select>
-                                    <input t-else="" class="form-control" t-att-type="f.key.endsWith('date') ? 'date' : 'text'"
-                                           t-att-value="this.state.identity[f.key] or ''" t-on-input="(ev) => this.onIdentity(f.key, ev)"/>
-                                </label>
-                                <label class="o_edu_dc_field o_edu_dc_wide">
-                                    <span>Destina-se a</span>
-                                    <input class="form-control" placeholder="Vazio: sai uma linha para preencher à mão"
-                                           t-att-value="this.state.purpose" t-on-input="(ev) => this.onPurpose(ev)"/>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="o_edu_dc_actions">
-                            <button t-if="this.changed" type="button" class="btn btn-secondary" t-att-disabled="this.state.busy"
-                                    t-on-click="() => this.save()">Guardar os dados</button>
-                            <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy or d.blocked"
-                                    t-on-click="() => this.open('preview')">
-                                <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>
-                                <t t-out="this.changed ? 'Guardar e ver a declaração' : 'Ver a declaração'"/>
-                            </button>
-                            <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy or d.blocked"
-                                    t-on-click="() => this.open('issue_and_print')">
-                                <i class="oi me-1" data-icon="print" aria-hidden="true"/>Emitir e imprimir
-                            </button>
-                        </div>
-                        <p class="small text-muted mb-0">
-                            «Ver» mostra a declaração sem a emitir. «Emitir e imprimir» dá-lhe o número do registo e gera o PDF.
-                        </p>
-                    </section>
-
-                    <!-- Já emitidas -->
-                    <section t-if="this.state.pick and this.state.data and this.state.data.documents.length" class="o_edu_dc_card">
-                        <h2 class="o_edu_dc_h2">Declarações já emitidas a este aluno</h2>
-                        <table class="table table-sm mb-0">
-                            <thead>
-                                <tr><th>Número</th><th>Declaração</th><th>Ano</th><th>Data</th><th>Impressões</th><th/></tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="this.state.data.documents" t-as="doc" t-key="doc.id" t-att-class="{'text-muted': doc.state === 'cancelled'}">
-                                    <td t-out="doc.name"/>
-                                    <td t-out="doc.type"/>
-                                    <td t-out="doc.year"/>
-                                    <td t-out="doc.date"/>
-                                    <td t-out="doc.state === 'cancelled' ? 'Anulada' : doc.prints"/>
-                                    <td class="text-end">
-                                        <button t-if="doc.state === 'issued'" type="button" class="btn btn-sm btn-secondary"
-                                                t-att-disabled="this.state.busy" t-on-click="() => this.reprint(doc)"
-                                                title="Reimprimir (sai «2.ª VIA»)">
-                                            <i class="oi me-1" data-icon="print" aria-hidden="true"/>2.ª via
+                                    <div class="o_edu_dc_actions">
+                                        <button t-if="this.changed" type="button" class="btn btn-secondary" t-att-disabled="this.state.busy"
+                                                t-on-click="() => this.save()">Guardar os dados</button>
+                                        <span class="flex-grow-1"/>
+                                        <button type="button" class="btn btn-secondary" t-att-disabled="this.state.busy or d.blocked"
+                                                t-on-click="() => this.open('preview')">
+                                            <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>
+                                            <t t-out="this.changed ? 'Guardar e ver' : 'Ver a declaração'"/>
                                         </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </section>
+                                        <button type="button" class="btn btn-primary" t-att-disabled="this.state.busy or d.blocked"
+                                                t-on-click="() => this.open('issue_and_print')">
+                                            <i class="oi me-1" data-icon="print" aria-hidden="true"/>Emitir e imprimir
+                                        </button>
+                                    </div>
+                                    <p class="small text-muted mb-0 mt-2 text-end">
+                                        «Ver» mostra a <t t-out="this.typeName.toLowerCase()"/> sem a emitir. «Emitir e imprimir» dá-lhe
+                                        o número do registo.
+                                    </p>
+                                </section>
+
+                                <section class="o_edu_dc_card">
+                                    <div class="o_edu_dc_card_head">
+                                        <h3 class="o_edu_dc_h3">Já emitidas a este aluno</h3>
+                                        <span class="small text-muted" t-out="d.documents.length"/>
+                                    </div>
+                                    <p t-if="!d.documents.length" class="small text-muted mb-0">Ainda nenhuma declaração emitida.</p>
+                                    <ul t-else="" class="o_edu_dc_docs">
+                                        <li t-foreach="d.documents" t-as="doc" t-key="doc.id" t-att-class="{ o_cancelled: doc.state === 'cancelled' }">
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div><span class="fw-semibold" t-out="doc.type"/> · <t t-out="doc.name"/></div>
+                                                <div class="small text-muted">
+                                                    <t t-out="doc.year"/> · emitida a <t t-out="doc.date"/>
+                                                    <t t-if="doc.state !== 'cancelled'"> · <t t-out="doc.prints === 1 ? '1 impressão' : doc.prints + ' impressões'"/></t>
+                                                </div>
+                                            </div>
+                                            <span t-if="doc.state === 'cancelled'" class="badge text-bg-light">Anulada</span>
+                                            <button t-else="" type="button" class="btn btn-sm btn-secondary"
+                                                    t-att-disabled="this.state.busy" t-on-click="() => this.reprint(doc)"
+                                                    title="Reimprimir (sai «2.ª VIA»)">
+                                                <i class="oi me-1" data-icon="print" aria-hidden="true"/>2.ª via
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </section>
+                            </t>
+                        </section>
+                    </div>
                 </div>
             </Layout>
         </div>

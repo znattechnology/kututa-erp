@@ -43,6 +43,7 @@ do Despacho n.º 60/08.
     'assets': {
         'web.assets_backend': [
             'edu_documents/static/src/student_picker/*',
+            'edu_documents/static/src/student_panel/*',
             'edu_documents/static/src/declarations/*',
             'edu_documents/static/src/student_history/*',
             'edu_documents/static/src/graduations/*',

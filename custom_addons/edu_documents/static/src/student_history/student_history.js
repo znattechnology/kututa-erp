@@ -1,27 +1,10 @@
-import { Component, onWillStart, onWillUnmount, proxy, useProps } from "@odoo/owl";
+import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-
-const LAST_CLASS_KEY = "edu_documents.student_history.class";
-
-function remembered() {
-    try {
-        return parseInt(window.localStorage.getItem(LAST_CLASS_KEY), 10) || false;
-    } catch {
-        return false;
-    }
-}
-
-function remember(classId) {
-    try {
-        window.localStorage.setItem(LAST_CLASS_KEY, String(classId || ""));
-    } catch {
-        // Sem armazenamento: fica só nesta visita.
-    }
-}
+import { StudentPanel } from "../student_panel/student_panel";
 
 /**
  * «Histórico do aluno», como a página do secPed-Express, no formato da mini-pauta: à esquerda o ano lectivo, as
@@ -31,7 +14,7 @@ function remember(classId) {
  */
 export class StudentHistory extends Component {
     static template = "edu_documents.StudentHistory";
-    static components = { Layout };
+    static components = { Layout, StudentPanel };
 
     props = useProps(standardActionServiceProps);
 
@@ -40,29 +23,8 @@ export class StudentHistory extends Component {
         this.action = useService("action");
         this.dialog = useService("dialog");
         this.notification = useService("notification");
-        this.state = proxy({
-            // O painel: o ano, as turmas, a turma escolhida e os seus alunos, ou a pesquisa pelo nome.
-            yearId: false,
-            years: [],
-            classes: [],
-            classId: false,
-            students: [],
-            filter: "",
-            query: "",
-            results: [],
-            searching: false,
-            // O aluno à vista.
-            studentId: false,
-            data: null,
-            busy: false,
-            editing: null,
-            status: "",
-            reason: "",
-        });
-        this.searchTimer = null;
-        onWillUnmount(() => clearTimeout(this.searchTimer));
+        this.state = proxy({ studentId: false, data: null, busy: false, editing: null, status: "", reason: "" });
         onWillStart(async () => {
-            await this.loadYear(false, remembered());
             const studentId = (this.props.action.context || {}).default_student_id;
             if (studentId) {
                 await this.load(studentId);
@@ -72,95 +34,6 @@ export class StudentHistory extends Component {
 
     get display() {
         return { controlPanel: {} };
-    }
-
-    // Painel
-
-    async loadYear(yearId, classId = false) {
-        const options = await this.orm.call("edu.student.picker", "picker_options", [yearId]);
-        Object.assign(this.state, {
-            yearId: options.year_id,
-            years: options.years,
-            classes: options.classes,
-            classId: false,
-            students: [],
-            results: [],
-            query: "",
-        });
-        if (classId && options.classes.some((c) => c.id === classId)) {
-            await this.selectClass(classId);
-        }
-    }
-
-    async onYearChange(ev) {
-        await this.loadYear(parseInt(ev.target.value, 10) || false);
-    }
-
-    get selectedClass() {
-        return this.state.classes.find((c) => c.id === this.state.classId);
-    }
-
-    /** As turmas por curso, filtradas pela pesquisa da turma. */
-    get classGroups() {
-        const filter = this.state.filter.trim().toLowerCase();
-        const groups = [];
-        for (const c of this.state.classes) {
-            if (filter && !`${c.name} ${c.course || ""}`.toLowerCase().includes(filter)) {
-                continue;
-            }
-            const course = c.course || "Sem curso";
-            let group = groups.find((g) => g.course === course);
-            if (!group) {
-                group = { course, classes: [] };
-                groups.push(group);
-            }
-            group.classes.push(c);
-        }
-        return groups;
-    }
-
-    async selectClass(classId) {
-        this.state.classId = classId;
-        this.state.filter = "";
-        remember(classId);
-        this.state.students = await this.orm.call("edu.student.picker", "class_students", [classId]);
-    }
-
-    backToClasses() {
-        this.state.classId = false;
-        this.state.students = [];
-        remember(false);
-    }
-
-    get searchMode() {
-        return this.state.query.trim().length >= 2;
-    }
-
-    onQuery(ev) {
-        this.state.query = ev.target.value;
-        clearTimeout(this.searchTimer);
-        this.searchTimer = setTimeout(() => this.search(), 300);
-    }
-
-    async search() {
-        const query = this.state.query.trim();
-        if (query.length < 2) {
-            this.state.results = [];
-            return;
-        }
-        // Uma resposta antiga (lenta) não se sobrepõe à da pesquisa mais recente.
-        const request = (this.searchRequest = (this.searchRequest || 0) + 1);
-        this.state.searching = true;
-        try {
-            const results = await this.orm.call("edu.student.picker", "search_students", [this.state.yearId, query]);
-            if (request === this.searchRequest) {
-                this.state.results = results;
-            }
-        } finally {
-            if (request === this.searchRequest) {
-                this.state.searching = false;
-            }
-        }
     }
 
     // Aluno
@@ -244,6 +117,7 @@ export class StudentHistory extends Component {
             title: "Voltar à decisão automática",
             body: `A decisão de ${row.year} volta a ser a das regras, com as notas do ano.`,
             confirmLabel: "Voltar à automática",
+            cancelLabel: "Cancelar",
             confirm: async () => {
                 this.state.busy = true;
                 try {

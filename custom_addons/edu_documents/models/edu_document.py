@@ -182,7 +182,7 @@ class EduDocument(models.Model):
         if self.state != 'issued':
             raise UserError(self.env._('O documento está anulado.'))
         self.sudo().print_count += 1
-        return self.env.ref(REPORTS[self.document_type]).report_action(self)
+        return self.env.ref(REPORTS[self.document_type]).preview_action(self)
 
     def action_preview(self):
         # Ver o documento tal como sai impresso, sem o emitir nem contar como impressão.

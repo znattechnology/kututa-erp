@@ -183,6 +183,7 @@ export class Graduations extends Component {
                 title: "Emitir a conclusão",
                 body: `A conclusão de ${row.student} fica emitida e recebe o número do diploma, que não se repete.`,
                 confirmLabel: "Emitir",
+                cancelLabel: "Cancelar",
                 confirm: () => this.doRowAction(method, row),
                 cancel: () => {},
             });

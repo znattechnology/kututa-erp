@@ -1,63 +1,98 @@
-// Declarações: a página do secPed-Express (escolher o aluno, tipo, dados de identificação) com as cores do sistema.
+// Declarações: o aluno à esquerda (StudentPanel) e, à direita, o tipo, os dados de identificação e as já emitidas.
 .o_edu_declarations {
     .o_edu_dc_body {
+        padding: 16px 24px 24px;
+    }
+
+    .o_edu_dc_layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 24px;
+    }
+
+    .o_edu_dc_main {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
+        flex: 1 1 auto;
+        min-width: 0;
         max-width: 960px;
-        margin: 0 auto;
-        padding: 24px 16px 32px;
+
+        > .alert {
+            margin: 0;
+        }
     }
 
-    .o_edu_dc_intro {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 8px;
-    }
-
-    .o_edu_dc_lead {
-        max-width: 72ch;
-        margin: 0;
+    .o_edu_dc_empty {
+        max-width: 64ch;
+        padding: 24px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
         color: $text-muted;
     }
 
     .o_edu_dc_card {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        padding: 20px;
+        padding: 16px 20px;
         border: 1px solid $border-color;
         border-radius: $border-radius-lg;
         background: $o-view-background-color;
     }
 
-    .o_edu_dc_picked {
+    .o_edu_dc_student {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 12px;
     }
 
+    .o_edu_dc_name {
+        margin: 0 0 2px;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .o_edu_dc_tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .o_edu_dc_card_head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .o_edu_dc_h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
     .o_edu_dc_fields {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-
-        @include media-breakpoint-down(sm) {
-            grid-template-columns: minmax(0, 1fr);
-        }
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px 16px;
     }
 
     .o_edu_dc_field {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
         margin: 0;
 
-        > span:first-child {
-            font-size: 0.875rem;
-            color: $text-muted;
+        > span {
+            font-size: 0.8125rem;
+            color: $o-gray-700;
+        }
+
+        // O que falta: a linha para preencher à mão na declaração.
+        &.o_edu_dc_missing > .form-control,
+        &.o_edu_dc_missing > .form-select {
+            border-color: rgba($warning, 0.7);
+            background-color: rgba($warning, 0.04);
         }
     }
 
@@ -65,24 +100,45 @@
         grid-column: 1 / -1;
     }
 
-    .o_edu_dc_tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .o_edu_dc_h2 {
-        margin: 0 0 4px;
-        font-size: 1rem;
-        font-weight: 600;
-    }
-
     .o_edu_dc_actions {
         display: flex;
         flex-wrap: wrap;
-        justify-content: flex-end;
+        align-items: center;
         gap: 8px;
+        margin-top: 16px;
         padding-top: 16px;
         border-top: 1px solid $border-color;
+    }
+
+    .o_edu_dc_docs {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid $border-color;
+
+            &:last-child {
+                border-bottom: 0;
+            }
+
+            &.o_cancelled {
+                color: $text-muted;
+            }
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .o_edu_dc_body {
+            padding: 12px 16px;
+        }
+
+        .o_edu_dc_layout {
+            flex-direction: column;
+        }
     }
 }

@@ -1,19 +1,21 @@
 import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
+import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { StudentPicker } from "../student_picker/student_picker";
+import { StudentPanel } from "../student_panel/student_panel";
 
 /**
- * «Declarações», como a página do secPed-Express: escolhe-se o aluno pela turma (a lista dos alunos, pelo número)
- * ou pelo nome, no ano lectivo; depois o tipo de declaração. Os dados de identificação que faltam completam-se aqui
+ * «Declarações», como a página do secPed-Express, no formato do Histórico do aluno: à esquerda escolhe-se o aluno
+ * pela turma (a lista dos alunos, pelo número) ou pelo nome, no ano lectivo; à direita o tipo de declaração. Os dados de identificação que faltam completam-se aqui
  * e ficam na ficha do aluno; o que continuar vazio sai como linha para preencher à mão. «Ver a declaração» mostra-a
- * sem a emitir; «Emitir e imprimir» dá-lhe o número do registo e gera o PDF. As já emitidas reimprimem-se (2.ª via).
+ * sem a emitir; «Emitir e imprimir» dá-lhe o número do registo e mostra-a para imprimir. As já emitidas reimprimem-se
+ * (2.ª via).
  */
 export class Declarations extends Component {
     static template = "edu_documents.Declarations";
-    static components = { Layout, StudentPicker };
+    static components = { Layout, StudentPanel };
 
     props = useProps(standardActionServiceProps);
 
@@ -21,6 +23,7 @@ export class Declarations extends Component {
         this.orm = useService("orm");
         this.action = useService("action");
         this.notification = useService("notification");
+        this.dialog = useService("dialog");
         this.state = proxy({
             types: [],
             states: [],
@@ -47,17 +50,28 @@ export class Declarations extends Component {
 
     // O aluno
 
-    async choose(row) {
-        this.state.pick = row;
-        await this.loadStudent();
-    }
-
-    otherStudent() {
-        if (this.changed && !window.confirm("Os dados de identificação alterados não foram guardados. Trocar de aluno?")) {
+    choose(row) {
+        if (this.state.pick && row.enrollment_id === this.state.pick.enrollment_id) {
             return;
         }
-        this.state.pick = null;
+        if (this.state.data && this.changed) {
+            this.dialog.add(ConfirmationDialog, {
+                title: "Dados por guardar",
+                body: `Os dados de identificação de ${this.state.data.student.name} foram alterados e não foram guardados.`,
+                confirmLabel: "Trocar de aluno sem guardar",
+                cancelLabel: "Continuar a editar",
+                confirm: () => this.pickStudent(row),
+                cancel: () => {},
+            });
+            return;
+        }
+        return this.pickStudent(row);
+    }
+
+    async pickStudent(row) {
+        this.state.pick = row;
         this.state.data = null;
+        await this.loadStudent();
     }
 
     // A declaração
