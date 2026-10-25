@@ -274,4 +274,66 @@
             tempos semanais no ano (Despacho 60/08). Tire o filtro «Em risco ou reprovados» para ver todos.</p>
         </field>
     </record>
+
+    <!-- Sessões de exame em cartões, por dia e hora: o dia e a hora, a disciplina, as turmas, a sala e o vigilante (a
+         amarelo o que falta). À esquerda, a época. As provas marcam-se no Calendário de provas. -->
+    <record id="view_edu_exam_session_kanban" model="ir.ui.view">
+        <field name="name">edu.exam.session.kanban</field>
+        <field name="model">edu.exam.session</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_exs_kanban" default_order="date, hour_from">
+                <field name="state"/>
+                <field name="kind"/>
+                <field name="seat_count"/>
+                <field name="room_label"/>
+                <field name="supervisor_label"/>
+                <field name="edu_time_label"/>
+                <field name="edu_class_label"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_exs_card">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold" t-out="record.edu_time_label.raw_value"/>
+                                <span t-if="record.state.raw_value === 'done'" class="badge text-bg-success">Realizada</span>
+                                <span t-elif="record.state.raw_value === 'cancelled'" class="badge text-bg-light">Anulada</span>
+                            </div>
+                            <div class="fw-semibold text-truncate"><field name="subject_id"/></div>
+                            <div class="small text-muted text-truncate" t-out="record.edu_class_label.raw_value"/>
+                            <div class="o_edu_exs_who small">
+                                <span class="text-muted">Sala</span>
+                                <span t-if="record.room_label.raw_value" class="text-truncate" t-out="record.room_label.raw_value"/>
+                                <span t-else="" class="text-warning">Por definir</span>
+                                <span class="text-muted">Vigia</span>
+                                <span t-if="record.supervisor_label.raw_value" class="text-truncate" t-out="record.supervisor_label.raw_value"/>
+                                <span t-else="" class="text-warning">Por definir</span>
+                            </div>
+                            <div t-if="['resit', 'extraordinary', 'improvement', 'completion'].includes(record.kind.raw_value)"
+                                 class="small text-muted" t-out="record.seat_count.raw_value + (record.seat_count.raw_value === 1 ? ' aluno' : ' alunos')"/>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_edu_exam_session_search_panel" model="ir.ui.view">
+        <field name="name">edu.exam.session.search.panel</field>
+        <field name="model">edu.exam.session</field>
+        <field name="inherit_id" ref="edu_exam.edu_exam_session_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <searchpanel view_types="kanban,list">
+                    <field name="period_id" select="one" icon="calendar_today" enable_counters="1"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_exam.action_edu_exam_session" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_edu_exam_session_kanban')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('edu_exam.edu_exam_session_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('edu_exam.edu_exam_session_form')})]"/>
+    </record>
 </odoo>

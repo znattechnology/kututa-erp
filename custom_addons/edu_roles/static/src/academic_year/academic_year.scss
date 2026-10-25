@@ -1084,3 +1084,23 @@
         background: $danger;
     }
 }
+
+// Sessões de exame: a sala e o vigilante lado a lado, a amarelo o que falta.
+.o_edu_exs_kanban {
+    .o_kanban_record {
+        min-width: 260px;
+    }
+
+    .o_edu_exs_card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 2px;
+    }
+
+    .o_edu_exs_who {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0 8px;
+    }
+}

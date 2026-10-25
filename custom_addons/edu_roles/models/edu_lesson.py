@@ -104,3 +104,20 @@ class EduAbsenceSummary(models.Model):
         action['context'] = {}
         action['name'] = f'{self.student_id.name} · {self.subject_id.name}'
         return action
+
+
+class EduExamSession(models.Model):
+    """As sessões de exame em cartões: a hora, a disciplina, as turmas, a sala e o vigilante."""
+
+    _inherit = 'edu.exam.session'
+
+    edu_time_label = fields.Char(string='Hora', compute='_compute_edu_labels')
+    edu_class_label = fields.Char(string='Turmas (curto)', compute='_compute_edu_labels')
+
+    @api.depends('date', 'hour_from', 'hour_to', 'class_ids')
+    def _compute_edu_labels(self):
+        for session in self:
+            day = session.date
+            hours = f'{format_hour(session.hour_from)}–{format_hour(session.hour_to)}'
+            session.edu_time_label = f'{DAYS[day.weekday()]}, {day.strftime("%d/%m")} · {hours}' if day else hours
+            session.edu_class_label = ', '.join(c._editor_label() for c in session.class_ids) or False
