@@ -46,6 +46,7 @@
     <template id="report_listing_confirmation"><t t-call="edu_documents.listing_body"/></template>
     <template id="report_listing_calendar"><t t-call="edu_documents.listing_body"/></template>
     <template id="report_listing_exam_session"><t t-call="edu_documents.listing_body"/></template>
+    <template id="report_listing_exam_requirement"><t t-call="edu_documents.listing_body"/></template>
 
     <!-- Comprovativo de candidatura (como o do secPed): o que se entregou, para o candidato guardar. -->
     <template id="report_application_receipt">

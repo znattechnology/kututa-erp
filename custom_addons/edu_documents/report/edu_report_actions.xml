@@ -237,6 +237,14 @@
         <field name="print_report_name">'Sessões de exame'</field>
         <field name="paperformat_id" ref="paperformat_a4_portrait"/>
     </record>
+    <record id="action_report_listing_exam_requirement" model="ir.actions.report">
+        <field name="name">Exames especiais</field>
+        <field name="model">edu.exam.requirement</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">edu_documents.report_listing_exam_requirement</field>
+        <field name="print_report_name">'Exames especiais'</field>
+        <field name="paperformat_id" ref="paperformat_a4_portrait"/>
+    </record>
     <record id="action_report_student_card" model="ir.actions.report">
         <field name="name">Cartão de estudante</field>
         <field name="model">edu.student</field>

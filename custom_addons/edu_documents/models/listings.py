@@ -342,3 +342,66 @@ class EduExamSession(models.Model):
                 for day, sessions in days.items()
             ],
         }
+
+
+class EduExamRequirement(models.Model):
+    _name = 'edu.exam.requirement'
+    _inherit = ['edu.exam.requirement', 'edu.listing.mixin']
+    _listing_report = 'edu_documents.action_report_listing_exam_requirement'
+
+    @api.model
+    def _listing_default(self):
+        return self.search([('state', '=', 'pending')])
+
+    def _listing_year(self):
+        years = self.year_result_id.academic_year_id
+        return ', '.join(years.sorted('date_start').mapped('name')) or self.env.company.edu_current_year_id.name or ''
+
+    def _listing_data(self):
+        def result(r):
+            if r.state != 'done':
+                return self.env._('Por realizar')
+            verdict = self.env._('Aprovado') if r.passed else self.env._('Reprovado')
+            return f'{r.resulting:.0f} · {verdict}'
+
+        def summons(r):
+            session = r.session_id
+            if not session:
+                return ''
+            hours, minutes = divmod(round(session.hour_from * 60), 60)
+            return f'{session.date.strftime("%d/%m")} {hours:02d}:{minutes:02d}'
+
+        groups = []
+        for subject in self.subject_id.sorted('name'):
+            rows = self.filtered(lambda r, s=subject: r.subject_id == s).sorted(
+                lambda r: (r.class_id._editor_label(), r.student_id.name or '')
+            )
+            groups.append(
+                {
+                    'label': subject.name,
+                    'rows': [
+                        [
+                            r.student_id.name,
+                            r.class_id._editor_label(),
+                            _label(r, 'kind').split(' (')[0],
+                            f'{r.previous:.0f}',
+                            summons(r),
+                            result(r),
+                        ]
+                        for r in rows
+                    ],
+                }
+            )
+        return {
+            'title': self.env._('EXAMES ESPECIAIS'),
+            'context': EM.join([f'ANO LECTIVO: {self._listing_year()}', self.env._('%s EXAMES', len(self))]),
+            'columns': [
+                (self.env._('Aluno'), 0, 'l'),
+                (self.env._('Turma'), 13, 'l'),
+                (self.env._('Exame'), 13, 'l'),
+                (self.env._('Nota ant.'), 8, 'c'),
+                (self.env._('Prova'), 13, 'c'),
+                (self.env._('Resultado'), 15, 'l'),
+            ],
+            'groups': groups,
+        }

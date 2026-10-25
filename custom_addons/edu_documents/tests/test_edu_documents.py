@@ -191,6 +191,19 @@ class TestEduDocuments(TransactionCase):
         self.edu_class.action_compute_year_results()
         result = self.enrollment.year_result_id
         self.assertEqual(result.status, 'graduated')
+        # Lista dos exames especiais: por disciplina, com a nota anterior e o que falta.
+        requirement = self.env['edu.exam.requirement'].create(
+            {
+                'year_result_id': result.id,
+                'subject_result_id': self.enrollment.subject_result_ids[:1].id,
+                'kind': 'improvement',
+            }
+        )
+        self.assertEqual(requirement.action_print_listing()['report_type'], 'qweb-html')
+        html = self._render('edu_documents.action_report_listing_exam_requirement', requirement)
+        for text in ('EXAMES ESPECIAIS', self.student.name, 'Melhoria de nota', 'Por realizar', '14'):
+            self.assertIn(text, html)
+        requirement.unlink()
         # Registar conclusões pela turma da classe final, como no secPed.
         wizard = self.env['edu.graduation.register'].create({'academic_year_id': self.year.id})
         self.assertIn(self.edu_class, wizard.final_class_ids)

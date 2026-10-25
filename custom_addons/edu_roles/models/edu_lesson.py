@@ -121,3 +121,32 @@ class EduExamSession(models.Model):
             hours = f'{format_hour(session.hour_from)}–{format_hour(session.hour_to)}'
             session.edu_time_label = f'{DAYS[day.weekday()]}, {day.strftime("%d/%m")} · {hours}' if day else hours
             session.edu_class_label = ', '.join(c._editor_label() for c in session.class_ids) or False
+
+
+class EduExamRequirement(models.Model):
+    """Os exames especiais em cartões: a convocatória (dia e hora da prova) e «Lançar a nota» numa janela."""
+
+    _inherit = 'edu.exam.requirement'
+
+    edu_class_label = fields.Char(string='Turma (curta)', compute='_compute_edu_labels')
+    edu_session_label = fields.Char(string='Convocatória', compute='_compute_edu_labels')
+    edu_student_name = fields.Char(related='student_id.name', string='Aluno (nome)')
+
+    @api.depends('class_id', 'session_id')
+    def _compute_edu_labels(self):
+        for requirement in self:
+            requirement.edu_class_label = requirement.class_id._editor_label() if requirement.class_id else False
+            session = requirement.session_id
+            requirement.edu_session_label = session.edu_time_label if session else False
+
+    def action_edu_open_record(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.env._('Lançar a nota do exame'),
+            'res_model': 'edu.exam.requirement',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'views': [(self.env.ref('edu_roles.view_edu_exam_requirement_record_form').id, 'form')],
+            'target': 'new',
+        }

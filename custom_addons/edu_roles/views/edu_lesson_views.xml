@@ -352,4 +352,117 @@
             (0, 0, {'view_mode': 'list', 'view_id': ref('edu_exam.edu_exam_session_list')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('edu_exam.edu_exam_session_form')})]"/>
     </record>
+
+    <!-- Exames especiais (recurso, extraordinário, melhoria) em cartões: o aluno, a disciplina e o exame, a nota
+         anterior, a convocatória e, depois, a nota e o resultado. «Lançar a nota» abre uma janela pequena. À
+         esquerda, a disciplina e o exame. -->
+    <record id="view_edu_exam_requirement_kanban" model="ir.ui.view">
+        <field name="name">edu.exam.requirement.kanban</field>
+        <field name="model">edu.exam.requirement</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_req_kanban" create="false" delete="false" default_order="subject_id, class_id">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
+                <field name="state"/>
+                <field name="kind"/>
+                <field name="previous"/>
+                <field name="score"/>
+                <field name="resulting"/>
+                <field name="passed"/>
+                <field name="edu_student_name"/>
+                <field name="edu_class_label"/>
+                <field name="edu_session_label"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_req_card">
+                            <div class="d-flex align-items-center gap-2">
+                                <field name="student_id" widget="many2one_avatar" readonly="1"/>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold text-truncate" t-out="record.edu_student_name.raw_value"/>
+                                    <div class="small text-muted" t-out="record.edu_class_label.raw_value"/>
+                                </div>
+                            </div>
+                            <div class="fw-semibold o_edu_req_subject"><field name="subject_id"/></div>
+                            <div class="small text-muted">Nota anterior: <field name="previous"/></div>
+                            <div t-if="record.state.raw_value === 'pending'" class="small">
+                                <t t-if="record.edu_session_label.raw_value">
+                                    <i class="oi me-1 text-muted" data-icon="calendar_today" aria-hidden="true"/>Prova: <t t-out="record.edu_session_label.raw_value"/>
+                                </t>
+                                <span t-else="" class="text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Sem convocatória</span>
+                            </div>
+                            <div t-else="" class="small">
+                                Exame <strong><field name="score"/></strong> · Fica com <strong><field name="resulting"/></strong>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 mt-auto">
+                                <span t-if="record.kind.raw_value === 'resit'" class="badge text-bg-info">Recurso</span>
+                                <span t-elif="record.kind.raw_value === 'improvement'" class="badge text-bg-info">Melhoria</span>
+                                <span t-else="" class="badge text-bg-info">Extraordinário</span>
+                                <t t-if="record.state.raw_value === 'done'">
+                                    <span t-if="record.passed.raw_value" class="badge text-bg-success">Aprovado</span>
+                                    <span t-else="" class="badge text-bg-danger">Reprovado</span>
+                                </t>
+                                <button t-if="record.state.raw_value === 'pending'" name="action_edu_open_record" type="object"
+                                        class="btn btn-sm btn-primary ms-auto">Lançar a nota</button>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_edu_exam_requirement_record_form" model="ir.ui.view">
+        <field name="name">edu.exam.requirement.form.record</field>
+        <field name="model">edu.exam.requirement</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <form string="Lançar a nota do exame">
+                <group>
+                    <group>
+                        <field name="student_id" readonly="1"/>
+                        <field name="subject_id" readonly="1"/>
+                        <field name="kind" readonly="1"/>
+                        <field name="previous" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="score" readonly="state == 'done'"/>
+                        <field name="date" readonly="state == 'done'"/>
+                        <field name="state" invisible="1"/>
+                    </group>
+                </group>
+                <div class="text-muted small">
+                    No recurso e no extraordinário a nota do exame substitui a anterior; na melhoria fica a mais alta. A
+                    pauta e a decisão do ano actualizam-se ao lançar.
+                </div>
+                <footer>
+                    <button name="action_record" type="object" string="Lançar a nota" class="btn-primary" close="1"
+                            invisible="state == 'done'"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_edu_exam_requirement_search_panel" model="ir.ui.view">
+        <field name="name">edu.exam.requirement.search.panel</field>
+        <field name="model">edu.exam.requirement</field>
+        <field name="inherit_id" ref="edu_exam.edu_exam_requirement_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <searchpanel view_types="kanban,list">
+                    <field name="subject_id" select="one" icon="menu_book" enable_counters="1"/>
+                    <field name="kind" select="one" icon="list_alt" enable_counters="1"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_evaluation.action_edu_exam_requirement" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_edu_exam_requirement_kanban')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('edu_evaluation.edu_exam_requirement_list')})]"/>
+        <field name="context">{'search_default_pending': 1}</field>
+    </record>
 </odoo>
