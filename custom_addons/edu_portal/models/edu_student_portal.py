@@ -1398,9 +1398,46 @@ class EduStudentPortal(models.AbstractModel):
                         {'id': report.id, 'name': report.name, 'date': long_date(report.date)}
                         for report in internship.report_ids.sorted('date', reverse=True)
                     ],
+                    'progress': self._internship_progress(internship, today),
+                    'steps': self._internship_steps(internship),
                 }
             )
         return rows
+
+    @api.model
+    def _internship_progress(self, internship, today):
+        """O tempo decorrido do estágio: a percentagem do período e os dias que faltam (sem datas, nada)."""
+        start, end = internship.date_start, internship.date_end
+        if not start or not end or end <= start:
+            return None
+        total = (end - start).days
+        elapsed = min(max((today - start).days, 0), total)
+        return {
+            'pct': round(100 * elapsed / total),
+            'days_left': max((end - today).days, 0),
+            'started': today >= start,
+            'ended': today > end,
+        }
+
+    @api.model
+    def _internship_steps(self, internship):
+        """As etapas do estágio: por começar, a decorrer e o resultado (aprovado ou não aprovado)."""
+        order = ['planned', 'ongoing', 'result']
+        current = 'result' if internship.state in ('passed', 'failed') else internship.state
+        position = order.index(current) if current in order else 0
+        result_label = {'passed': 'Aprovado', 'failed': 'Não aprovado'}.get(internship.state, 'Resultado')
+        return [
+            {
+                'key': key,
+                'label': label,
+                'done': index < position or (key == 'result' and internship.state in ('passed', 'failed')),
+                'current': index == position,
+                'bad': key == 'result' and internship.state == 'failed',
+            }
+            for index, (key, label) in enumerate(
+                [('planned', 'Por começar'), ('ongoing', 'A decorrer'), ('result', result_label)]
+            )
+        ]
 
     @api.private
     @api.model

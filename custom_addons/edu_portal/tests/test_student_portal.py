@@ -334,6 +334,9 @@ class TestStudentPortal(HttpCase):
         self.assertEqual([i['entity'] for i in internships], ['Hospital Geral'])
         self.assertEqual((internships[0]['tutor'], internships[0]['hours']), ('Tutora do estágio', 120))
         self.assertIn('a data de início ainda não foi marcada', internships[0]['sentence'])
+        # Sem datas não há tempo decorrido; a primeira etapa é a actual.
+        self.assertIsNone(internships[0]['progress'])
+        self.assertEqual([(st['key'], st['current']) for st in internships[0]['steps']][0], ('planned', True))
         projects = Portal.page_data('project')['projects']
         self.assertEqual(projects[0]['title'], 'Higiene hospitalar')
         self.assertIn('ainda não tens orientador', projects[0]['sentence'])
