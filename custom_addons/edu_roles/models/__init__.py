@@ -1,5 +1,6 @@
 from . import (
     edu_academic_year,
+    edu_application,
     edu_attendance_page,
     edu_class,
     edu_coordination,

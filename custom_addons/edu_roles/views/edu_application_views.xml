@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- As candidaturas num quadro por estado (submetida, em análise, aprovada, rejeitada): o candidato e o número,
+         o curso e a classe pretendidos, a prova de acesso (nota, posição e resultado da seriação), o encarregado e
+         a data de submissão. A lista e o formulário ficam como estavam. -->
+    <record id="edu_application_kanban" model="ir.ui.view">
+        <field name="name">edu.application.kanban</field>
+        <field name="model">edu.application</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_app_kanban" default_group_by="state" default_order="submitted_date desc, id desc"
+                    records_draggable="0" quick_create="0" group_create="0" group_delete="0" group_edit="0">
+                <field name="state"/>
+                <field name="reference"/>
+                <field name="desired_course_id"/>
+                <field name="desired_class_number"/>
+                <field name="transfer_in"/>
+                <field name="admission_test_required"/>
+                <field name="has_admission_score"/>
+                <field name="admission_score"/>
+                <field name="admission_rank"/>
+                <field name="admission_result"/>
+                <field name="guardian_name"/>
+                <field name="guardian_phone"/>
+                <field name="submitted_date"/>
+                <field name="late_reason"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_app_card">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="min-w-0">
+                                    <field name="name" class="o_edu_app_name"/>
+                                    <div class="small text-muted" t-out="record.reference.raw_value"/>
+                                </div>
+                                <span t-if="record.admission_result.raw_value === 'admitted'" class="badge text-bg-success">Admitido(a)</span>
+                                <span t-elif="record.admission_result.raw_value === 'waitlist'" class="badge text-bg-warning">Suplente</span>
+                            </div>
+                            <div t-if="record.desired_course_id.raw_value or record.desired_class_number.raw_value" class="small">
+                                <field name="desired_course_id"/><t t-if="record.desired_class_number.raw_value">, <t t-out="record.desired_class_number.raw_value"/>ª classe</t>
+                                <span t-if="record.transfer_in.raw_value" class="text-muted">, vem transferido(a)</span>
+                            </div>
+                            <div t-if="record.admission_test_required.raw_value" class="small">
+                                <t t-if="record.has_admission_score.raw_value">
+                                    <span class="text-muted">Prova de acesso:</span> <span class="fw-semibold" t-out="record.admission_score.value"/>
+                                    <t t-if="record.admission_rank.raw_value">, <t t-out="record.admission_rank.raw_value"/>º lugar</t>
+                                </t>
+                                <span t-else="" class="text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Prova de acesso por fazer</span>
+                            </div>
+                            <div t-if="record.late_reason.raw_value" class="small text-warning"><i class="oi me-1" data-icon="schedule" aria-hidden="true"/>Fora de prazo</div>
+                            <div class="o_edu_app_foot">
+                                <span t-if="record.guardian_name.raw_value"><i class="oi me-1" data-icon="person" aria-hidden="true"/><t t-out="record.guardian_name.raw_value"/></span>
+                                <a t-if="record.guardian_phone.raw_value" t-att-href="'tel:' + record.guardian_phone.raw_value" class="text-reset"><i class="oi me-1" data-icon="phone" aria-hidden="true"/><t t-out="record.guardian_phone.raw_value"/></a>
+                                <span t-if="record.submitted_date.raw_value"><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/><t t-out="record.submitted_date.value"/></span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_enrollment.action_edu_application" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ainda não há candidaturas</p>
+            <p>As candidaturas chegam pelo formulário público da escola ou registam-se aqui com «Novo». Cada uma passa
+            de submetida a em análise e fica aprovada (com a matrícula) ou rejeitada (com a fundamentação).</p>
+        </field>
+    </record>
+</odoo>
