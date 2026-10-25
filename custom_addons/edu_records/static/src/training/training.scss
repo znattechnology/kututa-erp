@@ -118,10 +118,6 @@
         grid-column: 1 / -1;
     }
 
-    .o_edu_tr_multi {
-        min-height: 7rem;
-    }
-
     .o_edu_tr_pickbar {
         display: flex;
         align-items: center;
@@ -489,5 +485,30 @@
         border-radius: $border-radius;
         background: $o-gray-100;
         font-size: 0.875rem;
+    }
+
+    // O júri: uma lista de caixas, com os escolhidos primeiro.
+    .o_edu_tr_jury {
+        max-height: 10rem;
+        overflow-y: auto;
+        margin: 0;
+        padding: 4px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+        list-style: none;
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+
+            &:hover {
+                background: $o-gray-100;
+            }
+        }
     }
 }

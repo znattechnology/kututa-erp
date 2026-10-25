@@ -204,6 +204,32 @@ export class TrainingPage extends Component {
         };
     }
 
+    /** Os números da lista dos Serviços Académicos (no ano escolhido). */
+    get listKpis() {
+        const rows = this.yearRows;
+        const open = rows.filter((r) => !["passed", "failed", "cancelled"].includes(r.state));
+        const graded = rows.filter((r) => r.grade !== null && r.grade !== undefined);
+        const kpis = {
+            total: rows.length,
+            open: open.length,
+            graded: graded.length,
+            average: graded.length ? graded.reduce((sum, r) => sum + r.grade, 0) / graded.length : null,
+        };
+        if (this.isProject) {
+            kpis.missing = open.filter((r) => !r.advisor).length;
+            kpis.next = open
+                .filter((r) => r.defense_iso && this.daysTo(r.defense_iso) >= 0)
+                .sort((a, b) => a.defense_iso.localeCompare(b.defense_iso))[0];
+        } else {
+            kpis.missing = open.filter((r) => !r.tutor).length;
+            // O próximo estágio a terminar (o fim do período), entre os que decorrem.
+            kpis.next = open
+                .filter((r) => r.state === "ongoing" && r.end_iso && this.daysTo(r.end_iso) >= 0)
+                .sort((a, b) => a.end_iso.localeCompare(b.end_iso))[0];
+        }
+        return kpis;
+    }
+
     get emptyText() {
         if (!this.state.rows.length) {
             if (!this.state.isStaff) {
@@ -548,8 +574,15 @@ export class TrainingPage extends Component {
         this.state.edit[field] = ev.target.value;
     }
 
-    onJury(ev) {
-        this.state.edit.jury_ids = [...ev.target.selectedOptions].map((o) => parseInt(o.value, 10));
+    /** Os professores para o júri, com os já escolhidos primeiro (a escolha não salta enquanto se marca). */
+    juryOptions(detail) {
+        const initial = detail.jury_ids || [];
+        return [...detail.teachers].sort((a, b) => Number(initial.includes(b.id)) - Number(initial.includes(a.id)));
+    }
+
+    toggleJury(teacherId) {
+        const ids = this.state.edit.jury_ids;
+        this.state.edit.jury_ids = ids.includes(teacherId) ? ids.filter((id) => id !== teacherId) : [...ids, teacherId];
     }
 
     onGrade(ev) {

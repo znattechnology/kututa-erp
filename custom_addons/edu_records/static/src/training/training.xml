@@ -24,6 +24,33 @@
                         <!-- «Orientações» do professor: as duas listas, uma por baixo da outra, como no secPed. -->
                         <t t-if="this.switchable" t-call="edu_records.TrainingPage.Orientations"/>
                         <t t-else="">
+                        <t t-set="lk" t-value="this.listKpis"/>
+                        <div t-if="lk.total" class="o_edu_kpis o_edu_tr_kpis">
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label" t-out="this.isProject ? 'Em curso' : 'Por começar ou a decorrer'"/>
+                                <span class="o_edu_kpi_value"><t t-out="lk.open"/><small class="fs-6 fw-normal text-muted"> de <t t-out="lk.total"/></small></span>
+                                <span class="o_edu_kpi_detail" t-out="this.isProject ? 'Ainda sem nota final' : 'Ainda sem resultado'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label" t-out="this.isProject ? 'Sem orientador' : 'Sem tutor da escola'"/>
+                                <span class="o_edu_kpi_value" t-att-class="lk.missing ? 'text-danger' : ''" t-out="lk.missing"/>
+                                <span class="o_edu_kpi_detail" t-out="lk.missing ? 'Escolha-o na ficha' : 'Todos atribuídos'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label" t-out="this.isProject ? 'Próxima defesa' : 'Próximo a terminar'"/>
+                                <t t-if="lk.next">
+                                    <span class="o_edu_tr_kpi_text text-truncate w-100" t-out="lk.next.student"/>
+                                    <span class="o_edu_kpi_detail" t-if="this.isProject"><t t-out="this.defenseWhen(lk.next)"/>, <t t-out="lk.next.defense"/></span>
+                                    <span class="o_edu_kpi_detail" t-else="">Termina a <t t-out="lk.next.end"/></span>
+                                </t>
+                                <t t-else=""><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail" t-out="this.isProject ? 'Nenhuma marcada' : 'Nenhum a decorrer'"/></t>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Média das notas</span>
+                                <span class="o_edu_kpi_value" t-out="lk.average !== null ? this.fmtGrade(Math.round(lk.average * 10) / 10) : '—'"/>
+                                <span class="o_edu_kpi_detail" t-out="lk.graded === 1 ? 'De uma nota dada' : lk.graded ? 'De ' + lk.graded + ' notas dadas' : 'Ainda sem notas'"/>
+                            </div>
+                        </div>
                         <p t-if="this.summary" class="mb-0">
                             <t t-out="this.summary.text"/>
                             <span t-if="this.summary.alert" class="text-danger"> <t t-out="this.summary.alert"/></span>
@@ -267,15 +294,22 @@
                                         </select>
                                         <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !d.advisor}" t-out="d.advisor or 'Por atribuir'"/>
                                     </label>
-                                    <label class="o_edu_tr_field">
+                                    <div class="o_edu_tr_field">
                                         <span>Júri da defesa</span>
-                                        <select t-if="d.is_staff and this.editable" class="form-select o_edu_tr_multi" multiple="multiple" t-on-change="(ev) => this.onJury(ev)">
-                                            <option t-foreach="d.teachers" t-as="t" t-key="t.id" t-att-value="t.id"
-                                                    t-att-selected="this.state.edit.jury_ids.includes(t.id)" t-out="t.name"/>
-                                        </select>
+                                        <t t-if="d.is_staff and this.editable">
+                                            <ul class="o_edu_tr_jury" aria-label="Júri da defesa">
+                                                <li t-foreach="this.juryOptions(d)" t-as="t" t-key="t.id">
+                                                    <label>
+                                                        <input type="checkbox" class="form-check-input" t-att-checked="this.state.edit.jury_ids.includes(t.id) ? 'checked' : undefined"
+                                                               t-on-change="() => this.toggleJury(t.id)"/>
+                                                        <span class="text-truncate" t-out="t.name"/>
+                                                    </label>
+                                                </li>
+                                            </ul>
+                                            <small class="text-muted" t-out="this.state.edit.jury_ids.length === 1 ? '1 membro escolhido.' : this.state.edit.jury_ids.length ? this.state.edit.jury_ids.length + ' membros escolhidos.' : 'Ainda sem júri.'"/>
+                                        </t>
                                         <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.jury)}" t-out="d.jury or '—'"/>
-                                        <small t-if="d.is_staff and this.editable" class="text-muted">Ctrl ou ⌘ para escolher vários.</small>
-                                    </label>
+                                    </div>
                                     <t t-if="this.editable">
                                     <h3 class="o_edu_tr_h3 o_edu_tr_wide">Defesa</h3>
                                     <label class="o_edu_tr_field">
