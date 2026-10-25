@@ -33,6 +33,11 @@ export class GuardianCalendar extends AcademicCalendarPage {
         return [{ key: "all", label: "Todos" }, ...children.map((c) => ({ key: c.id, label: c.name }))];
     }
 
+    /** As provas dos educandos contam como as próximas provas, antes das épocas da escola. */
+    get examTypes() {
+        return ["child_exam", "exam"];
+    }
+
     /** Com um educando escolhido, as provas só desse (os eventos da escola ficam sempre). */
     matchesFilter(event) {
         return this.state.filter === "all" || !event.child_id || event.child_id === this.state.filter;

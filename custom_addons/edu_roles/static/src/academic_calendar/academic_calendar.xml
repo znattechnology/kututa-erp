@@ -16,6 +16,33 @@
                                 t-on-click="() => this.setFilter(f.key)" t-out="f.label"/>
                     </div>
 
+                    <!-- Onde estamos no ano: o trimestre e o que vem a seguir, com quanto falta -->
+                    <div class="o_edu_kpis o_edu_ca_kpis">
+                        <t t-set="tri" t-value="this.trimester"/>
+                        <div class="o_edu_kpi">
+                            <span class="o_edu_kpi_label"><t t-out="tri and !tri.current ? 'Próximo trimestre' : 'Trimestre em curso'"/></span>
+                            <t t-if="tri and tri.current">
+                                <span class="o_edu_kpi_value o_edu_ca_kpi_name" t-out="tri.name"/>
+                                <span class="o_edu_meter mt-1 w-100"><span t-att-style="'width: ' + tri.width + '%'"/></span>
+                                <span class="o_edu_kpi_detail">Semana <t t-out="tri.week"/> de <t t-out="tri.weeks"/>, <t t-out="tri.left === 0 ? 'acaba hoje' : tri.left === 1 ? 'falta 1 dia' : 'faltam ' + tri.left + ' dias'"/></span>
+                            </t>
+                            <t t-elif="tri">
+                                <span class="o_edu_kpi_value o_edu_ca_kpi_name" t-out="tri.name"/>
+                                <span class="o_edu_kpi_detail">Começa <t t-out="tri.until === 1 ? 'amanhã' : 'daqui a ' + tri.until + ' dias'"/></span>
+                            </t>
+                            <t t-else=""><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail">Sem trimestres no calendário</span></t>
+                        </div>
+                        <button t-foreach="this.overview" t-as="item" t-key="item.key" type="button" class="o_edu_kpi"
+                                t-att-disabled="!item.event" t-on-click="() => this.choose(item.event.start)">
+                            <span class="o_edu_kpi_label"><span class="o_edu_ca_dot me-1" t-att-class="item.event ? this.typeClass(item.event) : 'o_edu_ca_t_' + item.key" aria-hidden="true"/><t t-out="item.label"/></span>
+                            <t t-if="item.event">
+                                <span class="o_edu_ca_kpi_event text-truncate w-100" t-att-title="item.event.name" t-out="item.event.name"/>
+                                <span class="o_edu_kpi_detail"><t t-out="this.whenLabel(item.event)"/>, <t t-out="this.span(item.event)"/></span>
+                            </t>
+                            <t t-else=""><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail" t-out="item.empty"/></t>
+                        </button>
+                    </div>
+
                     <!-- O mês e a navegação -->
                     <div class="o_edu_ca_toolbar">
                         <h2 class="o_edu_ca_month" aria-live="polite" t-out="this.monthTitle"/>
@@ -89,6 +116,7 @@
                                             <span class="min-w-0">
                                                 <span class="d-block text-truncate" t-out="event.name"/>
                                                 <span class="o_edu_ca_meta"><t t-out="this.span(event)"/>, <t t-out="this.typeLabelInline(event)"/></span>
+                                                <span class="o_edu_ca_when" t-att-class="{'o_edu_ca_when_soon': this.daysUntil(event.start) &lt;= 1}" t-out="this.whenLabel(event)"/>
                                             </span>
                                         </button>
                                     </li>

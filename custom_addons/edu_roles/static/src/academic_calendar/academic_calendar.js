@@ -151,6 +151,72 @@ export class AcademicCalendarPage extends Component {
         return this.visible.filter((e) => e.end >= this.today).slice(0, 8);
     }
 
+    // Quanto falta
+
+    /** Os dias de hoje até ``key`` (negativo se já passou). */
+    daysUntil(key) {
+        return Math.round((fromKey(key) - fromKey(this.today)) / 86400000);
+    }
+
+    /** Quanto falta para um evento: «A decorrer», «Hoje», «Amanhã», «Daqui a N dias» (ou semanas). */
+    whenLabel(event) {
+        if (event.start <= this.today && this.today <= event.end) {
+            return event.start === event.end ? "Hoje" : `A decorrer até ${shortDay(event.end)}`;
+        }
+        const days = this.daysUntil(event.start);
+        if (days === 1) {
+            return "Amanhã";
+        }
+        return days < 21 ? `Daqui a ${days} dias` : `Daqui a ${Math.round(days / 7)} semanas`;
+    }
+
+    /** O trimestre em curso (do início e do fim no calendário): a semana, os dias que faltam e o tempo passado. */
+    get trimester() {
+        const events = this.state.data.events;
+        const ends = Object.fromEntries(events.filter((e) => e.type === "trimester_end").map((e) => [e.id.replace("trimester_end", ""), e]));
+        const terms = events
+            .filter((e) => e.type === "trimester_start" && ends[e.id.replace("trimester_start", "")])
+            .map((e) => ({ name: e.name.replace(/^Início do /, ""), start: e.start, end: ends[e.id.replace("trimester_start", "")].start }));
+        const current = terms.find((t) => t.start <= this.today && this.today <= t.end);
+        if (current) {
+            const total = this.daysUntil(current.end) - this.daysUntil(current.start) + 1;
+            const passed = -this.daysUntil(current.start) + 1;
+            return {
+                ...current,
+                current: true,
+                left: this.daysUntil(current.end),
+                week: Math.floor((passed - 1) / 7) + 1,
+                weeks: Math.ceil(total / 7),
+                width: Math.min(100, (100 * passed) / total),
+            };
+        }
+        const next = terms.find((t) => t.start > this.today);
+        return next ? { ...next, current: false, until: this.daysUntil(next.start) } : null;
+    }
+
+    /** O próximo evento (ou o que está a decorrer) de um dos tipos, no filtro escolhido. */
+    nextOf(types) {
+        return (
+            this.state.data.events.find(
+                (e) => types.includes(e.type) && !e.commemorative && e.end >= this.today && this.matchesFilter(e)
+            ) || null
+        );
+    }
+
+    /** Os tipos que contam como provas no cartão de cima (o encarregado junta as provas dos educandos). */
+    get examTypes() {
+        return ["exam"];
+    }
+
+    /** Os números de cima: o trimestre, a próxima pausa ou feriado, as próximas provas e a próxima reunião. */
+    get overview() {
+        return [
+            { key: "holiday", label: "Próxima pausa ou feriado", event: this.nextOf(["holiday"]), empty: "Nenhuma marcada" },
+            { key: "exam", label: "Próximas provas", event: this.nextOf(this.examTypes), empty: "Nenhuma marcada" },
+            { key: "meeting", label: "Próxima reunião", event: this.nextOf(["meeting"]), empty: "Nenhuma marcada" },
+        ];
+    }
+
     typeLabel(event) {
         if (event.commemorative) {
             return "Data comemorativa";

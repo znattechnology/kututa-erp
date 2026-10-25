@@ -292,4 +292,45 @@
             text-decoration: underline;
         }
     }
+
+    // Onde estamos no ano: o nome do trimestre e o evento a seguir em letra média, com quanto falta por baixo.
+    .o_edu_ca_kpi_name {
+        font-size: 1.35rem;
+    }
+
+    .o_edu_ca_kpi_event {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ca_kpis button.o_edu_kpi:disabled {
+        opacity: 1;
+        cursor: default;
+
+        &:hover {
+            border-color: $border-color;
+        }
+    }
+
+    .o_edu_ca_kpis div.o_edu_kpi:hover {
+        border-color: $border-color;
+    }
+
+    // Quanto falta, nos próximos eventos (por baixo da data, para o nome caber na coluna).
+    .o_edu_ca_when {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: $gray-100;
+        color: $text-muted;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .o_edu_ca_when_soon {
+        background: rgba($o-action, 0.12);
+        color: $o-action;
+        font-weight: 600;
+    }
 }
