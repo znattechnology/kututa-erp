@@ -223,9 +223,99 @@ export class GuardianHome extends GuardianPage(GuardianBase) {
     }
 }
 
+/** Meus educandos: a ficha do educando, os números do painel e quem o acompanha, a quem se escreve daqui. */
 export class GuardianChildren extends GuardianPage(GuardianBase) {
     static template = "edu_portal.GuardianChildren";
     static page = "children";
+
+    setup() {
+        super.setup();
+        this.store = useService("mail.store");
+    }
+
+    /** Os quatro números da ficha, cada um com o caminho para a sua página. */
+    get tiles() {
+        const d = this.state.data;
+        const c = d.card.summary;
+        const tiles = [];
+        if (c.preschool) {
+            const r = c.rdec;
+            tiles.push({
+                key: "rdec",
+                label: "RDEC" + (r && r.trimester ? " do " + r.trimester : ""),
+                value: r && r.applicable && !r.blocked ? `${r.done || 0} de ${r.total || 0}` : "—",
+                detail: r && r.blocked ? "Bloqueado pelas propinas" : "áreas avaliadas",
+                bad: r && r.blocked,
+                action: "edu_portal.action_guardian_rdec",
+            });
+        } else {
+            tiles.push({
+                key: "grades",
+                label: "Média do ano",
+                value: c.blocked || !c.average ? "—" : c.average.text,
+                detail: c.blocked ? "Bloqueada pelas propinas" : c.average ? (c.average.pos ? "Positiva, até agora" : "Abaixo de " + c.pass_text) : "Ainda sem notas",
+                bad: c.blocked || (c.average && !c.average.pos),
+                action: "edu_portal.action_guardian_grades",
+            });
+        }
+        const a = c.attendance;
+        tiles.push({
+            key: "absences",
+            label: "Assiduidade",
+            value: a.total ? `${a.rate}%` : "—",
+            detail: a.total ? `${a.present} de ${a.total} aulas com chamada` : "Ainda sem chamadas",
+            bad: a.total && a.rate < 75,
+            action: "edu_portal.action_guardian_absences",
+        });
+        const invoiced = c.months.some((m) => m.state !== "none");
+        tiles.push({
+            key: "fees",
+            label: "Propinas",
+            value: c.overdue ? c.overdue_total : invoiced ? "Em dia" : "Sem facturas",
+            detail: c.overdue ? count(c.overdue, "uma factura em atraso", "facturas em atraso") : invoiced ? "Nada em atraso" : "Ainda sem propinas facturadas",
+            bad: c.overdue > 0,
+            small: true,
+            action: "edu_portal.action_guardian_fees",
+        });
+        const e = d.card.next_exam;
+        tiles.push({
+            key: "exams",
+            label: "Próxima prova",
+            value: e ? (e.today ? "Hoje" : e.day.split(",")[1].trim()) : "—",
+            detail: e ? `${e.subject}, às ${e.start}` : "Nenhuma marcada",
+            small: Boolean(e),
+            action: "edu_portal.action_guardian_exams",
+        });
+        return tiles;
+    }
+
+    /** Os professores da disciplina sem o director de turma (que já tem o seu cartão). */
+    otherTeachers(subject) {
+        const director = this.state.data.card.director;
+        return subject.teachers.filter((p) => !director || p.name !== director.name);
+    }
+
+    /** No primário (e na iniciação) o director de turma dá tudo: em vez da grelha, uma frase com as disciplinas. */
+    get directorTeachesAll() {
+        const k = this.state.data.card;
+        return Boolean(k.director && k.subjects.length && k.subjects.every((s) => s.teachers.length && !this.otherTeachers(s).length));
+    }
+
+    /** O curso só quando diz mais do que o nível («Ensino Primário» repetia o nível). */
+    get course() {
+        const k = this.state.data.card;
+        return k.course && k.course.toLowerCase() !== (k.level || "").toLowerCase() ? k.course : "";
+    }
+
+    initials(name) {
+        const parts = (name || "").split(" ").filter(Boolean);
+        return (parts[0] ? parts[0][0] : "") + (parts.length > 1 ? parts[parts.length - 1][0] : "");
+    }
+
+    /** Abre a conversa com o professor nas Mensagens (a janela de conversa do Odoo). */
+    writeTo(person) {
+        return this.store.openChat({ partnerId: person.partner_id });
+    }
 }
 
 export class GuardianGrades extends GuardianPage(StudentGrades) {

@@ -142,9 +142,11 @@ class TestGuardianPortal(HttpCase):
         self.assertEqual(row['by_trimester'][self.t1.id]['ct']['text'], '13')
         card = Portal.page_data('children')['card']
         self.assertEqual(card['relationship'], 'Pai')
-        self.assertEqual(card['director'], 'Professora Lurdes')
+        lurdes = {'name': 'Professora Lurdes', 'partner_id': self.teacher_user.partner_id.id}
+        self.assertEqual(card['director'], lurdes)
         lp = next(s for s in card['subjects'] if s['id'] == self.lp.id)
-        self.assertEqual(lp['teachers'], ['Professora Lurdes'])
+        self.assertEqual(lp['teachers'], [lurdes])
+        self.assertEqual(card['summary']['trend'][0]['text'], '13,0')
         # O encarregado não lê os modelos da escola nem os contactos dos alunos.
         with self.assertRaises(AccessError):
             self.env['edu.subject.result'].with_user(self.gil_user).search([])

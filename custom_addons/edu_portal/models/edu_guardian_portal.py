@@ -248,9 +248,15 @@ class EduGuardianPortal(models.AbstractModel):
     @api.model
     def _card(self, student, enrollment):
         """A ficha do educando, como no secPed: a turma deste ano e quem o acompanha (o director de turma e o
-        professor de cada disciplina)."""
+        professor de cada disciplina, com quem se pode abrir conversa nas Mensagens), e os números do painel e a
+        próxima prova."""
         link = self._links().filtered(lambda link: link.student_id == student)[:1]
         edu_class = enrollment.class_id
+
+        def person(employee):
+            user = employee.user_id
+            return {'name': employee.name, 'partner_id': user.partner_id.id if user else False}
+
         subjects = []
         if enrollment:
             assignments = edu_class.assignment_ids
@@ -258,7 +264,9 @@ class EduGuardianPortal(models.AbstractModel):
                 lambda s: (s.name or '').lower()
             ):
                 teachers = assignments.filtered(lambda a, s=subject: a.subject_id == s).teacher_id
-                subjects.append({'id': subject.id, 'name': subject.name, 'teachers': teachers.mapped('name')})
+                subjects.append({'id': subject.id, 'name': subject.name, 'teachers': [person(t) for t in teachers]})
+        Portal = self.env['edu.student.portal']
+        next_exam = next((row for row in Portal.exams(student, enrollment)['rows'] if not row['done']), None)
         return {
             'name': student.name,
             'relationship': RELATIONSHIPS.get(link.relationship, 'Familiar'),
@@ -268,8 +276,10 @@ class EduGuardianPortal(models.AbstractModel):
             'course': edu_class.course_id.name or '',
             'level': edu_class.level_id.name or '',
             'year': enrollment.academic_year_id.name or '',
-            'director': edu_class.director_id.name or '',
+            'director': person(edu_class.director_id) if edu_class.director_id else None,
             'subjects': subjects,
+            'summary': self._summary(student),
+            'next_exam': next_exam,
         }
 
     # RDEC

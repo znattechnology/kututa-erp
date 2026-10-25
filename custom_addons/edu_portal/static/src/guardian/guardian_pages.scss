@@ -128,4 +128,54 @@
     .o_edu_gd_cols {
         height: 96px;
     }
+
+    // Meus educandos: a ficha, o director de turma em destaque e a equipa em grelha.
+    .o_edu_gd_profile {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .o_edu_gd_avatar_xl {
+        width: 64px;
+        height: 64px;
+        font-size: 1.5rem;
+    }
+
+    .o_edu_gd_name {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+    }
+
+    .o_edu_gd_director {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 16px;
+        border-left: 4px solid $primary;
+    }
+
+    .o_edu_gd_team {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_gd_member {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_gd_write {
+        flex: none;
+    }
 }

@@ -215,12 +215,12 @@
         </div>
     </t>
 
-    <!-- Meus educandos, como no secPed: quem é o educando na escola e quem o acompanha este ano (o director de turma e
-         o professor de cada disciplina). -->
+    <!-- Meus educandos, como no secPed: quem é o educando na escola e quem o acompanha este ano. Em cima a ficha com os
+         números do painel; em baixo o director de turma e o professor de cada disciplina, a quem se escreve daqui. -->
     <t t-name="edu_portal.GuardianChildren">
         <div class="o_action o_edu_student o_edu_guardian">
             <Layout display="this.display">
-                <div class="o_edu_st_body" t-if="this.state.data">
+                <div class="o_edu_st_body o_edu_st_wide" t-if="this.state.data">
                     <t t-set="d" t-value="this.state.data"/>
                     <header>
                         <h1 class="o_edu_st_title">Meus educandos</h1>
@@ -230,51 +230,72 @@
                     <t t-else="">
                         <t t-call="edu_portal.GuardianPage.Children"/>
                         <t t-set="k" t-value="d.card"/>
-                        <section class="o_edu_st_card" aria-labelledby="o_edu_gd_who">
-                            <div class="o_edu_gd_who mb-3">
-                                <span class="o_edu_gd_avatar o_edu_gd_avatar_lg" aria-hidden="true" t-out="d.child.first_name.charAt(0)"/>
-                                <div>
-                                    <h2 id="o_edu_gd_who" class="o_edu_st_h2 mb-0" t-out="k.name"/>
-                                    <div class="small text-muted"><t t-out="k.relationship"/><t t-if="k.primary">, encarregado principal</t></div>
+                        <section class="o_edu_st_card o_edu_gd_profile" aria-labelledby="o_edu_gd_who">
+                            <div class="o_edu_gd_who">
+                                <span class="o_edu_gd_avatar o_edu_gd_avatar_xl" aria-hidden="true" t-out="this.initials(k.name)"/>
+                                <div class="min-w-0">
+                                    <h2 id="o_edu_gd_who" class="o_edu_gd_name" t-out="k.name"/>
+                                    <div class="text-muted">
+                                        <t t-out="k.relationship"/>
+                                        <span t-if="k.primary" class="badge text-bg-info ms-1">Encarregado principal</span>
+                                    </div>
                                 </div>
                             </div>
                             <p t-if="!d.child.has_enrollment" class="mb-0 text-muted">
                                 <t t-out="d.child.first_name"/> não tem matrícula neste ano lectivo. Se achas que é um engano, fala com a secretaria.
                             </p>
                             <dl t-else="" class="o_edu_gd_facts o_edu_gd_facts_4">
-                                <div><dt>Turma</dt><dd><t t-out="k.class"/><t t-if="k.course">, <t t-out="k.course"/></t></dd></div>
+                                <div><dt>Turma</dt><dd><t t-out="k.class"/><div t-if="this.course" class="small text-muted" t-out="this.course"/></dd></div>
                                 <div><dt>Nível</dt><dd t-out="k.level"/></div>
                                 <div><dt>Ano lectivo</dt><dd t-out="k.year"/></div>
                                 <div><dt>N.º de matrícula</dt><dd><span t-if="k.matricula" class="o_edu_st_num" t-out="k.matricula"/><span t-else="" class="text-muted">Por atribuir</span></dd></div>
                             </dl>
-                            <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
-                                <button t-if="d.child.preschool" type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_rdec')">Relatório (RDEC)</button>
-                                <button t-else="" type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_grades')">Notas</button>
-                                <button type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_absences')">Faltas</button>
-                                <button type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_exams')">Provas</button>
-                                <button type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_fees')">Propinas</button>
-                            </div>
                         </section>
+
+                        <div t-if="d.child.has_enrollment" class="o_edu_kpis">
+                            <button t-foreach="this.tiles" t-as="t" t-key="t.key" type="button" class="o_edu_kpi" t-on-click="() => this.openFor(t.action)">
+                                <span class="o_edu_kpi_label" t-out="t.label"/>
+                                <span class="o_edu_kpi_value" t-att-class="{'text-danger': t.bad, 'o_edu_kpi_money': t.small}" t-out="t.value"/>
+                                <span class="o_edu_kpi_detail" t-att-class="{'text-danger': t.bad}" t-out="t.detail"/>
+                            </button>
+                        </div>
+
                         <section t-if="d.child.has_enrollment" class="o_edu_st_section" aria-labelledby="o_edu_gd_team">
                             <h2 id="o_edu_gd_team" class="o_edu_st_h2 mb-0">Quem acompanha <t t-out="d.child.first_name"/> este ano</h2>
-                            <p class="mb-0">
-                                <t t-if="k.director"><t t-out="k.director"/> é <t t-out="d.child.preschool ? 'o(a) educador(a) responsável' : 'director(a) de turma'"/> da <t t-out="k.class"/>.</t>
-                                <t t-else="">A <t t-out="k.class"/> ainda não tem director de turma.</t>
-                                <span class="text-muted"> Podes escrever-lhe, e a qualquer professor da turma, em
-                                    <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.open('mail.action_discuss')">Mensagens</button>.</span>
-                            </p>
-                            <p t-if="!k.subjects.length" class="o_edu_st_card mb-0 text-muted">A escola ainda não atribuiu disciplinas a esta matrícula.</p>
-                            <div t-else="" class="o_edu_st_card p-0 o_edu_st_scroll">
-                                <table class="table mb-0 o_edu_st_table">
-                                    <thead><tr><th>Disciplina</th><th>Professor</th></tr></thead>
-                                    <tbody>
-                                        <tr t-foreach="k.subjects" t-as="s" t-key="s.id">
-                                            <td t-out="s.name"/>
-                                            <td><t t-if="s.teachers.length" t-out="s.teachers.join(', ')"/><span t-else="" class="text-muted">Por atribuir</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div t-if="k.director" class="o_edu_st_card o_edu_gd_director">
+                                <span class="o_edu_gd_avatar o_edu_gd_avatar_lg" aria-hidden="true" t-out="this.initials(k.director.name)"/>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold" t-out="k.director.name"/>
+                                    <div class="small text-muted"><t t-out="d.child.preschool ? 'Educador(a) responsável' : 'Director(a) de turma'"/> da <t t-out="k.class"/>. É a quem se justificam as faltas.</div>
+                                </div>
+                                <button t-if="k.director.partner_id" type="button" class="btn btn-primary" t-on-click="() => this.writeTo(k.director)">
+                                    <i class="oi me-1" data-icon="forum" aria-hidden="true"/>Escrever
+                                </button>
                             </div>
+                            <p t-else="" class="o_edu_st_card mb-0 text-muted">A <t t-out="k.class"/> ainda não tem director de turma.</p>
+
+                            <p t-if="!k.subjects.length" class="o_edu_st_card mb-0 text-muted">A escola ainda não atribuiu disciplinas a esta matrícula.</p>
+                            <p t-elif="this.directorTeachesAll" class="mb-0">
+                                <t t-out="k.director.name"/> dá todas as disciplinas: <t t-out="this.list(k.subjects.map((s) => s.name))"/>.
+                            </p>
+                            <ul t-else="" class="o_edu_gd_team">
+                                <li t-foreach="k.subjects" t-as="s" t-key="s.id" class="o_edu_gd_member">
+                                    <div class="min-w-0 flex-grow-1">
+                                        <div class="fw-semibold" t-out="s.name"/>
+                                        <div class="small" t-att-class="s.teachers.length ? '' : 'text-muted'">
+                                            <t t-if="s.teachers.length" t-out="s.teachers.map((p) => p.name).join(', ')"/>
+                                            <t t-else="">Professor por atribuir</t>
+                                        </div>
+                                    </div>
+                                    <t t-foreach="this.otherTeachers(s)" t-as="p" t-key="p_index">
+                                        <button t-if="p.partner_id" type="button" class="btn btn-light btn-sm o_edu_gd_write"
+                                                t-att-title="'Escrever a ' + p.name" t-att-aria-label="'Escrever a ' + p.name" t-on-click="() => this.writeTo(p)">
+                                            <i class="oi" data-icon="forum" aria-hidden="true"/>
+                                        </button>
+                                    </t>
+                                </li>
+                            </ul>
+                            <p class="mb-0 small text-muted">As conversas ficam em Mensagens. Para outros assuntos, a secretaria também responde lá.</p>
                         </section>
                     </t>
                 </div>
