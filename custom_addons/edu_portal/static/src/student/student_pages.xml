@@ -392,7 +392,7 @@
                         Ainda não há provas marcadas para a tua turma. Aparecem aqui quando a secretaria as marcar.
                     </section>
                     <t t-else="">
-                        <p class="mb-0" t-out="this.sentence"/>
+                        <t t-call="edu_portal.Part.ExamsOverview"/>
                         <t t-call="edu_portal.Part.ExamPeriods"/>
                     </t>
                 </div>
@@ -982,6 +982,45 @@
                 </t>
             </section>
         </div>
+    </t>
+
+    <!-- O resumo das provas por cima das tabelas (o aluno e o encarregado): a próxima prova em destaque, três números e
+         os dias de provas numa fila (os já passados esbatidos, o de hoje destacado). Usa ``d.exams``. -->
+    <t t-name="edu_portal.Part.ExamsOverview">
+        <t t-set="next" t-value="d.exams.next"/>
+        <section t-if="next" class="o_edu_st_card o_edu_st_next_exam" aria-labelledby="o_edu_st_next_exam">
+            <div class="o_edu_st_date o_edu_st_date_lg" t-att-class="{'o_edu_st_date_today': next.today}">
+                <span t-out="next.date.slice(8, 10)"/>
+                <small t-out="next.day.split(' de ')[1] ? next.day.split(' de ')[1].slice(0, 3) : ''"/>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+                <div class="small fw-semibold" t-att-class="next.today ? 'text-success' : 'text-primary'"><t t-out="this.countdown(next)"/>, a próxima prova</div>
+                <h2 id="o_edu_st_next_exam" class="o_edu_st_next_exam_subject" t-out="next.subject"/>
+                <div class="text-muted">
+                    <t t-out="next.day"/>, <span class="o_edu_st_num" t-out="next.hours"/><t t-if="next.rooms">, <t t-out="next.rooms"/></t>
+                </div>
+            </div>
+        </section>
+        <div class="o_edu_kpis o_edu_st_kpis_3">
+            <div t-foreach="this.examTiles" t-as="t" t-key="t.key" class="o_edu_kpi">
+                <span class="o_edu_kpi_label" t-out="t.label"/>
+                <span class="o_edu_kpi_value" t-out="t.value"/>
+                <span class="o_edu_kpi_detail" t-out="t.detail"/>
+            </div>
+        </div>
+        <section class="o_edu_st_card" aria-labelledby="o_edu_st_exam_days">
+            <h2 id="o_edu_st_exam_days" class="o_edu_st_h2">Dias de provas</h2>
+            <ul class="o_edu_st_exam_days">
+                <li t-foreach="this.examDays" t-as="day" t-key="day.date" class="o_edu_st_exam_day"
+                    t-att-class="{'o_edu_st_exam_day_done': day.done, 'o_edu_st_exam_day_today': day.today}"
+                    t-att-title="day.subjects.join(', ')">
+                    <span class="small text-muted" t-out="day.weekday"/>
+                    <span class="o_edu_st_exam_day_num" t-out="day.num"/>
+                    <span class="small" t-out="day.month"/>
+                    <span class="o_edu_st_exam_day_count" t-out="day.count === 1 ? '1 prova' : day.count + ' provas'"/>
+                </li>
+            </ul>
+        </section>
     </t>
 
     <!-- A pauta de um ano: o resultado, a frase do trimestre, a tabela (no telemóvel uma lista) e a legenda das siglas. Usa

@@ -546,7 +546,7 @@
                             Ainda não há provas marcadas para a turma. Aparecem aqui quando a secretaria as marcar.
                         </section>
                         <t t-else="">
-                            <p class="mb-0" t-out="this.sentence"/>
+                            <t t-call="edu_portal.Part.ExamsOverview"/>
                             <t t-call="edu_portal.Part.ExamPeriods"/>
                         </t>
                     </t>

@@ -293,20 +293,41 @@ export class StudentExams extends StudentPage {
     static template = "edu_portal.StudentExams";
     static page = "exams";
 
-    /** «3 provas em 2 dias. A próxima: hoje, às 08:00, Matemática, Sala 3.», como no secPed. */
-    get sentence() {
+    /** Quantos dias faltam para uma prova: «Hoje», «Amanhã», «Daqui a 3 dias». */
+    countdown(row) {
+        const [y, m, d] = row.date.split("-").map((part) => parseInt(part, 10));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const days = Math.round((new Date(y, m - 1, d) - today) / 86400000);
+        return days <= 0 ? "Hoje" : days === 1 ? "Amanhã" : `Daqui a ${days} dias`;
+    }
+
+    /** Os números das provas: marcadas, feitas, por fazer e em quantos dias. */
+    get examTiles() {
         const e = this.state.data.exams;
-        let text = `${count(e.count, "Uma prova", "provas")} em ${count(e.days, "um dia", "dias")}.`;
-        const next = e.next;
-        if (next) {
-            const day = next.today ? "hoje" : next.day.charAt(0).toLowerCase() + next.day.slice(1);
-            // Sem template literals aninhados: o empacotador do Odoo comia o espaço depois da vírgula.
-            const room = next.rooms ? ", " + next.rooms : "";
-            text += ` A próxima: ${day}, às ${next.start}, ${next.subject}${room}.`;
-        } else {
-            text += " Já não há provas por fazer.";
+        const done = e.rows.filter((r) => r.done).length;
+        return [
+            { key: "count", label: "Provas marcadas", value: String(e.count), detail: count(e.days, "num só dia", "dias de provas").replace(/^(\d+)/, "em $1") },
+            { key: "done", label: "Já feitas", value: String(done), detail: done ? "Os resultados ficam nas notas" : "Ainda nenhuma" },
+            { key: "left", label: "Por fazer", value: String(e.count - done), detail: e.next ? "A próxima: " + this.countdown(e.next).toLowerCase() : "Não há mais provas" },
+        ];
+    }
+
+    /** Os dias de provas numa fila: o dia, o mês, quantas provas e se já passou. */
+    get examDays() {
+        const days = [];
+        for (const row of this.state.data.exams.rows) {
+            let day = days.find((d) => d.date === row.date);
+            if (!day) {
+                const [, month] = row.day.split(" de ");
+                day = { date: row.date, num: row.date.slice(8, 10), month: (month || "").slice(0, 3), weekday: row.day.split(",")[0].slice(0, 3), count: 0, done: true, today: row.today, subjects: [] };
+                days.push(day);
+            }
+            day.count++;
+            day.done = day.done && row.done;
+            day.subjects.push(row.subject);
         }
-        return text;
+        return days;
     }
 
     async print() {
