@@ -457,6 +457,61 @@ export class StudentSchedule extends StudentPage {
         return this.state.data.lessons.filter((lesson) => lesson.weekday === day.number);
     }
 
+    /** «Segunda-feira» (só a primeira letra em maiúscula; o «text-capitalize» dava «Segunda-Feira»). */
+    dayName(day) {
+        return day.name.charAt(0).toUpperCase() + day.name.slice(1);
+    }
+
+    /** As disciplinas por tempos semanais (as que têm mais primeiro), com o professor; as 8 primeiras com uma cor da
+     * paleta categórica (validada para o daltonismo), as outras em cinzento: as cores não se repetem. */
+    get subjects() {
+        const bySubject = {};
+        for (const lesson of this.state.data.lessons) {
+            const item = (bySubject[lesson.subject] ||= { name: lesson.subject, count: 0, teachers: new Set() });
+            item.count++;
+            if (lesson.teacher) {
+                item.teachers.add(lesson.teacher);
+            }
+        }
+        const max = Math.max(...Object.values(bySubject).map((i) => i.count));
+        return Object.values(bySubject)
+            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+            .map((item, index) => ({
+                ...item,
+                teachers: [...item.teachers].join(", "),
+                css: `o_edu_subj_${index < 8 ? index + 1 : 0}`,
+                width: (item.count / max) * 100,
+            }));
+    }
+
+    subjectClass(lesson) {
+        const subject = this.subjects.find((s) => s.name === lesson.subject);
+        return subject ? subject.css : "o_edu_subj_0";
+    }
+
+    /** O dia da semana de hoje (0 = segunda) e a hora, para destacar o dia e a aula a decorrer ou a seguinte. */
+    get now() {
+        const date = new Date();
+        return { weekday: (date.getDay() + 6) % 7, hour: date.getHours() + date.getMinutes() / 60 };
+    }
+
+    isToday(day) {
+        return day.number === this.now.weekday;
+    }
+
+    /** «Agora» ou «A seguir» numa aula de hoje. */
+    lessonTag(lesson) {
+        const now = this.now;
+        if (lesson.weekday !== now.weekday) {
+            return "";
+        }
+        if (lesson.start <= now.hour && now.hour < lesson.end) {
+            return "Agora";
+        }
+        const next = this.lessonsOn({ number: now.weekday }).find((l) => l.start > now.hour);
+        return next && next.id === lesson.id ? "A seguir" : "";
+    }
+
     /** A folha A4 da secretaria: na aplicação (Visualizar) ou em PDF (Exportar PDF), como no horário do professor. */
     async openReport(preview) {
         const action = await this.orm.call("edu.student.portal", "schedule_report", [preview]);

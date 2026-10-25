@@ -360,14 +360,15 @@
                                 <thead>
                                     <tr>
                                         <th class="o_edu_st_week_hours">Hora</th>
-                                        <th t-foreach="d.grid.days" t-as="day" t-key="day.number" class="text-capitalize" t-out="day.name"/>
+                                        <th t-foreach="d.grid.days" t-as="day" t-key="day.number" t-att-class="{'o_edu_st_today_col': this.isToday(day)}"><t t-out="this.dayName(day)"/><span t-if="this.isToday(day)" class="o_edu_st_today_tag">hoje</span></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr t-foreach="d.grid.rows" t-as="row" t-key="row_index">
                                         <td class="o_edu_st_time" t-out="row.hours"/>
-                                        <td t-foreach="d.grid.days" t-as="day" t-key="day.number">
-                                            <div t-foreach="row.cells[day.number]" t-as="lesson" t-key="lesson.id" class="o_edu_st_slot">
+                                        <td t-foreach="d.grid.days" t-as="day" t-key="day.number" t-att-class="{'o_edu_st_today_col': this.isToday(day)}">
+                                            <div t-foreach="row.cells[day.number]" t-as="lesson" t-key="lesson.id" class="o_edu_st_slot" t-att-class="this.subjectClass(lesson)">
+                                                <div t-if="this.lessonTag(lesson)" class="o_edu_st_slot_tag" t-out="this.lessonTag(lesson)"/>
                                                 <div class="fw-semibold" t-out="lesson.subject"/>
                                                 <div class="small text-muted" t-if="lesson.teacher" t-out="lesson.teacher"/>
                                                 <div class="small text-muted" t-if="lesson.room" t-out="lesson.room"/>
@@ -379,19 +380,39 @@
                         </div>
                         <div class="d-md-none d-flex flex-column gap-3">
                             <section t-foreach="d.grid.days" t-as="day" t-key="day.number" class="o_edu_st_card">
-                                <h2 class="o_edu_st_h2 text-capitalize" t-out="day.name"/>
+                                <h2 class="o_edu_st_h2"><t t-out="this.dayName(day)"/><span t-if="this.isToday(day)" class="o_edu_st_today_tag">hoje</span></h2>
                                 <p t-if="!this.lessonsOn(day).length" class="mb-0 text-muted small">Sem aulas.</p>
                                 <ul t-else="" class="o_edu_st_list">
                                     <li t-foreach="this.lessonsOn(day)" t-as="lesson" t-key="lesson.id">
                                         <span class="o_edu_st_time" t-out="lesson.hours"/>
+                                        <span class="o_edu_st_subj_dot" t-att-class="this.subjectClass(lesson)" aria-hidden="true"/>
                                         <div class="flex-grow-1">
-                                            <div t-out="lesson.subject"/>
+                                            <div><t t-out="lesson.subject"/><span t-if="this.lessonTag(lesson)" class="o_edu_st_slot_tag ms-2" t-out="this.lessonTag(lesson)"/></div>
                                             <div class="small text-muted"><t t-out="lesson.teacher"/><t t-if="lesson.teacher and lesson.room">, </t><t t-out="lesson.room"/></div>
                                         </div>
                                     </li>
                                 </ul>
                             </section>
                         </div>
+
+                        <!-- Por disciplina: os tempos por semana e o professor (a legenda das cores) -->
+                        <section class="o_edu_st_card" aria-labelledby="o_edu_st_subjects">
+                            <h2 id="o_edu_st_subjects" class="o_edu_st_h2">Por disciplina</h2>
+                            <ul class="o_edu_st_subjects">
+                                <li t-foreach="this.subjects" t-as="subject" t-key="subject.name">
+                                    <span class="o_edu_st_subj_dot" t-att-class="subject.css" aria-hidden="true"/>
+                                    <div class="min-w-0 flex-grow-1">
+                                        <div class="d-flex justify-content-between gap-2">
+                                            <span class="fw-semibold text-truncate" t-out="subject.name"/>
+                                            <span class="small text-muted text-nowrap o_edu_st_num" t-out="subject.count === 1 ? '1 tempo' : subject.count + ' tempos'"/>
+                                        </div>
+                                        <div class="small text-muted text-truncate" t-out="subject.teachers or 'Professor por atribuir'"/>
+                                        <span class="o_edu_st_subj_bar" t-att-class="subject.css"><span t-att-style="'width: ' + subject.width + '%'"/></span>
+                                    </div>
+                                </li>
+                            </ul>
+                            <p class="mb-0 mt-2 small text-muted">Tempos por semana. Cada disciplina tem a sua cor no horário.</p>
+                        </section>
                     </t>
                 </div>
             </Layout>
