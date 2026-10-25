@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A confirmação de matrículas em três passos (escolher os anos, rever os alunos, confirmar). Depois de preparar,
+         quatro contagens no cimo e os alunos separados pelo que lhes cabe: os pendentes primeiro, porque são os que
+         pedem trabalho à secretaria. -->
+    <record id="edu_enrollment_confirmation_form_secretaria" model="ir.ui.view">
+        <field name="name">edu.enrollment.confirmation.form.secretaria</field>
+        <field name="model">edu.enrollment.confirmation</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <form string="Confirmação de matrículas">
+                <header>
+                    <button name="action_prepare" type="object" string="Preparar a confirmação" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_confirm" type="object" string="Confirmar as matrículas" class="btn-primary"
+                            invisible="state != 'prepared'"
+                            confirm="Confirmar as matrículas dos alunos «A confirmar»? Os pendentes ficam na lista para resolver."/>
+                    <button name="action_prepare" type="object" string="Preparar de novo" invisible="state != 'prepared'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet class="o_edu_confirm">
+                    <div class="oe_title">
+                        <h1>Confirmação de matrículas</h1>
+                        <p class="text-muted mb-0" invisible="state == 'draft'"><field name="edu_years_label"/></p>
+                    </div>
+
+                    <div invisible="state != 'draft'">
+                        <p class="text-muted">
+                            A escola confirma as matrículas: os encarregados não precisam de se deslocar e a confirmação
+                            não depende de documentos (DP 162/23, arts. 24.º e 27.º; DP 167/23, art. 50.º).
+                        </p>
+                        <h3 class="o_edu_new_step"><span>1</span>Os anos</h3>
+                        <group>
+                            <group>
+                                <field name="source_year_id" options="{'no_create': True}"/>
+                                <field name="target_year_id" options="{'no_create': True}"/>
+                            </group>
+                            <group>
+                                <field name="create_classes"/>
+                                <field name="company_id" invisible="1"/>
+                            </group>
+                        </group>
+                        <h3 class="o_edu_new_step o_edu_confirm_next"><span>2</span>Rever os alunos</h3>
+                        <p class="text-muted ms-5">
+                            «Preparar a confirmação» fecha as matrículas do ano que acaba pelo resultado do ano, cria as
+                            turmas que faltam e propõe a turma de cada aluno. Vê-se quem fica pendente e porquê.
+                        </p>
+                        <h3 class="o_edu_new_step o_edu_confirm_next"><span>3</span>Confirmar</h3>
+                        <p class="text-muted ms-5">
+                            As matrículas só se criam com «Confirmar as matrículas». Cada aluno é tratado à parte: um caso
+                            com problema não trava os outros.
+                        </p>
+                    </div>
+
+                    <div class="o_edu_confirm_tiles" invisible="state == 'draft'">
+                        <div class="o_edu_confirm_tile o_edu_tile_pending">
+                            <field name="edu_pending_count"/>
+                            <span>Pendentes</span>
+                        </div>
+                        <div class="o_edu_confirm_tile o_edu_tile_confirm">
+                            <field name="edu_confirm_count"/>
+                            <span>A confirmar</span>
+                        </div>
+                        <div class="o_edu_confirm_tile o_edu_tile_done">
+                            <field name="edu_done_count"/>
+                            <span>Confirmadas</span>
+                        </div>
+                        <div class="o_edu_confirm_tile">
+                            <field name="edu_excluded_count"/>
+                            <span>Fora da confirmação</span>
+                        </div>
+                    </div>
+
+                    <notebook invisible="state == 'draft'">
+                        <page string="Pendentes" name="pending" invisible="not edu_pending_count">
+                            <p class="text-muted small">Resolva o que falta (exames, turma, faltas justificadas, decisão da
+                            direcção) e use «Tentar de novo». Pode escolher a turma à mão.</p>
+                            <field name="edu_pending_line_ids">
+                                <list editable="bottom" create="false" delete="false">
+                                    <field name="student_id" readonly="1"/>
+                                    <field name="previous_class_id" readonly="1"/>
+                                    <field name="previous_state" readonly="1" widget="badge"/>
+                                    <field name="target_class_id" options="{'no_create': True}"/>
+                                    <field name="reason" readonly="1" class="text-danger"/>
+                                    <button name="action_retry" type="object" string="Tentar de novo" icon="refresh"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="A confirmar" name="confirm" invisible="not edu_confirm_count">
+                            <field name="edu_confirm_line_ids">
+                                <list editable="bottom" create="false" delete="false">
+                                    <field name="student_id" readonly="1"/>
+                                    <field name="previous_class_id" readonly="1"/>
+                                    <field name="previous_state" readonly="1" widget="badge"/>
+                                    <field name="target_class_id" options="{'no_create': True}"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Confirmadas" name="done" invisible="not edu_done_count">
+                            <field name="edu_done_line_ids" readonly="1">
+                                <list>
+                                    <field name="student_id"/>
+                                    <field name="previous_class_id"/>
+                                    <field name="target_class_id"/>
+                                    <field name="enrollment_id"/>
+                                    <field name="reason" string="Notas" class="text-muted"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Fora da confirmação" name="excluded" invisible="not edu_excluded_count">
+                            <field name="edu_excluded_line_ids" readonly="1">
+                                <list>
+                                    <field name="student_id"/>
+                                    <field name="previous_class_id"/>
+                                    <field name="previous_state" widget="badge"/>
+                                    <field name="reason" class="text-muted"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_evaluation.action_edu_enrollment_confirmation" model="ir.actions.act_window">
+        <field name="view_id" ref="edu_enrollment_confirmation_form_secretaria"/>
+    </record>
+</odoo>

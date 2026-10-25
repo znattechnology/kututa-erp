@@ -809,7 +809,8 @@
 }
 
 // A nova matrícula: os três passos com o número num círculo.
-.o_edu_new_enroll {
+.o_edu_new_enroll,
+.o_edu_confirm {
     .o_edu_new_step {
         display: flex;
         align-items: center;
@@ -897,5 +898,49 @@
         .o_field_widget {
             display: inline;
         }
+    }
+}
+
+// A confirmação de matrículas: os passos por vir em cinzento e as quatro contagens no cimo.
+.o_edu_confirm {
+    .o_edu_confirm_next > span {
+        background: $gray-400;
+    }
+
+    .o_edu_confirm_tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin: 16px 0;
+    }
+
+    .o_edu_confirm_tile {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 14px;
+        border: 1px solid $border-color;
+        border-left: 4px solid $gray-400;
+        border-radius: 6px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+
+        .o_field_widget {
+            color: $body-color;
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+    }
+
+    .o_edu_tile_pending {
+        border-left-color: $danger;
+    }
+
+    .o_edu_tile_confirm {
+        border-left-color: $info;
+    }
+
+    .o_edu_tile_done {
+        border-left-color: $success;
     }
 }

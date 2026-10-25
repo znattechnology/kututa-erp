@@ -33,6 +33,7 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
         'views/edu_application_views.xml',
         'views/edu_enrollment_views.xml',
         'views/edu_transfer_views.xml',
+        'wizard/edu_enrollment_confirmation_views.xml',
         'views/edu_enrollment_document_views.xml',
     ],
     'assets': {
