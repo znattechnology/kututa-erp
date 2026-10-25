@@ -30,19 +30,44 @@ export class TeacherProfilePage extends Component {
         return { controlPanel: {} };
     }
 
-    get sentence() {
+    /** O cargo e o departamento, numa linha («Professor, Departamento de Ciências»). */
+    get roleLine() {
         const d = this.state.data;
-        if (!d.subjects.length) {
-            return `${d.name}, ainda não tem disciplinas atribuídas` + (d.year ? ` no ano lectivo ${d.year}` : "") + ".";
-        }
-        const classes = d.classes.length === 1 ? "uma turma" : `${d.classes.length} turmas`;
-        return `${d.name}, dá ${list(d.subjects)} em ${classes} no ano lectivo ${d.year}.`;
+        return [d.job || "Professor", d.department].filter(Boolean).join(", ");
     }
 
-    get loadText() {
+    /** O que falta na ficha (para o aviso). */
+    get missing() {
+        const d = this.state.data;
+        return [
+            !d.email && "o email",
+            !d.phone && "o telefone",
+            !d.id_number && "o n.º do BI",
+            !d.inss && "o n.º da Segurança Social",
+        ].filter(Boolean);
+    }
+
+    /** Os dados da ficha em grelha, com o ícone de cada um. */
+    get fields() {
+        const d = this.state.data;
+        return [
+            { key: "email", label: "Email", icon: "mail", value: d.email },
+            { key: "phone", label: "Telefone", icon: "phone", value: d.phone },
+            { key: "id_number", label: "Bilhete de identidade", icon: "credit_card", value: d.id_number },
+            { key: "inss", label: "N.º da Segurança Social", icon: "badge", value: d.inss },
+            { key: "department", label: "Departamento", icon: "groups", value: d.department },
+            { key: "job", label: "Cargo", icon: "work", value: d.job },
+        ];
+    }
+
+    get loadWidth() {
         const load = this.state.data.load;
-        const notes = load.notes.length ? ` (${load.notes.join(", ")})` : "";
-        return `${load.count} de ${load.limit} tempos${notes}`;
+        return load.limit ? Math.min(100, (100 * load.count) / load.limit) : 0;
+    }
+
+    initials(name) {
+        const parts = (name || "").split(" ").filter(Boolean);
+        return (parts[0] ? parts[0][0] : "") + (parts.length > 1 ? parts[parts.length - 1][0] : "");
     }
 
     get overLoad() {

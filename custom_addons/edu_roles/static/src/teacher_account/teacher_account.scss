@@ -94,4 +94,112 @@
         font-weight: 600;
         white-space: nowrap;
     }
+
+    // Meu perfil: quem é (as iniciais, o cargo e os contactos), os números, as etiquetas e os dados em grelha.
+    .o_edu_ta_me {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .o_edu_ta_avatar {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba($primary, 0.12);
+        color: $primary;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ta_name {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ta_contacts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        margin-top: 8px;
+    }
+
+    .o_edu_ta_contact {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .o_edu_ta_kpis .o_edu_kpi:hover {
+        border-color: $border-color;
+    }
+
+    .o_edu_ta_kpi_text {
+        font-size: 1.1rem;
+    }
+
+    .o_edu_ta_h3 {
+        margin: 0 0 6px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ta_tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            padding: 4px 10px;
+            border: 1px solid $border-color;
+            border-radius: $border-radius-pill;
+            background: $o-view-background-color;
+            font-size: $font-size-sm;
+        }
+
+        > li.o_edu_ta_tag_strong {
+            border-color: $o-action;
+            color: $o-action;
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_ta_datafields {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_ta_datafield {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_ta_icon {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba($primary, 0.1);
+        color: $primary;
+        font-size: 1.1rem;
+    }
 }

@@ -14,52 +14,98 @@
                         O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
                     </section>
                     <t t-else="">
-                        <p class="mb-0 fs-6" t-out="this.sentence"/>
-                        <div class="o_edu_ta_grid">
-                            <section class="o_edu_ta_card" aria-labelledby="o_edu_ta_work">
-                                <h2 id="o_edu_ta_work" class="o_edu_ta_h2">O seu trabalho este ano</h2>
-                                <dl class="o_edu_ta_fields">
-                                    <dt>Disciplinas</dt>
-                                    <dd><t t-if="d.subjects.length" t-out="this.list(d.subjects)"/><span t-else="" class="text-muted">Nenhuma atribuída</span></dd>
-                                    <dt>Turmas</dt>
-                                    <dd><t t-if="d.classes.length" t-out="this.list(d.classes)"/><span t-else="" class="text-muted">Nenhuma</span></dd>
-                                    <dt>Direcção de turma</dt>
-                                    <dd><t t-if="d.directs.length" t-out="this.list(d.directs)"/><span t-else="" class="text-muted">Não tem</span></dd>
-                                    <dt>Carga semanal</dt>
-                                    <dd t-att-class="{'text-danger fw-semibold': this.overLoad}"><t t-out="this.loadText"/><t t-if="this.overLoad">, acima do máximo</t></dd>
-                                    <t t-if="d.coordination">
-                                        <dt>Coordenação</dt>
-                                        <dd t-out="d.coordination"/>
-                                    </t>
-                                    <dt>Departamento</dt>
-                                    <dd><t t-if="d.department" t-out="d.department"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Cargo</dt>
-                                    <dd><t t-if="d.job" t-out="d.job"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                </dl>
-                            </section>
-                            <section class="o_edu_ta_card" aria-labelledby="o_edu_ta_data">
-                                <h2 id="o_edu_ta_data" class="o_edu_ta_h2">Os seus dados</h2>
-                                <dl class="o_edu_ta_fields">
-                                    <dt>Nome</dt><dd t-out="d.name"/>
-                                    <dt>Email</dt>
-                                    <dd><t t-if="d.email" t-out="d.email"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Telefone</dt>
-                                    <dd><t t-if="d.phone" t-out="d.phone"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Bilhete de identidade</dt>
-                                    <dd><t t-if="d.id_number" t-out="d.id_number"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>N.º da Segurança Social</dt>
-                                    <dd><t t-if="d.inss" t-out="d.inss"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Na escola desde</dt>
-                                    <dd><t t-if="d.since" t-out="d.since"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                </dl>
-                                <p class="mb-0 small text-muted">Se algum dado estiver errado ou em falta, peça à secretaria para o corrigir.</p>
-                            </section>
+                        <!-- Quem é, o que faz na escola e como a escola o contacta -->
+                        <section class="o_edu_ta_card o_edu_ta_me" aria-labelledby="o_edu_ta_me">
+                            <span class="o_edu_ta_avatar" aria-hidden="true" t-out="this.initials(d.name)"/>
+                            <div class="min-w-0 flex-grow-1">
+                                <h2 id="o_edu_ta_me" class="o_edu_ta_name">
+                                    <t t-out="d.name"/>
+                                    <span t-if="d.directs.length" class="badge text-bg-info ms-2 align-middle fs-6 fw-normal">Director(a) de turma</span>
+                                </h2>
+                                <div class="text-muted" t-out="this.roleLine"/>
+                                <div t-if="d.email or d.phone" class="o_edu_ta_contacts">
+                                    <a t-if="d.phone" t-att-href="'tel:' + d.phone" class="o_edu_ta_contact"><i class="oi" data-icon="phone" aria-hidden="true"/><t t-out="d.phone"/></a>
+                                    <a t-if="d.email" t-att-href="'mailto:' + d.email" class="o_edu_ta_contact"><i class="oi" data-icon="mail" aria-hidden="true"/><t t-out="d.email"/></a>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div t-if="this.missing.length" class="alert alert-warning mb-0 d-flex gap-2" role="status">
+                            <i class="oi" data-icon="info" aria-hidden="true"/>
+                            <div>Faltam <t t-out="this.list(this.missing)"/>. Peça à secretaria para os completar.</div>
                         </div>
+
+                        <!-- Os números do ano -->
+                        <div class="o_edu_kpis o_edu_ta_kpis">
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Carga semanal</span>
+                                <span class="o_edu_kpi_value" t-att-class="{'text-danger': this.overLoad}"><t t-out="d.load.count"/><small class="fs-6 fw-normal text-muted"> de <t t-out="d.load.limit"/> tempos</small></span>
+                                <span class="o_edu_meter mt-1 w-100" t-att-class="{'o_edu_meter_bad': this.overLoad}"><span t-att-style="'width: ' + this.loadWidth + '%'"/></span>
+                                <span t-if="d.load.notes.length" class="o_edu_kpi_detail" t-out="d.load.notes.join(', ')"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Disciplinas</span>
+                                <span class="o_edu_kpi_value" t-out="d.subjects.length"/>
+                                <span class="o_edu_kpi_detail" t-out="d.year ? 'No ano lectivo ' + d.year : 'Sem ano lectivo em curso'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Turmas</span>
+                                <span class="o_edu_kpi_value" t-out="d.classes.length"/>
+                                <span class="o_edu_kpi_detail" t-out="d.directs.length ? 'Dirige ' + this.list(d.directs) : 'Não dirige turma'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Na escola</span>
+                                <span class="o_edu_kpi_value o_edu_ta_kpi_text" t-out="d.since ? 'Desde ' + d.since : '—'"/>
+                                <span class="o_edu_kpi_detail" t-out="d.since ? 'Data de admissão' : 'Data por preencher'"/>
+                            </div>
+                        </div>
+
+                        <!-- O trabalho deste ano: as disciplinas e as turmas em etiquetas -->
+                        <section class="o_edu_ta_card o_edu_ta_section" aria-labelledby="o_edu_ta_work">
+                            <h2 id="o_edu_ta_work" class="o_edu_ta_h2 mb-0">O seu trabalho este ano</h2>
+                            <p t-if="!d.subjects.length" class="mb-0 text-muted">Ainda não tem disciplinas atribuídas. As atribuições são feitas pelos Serviços Académicos.</p>
+                            <t t-else="">
+                                <div>
+                                    <h3 class="o_edu_ta_h3">Disciplinas</h3>
+                                    <ul class="o_edu_ta_tags">
+                                        <li t-foreach="d.subjects" t-as="subject" t-key="subject_index" t-out="subject"/>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 class="o_edu_ta_h3">Turmas</h3>
+                                    <ul class="o_edu_ta_tags">
+                                        <li t-foreach="d.classes" t-as="c" t-key="c_index" t-att-class="{'o_edu_ta_tag_strong': d.directs.includes(c)}">
+                                            <t t-out="c"/><span t-if="d.directs.includes(c)" class="ms-1 small">, dirige</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <p t-if="d.coordination" class="mb-0"><span class="text-muted">Coordenação:</span> <t t-out="d.coordination"/></p>
+                            </t>
+                        </section>
+
+                        <!-- Os dados da ficha, em grelha -->
+                        <section class="o_edu_ta_section" aria-labelledby="o_edu_ta_data">
+                            <h2 id="o_edu_ta_data" class="o_edu_ta_h2 mb-0">Os seus dados</h2>
+                            <ul class="o_edu_ta_datafields">
+                                <li t-foreach="this.fields" t-as="f" t-key="f.key" class="o_edu_ta_datafield">
+                                    <span class="o_edu_ta_icon" aria-hidden="true"><i class="oi" t-att-data-icon="f.icon"/></span>
+                                    <div class="min-w-0">
+                                        <div class="small text-muted" t-out="f.label"/>
+                                        <div t-if="f.value" class="text-break" t-out="f.value"/>
+                                        <div t-else="" class="text-muted">Por preencher</div>
+                                    </div>
+                                </li>
+                            </ul>
+                            <p class="mb-0 small text-muted">Estes dados são da secretaria: se algum estiver errado, peça-lhe para o corrigir.</p>
+                        </section>
+
                         <section class="o_edu_ta_card" aria-labelledby="o_edu_ta_security">
                             <h2 id="o_edu_ta_security" class="o_edu_ta_h2">Segurança</h2>
                             <div class="o_edu_ta_row">
                                 <p class="mb-0 text-muted">Mude a palavra-passe se achar que alguém a sabe.</p>
-                                <button type="button" class="btn btn-secondary" t-on-click="() => this.changePassword()">Alterar a palavra-passe</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.changePassword()">
+                                    <i class="oi me-1" data-icon="lock" aria-hidden="true"/>Alterar a palavra-passe
+                                </button>
                             </div>
                         </section>
                     </t>
