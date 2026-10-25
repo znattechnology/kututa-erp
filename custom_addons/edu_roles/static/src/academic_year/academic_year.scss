@@ -830,3 +830,32 @@
         }
     }
 }
+
+// As anulações de matrícula em cartões: o motivo em destaque e as observações em duas linhas.
+.o_edu_drop_kanban {
+    .o_kanban_record {
+        min-width: 280px;
+    }
+
+    .o_edu_drop_card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 2px;
+    }
+
+    .o_edu_enroll_name {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-height: 1.25;
+    }
+
+    .o_edu_drop_note {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+}
