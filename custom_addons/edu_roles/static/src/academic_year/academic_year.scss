@@ -392,3 +392,34 @@
         font-size: 0.875rem;
     }
 }
+
+// As turmas em cartões: a designação em destaque, o turno e a sala, e as vagas em medidor.
+.o_edu_class_kanban {
+    .o_kanban_record {
+        min-width: 280px;
+    }
+
+    .o_edu_class_card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_class_name {
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .o_edu_class_facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+
+        &:empty {
+            display: none;
+        }
+    }
+}

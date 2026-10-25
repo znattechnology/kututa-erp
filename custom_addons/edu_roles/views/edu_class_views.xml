@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- As turmas em cartões (com o painel dos anos lectivos à esquerda, como a lista): a designação e o curso, o
+         turno e a sala, o director de turma (ou por nomear), os alunos face às vagas e o estado do horário. -->
+    <record id="edu_class_kanban" model="ir.ui.view">
+        <field name="name">edu.class.kanban</field>
+        <field name="model">edu.class</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_class_kanban" default_order="class_number, name">
+                <field name="director_id"/>
+                <field name="academic_year_id"/>
+                <field name="edu_is_current"/>
+                <field name="room_id"/>
+                <field name="shift_id"/>
+                <field name="capacity"/>
+                <field name="student_count"/>
+                <field name="edu_occupancy"/>
+                <field name="edu_occupancy_width"/>
+                <field name="edu_lessons"/>
+                <field name="edu_no_teacher"/>
+                <field name="edu_no_schedule"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_class_card">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="min-w-0">
+                                    <field name="edu_label" class="o_edu_class_name"/>
+                                    <div class="small text-muted text-truncate">
+                                        <field name="course_id"/><t t-if="!record.edu_is_current.raw_value">, <field name="academic_year_id"/></t>
+                                    </div>
+                                </div>
+                                <span t-if="record.edu_no_schedule.raw_value" class="badge text-bg-danger">Sem horário</span>
+                            </div>
+                            <div class="o_edu_class_facts">
+                                <span t-if="record.shift_id.raw_value"><i class="oi me-1" data-icon="schedule" aria-hidden="true"/><field name="shift_id"/></span>
+                                <span t-if="record.room_id.raw_value"><i class="oi me-1" data-icon="location_on" aria-hidden="true"/><field name="room_id"/></span>
+                            </div>
+                            <div class="small">
+                                <t t-if="record.director_id.raw_value"><span class="text-muted">Director(a):</span> <field name="director_id"/></t>
+                                <span t-else="" class="text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Director(a) de turma por nomear</span>
+                            </div>
+                            <div>
+                                <div class="d-flex justify-content-between small">
+                                    <span class="text-muted">Alunos</span>
+                                    <span t-att-class="{'text-danger fw-semibold': record.capacity.raw_value and record.student_count.raw_value > record.capacity.raw_value}">
+                                        <t t-out="record.student_count.raw_value"/> de <t t-out="record.capacity.raw_value"/>
+                                    </span>
+                                </div>
+                                <span class="o_edu_meter" t-att-class="{'o_edu_meter_bad': record.edu_occupancy.raw_value > 100, 'o_edu_meter_warn': record.edu_occupancy.raw_value >= 90 and record.edu_occupancy.raw_value &lt;= 100}">
+                                    <span t-att-style="'width: ' + record.edu_occupancy_width.raw_value + '%'"/>
+                                </span>
+                            </div>
+                            <div class="small text-muted">
+                                <t t-if="record.edu_lessons.raw_value">
+                                    <i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/><t t-out="record.edu_lessons.raw_value"/> tempos por semana
+                                    <span t-if="record.edu_no_teacher.raw_value" class="text-warning">, <t t-out="record.edu_no_teacher.raw_value"/> sem professor</span>
+                                </t>
+                                <t t-elif="!record.edu_no_schedule.raw_value">Estágio: sem grelha semanal</t>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_core.action_edu_class" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>
