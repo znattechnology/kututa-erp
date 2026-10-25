@@ -300,6 +300,23 @@ class EduGuardianPortal(models.AbstractModel):
         trimester = started.filtered(lambda t: t.id == trimester_id)[:1] or current
         record = Rdec.search([('enrollment_id', '=', enrollment.id), ('trimester_id', '=', trimester.id)], limit=1)
         levels = dict(RDEC_LEVELS)
+        # Os trimestres anteriores, para a evolução de cada área (o nível que teve em cada um).
+        earlier = Rdec.search(
+            [
+                ('enrollment_id', '=', enrollment.id),
+                ('trimester_id', 'in', started.filtered(lambda t: t.number < trimester.number).ids),
+            ]
+        ).sorted(lambda r: r.trimester_id.number)
+        history = {}
+        for previous in earlier:
+            for line in previous.line_ids.filtered('level'):
+                history.setdefault(line.subject_id.id, []).append(
+                    {
+                        'trimester': previous.trimester_id.name,
+                        'level': line.level,
+                        'level_label': levels[line.level],
+                    }
+                )
         return {
             'applicable': True,
             'blocked': False,
@@ -318,9 +335,20 @@ class EduGuardianPortal(models.AbstractModel):
                     'name': line.subject_id.name,
                     'level': line.level or '',
                     'level_label': levels.get(line.level, ''),
+                    # O degrau na escala de quatro níveis (0 por avaliar).
+                    'step': [key for key, _label in RDEC_LEVELS].index(line.level) + 1 if line.level else 0,
                     'observations': line.observations or '',
+                    'history': history.get(line.subject_id.id, []),
                 }
                 for line in record.line_ids
+            ],
+            'levels': [
+                {
+                    'key': key,
+                    'label': label,
+                    'count': len(record.line_ids.filtered(lambda line, k=key: line.level == k)),
+                }
+                for key, label in reversed(RDEC_LEVELS)
             ],
             'appreciation': record.appreciation or '',
             'absences_justified': record.absences_justified,

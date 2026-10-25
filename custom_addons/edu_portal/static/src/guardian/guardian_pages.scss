@@ -184,4 +184,42 @@
         color: $text-muted;
         font-size: 0.75rem;
     }
+
+    // RDEC: o resumo em três, as áreas em grelha com a escala de quatro degraus, e a apreciação em destaque.
+    .o_edu_gd_kpis_3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+
+        @include media-breakpoint-down(md) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_gd_areas {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_gd_area {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px 16px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_gd_area_level {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .o_edu_gd_appreciation {
+        border-left: 4px solid $primary;
+    }
 }

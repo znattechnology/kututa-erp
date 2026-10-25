@@ -187,6 +187,9 @@ class TestGuardianPortal(HttpCase):
         self.assertTrue(data['applicable'])
         self.assertEqual(data['state'], 'progress')
         self.assertEqual([a['level_label'] for a in data['areas']], ['Muito bom', ''])
+        # A escala de quatro degraus e quantas áreas em cada nível (do melhor para o pior).
+        self.assertEqual([a['step'] for a in data['areas']], [4, 0])
+        self.assertEqual([(lvl['key'], lvl['count']) for lvl in data['levels']][:2], [('very_good', 1), ('good', 0)])
         # A Ana (do técnico) não tem RDEC: pedida noutra página, o RDEC abre na Carla, e só ela tem separador.
         data = Portal.page_data('rdec', {'student_id': self.ana.id})
         self.assertEqual(data['child_id'], carla.id)

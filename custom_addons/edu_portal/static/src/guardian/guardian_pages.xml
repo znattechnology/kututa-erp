@@ -402,35 +402,72 @@
                             <t t-if="r.director"><t t-out="r.director"/> ainda não começou</t><t t-else="">O educador ainda não começou</t> o relatório do <t t-out="r.trimester"/>. Aparece aqui à medida que for preenchido.
                         </section>
                         <t t-else="">
-                            <p class="mb-0">
-                                <t t-if="r.state === 'todo'"><t t-if="r.director"><t t-out="r.director"/> ainda não começou</t><t t-else="">O educador ainda não começou</t> o relatório do <t t-out="r.trimester"/>: as áreas aparecem avaliadas à medida que for preenchido.</t>
-                                <t t-elif="r.state === 'done'">O relatório do <t t-out="r.trimester"/> está completo.</t>
-                                <t t-else="">O relatório do <t t-out="r.trimester"/> está a ser preenchido: <t t-out="r.done"/> de <t t-out="r.total"/> áreas avaliadas.</t>
-                                <span class="text-muted"> <t t-out="r.absences_unjustified + r.absences_justified === 0 ? 'Sem faltas no trimestre.' : 'No trimestre: ' + this.count(r.absences_justified, '1 falta justificada', 'faltas justificadas') + ' e ' + this.count(r.absences_unjustified, '1 injustificada', 'injustificadas') + '.'"/></span>
-                            </p>
-                            <div class="o_edu_st_card p-0 o_edu_st_scroll">
-                                <table class="table mb-0 o_edu_st_table">
-                                    <thead><tr><th>Área de desenvolvimento</th><th>Nível</th><th>Observações</th></tr></thead>
-                                    <tbody>
-                                        <tr t-foreach="r.areas" t-as="area" t-key="area.id">
-                                            <td t-out="area.name"/>
-                                            <td class="text-nowrap">
-                                                <span t-if="area.level" class="badge" t-att-class="this.levelClass(area)" t-out="area.level_label"/>
-                                                <span t-else="" class="text-muted">—</span>
-                                            </td>
-                                            <td><t t-if="area.observations" t-out="area.observations"/><span t-else="" class="text-muted">—</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <!-- O resumo: o estado com o progresso, as faltas do trimestre e quem o escreve -->
+                            <div class="o_edu_kpis o_edu_gd_kpis_3">
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Relatório do <t t-out="r.trimester"/></span>
+                                    <span class="o_edu_kpi_value"><t t-out="r.done || 0"/><span class="o_edu_gd_big_of"> de <t t-out="r.total || 0"/> áreas</span></span>
+                                    <div class="o_edu_stacks w-100">
+                                        <div class="o_edu_stack" role="img" t-att-aria-label="(r.done || 0) + ' de ' + (r.total || 0) + ' áreas avaliadas'">
+                                            <span t-if="r.done" class="o_edu_stack_pos" t-att-style="'flex: ' + r.done"/>
+                                            <span t-if="(r.total || 0) - (r.done || 0)" class="o_edu_stack_missing" t-att-style="'flex: ' + (r.total - r.done)"/>
+                                        </div>
+                                    </div>
+                                    <span class="o_edu_kpi_detail" t-out="r.state === 'done' ? 'Completo' : (r.state === 'progress' ? 'A ser preenchido' : 'Ainda por começar')"/>
+                                </div>
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Faltas no trimestre</span>
+                                    <span class="o_edu_kpi_value" t-out="r.absences_justified + r.absences_unjustified"/>
+                                    <span class="o_edu_kpi_detail"><t t-out="this.count(r.absences_justified, 'uma justificada', 'justificadas')"/>, <t t-out="this.count(r.absences_unjustified, 'uma injustificada', 'injustificadas')"/>. Na Iniciação não contam para passar.</span>
+                                </div>
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Educador(a)</span>
+                                    <span class="o_edu_kpi_value o_edu_kpi_money" t-out="r.director || '—'"/>
+                                    <span class="o_edu_kpi_detail">Quem escreve o relatório, director(a) da turma.</span>
+                                </div>
                             </div>
-                            <section class="o_edu_st_card" aria-labelledby="o_edu_gd_appreciation">
+
+                            <!-- Quantas áreas em cada nível -->
+                            <section t-if="r.done" class="o_edu_st_card" aria-labelledby="o_edu_gd_levels">
+                                <h2 id="o_edu_gd_levels" class="o_edu_st_h2">Níveis no <t t-out="r.trimester"/></h2>
+                                <t t-set="parts" t-value="this.levelParts"/>
+                                <div class="o_edu_levels" role="img" t-att-aria-label="parts.map((p) => p.label + ' ' + p.count).join(', ')">
+                                    <span t-foreach="parts" t-as="p" t-key="p.key" t-att-class="p.css" t-att-style="'flex: ' + p.count" t-att-title="p.label + ': ' + p.count"/>
+                                </div>
+                                <ul class="o_edu_chart_legend mt-2 mb-0">
+                                    <li t-foreach="parts" t-as="p" t-key="p.key"><span class="o_edu_chart_key" t-att-class="p.css"/><t t-out="p.label"/> <span class="o_edu_st_num" t-out="p.count"/></li>
+                                </ul>
+                            </section>
+                            <p t-else="" class="mb-0 text-muted">
+                                <t t-if="r.director"><t t-out="r.director"/> ainda não começou</t><t t-else="">O educador ainda não começou</t> o relatório do <t t-out="r.trimester"/>: as áreas aparecem avaliadas à medida que for preenchido.
+                            </p>
+
+                            <!-- As áreas: o nível numa escala de quatro degraus, as observações e os trimestres anteriores -->
+                            <section class="o_edu_st_section" aria-labelledby="o_edu_gd_areas">
+                                <h2 id="o_edu_gd_areas" class="o_edu_st_h2 mb-0">Áreas de desenvolvimento</h2>
+                                <ul class="o_edu_gd_areas">
+                                    <li t-foreach="r.areas" t-as="area" t-key="area.id" class="o_edu_gd_area">
+                                        <div class="fw-semibold" t-out="area.name"/>
+                                        <div class="o_edu_gd_area_level">
+                                            <div class="o_edu_scale" t-att-class="this.levelClass(area.level)" role="img"
+                                                 t-att-aria-label="area.level ? area.level_label + ', nível ' + area.step + ' de 4' : 'Por avaliar'">
+                                                <span t-foreach="[1, 2, 3, 4]" t-as="n" t-key="n" t-att-class="{'o_edu_scale_on': n &lt;= area.step}"/>
+                                            </div>
+                                            <span class="small text-nowrap" t-att-class="area.level ? (area.level === 'not_satisfactory' ? 'text-danger' : '') : 'text-muted'" t-out="area.level_label || 'Por avaliar'"/>
+                                        </div>
+                                        <p t-if="area.observations" class="mb-0 small o_edu_st_pre" t-out="area.observations"/>
+                                        <p t-if="area.history.length" class="mb-0 small text-muted">Antes: <t t-out="this.historyText(area)"/></p>
+                                    </li>
+                                </ul>
+                            </section>
+
+                            <section class="o_edu_st_card o_edu_gd_appreciation" aria-labelledby="o_edu_gd_appreciation">
                                 <h2 id="o_edu_gd_appreciation" class="o_edu_st_h2">Apreciação global</h2>
                                 <p t-if="r.appreciation" class="mb-0 o_edu_st_pre" t-out="r.appreciation"/>
                                 <p t-else="" class="mb-0 text-muted">Ainda por escrever.</p>
                             </section>
                             <p class="mb-0 small text-muted">
                                 Na Iniciação a avaliação é formativa e qualitativa, sem notas e sem retenção (Decreto Executivo 424/25, art. 19.º).
-                                <t t-if="r.director">Escreve-o <t t-out="r.director"/>, o(a) educador(a) da turma.</t>
                             </p>
                         </t>
                     </t>

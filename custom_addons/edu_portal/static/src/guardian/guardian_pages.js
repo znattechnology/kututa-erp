@@ -329,13 +329,6 @@ export class GuardianGrades extends GuardianPage(StudentGrades) {
     }
 }
 
-const RDEC_LEVEL_CLASS = {
-    not_satisfactory: "text-bg-danger",
-    satisfactory: "text-bg-warning",
-    good: "text-bg-info",
-    very_good: "text-bg-success",
-};
-
 /** O RDEC do educando da Iniciação, só para ler, como no secPed; «Ver RDEC» abre o documento da escola. */
 export class GuardianRdec extends GuardianPage(GuardianBase) {
     static template = "edu_portal.GuardianRdec";
@@ -345,8 +338,24 @@ export class GuardianRdec extends GuardianPage(GuardianBase) {
         return this.load({ trimester_id: parseInt(ev.target.value, 10) });
     }
 
-    levelClass(area) {
-        return RDEC_LEVEL_CLASS[area.level] || "text-bg-light";
+    levelClass(level) {
+        return "o_edu_lvl_" + (level || "none");
+    }
+
+    /** As áreas por nível, para a barra (só os níveis com áreas) e a legenda (por avaliar no fim). */
+    get levelParts() {
+        const r = this.state.data.rdec;
+        const parts = r.levels.filter((l) => l.count).map((l) => ({ ...l, css: this.levelClass(l.key) }));
+        const missing = (r.total || 0) - (r.done || 0);
+        if (missing) {
+            parts.push({ key: "none", label: "Por avaliar", count: missing, css: this.levelClass("") });
+        }
+        return parts;
+    }
+
+    /** «I: Bom, II: Muito bom» — os níveis da área nos trimestres anteriores. */
+    historyText(area) {
+        return area.history.map((h) => `${h.trimester.replace(" Trimestre", "")}: ${h.level_label}`).join(", ");
     }
 
     async openReport() {

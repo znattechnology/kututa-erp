@@ -8,6 +8,8 @@
 .o_edu_meters,
 .o_edu_meter,
 .o_edu_months,
+.o_edu_scale,
+.o_edu_levels,
 .o_edu_chart_legend {
     --edu-chart-series: #2a78d6;
     --edu-chart-series-track: #cde2fb;
@@ -362,4 +364,64 @@
 .o_edu_chart_key.o_edu_month_due {
     border: 1px solid var(--edu-chart-series);
     background: none;
+}
+
+// Os níveis do RDEC (iniciação), uma escala ordenada: muito bom, bom e satisfatório em passos da série (do mais escuro
+// ao mais claro), não satisfatório no crítico, por avaliar no vazio. O nível está sempre escrito ao lado.
+.o_edu_lvl_very_good {
+    --edu-lvl: var(--edu-chart-series);
+}
+
+.o_edu_lvl_good {
+    --edu-lvl: color-mix(in srgb, var(--edu-chart-series) 68%, #{$o-view-background-color});
+}
+
+.o_edu_lvl_satisfactory {
+    --edu-lvl: color-mix(in srgb, var(--edu-chart-series) 40%, #{$o-view-background-color});
+}
+
+.o_edu_lvl_not_satisfactory {
+    --edu-lvl: var(--edu-chart-critical);
+}
+
+.o_edu_lvl_none {
+    --edu-lvl: var(--edu-chart-empty);
+}
+
+// A escala de quatro degraus de uma área: preenchidos até ao nível, com a cor do nível.
+.o_edu_scale {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+    width: 100%;
+    max-width: 220px;
+
+    // Os degraus por preencher em cinzento: em azul confundiam-se com o «satisfatório», o passo mais claro.
+    > span {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--edu-chart-empty);
+    }
+
+    > .o_edu_scale_on {
+        background: var(--edu-lvl);
+    }
+}
+
+// Quantas áreas em cada nível: uma barra empilhada com 2px de superfície entre os segmentos.
+.o_edu_levels {
+    display: flex;
+    gap: 2px;
+    height: 16px;
+    overflow: hidden;
+    border-radius: 4px;
+
+    > span {
+        min-width: 4px;
+        background: var(--edu-lvl);
+    }
+}
+
+.o_edu_chart_key[class*="o_edu_lvl_"] {
+    background: var(--edu-lvl);
 }
