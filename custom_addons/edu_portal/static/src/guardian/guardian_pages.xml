@@ -341,6 +341,9 @@
                     <t t-else="">
                         <t t-call="edu_portal.GuardianPage.Children"/>
                         <t t-call="edu_portal.GuardianPage.Debt"/>
+                        <div t-if="g.year_missing" class="alert alert-info mb-0" role="status">
+                            <t t-out="d.child.first_name"/> não tem matrícula em <t t-out="g.year_missing"/>: mostra-se <t t-out="g.year"/>.
+                        </div>
                         <section t-if="!g.years.length" class="o_edu_st_card text-muted">
                             <t t-out="d.child.first_name"/> ainda não tem matrículas com notas. Se achas que é um engano, fala com a secretaria.
                         </section>

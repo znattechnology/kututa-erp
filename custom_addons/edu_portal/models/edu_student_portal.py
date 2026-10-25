@@ -236,6 +236,10 @@ class EduStudentPortal(models.AbstractModel):
         matrícula, para escolher."""
         enrollments = self._enrollments(student)
         chosen = enrollments.filtered(lambda e: e.id == options.get('enrollment_id'))[:1]
+        # O encarregado que muda de educando fica no mesmo ano lectivo, se o outro educando tiver matrícula nele.
+        year_id = options.get('academic_year_id')
+        if not chosen and year_id:
+            chosen = enrollments.filtered(lambda e: e.academic_year_id.id == year_id)[:1]
         chosen = chosen or (enrollment if enrollment in enrollments else enrollments[:1])
         grades = self.grades(student, chosen, options.get('trimester_id'))
         grades['years'] = [
@@ -247,6 +251,12 @@ class EduStudentPortal(models.AbstractModel):
             for e in enrollments
         ]
         grades['enrollment_id'] = chosen.id
+        grades['academic_year_id'] = chosen.academic_year_id.id
+        # O ano pedido em que o aluno não tem matrícula (a página diz que mostra outro).
+        missing = (
+            year_id and year_id != chosen.academic_year_id.id and self.env['edu.academic.year'].sudo().browse(year_id)
+        )
+        grades['year_missing'] = missing.name if missing and missing.exists() else ''
         return grades
 
     @api.model

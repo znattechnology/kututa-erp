@@ -321,6 +321,12 @@ export class GuardianChildren extends GuardianPage(GuardianBase) {
 export class GuardianGrades extends GuardianPage(StudentGrades) {
     static template = "edu_portal.GuardianGrades";
     static page = "grades";
+
+    /** Outro educando no mesmo ano lectivo (se tiver matrícula nele; senão a página diz qual mostra). */
+    selectChild(child) {
+        const g = this.state.data.grades;
+        return this.load({ student_id: child.id, academic_year_id: g ? g.academic_year_id : false });
+    }
 }
 
 const RDEC_LEVEL_CLASS = {

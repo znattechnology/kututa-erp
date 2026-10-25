@@ -140,6 +140,14 @@ class TestGuardianPortal(HttpCase):
         self.assertEqual(data['child_id'], self.ana.id)
         row = next(r for r in data['grades']['subjects'] if r['id'] == self.lp.id)
         self.assertEqual(row['by_trimester'][self.t1.id]['ct']['text'], '13')
+        # Mudar de educando num ano em que ele não tem matrícula: o ano dele, e a página diz qual pediu.
+        past = self.env['edu.academic.year'].create(
+            {'name': '2025/2026', 'date_start': date(2025, 9, 1), 'date_end': date(2026, 7, 31)}
+        )
+        grades = Portal.page_data('grades', {'student_id': self.ana.id, 'academic_year_id': past.id})['grades']
+        self.assertEqual((grades['year'], grades['year_missing']), ('2026/2027', '2025/2026'))
+        grades = Portal.page_data('grades', {'student_id': self.ana.id, 'academic_year_id': self.year.id})['grades']
+        self.assertEqual(grades['year_missing'], '')
         card = Portal.page_data('children')['card']
         self.assertEqual(card['relationship'], 'Pai')
         lurdes = {'name': 'Professora Lurdes', 'partner_id': self.teacher_user.partner_id.id}
