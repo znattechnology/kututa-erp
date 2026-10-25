@@ -1009,3 +1009,26 @@
         line-height: 1.25;
     }
 }
+
+// Aulas e sumários: o sumário em duas linhas e o estado no fundo do cartão.
+.o_edu_lesson_kanban {
+    .o_kanban_record {
+        min-width: 280px;
+    }
+
+    .o_edu_lesson_card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        height: 100%;
+        padding: 2px;
+    }
+
+    .o_edu_lesson_summary {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        white-space: pre-line;
+    }
+}

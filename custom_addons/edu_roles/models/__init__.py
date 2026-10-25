@@ -7,6 +7,7 @@ from . import (
     edu_enrollment_document,
     edu_grade_grid,
     edu_guardian_page,
+    edu_lesson,
     edu_report_page,
     edu_secretaria_home,
     edu_shift,
