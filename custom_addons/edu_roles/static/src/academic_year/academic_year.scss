@@ -264,3 +264,33 @@
         font-size: 0.875rem;
     }
 }
+
+// Os documentos da matrícula em cartões: as entregas deste ano em medidor.
+.o_edu_doc_kanban {
+    .o_kanban_record {
+        min-width: 320px;
+    }
+
+    .o_edu_doc_card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_doc_icon {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba($primary, 0.1);
+        color: $primary;
+        font-size: 1.15rem;
+    }
+
+    .o_edu_doc_name {
+        font-weight: 600;
+    }
+}

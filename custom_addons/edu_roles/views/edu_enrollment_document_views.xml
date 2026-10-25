@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Os documentos da matrícula em cartões: a ordem, os níveis, se são da lei (todas as escolas) ou só desta
+         escola, e as entregas deste ano. A lista fica para mudar a ordem (arrastar) e editar. -->
+    <record id="edu_enrollment_document_type_kanban" model="ir.ui.view">
+        <field name="name">edu.enrollment.document.type.kanban</field>
+        <field name="model">edu.enrollment.document.type</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_doc_kanban" default_order="sequence, id">
+                <field name="company_id"/>
+                <field name="active"/>
+                <field name="level_ids"/>
+                <field name="edu_requested"/>
+                <field name="edu_delivered"/>
+                <field name="edu_delivery"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_doc_card" t-att-class="{'opacity-50': !record.active.raw_value}">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="o_edu_doc_icon" aria-hidden="true"><i class="oi" data-icon="description"/></span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <field name="name" class="o_edu_doc_name"/>
+                                    <div class="small text-muted">
+                                        <t t-if="record.company_id.raw_value">Só desta escola</t>
+                                        <t t-else="">Da lei (DP 162/23), em todas as escolas</t>
+                                        <t t-if="!record.active.raw_value">, arquivado</t>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <t t-if="record.level_ids.raw_value.length"><field name="level_ids" widget="many2many_tags"/></t>
+                                <span t-else="" class="small text-muted">Todos os níveis</span>
+                            </div>
+                            <div class="o_edu_doc_row">
+                                <div class="d-flex justify-content-between small">
+                                    <span class="text-muted">Entregas este ano</span>
+                                    <span t-if="record.edu_requested.raw_value"><t t-out="record.edu_delivered.raw_value"/> de <t t-out="record.edu_requested.raw_value === 1 ? '1 matrícula' : record.edu_requested.raw_value + ' matrículas'"/></span>
+                                    <span t-else="" class="text-muted">Ainda não pedido</span>
+                                </div>
+                                <span class="o_edu_meter" t-att-class="{'o_edu_meter_warn': record.edu_requested.raw_value and record.edu_delivery.raw_value &lt; 50}">
+                                    <span t-att-style="'width: ' + record.edu_delivery.raw_value + '%'"/>
+                                </span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_enrollment.action_edu_enrollment_document_type" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>
