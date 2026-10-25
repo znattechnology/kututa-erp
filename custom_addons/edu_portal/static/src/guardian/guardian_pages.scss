@@ -1,0 +1,110 @@
+// Área do Encarregado: o aspecto da área do estudante, com as peças do painel do secPed (o cartão de cada educando,
+// as listas do que pede atenção e das novidades, e as perguntas da ajuda).
+.o_edu_guardian {
+    .o_edu_gd_who {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .o_edu_gd_avatar {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba($primary, 0.12);
+        color: $primary;
+        font-weight: 600;
+    }
+
+    .o_edu_gd_avatar_lg {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+
+    .o_edu_gd_facts {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px 16px;
+        margin: 16px 0;
+
+        dt {
+            font-weight: normal;
+            font-size: $font-size-sm;
+            color: $text-muted;
+        }
+
+        dd {
+            margin: 2px 0 0;
+        }
+
+        @include media-breakpoint-down(sm) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_gd_facts_4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin: 0;
+
+        @include media-breakpoint-down(lg) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    .o_edu_gd_feed {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li + li {
+            border-top: 1px solid $border-color;
+        }
+    }
+
+    .o_edu_gd_feed_item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        width: 100%;
+        padding: 10px 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        text-align: start;
+
+        &:hover > span:first-child,
+        &:focus-visible > span:first-child {
+            text-decoration: underline;
+        }
+    }
+
+    .o_edu_gd_day {
+        min-width: 13em;
+    }
+
+    .o_edu_gd_faq {
+        padding-top: 4px;
+        padding-bottom: 4px;
+
+        details {
+            padding: 10px 0;
+
+            + details {
+                border-top: 1px solid $border-color;
+            }
+
+            > p {
+                margin: 8px 0 4px;
+            }
+        }
+
+        summary {
+            font-weight: 500;
+            cursor: pointer;
+        }
+    }
+}

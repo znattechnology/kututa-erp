@@ -193,20 +193,7 @@ class EduStudentPortal(models.AbstractModel):
                 'overdue': fees['overdue'],
             }
         elif page == 'grades':
-            enrollments = self._enrollments(student)
-            chosen = enrollments.filtered(lambda e: e.id == options.get('enrollment_id'))[:1]
-            chosen = chosen or (enrollment if enrollment in enrollments else enrollments[:1])
-            grades = self.grades(student, chosen, options.get('trimester_id'))
-            grades['years'] = [
-                {
-                    'id': e.id,
-                    'label': f'{e.academic_year_id.name}, {e.class_id._editor_label()}',
-                    'current': e.academic_year_id.is_current,
-                }
-                for e in enrollments
-            ]
-            grades['enrollment_id'] = chosen.id
-            data['grades'] = grades
+            data['grades'] = self._grades_page(student, enrollment, options)
         elif page == 'schedule':
             lessons = self.schedule(student, enrollment)
             data.update(
@@ -229,6 +216,25 @@ class EduStudentPortal(models.AbstractModel):
         elif page == 'project':
             data['projects'] = self.projects(student)
         return data
+
+    @api.model
+    def _grades_page(self, student, enrollment, options):
+        """A página das notas (a do aluno e a do encarregado): o ano escolhido (por omissão o corrente) e os anos com
+        matrícula, para escolher."""
+        enrollments = self._enrollments(student)
+        chosen = enrollments.filtered(lambda e: e.id == options.get('enrollment_id'))[:1]
+        chosen = chosen or (enrollment if enrollment in enrollments else enrollments[:1])
+        grades = self.grades(student, chosen, options.get('trimester_id'))
+        grades['years'] = [
+            {
+                'id': e.id,
+                'label': f'{e.academic_year_id.name}, {e.class_id._editor_label()}',
+                'current': e.academic_year_id.is_current,
+            }
+            for e in enrollments
+        ]
+        grades['enrollment_id'] = chosen.id
+        return grades
 
     @api.model
     def schedule_report(self, preview=True):
@@ -912,6 +918,8 @@ class EduStudentPortal(models.AbstractModel):
                 }
             )
         due_rows = [r for r in rows if r['tab'] == 'due']
+        # Em atraso como no aviso das propinas: depois dos dias de tolerância da escola.
+        overdue_rows = [r for r in due_rows if r['late_days'] > (student.company_id.edu_gate_grace_days or 0)]
         return {
             'rows': rows,
             'due': due_rows,
@@ -922,8 +930,8 @@ class EduStudentPortal(models.AbstractModel):
             'has_fines': any(r['fine_value'] for r in due_rows),
             # A coluna da multa só aparece se a escola cobra multas a este aluno.
             'charges_fines': any(r['fine'] for r in rows),
-            # Em atraso como no aviso das propinas: depois dos dias de tolerância da escola.
-            'overdue': len([r for r in due_rows if r['late_days'] > (student.company_id.edu_gate_grace_days or 0)]),
+            'overdue': len(overdue_rows),
+            'overdue_total': money(sum(r['due_value'] for r in overdue_rows)),
         }
 
     # Formação técnica

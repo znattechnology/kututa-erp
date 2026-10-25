@@ -15,20 +15,42 @@ class ResUsers(models.Model):
         ]
         return not any(group in self.all_group_ids for group in roles if group)
 
+    def _edu_guardian_only(self):
+        """Encarregado sem outro papel na escola (nem aluno, nem professor, nem secretaria, nem administração): só tem
+        a sua área. Um professor que também é encarregado continua com o seu painel e ganha a área do encarregado."""
+        self.ensure_one()
+        if not self.has_group('edu_portal.group_edu_guardian'):
+            return False
+        roles = [
+            self.env.ref(xmlid, raise_if_not_found=False)
+            for xmlid in (*OTHER_ROLES, 'edu_core.group_edu_teacher', 'edu_portal.group_edu_student')
+        ]
+        return not any(group in self.all_group_ids for group in roles if group)
+
+    @api.private
+    def edu_guardian_only(self):
+        # Para as regras de acesso (o safe_eval não chama métodos começados por «_»).
+        return self._edu_guardian_only()
+
     def _on_webclient_bootstrap(self):
-        # O aluno não usa as Discussões: o OdooBot não lhe abre uma conversa.
-        if 'odoobot_state' in self._fields and self.odoobot_state != 'disabled' and self._edu_student_only():
+        # O aluno não usa as Discussões; o encarregado usa-as só para falar com a escola: o OdooBot não lhes abre uma
+        # conversa.
+        if (
+            'odoobot_state' in self._fields
+            and self.odoobot_state != 'disabled'
+            and (self._edu_student_only() or self._edu_guardian_only())
+        ):
             self.sudo().odoobot_state = 'disabled'
         return super()._on_webclient_bootstrap()
 
     @api.model_create_multi
     def create(self, vals_list):
         users = super().create(vals_list)
-        self.env['discuss.channel']._edu_remove_students(users)
+        self.env['discuss.channel']._edu_remove_family(users)
         return users
 
     def write(self, vals):
         result = super().write(vals)
         if 'group_ids' in vals:
-            self.env['discuss.channel']._edu_remove_students(self)
+            self.env['discuss.channel']._edu_remove_family(self)
         return result

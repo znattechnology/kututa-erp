@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Os alunos que já estavam nas conversas (o canal «General» junta todos os utilizadores internos) saem delas. -->
-    <function model="discuss.channel" name="_edu_remove_students"/>
+    <!-- Os alunos e os encarregados que já estavam nos canais (o «General» junta todos os utilizadores internos) saem
+         deles. -->
+    <function model="discuss.channel" name="_edu_remove_family"/>
 </odoo>

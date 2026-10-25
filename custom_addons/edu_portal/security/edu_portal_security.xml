@@ -15,4 +15,20 @@
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         <field name="comment">A área do estudante: as suas notas, o horário, as provas, as faltas, as propinas e o perfil.</field>
     </record>
+
+    <record id="res_groups_privilege_guardian" model="res.groups.privilege">
+        <field name="name">Área do encarregado</field>
+        <field name="sequence">13</field>
+        <field name="category_id" ref="edu_core.module_category_secretaria_express"/>
+    </record>
+
+    <!-- O encarregado entra como o aluno (utilizador interno, só com a sua área): vê os educandos que a escola lhe
+         ligou com acesso ao portal, pelos métodos de edu.guardian.portal, e fala com a escola nas Mensagens. -->
+    <record id="group_edu_guardian" model="res.groups">
+        <field name="name">Encarregado</field>
+        <field name="sequence">2</field>
+        <field name="privilege_id" ref="res_groups_privilege_guardian"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">A área do encarregado: os educandos, as notas, o RDEC, as faltas, as provas, as propinas e as mensagens com a escola.</field>
+    </record>
 </odoo>

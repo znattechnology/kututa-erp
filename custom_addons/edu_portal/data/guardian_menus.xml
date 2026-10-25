@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A Área do Encarregado, como a do estudante: o painel e as páginas da barra lateral do secPed, cada uma uma acção
+         cliente. O calendário é o «Calendário académico» do professor e as mensagens são as Discussões do Odoo. -->
+    <record id="action_guardian_home" model="ir.actions.client">
+        <field name="name">Painel</field>
+        <field name="tag">edu_portal.guardian_home</field>
+    </record>
+    <record id="action_guardian_children" model="ir.actions.client">
+        <field name="name">Meus educandos</field>
+        <field name="tag">edu_portal.guardian_children</field>
+    </record>
+    <record id="action_guardian_grades" model="ir.actions.client">
+        <field name="name">Notas</field>
+        <field name="tag">edu_portal.guardian_grades</field>
+    </record>
+    <record id="action_guardian_rdec" model="ir.actions.client">
+        <field name="name">RDEC (Iniciação)</field>
+        <field name="tag">edu_portal.guardian_rdec</field>
+    </record>
+    <record id="action_guardian_absences" model="ir.actions.client">
+        <field name="name">Faltas</field>
+        <field name="tag">edu_portal.guardian_absences</field>
+    </record>
+    <record id="action_guardian_exams" model="ir.actions.client">
+        <field name="name">Provas</field>
+        <field name="tag">edu_portal.guardian_exams</field>
+    </record>
+    <record id="action_guardian_fees" model="ir.actions.client">
+        <field name="name">Propinas</field>
+        <field name="tag">edu_portal.guardian_fees</field>
+    </record>
+    <record id="action_guardian_notifications" model="ir.actions.client">
+        <field name="name">Notificações</field>
+        <field name="tag">edu_portal.guardian_notifications</field>
+    </record>
+    <record id="action_guardian_profile" model="ir.actions.client">
+        <field name="name">Meu perfil</field>
+        <field name="tag">edu_portal.guardian_profile</field>
+    </record>
+    <record id="action_guardian_help" model="ir.actions.client">
+        <field name="name">Ajuda</field>
+        <field name="tag">edu_portal.guardian_help</field>
+    </record>
+
+    <menuitem id="menu_guardian_root" name="Área do Encarregado" sequence="2" groups="group_edu_guardian"
+              action="action_guardian_home" web_icon="edu_portal,static/description/icon_guardian.png"/>
+    <menuitem id="menu_guardian_home" name="Painel" action="action_guardian_home" parent="menu_guardian_root" sequence="1"/>
+    <menuitem id="menu_guardian_children_root" name="Educandos" parent="menu_guardian_root" sequence="10"/>
+    <menuitem id="menu_guardian_children" name="Meus educandos" action="action_guardian_children" parent="menu_guardian_children_root" sequence="10"/>
+    <menuitem id="menu_guardian_grades" name="Notas" action="action_guardian_grades" parent="menu_guardian_children_root" sequence="20"/>
+    <!-- O RDEC só aparece a quem tem um educando na Iniciação (ir.ui.menu._load_menus_blacklist). -->
+    <menuitem id="menu_guardian_rdec" name="RDEC (Iniciação)" action="action_guardian_rdec" parent="menu_guardian_children_root" sequence="30"/>
+    <menuitem id="menu_guardian_absences" name="Faltas" action="action_guardian_absences" parent="menu_guardian_children_root" sequence="40"/>
+    <menuitem id="menu_guardian_exams" name="Provas" action="action_guardian_exams" parent="menu_guardian_children_root" sequence="50"/>
+    <menuitem id="menu_guardian_calendar" name="Calendário" action="edu_roles.action_academic_calendar" parent="menu_guardian_children_root" sequence="60"/>
+    <menuitem id="menu_guardian_finance" name="Finanças" parent="menu_guardian_root" sequence="20"/>
+    <menuitem id="menu_guardian_fees" name="Propinas" action="action_guardian_fees" parent="menu_guardian_finance" sequence="10"/>
+    <menuitem id="menu_guardian_communication" name="Comunicação" parent="menu_guardian_root" sequence="30"/>
+    <menuitem id="menu_guardian_notifications" name="Notificações" action="action_guardian_notifications" parent="menu_guardian_communication" sequence="10"/>
+    <menuitem id="menu_guardian_messages" name="Mensagens" action="mail.action_discuss" parent="menu_guardian_communication" sequence="20"/>
+    <menuitem id="menu_guardian_account" name="Conta" parent="menu_guardian_root" sequence="40"/>
+    <menuitem id="menu_guardian_profile" name="Meu perfil" action="action_guardian_profile" parent="menu_guardian_account" sequence="10"/>
+    <menuitem id="menu_guardian_help" name="Ajuda" action="action_guardian_help" parent="menu_guardian_account" sequence="20"/>
+</odoo>

@@ -9,4 +9,6 @@ class IrHttp(models.AbstractModel):
         info = super().session_info()
         user = self.env.user
         info['edu_student_only'] = bool(user) and user._is_internal() and user._edu_student_only()
+        # Ao encarregado esconde só as Preferências: as Discussões são as suas mensagens com a escola.
+        info['edu_guardian_only'] = bool(user) and user._is_internal() and user._edu_guardian_only()
         return info

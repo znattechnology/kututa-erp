@@ -1,0 +1,637 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Em todas as páginas: sem registo de encarregado ou sem educandos, a frase para a secretaria. -->
+    <t t-name="edu_portal.GuardianPage.Empty">
+        <section class="o_edu_st_card">
+            <t t-if="!d.has_guardian">O teu utilizador ainda não está ligado a um registo de encarregado de educação. Pede à secretaria para o associar.</t>
+            <t t-else="">Ainda não tens educandos ligados à tua conta, ou a escola ainda não te deu acesso ao portal deles. Fala com a secretaria.</t>
+        </section>
+    </t>
+
+    <!-- Os separadores com os educandos, como no secPed (com um só não há o que escolher). -->
+    <t t-name="edu_portal.GuardianPage.Children">
+        <div t-if="d.children.length > 1" class="btn-group flex-wrap align-self-start" role="group" aria-label="Educando">
+            <button t-foreach="d.children" t-as="c" t-key="c.id" type="button" class="btn"
+                    t-att-class="c.id === d.child_id ? 'btn-primary' : 'btn-secondary'"
+                    t-att-aria-pressed="c.id === d.child_id ? 'true' : 'false'"
+                    t-on-click="() => this.selectChild(c)" t-out="c.name"/>
+        </div>
+    </t>
+
+    <!-- O aviso das propinas em atraso do educando, como o do aluno. -->
+    <t t-name="edu_portal.GuardianPage.Debt">
+        <div t-if="d.debt" class="alert mb-0 d-flex gap-3" t-att-class="d.debt.enforced ? 'alert-danger' : 'alert-warning'"
+             t-att-role="d.debt.enforced ? 'alert' : 'status'">
+            <i class="oi fs-4" t-att-data-icon="d.debt.enforced ? 'warning' : 'info'" aria-hidden="true"/>
+            <div>
+                <div class="fw-semibold">
+                    <t t-out="d.child.first_name"/> tem <t t-out="d.debt.amount"/> de propinas em atraso<t t-if="d.debt.since"> desde <t t-out="d.debt.since"/></t>
+                </div>
+                <div>
+                    <t t-if="d.debt.enforced">Até serem pagas, a escola esconde as notas e condiciona alguns serviços. Se precisas de apoio (bolsa ou caso social), fala com a secretaria.</t>
+                    <t t-else="">Regulariza quando puderes para evitar restrições. Se já pagaste, ignora este aviso.</t>
+                </div>
+                <button type="button" class="btn btn-link p-0" t-on-click="() => this.openFor('edu_portal.action_guardian_fees')">Ver as propinas</button>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="edu_portal.GuardianPage.GradesBlocked">
+        <section class="o_edu_st_card border-danger" role="alert">
+            As notas de <t t-out="d.child.first_name"/> estão bloqueadas porque há propinas em atraso. Voltam a ver-se quando as propinas vencidas forem pagas.
+            <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.openFor('edu_portal.action_guardian_fees')">Ver as propinas</button>
+        </section>
+    </t>
+
+    <!-- Painel, como no secPed: como vão os educandos e o que pede atenção, e ao lado as novidades. Um cartão por
+         educando (a turma, a média, a assiduidade e as propinas, em frases), com o caminho para as páginas dele. -->
+    <t t-name="edu_portal.GuardianHome">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body o_edu_st_wide" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title" t-out="d.has_guardian ? this.greeting : 'Área do Encarregado'"/>
+                        <p class="mb-0 text-muted" t-if="d.has_guardian" t-out="this.subtitle"/>
+                    </header>
+                    <t t-if="!d.children.length" t-call="edu_portal.GuardianPage.Empty"/>
+                    <div t-else="" class="o_edu_st_grid">
+                        <div class="o_edu_st_main">
+                            <t t-set="sm" t-value="this.summary"/>
+                            <p class="mb-0"><t t-out="sm.text"/><span t-if="sm.debt" class="text-danger" t-out="' ' + sm.debt"/></p>
+
+                            <section class="o_edu_st_section" aria-labelledby="o_edu_gd_children">
+                                <h2 id="o_edu_gd_children" class="o_edu_st_h2 mb-0">Os teus educandos</h2>
+                                <section t-foreach="d.summaries" t-as="c" t-key="c.id" class="o_edu_st_card" t-att-aria-label="c.name">
+                                    <div class="o_edu_gd_who">
+                                        <span class="o_edu_gd_avatar" aria-hidden="true" t-out="c.first_name.charAt(0)"/>
+                                        <div>
+                                            <div class="fw-semibold" t-out="c.name"/>
+                                            <div class="small text-muted">
+                                                <t t-if="c.has_enrollment"><t t-out="c.class"/><t t-if="c.level">, <t t-out="c.level"/></t></t>
+                                                <t t-else="">Sem matrícula neste ano lectivo</t><t t-if="c.matricula">, n.º <t t-out="c.matricula"/></t>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <dl class="o_edu_gd_facts">
+                                        <div>
+                                            <dt>Média deste ano</dt>
+                                            <dd>
+                                                <span t-if="c.blocked" class="text-danger">Bloqueada por propinas em atraso</span>
+                                                <span t-elif="c.preschool" class="text-muted">Avaliação descritiva (RDEC)</span>
+                                                <span t-elif="!c.average" class="text-muted">Ainda sem notas do trimestre</span>
+                                                <span t-else="" class="o_edu_st_num fw-semibold" t-att-class="c.average.pos ? 'text-primary' : 'text-danger'" t-out="c.average.text"/>
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt>Assiduidade</dt>
+                                            <dd>
+                                                <span t-if="!c.attendance.total" class="text-muted">Ainda sem aulas com chamada</span>
+                                                <t t-else="">
+                                                    <span class="o_edu_st_num fw-semibold"><t t-out="c.attendance.rate"/>%</span><span class="small text-muted">, <t t-out="this.attendanceText(c)"/></span>
+                                                </t>
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt>Propinas</dt>
+                                            <dd>
+                                                <span t-if="c.overdue" class="text-danger"><t t-out="c.overdue_total"/> em atraso</span>
+                                                <span t-else="">Em dia</span>
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button t-if="c.preschool" type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_rdec', c.id)">Relatório (RDEC)</button>
+                                        <button t-else="" type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_grades', c.id)">Notas</button>
+                                        <button type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_absences', c.id)">Faltas</button>
+                                        <button type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_fees', c.id)">Propinas</button>
+                                    </div>
+                                </section>
+                            </section>
+
+                            <section class="o_edu_st_section" aria-labelledby="o_edu_gd_attention">
+                                <h2 id="o_edu_gd_attention" class="o_edu_st_h2 mb-0">O que pede atenção</h2>
+                                <t t-set="warnings" t-value="this.warnings"/>
+                                <p t-if="!warnings.length" class="o_edu_st_card mb-0 text-muted">
+                                    Nada por agora: propinas em dia, nenhuma disciplina no limite de faltas e nenhuma média negativa.
+                                </p>
+                                <ul t-else="" class="o_edu_st_card o_edu_gd_feed">
+                                    <li t-foreach="warnings" t-as="w" t-key="w.key">
+                                        <button type="button" class="o_edu_gd_feed_item" t-on-click="() => this.openFor(w.action, w.child.id)">
+                                            <span class="small text-muted" t-out="w.child.first_name"/>
+                                            <span t-out="w.text"/>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </section>
+                        </div>
+
+                        <aside class="o_edu_st_side">
+                            <section class="o_edu_st_section" aria-labelledby="o_edu_gd_news">
+                                <div class="o_edu_st_row">
+                                    <h2 id="o_edu_gd_news" class="o_edu_st_h2 mb-0">Novidades</h2>
+                                    <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_notifications')">Ver todas</button>
+                                </div>
+                                <p t-if="!d.feed.length" class="o_edu_st_card mb-0 text-muted">
+                                    Sem novidades nos últimos 30 dias. Aparecem aqui as notas novas, as faltas, as provas marcadas e as propinas dos teus educandos.
+                                </p>
+                                <ul t-else="" class="o_edu_st_card o_edu_gd_feed">
+                                    <li t-foreach="d.feed" t-as="item" t-key="item.key">
+                                        <button type="button" class="o_edu_gd_feed_item" t-on-click="() => this.openItem(item)">
+                                            <span t-out="item.text"/>
+                                            <span class="small text-muted"><t t-out="item.first_name"/>, <t t-out="this.when(item).toLowerCase()"/></span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- Meus educandos, como no secPed: quem é o educando na escola e quem o acompanha este ano (o director de turma e
+         o professor de cada disciplina). -->
+    <t t-name="edu_portal.GuardianChildren">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">Meus educandos</h1>
+                        <p class="mb-0 text-muted">A ficha de cada educando e quem o acompanha na escola.</p>
+                    </header>
+                    <t t-if="!d.child_id" t-call="edu_portal.GuardianPage.Empty"/>
+                    <t t-else="">
+                        <t t-call="edu_portal.GuardianPage.Children"/>
+                        <t t-set="k" t-value="d.card"/>
+                        <section class="o_edu_st_card" aria-labelledby="o_edu_gd_who">
+                            <div class="o_edu_gd_who mb-3">
+                                <span class="o_edu_gd_avatar o_edu_gd_avatar_lg" aria-hidden="true" t-out="d.child.first_name.charAt(0)"/>
+                                <div>
+                                    <h2 id="o_edu_gd_who" class="o_edu_st_h2 mb-0" t-out="k.name"/>
+                                    <div class="small text-muted"><t t-out="k.relationship"/><t t-if="k.primary">, encarregado principal</t></div>
+                                </div>
+                            </div>
+                            <p t-if="!d.child.has_enrollment" class="mb-0 text-muted">
+                                <t t-out="d.child.first_name"/> não tem matrícula neste ano lectivo. Se achas que é um engano, fala com a secretaria.
+                            </p>
+                            <dl t-else="" class="o_edu_gd_facts o_edu_gd_facts_4">
+                                <div><dt>Turma</dt><dd><t t-out="k.class"/><t t-if="k.course">, <t t-out="k.course"/></t></dd></div>
+                                <div><dt>Nível</dt><dd t-out="k.level"/></div>
+                                <div><dt>Ano lectivo</dt><dd t-out="k.year"/></div>
+                                <div><dt>N.º de matrícula</dt><dd><span t-if="k.matricula" class="o_edu_st_num" t-out="k.matricula"/><span t-else="" class="text-muted">Por atribuir</span></dd></div>
+                            </dl>
+                            <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                                <button t-if="d.child.preschool" type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_rdec')">Relatório (RDEC)</button>
+                                <button t-else="" type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_grades')">Notas</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_absences')">Faltas</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_exams')">Provas</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.openFor('edu_portal.action_guardian_fees')">Propinas</button>
+                            </div>
+                        </section>
+                        <section t-if="d.child.has_enrollment" class="o_edu_st_section" aria-labelledby="o_edu_gd_team">
+                            <h2 id="o_edu_gd_team" class="o_edu_st_h2 mb-0">Quem acompanha <t t-out="d.child.first_name"/> este ano</h2>
+                            <p class="mb-0">
+                                <t t-if="k.director"><t t-out="k.director"/> é <t t-out="d.child.preschool ? 'o(a) educador(a) responsável' : 'director(a) de turma'"/> da <t t-out="k.class"/>.</t>
+                                <t t-else="">A <t t-out="k.class"/> ainda não tem director de turma.</t>
+                                <span class="text-muted"> Podes escrever-lhe, e a qualquer professor da turma, em
+                                    <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.open('mail.action_discuss')">Mensagens</button>.</span>
+                            </p>
+                            <p t-if="!k.subjects.length" class="o_edu_st_card mb-0 text-muted">A escola ainda não atribuiu disciplinas a esta matrícula.</p>
+                            <div t-else="" class="o_edu_st_card p-0 o_edu_st_scroll">
+                                <table class="table mb-0 o_edu_st_table">
+                                    <thead><tr><th>Disciplina</th><th>Professor</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="k.subjects" t-as="s" t-key="s.id">
+                                            <td t-out="s.name"/>
+                                            <td><t t-if="s.teachers.length" t-out="s.teachers.join(', ')"/><span t-else="" class="text-muted">Por atribuir</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- As notas do educando: a mesma pauta que o aluno vê, pela mesma tabela (como no secPed). -->
+    <t t-name="edu_portal.GuardianGrades">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body o_edu_st_wide" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <t t-set="g" t-value="d.grades"/>
+                    <header class="o_edu_st_row">
+                        <div>
+                            <h1 class="o_edu_st_title">Notas<t t-if="d.child"> de <t t-out="d.child.first_name"/></t></h1>
+                            <p class="mb-0 text-muted" t-if="g and g.year">
+                                <t t-out="g.year"/>, <t t-out="g.class"/><t t-if="g.level">, <t t-out="g.level"/></t>.
+                            </p>
+                        </div>
+                        <div t-if="g and g.years and g.years.length" class="o_edu_st_row">
+                            <select class="form-select w-auto" aria-label="Ano lectivo" t-att-disabled="g.years.length === 1"
+                                    t-att-title="g.years.length === 1 ? 'Só há matrícula neste ano lectivo' : 'Escolher o ano lectivo'"
+                                    t-on-change="(ev) => this.selectYear(ev)">
+                                <option t-foreach="g.years" t-as="y" t-key="y.id" t-att-value="y.id" t-att-selected="y.id === g.enrollment_id">
+                                    <t t-out="y.label"/><t t-if="y.current"> (este ano)</t>
+                                </option>
+                            </select>
+                            <div t-if="g.active and !g.blocked" class="btn-group" role="group" aria-label="Trimestre">
+                                <button t-foreach="g.trimesters" t-as="t" t-key="t.id" type="button" class="btn"
+                                        t-att-class="t.id === g.active.id ? 'btn-primary' : 'btn-secondary'"
+                                        t-att-aria-pressed="t.id === g.active.id ? 'true' : 'false'"
+                                        t-on-click="() => this.selectTrimester(t)" t-out="t.name"/>
+                            </div>
+                        </div>
+                    </header>
+                    <t t-if="!d.child_id" t-call="edu_portal.GuardianPage.Empty"/>
+                    <t t-else="">
+                        <t t-call="edu_portal.GuardianPage.Children"/>
+                        <t t-call="edu_portal.GuardianPage.Debt"/>
+                        <section t-if="!g.years.length" class="o_edu_st_card text-muted">
+                            <t t-out="d.child.first_name"/> ainda não tem matrículas com notas. Se achas que é um engano, fala com a secretaria.
+                        </section>
+                        <t t-elif="g.blocked" t-call="edu_portal.GuardianPage.GradesBlocked"/>
+                        <section t-elif="g.preschool" class="o_edu_st_card">
+                            Na Iniciação a avaliação é descritiva (Decreto Executivo 424/25): os educadores escrevem um relatório por trimestre, sem notas de 0 a 20.
+                            <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.openFor('edu_portal.action_guardian_rdec')">Ver o relatório de <t t-out="d.child.first_name"/></button>.
+                        </section>
+                        <section t-elif="!g.active" class="o_edu_st_card text-muted">A escola ainda não tem trimestres neste ano lectivo.</section>
+                        <t t-else="" t-call="edu_portal.Part.GradesBoard"/>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- O RDEC do educando da Iniciação, só para ler, como no secPed: as áreas com o nível e as observações e a
+         apreciação global; «Ver RDEC» abre o documento da escola. -->
+    <t t-name="edu_portal.GuardianRdec">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <t t-set="r" t-value="d.rdec"/>
+                    <header class="o_edu_st_row">
+                        <div>
+                            <h1 class="o_edu_st_title">RDEC<t t-if="d.child"> de <t t-out="d.child.first_name"/></t></h1>
+                            <p class="mb-0 text-muted">Relatório de Desempenho Escolar da Criança (Iniciação).</p>
+                        </div>
+                        <div t-if="r and r.applicable and !r.blocked" class="o_edu_st_row">
+                            <select t-if="r.trimesters.length" class="form-select w-auto" aria-label="Trimestre" t-on-change="(ev) => this.selectTrimester(ev)">
+                                <option t-foreach="r.trimesters" t-as="t" t-key="t.id" t-att-value="t.id" t-att-selected="t.id === r.trimester_id" t-out="t.name"/>
+                            </select>
+                            <button t-if="r.rdec_id" type="button" class="btn btn-secondary" t-on-click="() => this.openReport()"
+                                    title="O RDEC da escola em folha A4, na aplicação">
+                                <i class="oi me-1" data-icon="print" aria-hidden="true"/>Ver RDEC
+                            </button>
+                        </div>
+                    </header>
+                    <t t-if="!d.child_id" t-call="edu_portal.GuardianPage.Empty"/>
+                    <t t-else="">
+                        <t t-call="edu_portal.GuardianPage.Children"/>
+                        <t t-call="edu_portal.GuardianPage.Debt"/>
+                        <section t-if="!r.applicable" class="o_edu_st_card text-muted">
+                            <t t-out="d.child.first_name"/> não está na Iniciação: o RDEC é a avaliação do pré-escolar.
+                            <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.openFor('edu_portal.action_guardian_grades')">Ver as notas</button>.
+                        </section>
+                        <section t-elif="r.blocked" class="o_edu_st_card border-danger" role="alert">
+                            O RDEC de <t t-out="d.child.first_name"/> está bloqueado porque há propinas em atraso. Volta a ver-se quando as propinas vencidas forem pagas.
+                            <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.openFor('edu_portal.action_guardian_fees')">Ver as propinas</button>
+                        </section>
+                        <section t-elif="!r.rdec_id or r.state === 'todo'" class="o_edu_st_card text-muted">
+                            <t t-if="r.director"><t t-out="r.director"/> ainda não começou</t><t t-else="">O educador ainda não começou</t> o relatório do <t t-out="r.trimester"/>. Aparece aqui à medida que for preenchido.
+                        </section>
+                        <t t-else="">
+                            <p class="mb-0">
+                                <t t-if="r.state === 'done'">O relatório do <t t-out="r.trimester"/> está completo.</t>
+                                <t t-else="">O relatório do <t t-out="r.trimester"/> está a ser preenchido: <t t-out="r.done"/> de <t t-out="r.total"/> áreas avaliadas.</t>
+                                <span class="text-muted"> <t t-out="r.absences_unjustified + r.absences_justified === 0 ? 'Sem faltas no trimestre.' : 'No trimestre: ' + this.count(r.absences_justified, '1 falta justificada', 'faltas justificadas') + ' e ' + this.count(r.absences_unjustified, '1 injustificada', 'injustificadas') + '.'"/></span>
+                            </p>
+                            <div class="o_edu_st_card p-0 o_edu_st_scroll">
+                                <table class="table mb-0 o_edu_st_table">
+                                    <thead><tr><th>Área de desenvolvimento</th><th>Nível</th><th>Observações</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="r.areas" t-as="area" t-key="area.id">
+                                            <td t-out="area.name"/>
+                                            <td class="text-nowrap">
+                                                <span t-if="area.level" class="badge" t-att-class="this.levelClass(area)" t-out="area.level_label"/>
+                                                <span t-else="" class="text-muted">—</span>
+                                            </td>
+                                            <td><t t-if="area.observations" t-out="area.observations"/><span t-else="" class="text-muted">—</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <section class="o_edu_st_card" aria-labelledby="o_edu_gd_appreciation">
+                                <h2 id="o_edu_gd_appreciation" class="o_edu_st_h2">Apreciação global</h2>
+                                <p t-if="r.appreciation" class="mb-0 o_edu_st_pre" t-out="r.appreciation"/>
+                                <p t-else="" class="mb-0 text-muted">Ainda por escrever.</p>
+                            </section>
+                            <p class="mb-0 small text-muted">
+                                Na Iniciação a avaliação é formativa e qualitativa, sem notas e sem retenção (Decreto Executivo 424/25, art. 19.º).
+                                <t t-if="r.director">Escreve-o <t t-out="r.director"/>, o(a) educador(a) da turma.</t>
+                            </p>
+                        </t>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- As faltas do educando: as mesmas contas que ele vê, pela regra que conta, e as últimas faltas e atrasos. -->
+    <t t-name="edu_portal.GuardianAbsences">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">Faltas<t t-if="d.child"> de <t t-out="d.child.first_name"/></t></h1>
+                        <p class="mb-0 text-muted" t-if="d.child and d.child.year"><t t-out="d.child.class"/>, <t t-out="d.child.year"/>.</p>
+                    </header>
+                    <t t-if="!d.child_id" t-call="edu_portal.GuardianPage.Empty"/>
+                    <t t-else="">
+                        <t t-call="edu_portal.GuardianPage.Children"/>
+                        <t t-call="edu_portal.GuardianPage.Debt"/>
+                        <section t-if="!d.child.has_enrollment" class="o_edu_st_card text-muted"><t t-out="d.child.first_name"/> não tem matrícula neste ano lectivo, por isso não há faltas a contar.</section>
+                        <section t-elif="!d.absences.total" class="o_edu_st_card text-muted">
+                            Ainda não há presenças registadas este ano. As faltas aparecem aqui assim que os professores fizerem a chamada.
+                        </section>
+                        <t t-else="">
+                            <t t-set="a" t-value="d.absences"/>
+                            <p t-if="a.preschool" class="o_edu_st_card mb-0">Na Iniciação a assiduidade é informativa: não há reprovação por faltas (Decreto Executivo 424/25).</p>
+                            <p class="mb-0" t-out="this.sentence"/>
+                            <div t-if="a.failed.length" class="alert alert-danger mb-0" role="alert">
+                                <t t-out="a.regime === 'technical' ? 'Passou' : 'Atingiu'"/> o limite de faltas injustificadas a <t t-out="this.list(a.failed)"/>. Fala com o director de turma: as faltas que tenham justificação ainda podem ser justificadas.
+                            </div>
+                            <div t-if="a.at_risk.length" class="alert alert-warning mb-0">
+                                <t t-out="a.regime === 'technical' ? 'Está no limite de faltas injustificadas' : 'Está a uma falta injustificada do limite'"/> a <t t-out="this.list(a.at_risk)"/>.
+                            </div>
+                            <t t-call="edu_portal.Part.AbsenceTable"/>
+                            <p t-if="this.rule" class="mb-0 small text-muted" t-out="this.rule"/>
+                            <section t-if="d.recent.length" class="o_edu_st_section" aria-labelledby="o_edu_gd_recent">
+                                <h2 id="o_edu_gd_recent" class="o_edu_st_h2 mb-0">As últimas faltas e atrasos</h2>
+                                <ul class="o_edu_st_card o_edu_st_list">
+                                    <li t-foreach="d.recent" t-as="row" t-key="row.id">
+                                        <span class="o_edu_gd_day small text-muted" t-out="row.day"/>
+                                        <span class="flex-grow-1" t-out="row.subject"/>
+                                        <span class="small" t-att-class="row.state === 'absent' ? 'text-danger' : 'text-muted'" t-out="row.kind"/>
+                                    </li>
+                                </ul>
+                                <p class="mb-0 small text-muted">As faltas justificam-se junto do director de turma, com o documento que as justifica.</p>
+                            </section>
+                        </t>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- As provas da turma do educando, como no secPed. -->
+    <t t-name="edu_portal.GuardianExams">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">Provas<t t-if="d.child"> de <t t-out="d.child.first_name"/></t></h1>
+                        <p class="mb-0 text-muted" t-if="d.child and d.child.class">As provas da turma <t t-out="d.child.class"/>.</p>
+                    </header>
+                    <t t-if="!d.child_id" t-call="edu_portal.GuardianPage.Empty"/>
+                    <t t-else="">
+                        <t t-call="edu_portal.GuardianPage.Children"/>
+                        <t t-call="edu_portal.GuardianPage.Debt"/>
+                        <section t-if="!d.child.has_enrollment" class="o_edu_st_card text-muted"><t t-out="d.child.first_name"/> não tem matrícula neste ano lectivo, por isso não há provas.</section>
+                        <section t-elif="!d.exams.count" class="o_edu_st_card text-muted">
+                            Ainda não há provas marcadas para a turma. Aparecem aqui quando a secretaria as marcar.
+                        </section>
+                        <t t-else="">
+                            <p class="mb-0" t-out="this.sentence"/>
+                            <t t-call="edu_portal.Part.ExamPeriods"/>
+                        </t>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- As propinas do educando: as facturas pela mesma tabela que o aluno vê. Pagam-se na tesouraria da escola. -->
+    <t t-name="edu_portal.GuardianFees">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">Propinas<t t-if="d.child"> de <t t-out="d.child.first_name"/></t></h1>
+                        <p class="mb-0 text-muted">As facturas das propinas e dos outros serviços da escola.</p>
+                    </header>
+                    <t t-if="!d.child_id" t-call="edu_portal.GuardianPage.Empty"/>
+                    <t t-else="">
+                        <t t-call="edu_portal.GuardianPage.Children"/>
+                        <t t-set="f" t-value="d.fees"/>
+                        <p class="mb-0">
+                            <t t-if="!f.rows.length"><t t-out="d.child.first_name"/> ainda não tem facturas.</t>
+                            <t t-elif="!f.due.length">Não há nada por pagar.</t>
+                            <t t-else="">
+                                <t t-out="(f.due.length === 1 ? 'Há uma factura' : 'Há ' + f.due.length + ' facturas') + ' por pagar, no total de '"/><span class="o_edu_st_num" t-out="f.total_due"/><span t-if="this.overdueText" class="text-danger" t-out="'; ' + this.overdueText"/>.
+                                <t t-if="f.has_fines"> Deste valor, <span class="o_edu_st_num" t-out="f.total_fines"/> são multas por atraso.</t>
+                            </t>
+                        </p>
+                        <t t-call="edu_portal.Part.FeesTable"/>
+                        <p class="mb-0 small text-muted">
+                            As propinas pagam-se na tesouraria da escola. Quando o pagamento é confirmado, a factura passa para «Pagas».
+                        </p>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- As novidades dos educandos (as notas novas, as faltas, as provas marcadas, as facturas e os pagamentos). -->
+    <t t-name="edu_portal.GuardianNotifications">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">Notificações</h1>
+                        <p class="mb-0 text-muted">O que mudou nos teus educandos nos últimos 30 dias.</p>
+                    </header>
+                    <t t-if="!d.children.length" t-call="edu_portal.GuardianPage.Empty"/>
+                    <p t-elif="!d.feed.length" class="o_edu_st_card mb-0 text-muted">
+                        Ainda não há notificações. Aparecem aqui as notas novas, as faltas, as provas marcadas e as propinas dos teus educandos.
+                    </p>
+                    <ul t-else="" class="o_edu_st_card o_edu_gd_feed">
+                        <li t-foreach="d.feed" t-as="item" t-key="item.key">
+                            <button type="button" class="o_edu_gd_feed_item" t-on-click="() => this.openItem(item)">
+                                <span t-out="item.text"/>
+                                <span class="small text-muted"><t t-out="item.first_name"/>, <t t-out="this.when(item).toLowerCase()"/></span>
+                            </button>
+                        </li>
+                    </ul>
+                    <p t-if="d.feed.length" class="mb-0 small text-muted">As notificações das notas não dizem a nota, que pode mudar até o trimestre fechar: abre a página para a ver.</p>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- O perfil do encarregado, só para ler (corrige-o a secretaria), os educandos e a palavra-passe. -->
+    <t t-name="edu_portal.GuardianProfile">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_st_title">Meu perfil</h1>
+                        <p class="mb-0 text-muted">Os teus dados de encarregado de educação na escola.</p>
+                    </header>
+                    <t t-if="!d.has_guardian" t-call="edu_portal.GuardianPage.Empty"/>
+                    <t t-else="">
+                        <t t-set="p" t-value="d.profile"/>
+                        <div class="o_edu_st_two">
+                            <section class="o_edu_st_card" aria-labelledby="o_edu_gd_data">
+                                <h2 id="o_edu_gd_data" class="o_edu_st_h2">Os teus dados</h2>
+                                <dl class="o_edu_st_fields">
+                                    <dt>Nome</dt><dd t-out="p.name"/>
+                                    <dt>Email</dt>
+                                    <dd><t t-if="p.email" t-out="p.email"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>Telefone</dt>
+                                    <dd><t t-if="p.phone" t-out="p.phone"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>Morada</dt>
+                                    <dd><t t-if="p.address" t-out="p.address"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>BI ou passaporte</dt>
+                                    <dd><t t-if="p.id_number" t-out="p.id_number"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>NIF</dt>
+                                    <dd><t t-if="p.vat" t-out="p.vat"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                    <dt>Profissão</dt>
+                                    <dd><t t-if="p.occupation" t-out="p.occupation"/><span t-else="" class="text-muted">Por preencher</span></dd>
+                                </dl>
+                                <p class="mb-0 small text-muted">O NIF vai nas facturas das propinas. Se algum dado estiver errado, pede à secretaria para o corrigir.</p>
+                            </section>
+                            <section class="o_edu_st_card" aria-labelledby="o_edu_gd_kids">
+                                <h2 id="o_edu_gd_kids" class="o_edu_st_h2">Educandos associados</h2>
+                                <p t-if="!p.children.length" class="mb-0 text-muted">Nenhum educando com acesso ao portal. Fala com a secretaria.</p>
+                                <ul t-else="" class="o_edu_st_list">
+                                    <li t-foreach="p.children" t-as="c" t-key="c.id">
+                                        <span class="o_edu_gd_avatar" aria-hidden="true" t-out="c.name.charAt(0)"/>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold"><t t-out="c.name"/><span t-if="c.primary" class="badge text-bg-info ms-1">Principal</span></div>
+                                            <div class="small text-muted"><t t-out="c.relationship"/>, <t t-if="c.matricula">n.º <t t-out="c.matricula"/></t><t t-else="">sem n.º de matrícula</t></div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </section>
+                        </div>
+                        <section class="o_edu_st_card" aria-labelledby="o_edu_gd_security">
+                            <h2 id="o_edu_gd_security" class="o_edu_st_h2">Segurança</h2>
+                            <div class="o_edu_st_row">
+                                <p class="mb-0 text-muted">Muda a palavra-passe se achares que alguém a sabe.</p>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.changePassword()">Alterar a palavra-passe</button>
+                            </div>
+                        </section>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- A ajuda, como a do secPed: o que a área faz pelo encarregado, por temas, com o caminho para cada página. -->
+    <t t-name="edu_portal.GuardianHelp">
+        <div class="o_action o_edu_student o_edu_guardian">
+            <Layout display="this.display">
+                <div class="o_edu_st_body">
+                    <header>
+                        <h1 class="o_edu_st_title">Ajuda</h1>
+                        <p class="mb-0 text-muted">Respostas às dúvidas mais comuns sobre a área do encarregado.</p>
+                    </header>
+                    <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h1">
+                        <h2 id="o_edu_gd_h1" class="o_edu_st_h2 mb-0">Os teus educandos</h2>
+                        <div class="o_edu_st_card o_edu_gd_faq">
+                            <details>
+                                <summary>Tenho mais do que um educando. Como escolho de qual vejo?</summary>
+                                <p>Nas notas, nas faltas, nas provas e nas propinas há separadores com o nome de cada educando por cima. O painel mostra todos ao mesmo tempo.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_home')">Abrir o painel</button>
+                            </details>
+                            <details>
+                                <summary>Falta um educando, ou aparece um que não é meu.</summary>
+                                <p class="mb-0">Quem liga os educandos à tua conta é a secretaria da escola. Fala com ela para acrescentar ou retirar um educando, ou para te dar acesso ao portal dele.</p>
+                            </details>
+                            <details>
+                                <summary>Quem são os professores e o director de turma?</summary>
+                                <p>Em Meus educandos, cada ficha mostra a turma deste ano, o director de turma e o professor de cada disciplina.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_children')">Ver os educandos</button>
+                            </details>
+                        </div>
+                    </section>
+                    <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h2">
+                        <h2 id="o_edu_gd_h2" class="o_edu_st_h2 mb-0">Notas e faltas</h2>
+                        <div class="o_edu_st_card o_edu_gd_faq">
+                            <details>
+                                <summary>Quando aparecem as notas?</summary>
+                                <p>Assim que o professor as lança. Nas notificações aparece «Notas novas», com o nome do educando e a disciplina (sem a nota, que pode mudar até o trimestre fechar).</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_grades')">Ver as notas</button>
+                            </details>
+                            <details>
+                                <summary>Porque é que as notas do meu educando estão bloqueadas?</summary>
+                                <p>Algumas escolas escondem as notas enquanto houver propinas vencidas por pagar. Voltam a ver-se assim que as propinas em atraso forem pagas. Nas propinas vês exactamente o que está em atraso.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_fees')">Ver as propinas</button>
+                            </details>
+                            <details>
+                                <summary>O meu educando está na Iniciação. Onde vejo a avaliação?</summary>
+                                <p>Na Iniciação não há notas: o educador escreve um relatório por trimestre (o RDEC), com o nível em cada área de desenvolvimento e uma apreciação global. Está em RDEC (Iniciação), que só aparece se um educando estiver na Iniciação.</p>
+                            </details>
+                            <details>
+                                <summary>Como se contam as faltas?</summary>
+                                <p>Só contam as aulas dadas em que o professor fez a chamada. Cada disciplina tem um limite de faltas injustificadas, que depende dos tempos semanais. No painel aparece um aviso quando o teu educando fica perto do limite ou o atinge.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_absences')">Ver as faltas</button>
+                            </details>
+                            <details>
+                                <summary>Como justifico uma falta?</summary>
+                                <p>As faltas justificam-se junto do director de turma, com o documento que as justifica. Podes escrever-lhe nas mensagens.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('mail.action_discuss')">Abrir as mensagens</button>
+                            </details>
+                        </div>
+                    </section>
+                    <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h3">
+                        <h2 id="o_edu_gd_h3" class="o_edu_st_h2 mb-0">Propinas</h2>
+                        <div class="o_edu_st_card o_edu_gd_faq">
+                            <details>
+                                <summary>Como pago as propinas?</summary>
+                                <p>Na tesouraria da escola. Quando o pagamento é confirmado, a factura passa para «Pagas» na página das propinas.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_fees')">Ver as propinas</button>
+                            </details>
+                            <details>
+                                <summary>Porque é que o valor de uma propina aumentou?</summary>
+                                <p class="mb-0">Se a escola cobra multa por atraso, ela é somada à propina depois do período de tolerância. Nas propinas a multa aparece à parte, factura a factura.</p>
+                            </details>
+                        </div>
+                    </section>
+                    <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h4">
+                        <h2 id="o_edu_gd_h4" class="o_edu_st_h2 mb-0">Mensagens e a tua conta</h2>
+                        <div class="o_edu_st_card o_edu_gd_faq">
+                            <details>
+                                <summary>A quem posso escrever?</summary>
+                                <p>Aos professores e ao director de turma de cada educando, e à secretaria. Em Mensagens, começa uma conversa nova e escolhe a pessoa.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('mail.action_discuss')">Abrir as mensagens</button>
+                            </details>
+                            <details>
+                                <summary>Esqueci-me da palavra-passe.</summary>
+                                <p class="mb-0">Pede à secretaria uma palavra-passe nova. Depois de entrares, podes mudá-la em Meu perfil.</p>
+                            </details>
+                            <details>
+                                <summary>Os meus dados estão errados.</summary>
+                                <p>Vê-os em Meu perfil. Para os corrigir (o NIF, que vai nas facturas, o telefone, a morada), fala com a secretaria.</p>
+                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_profile')">Ver o perfil</button>
+                            </details>
+                        </div>
+                    </section>
+                </div>
+            </Layout>
+        </div>
+    </t>
+</templates>

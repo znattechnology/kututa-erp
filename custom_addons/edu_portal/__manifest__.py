@@ -1,7 +1,7 @@
 {
-    'name': 'Secretaria Express - Área do estudante',
+    'name': 'Secretaria Express - Área do estudante e do encarregado',
     'version': '20.0.1.0.0',
-    'summary': 'A área do estudante do secPed-Express: painel, notas, horário, provas, faltas, propinas e perfil',
+    'summary': 'As áreas do estudante e do encarregado do secPed-Express: painel, notas, faltas, provas e propinas',
     'description': """
 Secretaria Express: a área do estudante, como a do secPed-Express, no Odoo como o painel do professor
 (perfil «Aluno»: o aluno só vê a «Área do Estudante»).
@@ -14,6 +14,13 @@ Secretaria Express: a área do estudante, como a do secPed-Express, no Odoo como
 * Propinas, só para ler (quem paga é o encarregado), e o aviso das propinas em atraso
 * Meu perfil: matrícula, dados pessoais, encarregados e a palavra-passe
 * Com propinas em atraso e a escola em modo «bloquear», as notas ficam escondidas (como no secPed)
+
+A área do encarregado, como a do secPed (perfil «Encarregado»: só vê a «Área do Encarregado» e as mensagens):
+
+* Painel: um cartão por educando (a média, a assiduidade e as propinas), o que pede atenção e as novidades
+* Meus educandos: a turma e quem acompanha cada educando (o director de turma e os professores)
+* Notas, RDEC (só com um educando na Iniciação), faltas, provas e propinas de cada educando, com as tabelas do aluno
+* Calendário da escola, notificações, mensagens com os professores e a secretaria, perfil e ajuda
     """,
     'author': 'Kututa ERP',
     'countries': ['ao'],
@@ -24,10 +31,12 @@ Secretaria Express: a área do estudante, como a do secPed-Express, no Odoo como
         'security/ir.access.csv',
         'data/student_menus.xml',
         'data/student_discuss.xml',
+        'data/guardian_menus.xml',
     ],
     'assets': {
         'web.assets_backend': [
             'edu_portal/static/src/student/*',
+            'edu_portal/static/src/guardian/*',
         ],
     },
     'license': 'OPL-1',
