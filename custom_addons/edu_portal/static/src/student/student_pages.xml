@@ -668,8 +668,9 @@
         </div>
     </t>
 
-    <!-- «Meu perfil», como o do professor: numa frase, onde estuda este ano; a matrícula e os dados (que se corrigem na
-         secretaria); os encarregados; e a palavra-passe. -->
+    <!-- «Meu perfil», no desenho do perfil do encarregado: quem é (com a turma e os contactos), o que falta para os
+         certificados, a matrícula e os dados em grelha (que se corrigem na secretaria), as disciplinas, os encarregados
+         e a palavra-passe. -->
     <t t-name="edu_portal.StudentProfile">
         <div class="o_action o_edu_student">
             <Layout display="this.display">
@@ -683,88 +684,92 @@
                     <t t-else="">
                         <t t-set="p" t-value="d.profile"/>
                         <t t-call="edu_portal.StudentPage.Debt"/>
-                        <p class="mb-0 fs-6" t-out="this.sentence"/>
-                        <div class="o_edu_st_two">
-                            <section class="o_edu_st_card" aria-labelledby="o_edu_st_enrollment">
-                                <h2 id="o_edu_st_enrollment" class="o_edu_st_h2">A tua matrícula</h2>
-                                <dl class="o_edu_st_fields">
-                                    <dt>N.º de matrícula</dt>
-                                    <dd><t t-if="p.matricula" t-out="p.matricula"/><span t-else="" class="text-muted">Por atribuir</span></dd>
-                                    <t t-if="p.enrollment">
-                                        <dt>Curso</dt>
-                                        <dd><t t-if="p.enrollment.course" t-out="p.enrollment.course"/><span t-else="" class="text-muted">—</span></dd>
-                                        <dt>Turma</dt><dd t-out="p.enrollment.class"/>
-                                        <dt>Ano lectivo</dt><dd t-out="p.enrollment.year"/>
-                                        <dt>Nível de ensino</dt><dd t-out="p.enrollment.level"/>
-                                        <dt>Situação</dt>
-                                        <dd t-att-class="{'text-danger': p.enrollment.irregular}" t-out="p.enrollment.state"/>
-                                    </t>
-                                    <t t-else="">
-                                        <dt>Situação</dt><dd class="text-muted">Sem matrícula neste ano lectivo</dd>
-                                    </t>
-                                </dl>
-                                <t t-if="p.enrollment and p.enrollment.subjects.length">
-                                    <h3 class="small text-muted mb-1"><t t-out="p.enrollment.subjects.length === 1 ? 'A tua disciplina' : 'As tuas ' + p.enrollment.subjects.length + ' disciplinas'"/></h3>
-                                    <p class="mb-0"><t t-out="this.list(p.enrollment.subjects)"/>.</p>
-                                </t>
-                            </section>
-                            <section class="o_edu_st_card" aria-labelledby="o_edu_st_data">
-                                <h2 id="o_edu_st_data" class="o_edu_st_h2">Os teus dados</h2>
-                                <dl class="o_edu_st_fields">
-                                    <dt>Nome</dt><dd t-out="p.name"/>
-                                    <dt>Data de nascimento</dt>
-                                    <dd><t t-if="p.birth_date" t-out="p.birth_date"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Sexo</dt>
-                                    <dd><t t-if="p.gender" t-out="p.gender"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Bilhete de identidade</dt>
-                                    <dd><t t-if="p.id_number" t-out="p.id_number"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Naturalidade</dt>
-                                    <dd><t t-if="p.birthplace" t-out="p.birthplace"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Filiação</dt>
-                                    <dd><t t-if="p.filiation" t-out="p.filiation"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Morada</dt>
-                                    <dd><t t-if="p.address" t-out="p.address"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Email</dt>
-                                    <dd><t t-if="p.email" t-out="p.email"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Telefone</dt>
-                                    <dd><t t-if="p.phone" t-out="p.phone"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                </dl>
-                                <p class="mb-0 small" t-att-class="p.missing ? 'text-warning' : 'text-muted'">
-                                    <t t-if="p.missing">Faltam <t t-out="p.missing"/>. Vão nos certificados e declarações: pede à secretaria para os completar antes de pedires um documento.</t>
-                                    <t t-else="">Estes dados vão nos certificados e declarações. Se algum estiver errado, pede à secretaria para o corrigir.</t>
-                                </p>
-                            </section>
+                        <!-- Quem é, onde estuda este ano, e como a escola o contacta -->
+                        <section class="o_edu_st_card o_edu_gd_me" aria-labelledby="o_edu_st_me">
+                            <span class="o_edu_gd_avatar o_edu_gd_avatar_xl" aria-hidden="true" t-out="this.initials(p.name)"/>
+                            <div class="min-w-0 flex-grow-1">
+                                <h2 id="o_edu_st_me" class="o_edu_gd_name">
+                                    <t t-out="p.name"/>
+                                    <span t-if="p.enrollment" class="badge ms-2 align-middle fs-6 fw-normal"
+                                          t-att-class="p.enrollment.irregular ? 'text-bg-danger' : 'text-bg-light'" t-out="p.enrollment.state"/>
+                                </h2>
+                                <div class="text-muted" t-out="this.sentence"/>
+                                <div t-if="p.phone or p.email" class="o_edu_gd_contacts">
+                                    <a t-if="p.phone" t-att-href="'tel:' + p.phone" class="o_edu_gd_contact"><i class="oi" data-icon="phone" aria-hidden="true"/><t t-out="p.phone"/></a>
+                                    <a t-if="p.email" t-att-href="'mailto:' + p.email" class="o_edu_gd_contact"><i class="oi" data-icon="mail" aria-hidden="true"/><t t-out="p.email"/></a>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div t-if="p.missing" class="alert alert-warning mb-0 d-flex gap-2" role="status">
+                            <i class="oi" data-icon="info" aria-hidden="true"/>
+                            <div>Faltam <t t-out="p.missing"/>. Vão nos certificados e declarações: pede à secretaria para os completar antes de pedires um documento.</div>
                         </div>
-                        <section class="o_edu_st_card" aria-labelledby="o_edu_st_guardians">
-                            <h2 id="o_edu_st_guardians" class="o_edu_st_h2">Os teus encarregados de educação</h2>
-                            <p t-if="!p.guardians.length" class="mb-0 text-muted">Não tens encarregado de educação registado. Pede à secretaria para o associar.</p>
-                            <ul t-else="" class="o_edu_st_list">
-                                <li t-foreach="p.guardians" t-as="guardian" t-key="guardian_index">
-                                    <div class="flex-grow-1">
-                                        <div class="fw-semibold">
-                                            <t t-out="guardian.name"/>
-                                            <span t-if="guardian.primary" class="badge text-bg-info ms-1">Encarregado principal</span>
-                                        </div>
+
+                        <section class="o_edu_st_section" aria-labelledby="o_edu_st_enrollment">
+                            <h2 id="o_edu_st_enrollment" class="o_edu_st_h2 mb-0">A tua matrícula</h2>
+                            <p t-if="!p.enrollment" class="o_edu_st_card mb-0 text-muted">Sem matrícula neste ano lectivo. Se for engano, fala com a secretaria.</p>
+                            <ul t-else="" class="o_edu_gd_fields">
+                                <t t-foreach="this.enrollmentFields" t-as="f" t-key="f.key" t-call="edu_portal.StudentProfile.Field"/>
+                            </ul>
+                            <div t-if="p.enrollment and p.enrollment.subjects.length">
+                                <h3 class="small text-muted mb-2"><t t-out="p.enrollment.subjects.length === 1 ? 'A tua disciplina' : 'As tuas ' + p.enrollment.subjects.length + ' disciplinas'"/></h3>
+                                <ul class="o_edu_st_subjects">
+                                    <li t-foreach="p.enrollment.subjects" t-as="subject" t-key="subject_index" t-out="subject"/>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <section class="o_edu_st_section" aria-labelledby="o_edu_st_data">
+                            <h2 id="o_edu_st_data" class="o_edu_st_h2 mb-0">Os teus dados</h2>
+                            <ul class="o_edu_gd_fields">
+                                <t t-foreach="this.personalFields" t-as="f" t-key="f.key" t-call="edu_portal.StudentProfile.Field"/>
+                            </ul>
+                            <p class="mb-0 small text-muted">Estes dados vão nos certificados e declarações. Se algum estiver errado, pede à secretaria para o corrigir.</p>
+                        </section>
+
+                        <section class="o_edu_st_section" aria-labelledby="o_edu_st_guardians">
+                            <h2 id="o_edu_st_guardians" class="o_edu_st_h2 mb-0">Os teus encarregados de educação</h2>
+                            <p t-if="!p.guardians.length" class="o_edu_st_card mb-0 text-muted">Não tens encarregado de educação registado. Pede à secretaria para o associar.</p>
+                            <ul t-else="" class="o_edu_gd_team o_edu_gd_team_wide">
+                                <li t-foreach="p.guardians" t-as="guardian" t-key="guardian_index" class="o_edu_gd_member">
+                                    <span class="o_edu_gd_avatar" aria-hidden="true" t-out="this.initials(guardian.name)"/>
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="fw-semibold"><t t-out="guardian.name"/><span t-if="guardian.primary" class="badge text-bg-info ms-1">Principal</span></div>
                                         <div class="small text-muted" t-out="guardian.relationship"/>
-                                    </div>
-                                    <div class="text-end small">
-                                        <a t-if="guardian.phone" t-att-href="'tel:' + guardian.phone" class="d-block o_edu_st_num" t-out="guardian.phone"/>
-                                        <a t-if="guardian.email" t-att-href="'mailto:' + guardian.email" class="d-block text-muted" t-out="guardian.email"/>
+                                        <div t-if="guardian.phone or guardian.email" class="o_edu_gd_contacts mt-1 small">
+                                            <a t-if="guardian.phone" t-att-href="'tel:' + guardian.phone" class="o_edu_gd_contact"><i class="oi" data-icon="phone" aria-hidden="true"/><t t-out="guardian.phone"/></a>
+                                            <a t-if="guardian.email" t-att-href="'mailto:' + guardian.email" class="o_edu_gd_contact text-break"><i class="oi" data-icon="mail" aria-hidden="true"/><t t-out="guardian.email"/></a>
+                                        </div>
                                     </div>
                                 </li>
                             </ul>
                         </section>
+
                         <section class="o_edu_st_card" aria-labelledby="o_edu_st_security">
                             <h2 id="o_edu_st_security" class="o_edu_st_h2">Segurança</h2>
                             <div class="o_edu_st_row">
                                 <p class="mb-0 text-muted">Muda a palavra-passe se achares que alguém a sabe.</p>
-                                <button type="button" class="btn btn-secondary" t-on-click="() => this.changePassword()">Alterar a palavra-passe</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.changePassword()">
+                                    <i class="oi me-1" data-icon="lock" aria-hidden="true"/>Alterar a palavra-passe
+                                </button>
                             </div>
                         </section>
                     </t>
                 </div>
             </Layout>
         </div>
+    </t>
+    <!-- Um dado do perfil, com o ícone; o que falta fica «Por preencher». -->
+    <t t-name="edu_portal.StudentProfile.Field">
+        <li class="o_edu_gd_field">
+            <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" t-att-data-icon="f.icon"/></span>
+            <div class="min-w-0">
+                <div class="small text-muted" t-out="f.label"/>
+                <div t-if="f.value" class="text-break" t-att-class="f.css" t-out="f.value"/>
+                <div t-else="" class="text-muted" t-out="f.empty or 'Por preencher'"/>
+            </div>
+        </li>
     </t>
     <!-- O Histórico, como no secPed: o percurso ano a ano (a turma, a média final, a assiduidade e a decisão do ano).
          Um ano entra quando a decisão está tomada. -->

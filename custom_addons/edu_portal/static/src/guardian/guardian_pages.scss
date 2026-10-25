@@ -7,24 +7,6 @@
         gap: 12px;
     }
 
-    .o_edu_gd_avatar {
-        display: inline-grid;
-        flex: none;
-        place-items: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: rgba($primary, 0.12);
-        color: $primary;
-        font-weight: 600;
-    }
-
-    .o_edu_gd_avatar_lg {
-        width: 48px;
-        height: 48px;
-        font-size: 1.25rem;
-    }
-
     .o_edu_gd_facts {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -129,23 +111,11 @@
         height: 96px;
     }
 
-    // Meus educandos: a ficha, o director de turma em destaque e a equipa em grelha.
+    // Meus educandos: a ficha e o director de turma em destaque.
     .o_edu_gd_profile {
         display: flex;
         flex-direction: column;
         gap: 20px;
-    }
-
-    .o_edu_gd_avatar_xl {
-        width: 64px;
-        height: 64px;
-        font-size: 1.5rem;
-    }
-
-    .o_edu_gd_name {
-        margin: 0;
-        font-size: 1.35rem;
-        font-weight: 600;
     }
 
     .o_edu_gd_director {
@@ -154,29 +124,6 @@
         align-items: center;
         gap: 12px 16px;
         border-left: 4px solid $primary;
-    }
-
-    .o_edu_gd_team {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 8px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    .o_edu_gd_team_wide {
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    }
-
-    .o_edu_gd_member {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        border: 1px solid $border-color;
-        border-radius: $border-radius-lg;
-        background: $o-view-background-color;
     }
 
     .o_edu_gd_write {
@@ -226,8 +173,64 @@
     .o_edu_gd_appreciation {
         border-left: 4px solid $primary;
     }
+}
 
-    // Meu perfil: quem é (com os contactos), os dados em grelha e os educandos.
+// As peças das pessoas, comuns às duas áreas (o perfil do aluno e o do encarregado, e os educandos): o avatar com
+// as iniciais, quem é com os contactos, os dados em grelha e as pessoas em cartões.
+.o_edu_student {
+    .o_edu_gd_avatar {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba($primary, 0.12);
+        color: $primary;
+        font-weight: 600;
+    }
+
+    .o_edu_gd_avatar_lg {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+
+    .o_edu_gd_avatar_xl {
+        width: 64px;
+        height: 64px;
+        font-size: 1.5rem;
+    }
+
+    .o_edu_gd_name {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+    }
+
+    .o_edu_gd_team {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_gd_team_wide {
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+
+    .o_edu_gd_member {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
     .o_edu_gd_me {
         display: flex;
         align-items: center;

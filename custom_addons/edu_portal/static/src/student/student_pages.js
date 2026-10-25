@@ -655,12 +655,44 @@ export class StudentProfile extends StudentPage {
         const d = this.state.data;
         const p = d.profile;
         if (!p.enrollment) {
-            return `${d.first_name}, não tens matrícula activa neste ano lectivo. Se for engano, fala com a secretaria.`;
+            return "Sem matrícula activa neste ano lectivo.";
         }
         const course = p.enrollment.course ? ` (${p.enrollment.course})` : "";
-        const n = p.enrollment.subjects.length;
-        const subjects = n ? `, com ${count(n, "uma disciplina", "disciplinas")}` : "";
-        return `${d.first_name}, estás na turma ${p.enrollment.class}${course} no ano lectivo ${p.enrollment.year}${subjects}.`;
+        return `Turma ${p.enrollment.class}${course}, ano lectivo ${p.enrollment.year}.`;
+    }
+
+    initials(name) {
+        const parts = (name || "").split(" ").filter(Boolean);
+        return (parts[0] ? parts[0][0] : "") + (parts.length > 1 ? parts[parts.length - 1][0] : "");
+    }
+
+    /** A matrícula deste ano em grelha, com o ícone de cada dado. */
+    get enrollmentFields() {
+        const p = this.state.data.profile;
+        const e = p.enrollment;
+        return [
+            { key: "matricula", label: "N.º de matrícula", icon: "badge", value: p.matricula, empty: "Por atribuir" },
+            { key: "course", label: "Curso", icon: "school", value: e.course, empty: "—" },
+            { key: "class", label: "Turma", icon: "groups", value: e.class },
+            { key: "year", label: "Ano lectivo", icon: "calendar_today", value: e.year },
+            { key: "level", label: "Nível de ensino", icon: "bar_chart", value: e.level, empty: "—" },
+            { key: "state", label: "Situação", icon: "verified", value: e.state, css: e.irregular ? "text-danger" : "" },
+        ];
+    }
+
+    /** Os dados pessoais em grelha (os que faltam ficam «Por preencher»). */
+    get personalFields() {
+        const p = this.state.data.profile;
+        return [
+            { key: "birth_date", label: "Data de nascimento", icon: "cake", value: p.birth_date },
+            { key: "gender", label: "Sexo", icon: "person", value: p.gender },
+            { key: "id_number", label: "Bilhete de identidade", icon: "credit_card", value: p.id_number },
+            { key: "birthplace", label: "Naturalidade", icon: "map", value: p.birthplace },
+            { key: "filiation", label: "Filiação", icon: "group", value: p.filiation },
+            { key: "address", label: "Morada", icon: "location_on", value: p.address },
+            { key: "email", label: "Email", icon: "mail", value: p.email },
+            { key: "phone", label: "Telefone", icon: "phone", value: p.phone },
+        ];
     }
 
     async changePassword() {

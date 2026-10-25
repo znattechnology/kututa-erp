@@ -748,6 +748,24 @@
     .o_edu_st_training_kpis .o_edu_kpi {
         background: $o-view-background-color;
     }
+
+    // Meu perfil: as disciplinas do ano em etiquetas.
+    .o_edu_st_subjects {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            padding: 4px 10px;
+            border: 1px solid $border-color;
+            border-radius: $border-radius-pill;
+            background: $o-view-background-color;
+            font-size: $font-size-sm;
+        }
+    }
 }
 
 // A cor de cada disciplina no horário: a paleta categórica da série dos gráficos, pela ordem fixa (validada para o
