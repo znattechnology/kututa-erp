@@ -21,7 +21,7 @@
                                 <option t-att-value="t.id" t-att-selected="t.id === this.state.trimesterId">Só o <t t-out="t.name"/></option>
                             </t>
                         </select>
-                        <div t-if="this.state.mode === 'class' and this.state.data" class="form-check ms-1">
+                        <div t-if="this.state.mode === 'class' and this.state.data and !this.readonly" class="form-check ms-1">
                             <input class="form-check-input" type="checkbox" id="o_edu_se_saturday"
                                    t-att-checked="this.state.saturday" t-on-change="(ev) => this.state.saturday = ev.target.checked"/>
                             <label class="form-check-label" for="o_edu_se_saturday">Sábado</label>
@@ -32,6 +32,14 @@
                                 class="btn btn-secondary" t-on-click="() => this.print()">
                             <i class="oi me-1" data-icon="print" aria-hidden="true"/>Imprimir
                         </button>
+                        <t t-if="this.readonly and this.state.mode === 'class' and this.state.data">
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.openList()">
+                                <i class="oi me-1" data-icon="view_list" aria-hidden="true"/>Ver em lista
+                            </button>
+                            <button type="button" class="btn btn-primary" t-on-click="() => this.openEditor()">
+                                <i class="oi me-1" data-icon="edit" aria-hidden="true"/>Editar horário
+                            </button>
+                        </t>
                     </div>
 
                     <div class="o_edu_se_layout">
@@ -68,8 +76,36 @@
                     </aside>
                     <div class="o_edu_se_content">
                     <t t-if="!this.state.data">
-                        <p class="o_edu_se_empty" t-if="this.state.mode === 'class'">Escolha à esquerda a turma cujo horário quer montar. O número ao lado é o dos tempos por semana já colocados face ao plano.</p>
+                        <p class="o_edu_se_empty" t-if="this.state.mode === 'class' and this.readonly">Escolha à esquerda a turma para ver o horário da semana.</p>
+                        <p class="o_edu_se_empty" t-elif="this.state.mode === 'class'">Escolha à esquerda a turma cujo horário quer montar. O número ao lado é o dos tempos por semana já colocados face ao plano.</p>
                         <p class="o_edu_se_empty" t-else="">Escolha à esquerda um professor para ver as aulas dele em todas as turmas.</p>
+                    </t>
+
+                    <t t-elif="this.state.mode === 'class' and this.readonly">
+                        <t t-set="stats" t-value="this.stats"/>
+                        <p class="o_edu_se_status">
+                            <strong t-out="this.state.data.class.name"/>
+                            <span class="text-muted">
+                                <t t-if="this.state.data.class.course"> · <t t-out="this.state.data.class.course"/></t>
+                                <t t-out="this.state.data.class.room ? ' · ' + this.state.data.class.room : ' · sem sala fixa'"/>
+                                <t t-if="this.state.data.class.shift"> · <t t-out="this.state.data.class.shift"/></t>
+                            </span>
+                            <br/>
+                            <t t-if="stats.lessons">
+                                <t t-out="this.plural(stats.lessons, 'aula', 'aulas')"/> por semana, <t t-out="stats.hours"/> h no total ·
+                                <t t-out="this.plural(stats.subjects, 'disciplina', 'disciplinas')"/>,
+                                <t t-out="this.plural(stats.teachers, 'professor', 'professores')"/>
+                                <span t-if="stats.withoutTeacher" class="text-danger">
+                                    · <t t-out="this.plural(stats.withoutTeacher, 'aula sem professor', 'aulas sem professor')"/></span>
+                            </t>
+                        </p>
+                        <p t-if="!stats.lessons" class="o_edu_se_empty">
+                            Esta turma ainda não tem aulas no horário<t t-if="this.state.trimesterId"> neste período</t>.
+                            <a href="#" t-on-click.prevent="() => this.openEditor()">Construir o horário</a>
+                        </p>
+                        <div t-else="" class="o_edu_se_grid_wrap">
+                            <t t-call="edu_timetable.ScheduleEditorGrid"/>
+                        </div>
                     </t>
 
                     <t t-elif="this.state.mode === 'class'">
@@ -166,7 +202,7 @@
                     <th class="o_edu_se_hour" t-out="row.label"/>
                     <t t-foreach="row.cells" t-as="cell" t-key="cell.key">
                         <td t-if="cell.lesson" class="o_edu_se_lesson" t-att-class="this.subjectColor(cell.lesson.subject_id)">
-                            <div t-if="cell.first" t-att-draggable="this.state.mode === 'class' ? 'true' : 'false'"
+                            <div t-if="cell.first" t-att-draggable="this.state.mode === 'class' and !this.readonly ? 'true' : 'false'"
                                  t-att-class="{ o_dragging: this.state.drag and this.state.drag.lessonId === cell.lesson.id }"
                                  t-on-dragstart="(ev) => this.onDragLesson(ev, cell.lesson)"
                                  t-on-dragend="() => this.onDragEnd()">
@@ -174,7 +210,7 @@
                                     <strong t-out="cell.lesson.subject"/>
                                     <span class="d-block" t-att-class="cell.lesson.teacher ? '' : 'text-danger'"
                                           t-out="this.lessonDetail(cell.lesson)"/>
-                                    <button type="button" class="btn btn-link o_edu_se_remove" title="Retirar a aula"
+                                    <button t-if="!this.readonly" type="button" class="btn btn-link o_edu_se_remove" title="Retirar a aula"
                                             t-att-aria-label="'Retirar ' + cell.lesson.subject"
                                             t-on-click="() => this.remove(cell.lesson)">
                                         <i class="oi" data-icon="close" aria-hidden="true"/>
@@ -188,7 +224,7 @@
                                 <span t-if="cell.lesson.trimester" class="d-block small text-muted" t-out="cell.lesson.trimester"/>
                             </div>
                         </td>
-                        <td t-elif="this.state.mode === 'class'" class="o_edu_se_free"
+                        <td t-elif="this.state.mode === 'class' and !this.readonly" class="o_edu_se_free"
                             t-att-class="{
                                 o_ready: (this.state.drag or this.state.selectedSubjectId) and !cell.clash,
                                 o_clash: cell.clash,

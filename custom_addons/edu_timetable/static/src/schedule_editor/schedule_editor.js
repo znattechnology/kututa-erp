@@ -40,6 +40,8 @@ export class ScheduleEditor extends Component {
     panel = signal.ref();
 
     setup() {
+        // Só consulta (Horários das turmas): sem lista de disciplinas, sem arrastar nem retirar aulas.
+        this.readonly = !!this.props.action.context?.edu_readonly;
         this.orm = useService("orm");
         this.action = useService("action");
         this.notification = useService("notification");
@@ -179,6 +181,43 @@ export class ScheduleEditor extends Component {
         this.state.classId = classId;
         remember(classId);
         await this.load();
+    }
+
+    async openEditor() {
+        await this.action.doAction("edu_timetable.action_edu_schedule_editor", {
+            additionalContext: { default_class_id: this.state.classId },
+        });
+    }
+
+    async openList() {
+        // A lista da turma sem o agrupamento por turma da acção «Tempos por turma».
+        await this.action.doAction({
+            type: "ir.actions.act_window",
+            name: this.state.data.class.name,
+            res_model: "edu.schedule",
+            views: [
+                [false, "list"],
+                [false, "form"],
+            ],
+            domain: [["class_id", "=", this.state.classId]],
+        });
+    }
+
+    /** O resumo da turma, como no secPed: aulas e horas por semana, disciplinas e professores. */
+    get stats() {
+        const lessons = this.state.data?.lessons || [];
+        const minutes = lessons.reduce((n, l) => n + Math.max(0, l.to - l.from) * 60, 0);
+        return {
+            lessons: lessons.length,
+            hours: Math.round(minutes / 60),
+            subjects: new Set(lessons.map((l) => l.subject_id)).size,
+            teachers: new Set(lessons.filter((l) => l.teacher_id).map((l) => l.teacher_id)).size,
+            withoutTeacher: lessons.filter((l) => !l.teacher_id).length,
+        };
+    }
+
+    plural(n, one, many) {
+        return `${n} ${n === 1 ? one : many}`;
     }
 
     async print() {
