@@ -69,29 +69,39 @@
                                 <t t-else="">Atribui o estágio a um ou vários alunos da mesma turma, na mesma entidade. Cada estágio ajusta-se depois na sua ficha.</t>
                             </p>
                         </div>
-                        <section class="o_edu_tr_card o_edu_tr_pad">
-                            <h3 class="o_edu_tr_h3"><t t-out="this.isProject ? 'Aluno' : 'Alunos'"/></h3>
-                            <p t-if="!o.year" class="mb-0 text-danger">Não há ano lectivo em curso: marque-o em Configuração › Anos lectivos.</p>
-                            <t t-else="">
-                                <label class="o_edu_tr_field o_edu_tr_narrow">
-                                    <span>Turma da classe final (<t t-out="o.year"/>)</span>
-                                    <select class="form-select" t-on-change="(ev) => this.onClass(ev)">
-                                        <option value="" t-att-selected="!this.state.classId">
-                                            <t t-out="o.classes.length ? 'Escolha a turma' : 'Não há turmas finalistas de cursos que o prevejam'"/>
-                                        </option>
-                                        <option t-foreach="o.classes" t-as="c" t-key="c.id" t-att-value="c.id"
-                                                t-att-selected="c.id === this.state.classId" t-out="c.label"/>
-                                    </select>
-                                </label>
-                                <div t-if="this.state.classId">
+                        <p t-if="!o.year" class="o_edu_tr_card o_edu_tr_pad mb-0 text-danger">Não há ano lectivo em curso: marque-o em Configuração › Anos lectivos.</p>
+                        <p t-elif="!o.classes.length" class="o_edu_tr_card o_edu_tr_pad mb-0 text-muted">
+                            Não há turmas da classe final em <t t-out="o.year"/> num curso que preveja <t t-out="this.isProject ? 'a PAP' : 'o estágio'"/>.
+                        </p>
+                        <div t-else="" class="o_edu_tr_newgrid">
+                            <!-- 1. A turma -->
+                            <aside class="o_edu_tr_newclasses" aria-label="Turmas da classe final">
+                                <h3 class="o_edu_tr_h3">Turma <span class="fw-normal text-muted">(<t t-out="o.year"/>)</span></h3>
+                                <section t-foreach="this.newClassGroups" t-as="g" t-key="g.course">
+                                    <h6 class="o_edu_tr_panel_head" t-out="g.course"/>
+                                    <button t-foreach="g.classes" t-as="c" t-key="c.id" type="button" class="o_edu_tr_panel_item"
+                                            t-att-class="{ o_active: c.id === this.state.classId }" t-att-aria-pressed="c.id === this.state.classId"
+                                            t-on-click="() => this.selectClass(c.id)">
+                                        <span class="text-truncate flex-grow-1" t-out="c.label"/>
+                                        <span class="small text-nowrap" t-att-class="c.free ? 'text-muted' : 'text-success'"
+                                              t-att-title="c.free + ' de ' + c.students + ' alunos sem ' + (this.isProject ? 'trabalho' : 'estágio')"
+                                              t-out="c.free ? c.free + '/' + c.students : 'todos'"/>
+                                    </button>
+                                </section>
+                            </aside>
+
+                            <!-- 2. Os alunos -->
+                            <section class="o_edu_tr_card o_edu_tr_pad o_edu_tr_newstudents">
+                                <p t-if="!this.newClass" class="mb-0 text-muted">
+                                    Escolha a turma à esquerda. O número ao lado de cada turma diz quantos alunos ainda não têm
+                                    <t t-out="this.isProject ? 'trabalho' : 'estágio'"/>.
+                                </p>
+                                <t t-else="">
                                     <div class="o_edu_tr_pickbar">
+                                        <h3 class="o_edu_tr_h3 mb-0" t-out="this.newClass.label"/>
                                         <span class="small text-muted">
-                                            <t t-if="this.chosenIds.length">
-                                                <t t-out="this.chosenIds.length"/> <t t-out="this.chosenIds.length === 1 ? 'aluno escolhido' : 'alunos escolhidos'"/>.
-                                            </t>
-                                            <t t-else="">
-                                                <t t-out="this.freeStudents.length"/> de <t t-out="this.state.students.length"/> alunos sem <t t-out="this.isProject ? 'trabalho' : 'estágio'"/>.
-                                            </t>
+                                            <t t-if="this.chosenIds.length" t-out="this.chosenIds.length === 1 ? '1 aluno escolhido' : this.chosenIds.length + ' alunos escolhidos'"/>
+                                            <t t-else="" t-out="this.freeStudents.length + ' de ' + this.state.students.length + ' sem ' + (this.isProject ? 'trabalho' : 'estágio')"/>
                                         </span>
                                         <button t-if="!this.isProject and this.freeStudents.length" type="button" class="btn btn-link btn-sm"
                                                 t-on-click="() => this.toggleAll()" t-out="this.allChosen ? 'Limpar a escolha' : 'Escolher todos'"/>
@@ -103,74 +113,80 @@
                                                 <input t-att-type="this.isProject ? 'radio' : 'checkbox'" name="o_edu_tr_student" class="form-check-input"
                                                        t-att-checked="this.state.chosen[s.enrollment_id] ? 'checked' : undefined"
                                                        t-att-disabled="s.taken" t-on-change="() => this.toggleStudent(s)"/>
+                                                <span class="o_edu_tr_num" t-out="s.number"/>
                                                 <span class="text-truncate" t-out="s.name"/>
                                                 <small t-if="s.taken" class="ms-auto text-muted text-nowrap">já tem <t t-out="this.isProject ? 'trabalho' : 'estágio'"/></small>
                                             </label>
                                         </li>
                                     </ul>
-                                </div>
-                            </t>
-                        </section>
+                                </t>
+                            </section>
 
-                        <section class="o_edu_tr_card o_edu_tr_pad o_edu_tr_form">
-                            <t t-if="this.isProject">
-                                <label class="o_edu_tr_field o_edu_tr_wide">
-                                    <span>Tema</span>
-                                    <input class="form-control" placeholder="Ex.: Cuidados de enfermagem ao doente diabético"
-                                           t-att-value="this.state.form.name" t-on-input="(ev) => this.onNew('name', ev)"/>
-                                </label>
-                                <label class="o_edu_tr_field o_edu_tr_wide">
-                                    <span>Descrição (opcional)</span>
-                                    <textarea class="form-control" rows="3" t-on-input="(ev) => this.onNew('description', ev)" t-out="this.state.form.description"/>
-                                </label>
-                                <label class="o_edu_tr_field o_edu_tr_wide">
-                                    <span>Orientador</span>
-                                    <select class="form-select" t-on-change="(ev) => this.onNew('advisor_id', ev)">
-                                        <option value="">Por atribuir</option>
-                                        <option t-foreach="o.teachers" t-as="t" t-key="t.id" t-att-value="t.id" t-out="t.name"/>
-                                    </select>
-                                    <small class="text-muted">O professor que orienta o trabalho. Vê-o no Painel do Professor.</small>
-                                </label>
-                            </t>
-                            <t t-else="">
-                                <h3 class="o_edu_tr_h3 o_edu_tr_wide">Entidade</h3>
-                                <label class="o_edu_tr_field o_edu_tr_wide">
-                                    <span>Entidade onde decorre o estágio</span>
-                                    <input class="form-control" placeholder="Ex.: Hospital Geral do Sumbe"
-                                           t-att-value="this.state.form.entity" t-on-input="(ev) => this.onNew('entity', ev)"/>
-                                </label>
-                                <label class="o_edu_tr_field">
-                                    <span>Supervisor na entidade</span>
-                                    <input class="form-control" t-att-value="this.state.form.supervisor" t-on-input="(ev) => this.onNew('supervisor', ev)"/>
-                                </label>
-                                <label class="o_edu_tr_field">
-                                    <span>Contacto do supervisor</span>
-                                    <input class="form-control" t-att-value="this.state.form.supervisor_contact" t-on-input="(ev) => this.onNew('supervisor_contact', ev)"/>
-                                </label>
-                                <h3 class="o_edu_tr_h3 o_edu_tr_wide">Acompanhamento</h3>
-                                <label class="o_edu_tr_field o_edu_tr_wide">
-                                    <span>Tutor da escola</span>
-                                    <select class="form-select" t-on-change="(ev) => this.onNew('tutor_id', ev)">
-                                        <option value="">Por atribuir</option>
-                                        <option t-foreach="o.teachers" t-as="t" t-key="t.id" t-att-value="t.id" t-out="t.name"/>
-                                    </select>
-                                    <small class="text-muted">O professor que acompanha o estágio. Vê-o no Painel do Professor.</small>
-                                </label>
-                                <label class="o_edu_tr_field">
-                                    <span>Início</span>
-                                    <input type="date" class="form-control" t-att-value="this.state.form.date_start" t-on-change="(ev) => this.onNew('date_start', ev)"/>
-                                </label>
-                                <label class="o_edu_tr_field">
-                                    <span>Fim</span>
-                                    <input type="date" class="form-control" t-att-value="this.state.form.date_end" t-on-change="(ev) => this.onNew('date_end', ev)"/>
-                                    <small t-if="this.dateError" class="text-danger">O fim tem de ser depois do início.</small>
-                                </label>
-                            </t>
-                            <div class="o_edu_tr_wide d-flex gap-2">
-                                <button type="button" class="btn btn-primary" t-att-disabled="!this.canCreate" t-on-click="() => this.create()" t-out="this.createLabel"/>
-                                <button type="button" class="btn btn-secondary" t-on-click="() => this.backToList()">Cancelar</button>
-                            </div>
-                        </section>
+                            <!-- 3. Os dados e o resumo -->
+                            <section class="o_edu_tr_card o_edu_tr_pad o_edu_tr_form o_edu_tr_newform">
+                                <t t-if="this.isProject">
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Tema</span>
+                                        <input class="form-control" placeholder="Ex.: Cuidados de enfermagem ao doente diabético"
+                                               t-att-value="this.state.form.name" t-on-input="(ev) => this.onNew('name', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Descrição (opcional)</span>
+                                        <textarea class="form-control" rows="3" t-on-input="(ev) => this.onNew('description', ev)" t-out="this.state.form.description"/>
+                                    </label>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Orientador</span>
+                                        <select class="form-select" t-on-change="(ev) => this.onNew('advisor_id', ev)">
+                                            <option value="">Por atribuir</option>
+                                            <option t-foreach="o.teachers" t-as="t" t-key="t.id" t-att-value="t.id" t-out="t.name"/>
+                                        </select>
+                                        <small class="text-muted">O professor que orienta o trabalho. Vê-o no Painel do Professor.</small>
+                                    </label>
+                                </t>
+                                <t t-else="">
+                                    <h3 class="o_edu_tr_h3 o_edu_tr_wide">Entidade</h3>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Entidade onde decorre o estágio</span>
+                                        <input class="form-control" placeholder="Ex.: Hospital Geral do Sumbe"
+                                               t-att-value="this.state.form.entity" t-on-input="(ev) => this.onNew('entity', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Supervisor na entidade</span>
+                                        <input class="form-control" t-att-value="this.state.form.supervisor" t-on-input="(ev) => this.onNew('supervisor', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Contacto do supervisor</span>
+                                        <input class="form-control" t-att-value="this.state.form.supervisor_contact" t-on-input="(ev) => this.onNew('supervisor_contact', ev)"/>
+                                    </label>
+                                    <h3 class="o_edu_tr_h3 o_edu_tr_wide">Acompanhamento</h3>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Tutor da escola</span>
+                                        <select class="form-select" t-on-change="(ev) => this.onNew('tutor_id', ev)">
+                                            <option value="">Por atribuir</option>
+                                            <option t-foreach="o.teachers" t-as="t" t-key="t.id" t-att-value="t.id" t-out="t.name"/>
+                                        </select>
+                                        <small class="text-muted">O professor que acompanha o estágio. Vê-o no Painel do Professor.</small>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Início</span>
+                                        <input type="date" class="form-control" t-att-value="this.state.form.date_start" t-on-change="(ev) => this.onNew('date_start', ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>Fim</span>
+                                        <input type="date" class="form-control" t-att-value="this.state.form.date_end" t-on-change="(ev) => this.onNew('date_end', ev)"/>
+                                        <small t-if="this.dateError" class="text-danger">O fim tem de ser depois do início.</small>
+                                    </label>
+                                </t>
+                                <div class="o_edu_tr_wide o_edu_tr_newsummary">
+                                    <p class="mb-0" t-att-class="this.newSummary ? '' : 'text-muted'"
+                                       t-out="this.newSummary or (this.isProject ? 'Escolha o aluno e escreva o tema.' : 'Escolha os alunos e indique a entidade.')"/>
+                                </div>
+                                <div class="o_edu_tr_wide d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" t-att-disabled="!this.canCreate" t-on-click="() => this.create()" t-out="this.createLabel"/>
+                                    <button type="button" class="btn btn-secondary" t-on-click="() => this.backToList()">Cancelar</button>
+                                </div>
+                            </section>
+                        </div>
                     </t>
 
                     <!-- Ficha -->

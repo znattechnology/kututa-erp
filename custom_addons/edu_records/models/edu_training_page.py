@@ -148,9 +148,21 @@ class EduTrainingPage(models.AbstractModel):
         finals = classes.filtered(
             lambda c: c.course_id[flag] and c.class_number == (c.curriculum_id.class_to or c.level_id.class_to)
         )
+        classes = []
+        for edu_class in finals.sorted(lambda c: (c.course_id.name or '', c.name or '')):
+            students = self.class_students(kind, edu_class.id)
+            classes.append(
+                {
+                    'id': edu_class.id,
+                    'label': edu_class._editor_label(),
+                    'course': edu_class.course_id.name or '',
+                    'students': len(students),
+                    'free': sum(1 for s in students if not s['taken']),
+                }
+            )
         return {
             'year': year.name or '',
-            'classes': [{'id': c.id, 'label': c._editor_label()} for c in finals],
+            'classes': classes,
             'teachers': self._teachers(),
             'today': _iso(fields.Date.context_today(self)),
         }
@@ -180,7 +192,8 @@ class EduTrainingPage(models.AbstractModel):
             }
             for e in enrollments
         ]
-        return sorted(students, key=lambda s: s['name'].lower())
+        # Pelo número da turma, como nas listas da secretaria.
+        return sorted(students, key=lambda s: (s['number'] or 9999, s['name'].lower()))
 
     @api.model
     def create_records(self, kind, vals):

@@ -348,8 +348,60 @@ export class TrainingPage extends Component {
         });
     }
 
+    /** As turmas finalistas por curso, para o painel do «Novo». */
+    get newClassGroups() {
+        const groups = [];
+        for (const c of (this.state.options && this.state.options.classes) || []) {
+            const course = c.course || "Sem curso";
+            let group = groups.find((g) => g.course === course);
+            if (!group) {
+                group = { course, classes: [] };
+                groups.push(group);
+            }
+            group.classes.push(c);
+        }
+        return groups;
+    }
+
+    get newClass() {
+        return ((this.state.options && this.state.options.classes) || []).find((c) => c.id === this.state.classId);
+    }
+
+    /** O que se vai criar, antes de carregar no botão. */
+    get newSummary() {
+        const n = this.chosenIds.length;
+        if (!n) {
+            return "";
+        }
+        const f = this.state.form;
+        const who = this.isProject
+            ? this.state.students.find((s) => this.state.chosen[s.enrollment_id])?.name || ""
+            : n === 1
+              ? this.state.students.find((s) => this.state.chosen[s.enrollment_id])?.name || ""
+              : `${n} alunos da ${this.newClass ? this.newClass.label : "turma"}`;
+        const teacherId = parseInt(this.isProject ? f.advisor_id : f.tutor_id, 10);
+        const teacher = (this.state.options.teachers.find((t) => t.id === teacherId) || {}).name;
+        const parts = [];
+        if (this.isProject) {
+            parts.push(f.name.trim() ? `«${f.name.trim()}», de ${who}` : `O trabalho de ${who}`);
+            parts.push(teacher ? `orientado por ${teacher}` : "orientador por atribuir");
+        } else {
+            parts.push(`${n === 1 ? "Estágio" : "Estágios"} de ${who}`);
+            parts.push(f.entity.trim() ? `em ${f.entity.trim()}` : "entidade por indicar");
+            parts.push(teacher ? `tutor ${teacher}` : "tutor por atribuir");
+            if (f.date_start || f.date_end) {
+                const fmt = (d) => (d ? d.split("-").reverse().join("/") : "?");
+                parts.push(`de ${fmt(f.date_start)} a ${fmt(f.date_end)}`);
+            }
+        }
+        return parts.join(", ") + ".";
+    }
+
     async onClass(ev) {
-        const classId = parseInt(ev.target.value, 10) || false;
+        await this.selectClass(parseInt(ev.target.value, 10) || false);
+    }
+
+    async selectClass(classId) {
         this.state.classId = classId;
         this.state.chosen = {};
         this.state.students = classId

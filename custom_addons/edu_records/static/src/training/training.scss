@@ -410,4 +410,84 @@
     .o_edu_tr_fact_value {
         font-weight: 600;
     }
+
+    // Novo: a turma à esquerda, os alunos ao centro, os dados e o resumo à direita.
+    .o_edu_tr_newgrid {
+        display: grid;
+        grid-template-columns: 200px minmax(0, 1fr) minmax(300px, 380px);
+        align-items: start;
+        gap: 16px;
+
+        @include media-breakpoint-down(lg) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_tr_newclasses {
+        position: sticky;
+        top: 0;
+        max-height: calc(100vh - 140px);
+        overflow-y: auto;
+
+        @include media-breakpoint-down(lg) {
+            position: static;
+            max-height: 240px;
+        }
+    }
+
+    .o_edu_tr_panel_head {
+        margin: 10px 0 4px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: $o-gray-700;
+    }
+
+    .o_edu_tr_panel_item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 4px 8px;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        text-align: left;
+
+        &:hover {
+            background: $o-gray-100;
+        }
+
+        &.o_active {
+            background: rgba($o-action, 0.12);
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_tr_newstudents .o_edu_tr_students {
+        grid-template-columns: minmax(0, 1fr);
+        max-height: calc(100vh - 260px);
+    }
+
+    .o_edu_tr_num {
+        flex: 0 0 2ch;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+
+    // Os dados numa coluna estreita: um campo por linha.
+    .o_edu_tr_newform {
+        position: sticky;
+        top: 0;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .o_edu_tr_newsummary {
+        margin: 8px 0 12px;
+        padding: 10px 12px;
+        border-radius: $border-radius;
+        background: $o-gray-100;
+        font-size: 0.875rem;
+    }
 }
