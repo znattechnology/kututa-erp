@@ -235,6 +235,30 @@ class TestGuardianPortal(HttpCase):
             [c['partner_id'] for c in by_key[f'child{self.ana.id}']['contacts']], self.teacher_user.partner_id.ids
         )
         self.assertIn(clerk.partner_id.id, [c['partner_id'] for c in by_key['office']['contacts']])
+        # Como no secPed, só esses: a procura da «Nova conversa» não mostra outro professor da escola, e a conversa
+        # com ele não se abre (nem pedida directamente ao servidor).
+        stranger = self.env['res.users'].create(
+            {
+                'name': 'Professor Alheio',
+                'login': 'prof_alheio',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_teacher').id])],
+            }
+        )
+        self.env['hr.employee'].create({'name': 'Professor Alheio', 'edu_is_teacher': True, 'user_id': stranger.id})
+        Partner = self.env['res.partner'].with_user(self.gil_user)
+        # A secretaria encontra-se e abre-se conversa com ela, mesmo sem ficha de funcionário.
+        self.assertEqual(Partner.search_for_channel_invite('Secretaria Geral')['partner_ids'], clerk.partner_id.ids)
+        office_chat = Channel._get_or_create_chat([clerk.partner_id.id])
+        self.assertIn(clerk.partner_id, office_chat.channel_member_ids.partner_id)
+        found = Partner.search_for_channel_invite('Professor')['partner_ids']
+        self.assertIn(self.teacher_user.partner_id.id, found)
+        self.assertNotIn(stranger.partner_id.id, found)
+        with self.assertRaises(AccessError):
+            Channel._get_or_create_chat([stranger.partner_id.id])
+        with self.assertRaises(AccessError):
+            chat._add_members(partners=stranger.partner_id)
+        # O professor escreve-lhe na mesma (a restrição é só do encarregado).
+        self.env['discuss.channel'].with_user(stranger)._get_or_create_chat([self.guardian.partner_id.id])
         # Um professor que também é encarregado continua com o seu painel e as regras de professor.
         self.teacher_user.group_ids = [Command.link(self.env.ref('edu_portal.group_edu_guardian').id)]
         self.assertFalse(self.teacher_user._edu_guardian_only())

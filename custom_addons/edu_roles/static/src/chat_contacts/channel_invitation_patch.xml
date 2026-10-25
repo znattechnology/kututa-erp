@@ -11,7 +11,7 @@
                         <span t-if="contact.detail" class="o_edu_chat_detail" t-out="contact.detail"/>
                     </button>
                 </section>
-                <p class="o_edu_chat_hint">Para outra pessoa da escola, procure-a pelo nome.</p>
+                <p t-if="!this.eduChatRestricted" class="o_edu_chat_hint">Para outra pessoa da escola, procure-a pelo nome.</p>
             </div>
         </xpath>
     </t>

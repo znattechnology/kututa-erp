@@ -37,6 +37,27 @@ class ResUsers(models.Model):
     def edu_guardian_only(self):
         return self._edu_guardian_only()
 
+    @api.private
+    def edu_staff_group_ids(self):
+        # O pessoal da escola que o aluno e o encarregado vêem: os professores, a secretaria e a direcção, mesmo sem
+        # ficha de funcionário (a conta da secretaria, por exemplo).
+        groups = [
+            self.env.ref(x, raise_if_not_found=False) for x in ('edu_core.group_edu_user', 'edu_core.group_edu_teacher')
+        ]
+        return [group.id for group in groups if group]
+
+    def _edu_chat_partners(self):
+        """Com quem o aluno ou o encarregado (só com a sua área) pode abrir conversas, como no secPed: os contactos da
+        «Nova conversa» (os professores e o director de turma, a secretaria e a direcção). ``None`` para os outros."""
+        self.ensure_one()
+        if self._edu_student_only():
+            groups = self.env['edu.student.portal'].with_user(self)._chat_contacts()
+        elif self._edu_guardian_only():
+            groups = self.env['edu.guardian.portal'].with_user(self)._chat_contacts()
+        else:
+            return None
+        return self.env['res.partner'].browse({c['partner_id'] for g in groups for c in g['contacts']})
+
     def _on_webclient_bootstrap(self):
         # O aluno e o encarregado usam as Discussões só para falar com a escola: o OdooBot não lhes abre uma conversa.
         if (
