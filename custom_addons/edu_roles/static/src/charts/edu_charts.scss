@@ -11,6 +11,7 @@
 .o_edu_scale,
 .o_edu_levels,
 .o_edu_vstacks,
+.o_edu_hist,
 .o_edu_chart_legend {
     --edu-chart-series: #2a78d6;
     --edu-chart-series-track: #cde2fb;
@@ -480,4 +481,79 @@
     color: $text-muted;
     font-size: 0.75rem;
     text-align: center;
+}
+
+// O percurso do aluno (o Histórico): uma coluna por ano, com a média na escala desse ano, o traço da positiva desse
+// ano e a cor do resultado (transitou: série; com disciplinas em atraso ou exame: aviso; retido: crítico).
+.o_edu_hist_good {
+    --edu-hist: var(--edu-chart-series);
+}
+
+.o_edu_hist_warn {
+    --edu-hist: var(--edu-chart-warning);
+}
+
+.o_edu_hist_bad {
+    --edu-hist: var(--edu-chart-critical);
+}
+
+.o_edu_chart_key[class*="o_edu_hist_"] {
+    background: var(--edu-hist);
+}
+
+.o_edu_hist {
+    display: grid;
+    grid-auto-columns: minmax(84px, 1fr);
+    grid-auto-flow: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    list-style: none;
+}
+
+.o_edu_hist_col {
+    min-width: 0;
+    text-align: center;
+}
+
+.o_edu_hist_track {
+    position: relative;
+    height: 150px;
+    margin: 18px 0 8px;
+    border-bottom: 1px solid var(--edu-chart-grid);
+}
+
+.o_edu_hist_bar {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 32px;
+    transform: translateX(-50%);
+    border-radius: 4px 4px 0 0;
+    background: var(--edu-hist);
+}
+
+.o_edu_hist_pass {
+    position: absolute;
+    left: calc(50% - 26px);
+    z-index: 1;
+    width: 52px;
+    border-top: 1px dashed $body-color;
+}
+
+.o_edu_hist_value {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-bottom: 2px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.o_edu_hist_year {
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }

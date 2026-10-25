@@ -369,6 +369,7 @@ class TestStudentPortal(HttpCase):
         self.assertEqual(
             [(r['year'], r['status_label'], r['average']['text']) for r in rows], [('2026/2027', 'Transita', '13')]
         )
+        self.assertEqual((rows[0]['average_value'], rows[0]['scale_max']), (13.0, 20))
         home = Portal.page_data('home')
         self.assertFalse(home['fees_summary']['invoiced'], 'sem facturas: o painel diz «Sem facturas»')
         self.assertIn('Notas novas de Língua Portuguesa.', [item['text'] for item in home['feed']])

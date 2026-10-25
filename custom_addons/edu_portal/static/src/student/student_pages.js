@@ -727,6 +727,31 @@ export class StudentHistory extends StudentPage {
     statusClass(row) {
         return HISTORY_STATUS_CLASS[row.status] || "text-warning";
     }
+
+    /** Os números do percurso: os anos, as transições, as retenções e a média do último ano. */
+    get historyTiles() {
+        const rows = this.state.data.history.rows;
+        const passed = rows.filter((r) => ["promoted", "graduated", "conditional"].includes(r.status)).length;
+        const retained = rows.filter((r) => r.status === "retained").length;
+        const last = rows[rows.length - 1];
+        return [
+            { key: "years", label: "Anos no histórico", value: String(rows.length), detail: `${rows[0].year} a ${last.year}` },
+            { key: "passed", label: "Transitou ou concluiu", value: String(passed), detail: passed ? count(passed, "um ano", "anos") : "Nenhum" },
+            { key: "retained", label: "Retenções", value: String(retained), detail: retained ? count(retained, "um ano", "anos") : "Nenhuma", bad: retained > 0 },
+            { key: "last", label: "Média do último ano", value: last.average ? last.average.text : "—", detail: `${last.year}, ${last.class}`, bad: last.average && !last.average.pos },
+        ];
+    }
+
+    /** Uma coluna por ano: a média na escala desse ano (0–10 no primário, 0–20 no secundário), com a marca da positiva
+     * desse ano, e a cor do resultado (transitou ou concluiu, com disciplinas em atraso ou exame, retido). */
+    get historyCols() {
+        return this.state.data.history.rows.map((r) => ({
+            ...r,
+            height: r.average_value ? Math.max(3, (r.average_value / r.scale_max) * 100) : 0,
+            pass: (r.pass_grade / r.scale_max) * 100,
+            css: { promoted: "o_edu_hist_good", graduated: "o_edu_hist_good", retained: "o_edu_hist_bad" }[r.status] || "o_edu_hist_warn",
+        }));
+    }
 }
 
 /** «hoje», «ontem», «há 3 dias», como nas notificações do secPed. */

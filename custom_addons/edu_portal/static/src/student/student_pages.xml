@@ -746,7 +746,39 @@
                         Ainda não tens anos no histórico. Cada ano entra aqui quando a escola toma a decisão do fim do ano.
                     </section>
                     <t t-else="">
-                        <p class="mb-0"><t t-out="this.sentence"/> <span class="text-muted">O ano em curso entra quando a escola tomar a decisão do fim do ano.</span></p>
+                        <div class="o_edu_kpis">
+                            <div t-foreach="this.historyTiles" t-as="tile" t-key="tile.key" class="o_edu_kpi">
+                                <span class="o_edu_kpi_label" t-out="tile.label"/>
+                                <span class="o_edu_kpi_value" t-att-class="{'text-danger': tile.bad}" t-out="tile.value"/>
+                                <span class="o_edu_kpi_detail" t-out="tile.detail"/>
+                            </div>
+                        </div>
+                        <!-- O percurso: uma coluna por ano, a média e a cor do resultado -->
+                        <section class="o_edu_st_card" aria-labelledby="o_edu_st_path">
+                            <div class="o_edu_st_row mb-2">
+                                <h2 id="o_edu_st_path" class="o_edu_st_h2 mb-0">O meu percurso</h2>
+                                <span class="small text-muted" t-out="this.sentence"/>
+                            </div>
+                            <ul class="o_edu_hist" aria-label="Média final de cada ano">
+                                <li t-foreach="this.historyCols" t-as="c" t-key="c.id" class="o_edu_hist_col" t-att-class="c.css"
+                                    t-att-title="c.year + ', ' + c.class + ': ' + c.status_label + (c.average ? ', média ' + c.average.text + ' em ' + c.scale_max : '')">
+                                    <div class="o_edu_hist_track">
+                                        <span class="o_edu_hist_pass" t-att-style="'bottom: ' + c.pass + '%'"/>
+                                        <span t-if="c.average" class="o_edu_hist_value" t-att-style="'bottom: ' + c.height + '%'" t-out="c.average.text"/>
+                                        <span class="o_edu_hist_bar" t-att-style="'height: ' + c.height + '%'"/>
+                                    </div>
+                                    <div class="o_edu_hist_year" t-out="c.year"/>
+                                    <div class="small text-muted text-truncate" t-out="c.class"/>
+                                    <div class="small fw-semibold" t-att-class="this.statusClass(c)" t-out="c.status_label"/>
+                                </li>
+                            </ul>
+                            <ul class="o_edu_chart_legend mt-3 mb-0">
+                                <li><span class="o_edu_chart_key o_edu_hist_good"/>Transitou ou concluiu</li>
+                                <li><span class="o_edu_chart_key o_edu_hist_warn"/>Com disciplinas em atraso ou exame</li>
+                                <li><span class="o_edu_chart_key o_edu_hist_bad"/>Retido</li>
+                            </ul>
+                            <p class="small text-muted mb-0 mt-2">A altura é a média final, na escala de cada ano (0 a 10 no primário, 0 a 20 depois); o traço marca a positiva. O ano em curso entra quando a escola tomar a decisão do fim do ano.</p>
+                        </section>
                         <!-- Ecrãs largos: a tabela. -->
                         <div class="o_edu_st_card p-0 o_edu_st_scroll d-none d-md-block">
                             <table class="table mb-0 o_edu_st_table">

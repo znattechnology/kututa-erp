@@ -1193,6 +1193,10 @@ class EduStudentPortal(models.AbstractModel):
                     }
                     if result.average
                     else None,
+                    # Para o gráfico do percurso: a média na escala do ano (0–10 no primário, 0–20 no secundário).
+                    'average_value': result.average or None,
+                    'scale_max': policy.scale_max,
+                    'pass_grade': policy.pass_grade,
                     # A frequência dos anos migrados do secPed não veio: fica por mostrar.
                     'attendance': round(100 * result.attendance_rate) if result.attendance_rate else None,
                     'status': result.status,
