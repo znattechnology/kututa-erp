@@ -596,7 +596,10 @@
                     <p t-elif="!d.feed.length" class="o_edu_st_card mb-0 text-muted">
                         Ainda não há notificações. Aparecem aqui as notas novas, as faltas, as provas marcadas e as propinas dos teus educandos.
                     </p>
-                    <t t-else="" t-call="edu_portal.Part.Feed"/>
+                    <t t-else="">
+                        <t t-call="edu_portal.Part.FeedFilters"/>
+                        <t t-call="edu_portal.Part.Feed"/>
+                    </t>
                     <p t-if="d.feed.length" class="mb-0 small text-muted">As notificações das notas não dizem a nota, que pode mudar até o trimestre fechar: abre a página para a ver.</p>
                 </div>
             </Layout>

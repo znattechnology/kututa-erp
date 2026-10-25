@@ -3,7 +3,7 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { feedGroups, feedWhen, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
+import { FeedFilters, feedGroups, feedWhen, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
 
 const list = (items) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}` : items[0] || "");
 const count = (n, one, many) => (n === 1 ? one : `${n} ${many}`);
@@ -377,16 +377,12 @@ export class GuardianFees extends GuardianPage(StudentFees) {
     }
 }
 
-export class GuardianNotifications extends GuardianPage(GuardianBase) {
+export class GuardianNotifications extends FeedFilters(GuardianPage(GuardianBase)) {
     static template = "edu_portal.GuardianNotifications";
     static page = "notifications";
 
     when(item) {
         return feedWhen(item.date);
-    }
-
-    get feedGroups() {
-        return feedGroups(this.state.data.feed);
     }
 
     openItem(item) {

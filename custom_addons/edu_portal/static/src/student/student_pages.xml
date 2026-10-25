@@ -750,6 +750,7 @@
                         Ainda não tens notificações. Aparecem aqui as notas novas, as faltas, as provas marcadas e as propinas.
                     </p>
                     <t t-else="">
+                        <t t-call="edu_portal.Part.FeedFilters"/>
                         <t t-call="edu_portal.Part.Feed"/>
                         <p class="mb-0 small text-muted">As notificações das notas não dizem a nota, que pode mudar até o trimestre fechar: abre a página para a ver.</p>
                     </t>
@@ -844,6 +845,7 @@
          página. Usa ``this.feedGroups``, ``this.openItem`` e ``showChild`` (o nome do educando, no encarregado). -->
     <t t-name="edu_portal.Part.Feed">
         <div class="o_edu_st_card o_edu_feed">
+            <p t-if="!this.feedGroups.length" class="mb-0 py-2 text-muted">Nada a mostrar com este filtro.</p>
             <section t-foreach="this.feedGroups" t-as="group" t-key="group.key" class="o_edu_feed_group" t-att-aria-label="group.label">
                 <h3 class="o_edu_feed_day" t-out="group.label"/>
                 <ul class="o_edu_feed_list">
@@ -1045,6 +1047,25 @@
                 <li><span class="o_edu_chart_key o_edu_month_exempt"/>Isenta</li>
             </ul>
         </section>
+    </t>
+
+    <!-- Os filtros das notificações: por educando (no encarregado) e por tipo, com quantas há de cada. -->
+    <t t-name="edu_portal.Part.FeedFilters">
+        <div t-if="this.feedChildFilters.length" class="btn-group flex-wrap align-self-start" role="group" aria-label="Educando">
+            <button t-foreach="this.feedChildFilters" t-as="c" t-key="c.id" type="button" class="btn"
+                    t-att-class="c.id === this.state.feedChild ? 'btn-primary' : 'btn-secondary'"
+                    t-att-aria-pressed="c.id === this.state.feedChild ? 'true' : 'false'"
+                    t-on-click="() => this.setFeedChild(c.id)" t-out="c.first_name"/>
+        </div>
+        <p class="mb-0" t-out="this.feedSummary"/>
+        <div t-if="this.feedTypeFilters.length" class="o_edu_st_filter_chips" role="group" aria-label="Tipo de novidade">
+            <button t-foreach="this.feedTypeFilters" t-as="f" t-key="f.key" type="button" class="o_edu_st_chip"
+                    t-att-class="{'o_edu_st_chip_on': f.key === this.state.feedType}"
+                    t-att-aria-pressed="f.key === this.state.feedType ? 'true' : 'false'"
+                    t-on-click="() => this.setFeedType(f.key)">
+                <t t-out="f.label"/> <span class="o_edu_st_chip_count" t-out="f.count"/>
+            </button>
+        </div>
     </t>
 
     <!-- A pauta de um ano: o resultado, a frase do trimestre, a tabela (no telemóvel uma lista) e a legenda das siglas. Usa

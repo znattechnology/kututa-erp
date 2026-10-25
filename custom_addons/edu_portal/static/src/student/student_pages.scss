@@ -476,6 +476,56 @@
         height: 40px;
         font-size: 0.8rem;
     }
+
+    // Os filtros das notificações: etiquetas com o número de cada tipo.
+    .o_edu_st_filter_chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .o_edu_st_chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border: 1px solid $border-color;
+        border-radius: 999px;
+        background: $o-view-background-color;
+        color: inherit;
+        font-size: 0.875rem;
+
+        &:hover {
+            border-color: $o-action;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $o-action;
+            outline-offset: 2px;
+        }
+    }
+
+    .o_edu_st_chip_on {
+        border-color: $o-action;
+        background: $o-action;
+        color: #fff;
+
+        .o_edu_st_chip_count {
+            background: rgba(#fff, 0.25);
+            color: #fff;
+        }
+    }
+
+    .o_edu_st_chip_count {
+        min-width: 1.5em;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: rgba($o-action, 0.12);
+        color: $o-action;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: center;
+    }
 }
 
 // As provas já feitas, acinzentadas (o Bootstrap põe a cor em cada célula, não na linha).

@@ -597,6 +597,71 @@ export function feedGroups(items) {
     return groups.filter((g) => g.items.length);
 }
 
+// Os tipos de novidade, pela ordem dos filtros, com o nome no plural e na frase de resumo.
+const FEED_TYPES = [
+    { key: "grades", label: "Notas", phrase: "de notas" },
+    { key: "absences", label: "Faltas", phrase: "de faltas" },
+    { key: "exams", label: "Provas", phrase: "de provas" },
+    { key: "fees", label: "Propinas", phrase: "de propinas" },
+    { key: "rdec", label: "RDEC", phrase: "do RDEC" },
+];
+
+/**
+ * Os filtros das notificações (o aluno e o encarregado): por tipo, com quantas há de cada (só os tipos com
+ * novidades), e por educando (no encarregado, com mais de um). Mistura-se numa página que tenha ``state.data.feed``.
+ */
+export const FeedFilters = (Base) =>
+    class extends Base {
+        setup() {
+            super.setup();
+            this.state.feedType = "all";
+            this.state.feedChild = "all";
+        }
+
+        get feedTypeFilters() {
+            const feed = this.feedForChild;
+            const types = FEED_TYPES.map((t) => ({ ...t, count: feed.filter((i) => i.page === t.key).length })).filter((t) => t.count);
+            return types.length > 1 ? [{ key: "all", label: "Todas", count: feed.length }, ...types] : [];
+        }
+
+        get feedChildFilters() {
+            const children = this.state.data.children || [];
+            return children.length > 1 ? [{ id: "all", first_name: "Todos" }, ...children] : [];
+        }
+
+        get feedForChild() {
+            const child = this.state.feedChild;
+            return (this.state.data.feed || []).filter((i) => child === "all" || i.student_id === child);
+        }
+
+        get filteredFeed() {
+            const type = this.state.feedType;
+            return this.feedForChild.filter((i) => type === "all" || i.page === type);
+        }
+
+        get feedGroups() {
+            return feedGroups(this.filteredFeed);
+        }
+
+        /** «11 novidades: 2 de notas, 3 de provas e 6 de propinas.» (os 30 dias estão no subtítulo) */
+        get feedSummary() {
+            const feed = this.feedForChild;
+            const parts = FEED_TYPES.map((t) => [t, feed.filter((i) => i.page === t.key).length])
+                .filter(([, n]) => n)
+                .map(([t, n]) => `${n} ${t.phrase}`);
+            return `${count(feed.length, "Uma novidade", "novidades")}${parts.length ? ": " + list(parts) : ""}.`;
+        }
+
+        setFeedType(key) {
+            this.state.feedType = key;
+        }
+
+        setFeedChild(key) {
+            this.state.feedChild = key;
+            this.state.feedType = "all";
+        }
+    };
+
 const STUDENT_FEED_ACTIONS = {
     grades: "edu_portal.action_student_grades",
     rdec: "edu_portal.action_student_grades",
@@ -606,16 +671,12 @@ const STUDENT_FEED_ACTIONS = {
 };
 
 /** As notificações: as notas novas, as faltas, as provas marcadas, as facturas e os pagamentos dos últimos 30 dias. */
-export class StudentNotifications extends StudentPage {
+export class StudentNotifications extends FeedFilters(StudentPage) {
     static template = "edu_portal.StudentNotifications";
     static page = "notifications";
 
     when(item) {
         return feedWhen(item.date);
-    }
-
-    get feedGroups() {
-        return feedGroups(this.state.data.feed);
     }
 
     openItem(item) {
