@@ -113,8 +113,13 @@
         margin: 0 0 12px;
 
         > span:first-child {
-            font-size: 0.875rem;
+            font-size: 0.8125rem;
             color: $text-muted;
+        }
+
+        // Só leitura: o nome do campo colado ao valor.
+        &:has(> .o_edu_tr_value) {
+            gap: 2px;
         }
     }
 
@@ -370,5 +375,52 @@
         max-width: 100%;
         line-height: 1.2;
         overflow-wrap: anywhere;
+    }
+
+    // A ficha: o que não se pode mudar fica em texto (sem caixas cinzentas vazias) e, por cima, as etapas e os dados
+    // principais.
+    .o_edu_tr_value {
+        padding: 0;
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+
+    .o_edu_tr_overview {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .o_edu_tr_steps {
+            max-width: 720px;
+        }
+
+        .o_edu_tr_step {
+            font-size: 0.8rem;
+        }
+    }
+
+    .o_edu_tr_overview_facts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px 24px;
+        padding-top: 12px;
+        border-top: 1px solid $border-color;
+
+        > div {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            min-width: 0;
+        }
+    }
+
+    .o_edu_tr_fact_label {
+        color: $text-muted;
+        font-size: 0.8125rem;
+    }
+
+    .o_edu_tr_fact_value {
+        font-weight: 600;
     }
 }

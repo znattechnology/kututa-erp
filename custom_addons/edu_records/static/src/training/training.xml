@@ -217,45 +217,92 @@
                             </h2>
                             <p class="mb-0 text-muted"><t t-out="d.class"/><t t-if="d.year">, ano lectivo <t t-out="d.year"/></t>.</p>
                         </div>
+                        <!-- Onde está: as etapas e os dados principais (a defesa com quanto falta, ou o período e as horas) -->
+                        <section t-if="d.state !== 'cancelled'" class="o_edu_tr_card o_edu_tr_pad o_edu_tr_overview" aria-label="Etapas">
+                            <t t-set="steps" t-value="this.orientSteps(d, this.isProject ? 'project' : 'internship')"/>
+                            <t t-call="edu_records.TrainingPage.Steps"/>
+                            <div class="o_edu_tr_overview_facts">
+                                <t t-if="this.isProject">
+                                    <div>
+                                        <span class="o_edu_tr_fact_label">Defesa</span>
+                                        <span class="o_edu_tr_fact_value"><t t-if="d.defense" t-out="d.defense"/><t t-else="">Por marcar</t></span>
+                                        <span t-if="this.defenseWhen(d) and !this.closed" class="o_edu_tr_when" t-out="this.defenseWhen(d)"/>
+                                    </div>
+                                    <div>
+                                        <span class="o_edu_tr_fact_label">Orientador</span>
+                                        <span class="o_edu_tr_fact_value" t-out="d.advisor or 'Por atribuir'"/>
+                                    </div>
+                                    <div>
+                                        <span class="o_edu_tr_fact_label">Entrega</span>
+                                        <span class="o_edu_tr_fact_value" t-out="d.submitted or 'Ainda não entregue'"/>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div>
+                                        <span class="o_edu_tr_fact_label">Período</span>
+                                        <span class="o_edu_tr_fact_value"><t t-if="d.start or d.end"><t t-out="d.start or '?'"/> a <t t-out="d.end or '?'"/></t><t t-else="">Por definir</t></span>
+                                        <t t-set="pct" t-value="d.state === 'ongoing' ? this.internshipProgress(d) : null"/>
+                                        <span t-if="pct !== null" class="o_edu_meter mt-1 w-100" t-att-title="pct + '% do período'"><span t-att-style="'width: ' + pct + '%'"/></span>
+                                    </div>
+                                    <div>
+                                        <span class="o_edu_tr_fact_label">Horas cumpridas</span>
+                                        <span class="o_edu_tr_fact_value"><t t-out="d.hours"/> horas</span>
+                                    </div>
+                                    <div>
+                                        <span class="o_edu_tr_fact_label">Relatórios entregues</span>
+                                        <span class="o_edu_tr_fact_value" t-out="d.reports.length"/>
+                                    </div>
+                                </t>
+                                <div>
+                                    <span class="o_edu_tr_fact_label">Nota</span>
+                                    <span class="o_edu_tr_fact_value" t-out="d.grade !== null and d.grade !== undefined ? this.fmtGrade(d.grade) : '—'"/>
+                                </div>
+                            </div>
+                        </section>
                         <div class="o_edu_tr_grid">
                             <section class="o_edu_tr_card o_edu_tr_pad o_edu_tr_form">
                                 <t t-if="this.isProject">
                                     <h3 class="o_edu_tr_h3 o_edu_tr_wide">Trabalho</h3>
                                     <label class="o_edu_tr_field o_edu_tr_wide">
                                         <span>Tema</span>
-                                        <input class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.name" t-on-input="(ev) => this.onEdit('name', ev)"/>
+                                        <input t-if="this.editable" class="form-control" t-att-value="this.state.edit.name" t-on-input="(ev) => this.onEdit('name', ev)"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.title)}" t-out="d.title or '—'"/>
                                     </label>
                                     <label class="o_edu_tr_field o_edu_tr_wide">
                                         <span>Descrição</span>
-                                        <textarea class="form-control" rows="3" t-att-disabled="!this.editable" t-on-input="(ev) => this.onEdit('description', ev)" t-out="this.state.edit.description"/>
+                                        <textarea t-if="this.editable" class="form-control" rows="3" t-on-input="(ev) => this.onEdit('description', ev)" t-out="this.state.edit.description"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.description)}" t-out="d.description or '—'"/>
                                     </label>
-                                    <label class="o_edu_tr_field">
+                                    <label t-if="this.editable" class="o_edu_tr_field">
                                         <span>Orientador</span>
-                                        <select t-if="d.is_staff" class="form-select" t-att-disabled="!this.editable" t-on-change="(ev) => this.onEdit('advisor_id', ev)">
+                                        <select t-if="d.is_staff and this.editable" class="form-select" t-on-change="(ev) => this.onEdit('advisor_id', ev)">
                                             <option value="" t-att-selected="!this.state.edit.advisor_id">Por atribuir</option>
                                             <option t-foreach="d.teachers" t-as="t" t-key="t.id" t-att-value="t.id"
                                                     t-att-selected="t.id === this.state.edit.advisor_id" t-out="t.name"/>
                                         </select>
-                                        <input t-else="" class="form-control" disabled="disabled" t-att-value="d.advisor or 'Por atribuir'"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !d.advisor}" t-out="d.advisor or 'Por atribuir'"/>
                                     </label>
                                     <label class="o_edu_tr_field">
                                         <span>Júri da defesa</span>
-                                        <select t-if="d.is_staff" class="form-select o_edu_tr_multi" multiple="multiple" t-att-disabled="!this.editable" t-on-change="(ev) => this.onJury(ev)">
+                                        <select t-if="d.is_staff and this.editable" class="form-select o_edu_tr_multi" multiple="multiple" t-on-change="(ev) => this.onJury(ev)">
                                             <option t-foreach="d.teachers" t-as="t" t-key="t.id" t-att-value="t.id"
                                                     t-att-selected="this.state.edit.jury_ids.includes(t.id)" t-out="t.name"/>
                                         </select>
-                                        <input t-else="" class="form-control" disabled="disabled" t-att-value="d.jury or '—'"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.jury)}" t-out="d.jury or '—'"/>
                                         <small t-if="d.is_staff and this.editable" class="text-muted">Ctrl ou ⌘ para escolher vários.</small>
                                     </label>
+                                    <t t-if="this.editable">
                                     <h3 class="o_edu_tr_h3 o_edu_tr_wide">Defesa</h3>
                                     <label class="o_edu_tr_field">
                                         <span>Data da defesa</span>
-                                        <input type="date" class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.defense_date" t-on-change="(ev) => this.onEdit('defense_date', ev)"/>
+                                        <input t-if="this.editable" type="date" class="form-control" t-att-value="this.state.edit.defense_date" t-on-change="(ev) => this.onEdit('defense_date', ev)"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !d.defense}" t-out="d.defense or 'Por marcar'"/>
                                     </label>
                                     <div class="o_edu_tr_field">
                                         <span>Entregue em</span>
-                                        <div class="form-control-plaintext" t-out="d.submitted or 'Ainda não foi entregue'"/>
+                                        <div class="o_edu_tr_value" t-att-class="{'text-muted': !d.submitted}" t-out="d.submitted or 'Ainda não foi entregue'"/>
                                     </div>
+                                    </t>
                                     <label class="o_edu_tr_field o_edu_tr_wide">
                                         <span>Observações</span>
                                         <textarea class="form-control" rows="3" t-att-disabled="this.closed" t-on-input="(ev) => this.onEdit('note', ev)" t-out="this.state.edit.note"/>
@@ -265,32 +312,37 @@
                                     <h3 class="o_edu_tr_h3 o_edu_tr_wide">Entidade</h3>
                                     <label class="o_edu_tr_field o_edu_tr_wide">
                                         <span>Entidade</span>
-                                        <input class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.entity" t-on-input="(ev) => this.onEdit('entity', ev)"/>
+                                        <input t-if="this.editable" class="form-control" t-att-value="this.state.edit.entity" t-on-input="(ev) => this.onEdit('entity', ev)"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.entity)}" t-out="d.entity or '—'"/>
                                     </label>
                                     <label class="o_edu_tr_field">
                                         <span>Supervisor na entidade</span>
-                                        <input class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.supervisor" t-on-input="(ev) => this.onEdit('supervisor', ev)"/>
+                                        <input t-if="this.editable" class="form-control" t-att-value="this.state.edit.supervisor" t-on-input="(ev) => this.onEdit('supervisor', ev)"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.supervisor)}" t-out="d.supervisor or '—'"/>
                                     </label>
                                     <label class="o_edu_tr_field">
                                         <span>Contacto do supervisor</span>
-                                        <input class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.supervisor_contact" t-on-input="(ev) => this.onEdit('supervisor_contact', ev)"/>
+                                        <input t-if="this.editable" class="form-control" t-att-value="this.state.edit.supervisor_contact" t-on-input="(ev) => this.onEdit('supervisor_contact', ev)"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.supervisor_contact)}" t-out="d.supervisor_contact or '—'"/>
                                     </label>
                                     <label class="o_edu_tr_field o_edu_tr_wide">
                                         <span>Tutor da escola</span>
-                                        <select t-if="d.is_staff" class="form-select" t-att-disabled="!this.editable" t-on-change="(ev) => this.onEdit('tutor_id', ev)">
+                                        <select t-if="d.is_staff and this.editable" class="form-select" t-on-change="(ev) => this.onEdit('tutor_id', ev)">
                                             <option value="" t-att-selected="!this.state.edit.tutor_id">Por atribuir</option>
                                             <option t-foreach="d.teachers" t-as="t" t-key="t.id" t-att-value="t.id"
                                                     t-att-selected="t.id === this.state.edit.tutor_id" t-out="t.name"/>
                                         </select>
-                                        <input t-else="" class="form-control" disabled="disabled" t-att-value="d.tutor or 'Por atribuir'"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !d.tutor}" t-out="d.tutor or 'Por atribuir'"/>
                                     </label>
-                                    <label class="o_edu_tr_field">
+                                    <label t-if="this.editable" class="o_edu_tr_field">
                                         <span>Início</span>
-                                        <input type="date" class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.date_start" t-on-change="(ev) => this.onEdit('date_start', ev)"/>
+                                        <input t-if="this.editable" type="date" class="form-control" t-att-value="this.state.edit.date_start" t-on-change="(ev) => this.onEdit('date_start', ev)"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.start)}" t-out="d.start or '—'"/>
                                     </label>
-                                    <label class="o_edu_tr_field">
+                                    <label t-if="this.editable" class="o_edu_tr_field">
                                         <span>Fim</span>
-                                        <input type="date" class="form-control" t-att-disabled="!this.editable" t-att-value="this.state.edit.date_end" t-on-change="(ev) => this.onEdit('date_end', ev)"/>
+                                        <input t-if="this.editable" type="date" class="form-control" t-att-value="this.state.edit.date_end" t-on-change="(ev) => this.onEdit('date_end', ev)"/>
+                                        <div t-else="" class="o_edu_tr_value" t-att-class="{'text-muted': !(d.end)}" t-out="d.end or '—'"/>
                                         <small t-if="this.dateError" class="text-danger">O fim tem de ser depois do início.</small>
                                     </label>
                                     <h3 class="o_edu_tr_h3 o_edu_tr_wide">Acompanhamento</h3>
@@ -321,7 +373,8 @@
                                     <t t-if="!d.is_staff">
                                         <p class="mb-0 text-muted">
                                             <t t-if="this.closed">Fechado<t t-if="d.grade !== null"> com <t t-out="this.fmtGrade(d.grade)"/> valores</t>.</t>
-                                            <t t-else="">A secretaria regista o estado e a nota. Aqui regista as horas, o parecer<t t-if="!this.isProject"> e os relatórios entregues</t>.</t>
+                                            <t t-elif="this.isProject">A secretaria regista a entrega, a defesa e a nota. Aqui escreve as observações sobre o trabalho.</t>
+                                            <t t-else="">A secretaria regista o estado e a nota. Aqui regista as horas, o parecer e os relatórios entregues.</t>
                                         </p>
                                     </t>
                                     <t t-elif="this.closed">
