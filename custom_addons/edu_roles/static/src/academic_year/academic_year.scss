@@ -591,3 +591,35 @@
         font-size: 0.8125rem;
     }
 }
+
+// Os docentes em cartões: a fotografia redonda, a carga semanal em medidor e os contactos.
+.o_edu_teacher_kanban {
+    .o_kanban_record {
+        min-width: 300px;
+    }
+
+    .o_edu_teacher_card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_teacher_photo img {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+    }
+
+    .o_edu_teacher_name {
+        font-weight: 600;
+    }
+
+    .o_edu_teacher_counts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 14px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+    }
+}
