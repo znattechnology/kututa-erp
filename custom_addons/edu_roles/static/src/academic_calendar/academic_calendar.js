@@ -10,7 +10,7 @@ const MONTHS = [
 ]; // prettier-ignore
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 /** Os tipos pela ordem da legenda; a cor de cada um vem do SCSS (o_edu_ca_t_<tipo>). */
-const TYPES = [
+export const TYPES = [
     { key: "exam", label: "Provas e exames" },
     { key: "trimester_start", label: "Início de trimestre" },
     { key: "trimester_end", label: "Fim de trimestre" },
@@ -53,11 +53,41 @@ export class AcademicCalendarPage extends Component {
             data: null,
             month: new Date(today.getFullYear(), today.getMonth(), 1),
             selected: this.today,
-            commemorative: true,
+            commemorative: this.showCommemorative,
+            filter: null,
         });
         onWillStart(async () => {
-            this.state.data = await this.orm.call("edu.teacher.home", "calendar_data", []);
+            this.state.data = await this.loadData();
         });
+    }
+
+    // O que muda de área para área (o encarregado junta as provas dos educandos): os dados, o título e os filtros.
+
+    loadData() {
+        return this.orm.call("edu.teacher.home", "calendar_data", []);
+    }
+
+    /** As datas comemorativas à vista por omissão. */
+    get showCommemorative() {
+        return true;
+    }
+
+    get subtitle() {
+        return "Os eventos, as provas e os prazos da escola.";
+    }
+
+    /** Os botões por cima do mês ([{key, label}]), por exemplo os educandos; ``null`` sem filtros. */
+    get filters() {
+        return null;
+    }
+
+    /** Se um evento passa no filtro escolhido. */
+    matchesFilter(event) {
+        return true;
+    }
+
+    setFilter(key) {
+        this.state.filter = key;
     }
 
     get display() {
@@ -69,7 +99,7 @@ export class AcademicCalendarPage extends Component {
     }
 
     get visible() {
-        const events = this.state.data.events;
+        const events = this.state.data.events.filter((e) => this.matchesFilter(e));
         return this.state.commemorative ? events : events.filter((e) => !e.commemorative);
     }
 
@@ -125,7 +155,16 @@ export class AcademicCalendarPage extends Component {
         if (event.commemorative) {
             return "Data comemorativa";
         }
+        if (event.type_label) {
+            return event.type_label;
+        }
         return (TYPES.find((t) => t.key === event.type) || TYPES[TYPES.length - 1]).label;
+    }
+
+    /** O tipo a meio da frase: só a primeira letra em minúscula («prova de Ana», não «prova de ana»). */
+    typeLabelInline(event) {
+        const label = this.typeLabel(event);
+        return label.charAt(0).toLowerCase() + label.slice(1);
     }
 
     span(event) {

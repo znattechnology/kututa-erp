@@ -10,6 +10,8 @@
         activity: $primary,
         other: $gray-600,
         commemorative: $gray-400,
+        // As provas de um aluno (no calendário do encarregado): a cor da série dos gráficos.
+        child_exam: #2a78d6,
     );
 
     @each $name, $color in $types {

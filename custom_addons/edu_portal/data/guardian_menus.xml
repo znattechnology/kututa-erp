@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- A Área do Encarregado, como a do estudante: o painel e as páginas da barra lateral do secPed, cada uma uma acção
-         cliente. O calendário é o «Calendário académico» do professor e as mensagens são as Discussões do Odoo. -->
+         cliente. O calendário é o «Calendário académico» do professor com as provas dos educandos, e as mensagens são as
+         Discussões do Odoo. -->
     <record id="action_guardian_home" model="ir.actions.client">
         <field name="name">Painel</field>
         <field name="tag">edu_portal.guardian_home</field>
@@ -25,6 +26,10 @@
     <record id="action_guardian_exams" model="ir.actions.client">
         <field name="name">Provas</field>
         <field name="tag">edu_portal.guardian_exams</field>
+    </record>
+    <record id="action_guardian_calendar" model="ir.actions.client">
+        <field name="name">Calendário</field>
+        <field name="tag">edu_portal.guardian_calendar</field>
     </record>
     <record id="action_guardian_fees" model="ir.actions.client">
         <field name="name">Propinas</field>
@@ -53,7 +58,7 @@
     <menuitem id="menu_guardian_rdec" name="RDEC (Iniciação)" action="action_guardian_rdec" parent="menu_guardian_children_root" sequence="30"/>
     <menuitem id="menu_guardian_absences" name="Faltas" action="action_guardian_absences" parent="menu_guardian_children_root" sequence="40"/>
     <menuitem id="menu_guardian_exams" name="Provas" action="action_guardian_exams" parent="menu_guardian_children_root" sequence="50"/>
-    <menuitem id="menu_guardian_calendar" name="Calendário" action="edu_roles.action_academic_calendar" parent="menu_guardian_children_root" sequence="60"/>
+    <menuitem id="menu_guardian_calendar" name="Calendário" action="action_guardian_calendar" parent="menu_guardian_children_root" sequence="60"/>
     <menuitem id="menu_guardian_finance" name="Finanças" parent="menu_guardian_root" sequence="20"/>
     <menuitem id="menu_guardian_fees" name="Propinas" action="action_guardian_fees" parent="menu_guardian_finance" sequence="10"/>
     <menuitem id="menu_guardian_communication" name="Comunicação" parent="menu_guardian_root" sequence="30"/>

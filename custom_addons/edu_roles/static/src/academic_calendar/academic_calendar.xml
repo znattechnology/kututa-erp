@@ -7,8 +7,14 @@
                 <div class="o_edu_ca_body" t-if="this.state.data">
                     <header>
                         <h1 class="o_edu_ca_title">Calendário académico<t t-if="this.state.data.year">, <t t-out="this.state.data.year"/></t></h1>
-                        <p class="mb-0 text-muted">Os eventos, as provas e os prazos da escola.</p>
+                        <p class="mb-0 text-muted" t-out="this.subtitle"/>
                     </header>
+                    <div t-if="this.filters" class="btn-group flex-wrap align-self-start" role="group" aria-label="Filtro">
+                        <button t-foreach="this.filters" t-as="f" t-key="f.key" type="button" class="btn"
+                                t-att-class="f.key === this.state.filter ? 'btn-primary' : 'btn-secondary'"
+                                t-att-aria-pressed="f.key === this.state.filter ? 'true' : 'false'"
+                                t-on-click="() => this.setFilter(f.key)" t-out="f.label"/>
+                    </div>
 
                     <!-- O mês e a navegação -->
                     <div class="o_edu_ca_toolbar">
@@ -82,7 +88,7 @@
                                             <span class="o_edu_ca_dot mt-1" t-att-class="this.typeClass(event)" aria-hidden="true"/>
                                             <span class="min-w-0">
                                                 <span class="d-block text-truncate" t-out="event.name"/>
-                                                <span class="o_edu_ca_meta"><t t-out="this.span(event)"/>, <t t-out="this.typeLabel(event).toLowerCase()"/></span>
+                                                <span class="o_edu_ca_meta"><t t-out="this.span(event)"/>, <t t-out="this.typeLabelInline(event)"/></span>
                                             </span>
                                         </button>
                                     </li>
