@@ -77,10 +77,13 @@ export class Declarations extends Component {
     // A declaração
 
     async loadStudent() {
-        const data = await this.orm.call("edu.declaration.page", "student_data", [
-            this.state.pick.enrollment_id,
-            this.state.type,
-        ]);
+        const pick = this.state.pick;
+        const type = this.state.type;
+        const data = await this.orm.call("edu.declaration.page", "student_data", [pick.enrollment_id, type]);
+        // Escolheu outro aluno ou outro tipo entretanto: esta resposta já não serve.
+        if (this.state.pick !== pick || this.state.type !== type) {
+            return;
+        }
         const sameStudent = this.state.data && this.state.data.enrollment.id === data.enrollment.id;
         this.state.data = data;
         if (!sameStudent) {

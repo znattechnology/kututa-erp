@@ -309,9 +309,13 @@ class EduExamPeriod(models.Model):
             raise UserError(self.env._('A prova já não existe.'))
         if not session.room_ids:
             raise UserError(self.env._('Escolha primeiro a sala da prova.'))
+        if session.state != 'scheduled':
+            raise UserError(self.env._('A prova já foi realizada ou anulada: o vigilante já não se muda.'))
         # Em sudo (depois do _planner_check): a secretaria não lê a ficha dos funcionários e o Odoo recusava gravar o
         # vigilante. Os choques continuam a ser verificados (_check_conflicts).
-        session.room_ids[:1].sudo().supervisor_ids = self.env['hr.employee'].browse(teacher_id or [])
+        session.room_ids[:1].sudo().supervisor_ids = self.env['hr.employee']._edu_exam_supervisors(
+            [teacher_id] if teacher_id else [], session.company_id
+        )
         return session._planner_session()
 
     @api.model

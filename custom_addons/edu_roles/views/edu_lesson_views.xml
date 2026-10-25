@@ -437,7 +437,8 @@
                 </div>
                 <footer>
                     <button name="action_record" type="object" string="Lançar a nota" class="btn-primary" close="1"
-                            invisible="state == 'done'"/>
+                            invisible="state == 'done'"
+                            confirm="Lançar a nota escrita? Uma nota 0 também conta (o aluno reprova) e depois de lançada já não se muda aqui."/>
                     <button special="cancel" string="Cancelar"/>
                 </footer>
             </form>

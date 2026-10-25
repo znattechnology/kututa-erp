@@ -148,6 +148,15 @@ class EduExamSession(models.Model):
     def _check_conflicts(self):
         """A mesma sala, o mesmo vigilante ou o mesmo aluno não estão em duas sessões à mesma hora."""
         for session in self.filtered(lambda s: s.state != 'cancelled'):
+            # Na mesma sessão: um vigilante não fica em duas salas ao mesmo tempo.
+            seen = self.env['hr.employee']
+            for room in session.sudo().room_ids:
+                twice = room.supervisor_ids & seen
+                if twice:
+                    raise ValidationError(
+                        self.env._('%s não pode vigiar duas salas da mesma prova.', ', '.join(twice.mapped('name')))
+                    )
+                seen |= room.supervisor_ids
             others = session._overlapping_sessions()
             if not others:
                 continue
@@ -305,7 +314,9 @@ class EduExamRoom(models.Model):
         if not self.env.su and not self.env.user.has_group('edu_core.group_edu_user'):
             raise UserError(self.env._('Os vigilantes escolhe-os a secretaria.'))
         for room in self:
-            room.sudo().supervisor_ids = self.env['hr.employee'].browse(room.supervisor_public_ids.ids)
+            room.sudo().supervisor_ids = self.env['hr.employee']._edu_exam_supervisors(
+                room.supervisor_public_ids.ids, room.session_id.company_id
+            )
 
     @api.depends('room_id')
     def _compute_capacity(self):
@@ -374,3 +385,16 @@ class EduExamSeat(models.Model):
                 grade.write(vals)
             else:
                 Grade.create({'assessment_id': assessment.id, 'enrollment_id': self.enrollment_id.id, **vals})
+
+
+class HrEmployee(models.Model):
+    _inherit = 'hr.employee'
+
+    @api.model
+    def _edu_exam_supervisors(self, ids, company):
+        """Os vigilantes que se podem gravar em sudo: só professores da escola da prova."""
+        teachers = self.sudo().browse(ids).exists()
+        wrong = teachers.filtered(lambda t: not t.edu_is_teacher or t.company_id != company)
+        if wrong:
+            raise UserError(self.env._('%s não é professor desta escola.', ', '.join(wrong.mapped('name'))))
+        return teachers

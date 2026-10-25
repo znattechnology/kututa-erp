@@ -41,7 +41,11 @@ export class StudentHistory extends Component {
     async load(studentId) {
         this.state.studentId = studentId;
         this.state.editing = null;
-        this.state.data = await this.orm.call("edu.history.page", "student_history", [studentId]);
+        const data = await this.orm.call("edu.history.page", "student_history", [studentId]);
+        // Escolheu outro aluno entretanto: esta resposta já não serve.
+        if (this.state.studentId === studentId) {
+            this.state.data = data;
+        }
     }
 
     choose(row) {

@@ -181,7 +181,7 @@ class EduDocument(models.Model):
             self.action_issue()
         if self.state != 'issued':
             raise UserError(self.env._('O documento está anulado.'))
-        self.sudo().print_count += 1
+        # Mostra-o na janela; a impressão conta quando sai o PDF (ver IrActionsReport._render_qweb_pdf).
         return self.env.ref(REPORTS[self.document_type]).preview_action(self)
 
     def action_preview(self):
@@ -213,14 +213,13 @@ class EduStudent(models.Model):
         )[-1:]
         if not enrollment:
             raise UserError(self.env._('%s ainda não tem matrículas.', self.name))
-        document = self.document_ids.filtered(
-            lambda d: d.document_type == 'term' and d.state == 'issued' and d.enrollment_id == enrollment
-        )[:1]
+        terms = self.document_ids.filtered(lambda d: d.document_type == 'term' and d.enrollment_id == enrollment)
+        # O emitido, ou o rascunho (ver não lhe dá número: o número é dado quando se imprime).
+        document = terms.filtered(lambda d: d.state == 'issued')[:1] or terms.filtered(lambda d: d.state == 'draft')[:1]
         if not document:
             document = self.env['edu.document'].create(
                 {'document_type': 'term', 'student_id': self.id, 'enrollment_id': enrollment.id}
             )
-            document.action_issue()
         return document.action_preview()
 
     def action_new_document(self):
@@ -289,11 +288,16 @@ class EduGraduation(models.Model):
     document_ids = fields.One2many('edu.document', 'graduation_id', string='Documentos')
 
     def _graduation_document(self, kind):
-        """O diploma ou o certificado desta conclusão: o emitido, ou um novo emitido agora."""
+        """O diploma ou o certificado desta conclusão: o emitido ou o rascunho. Ver não lhe dá número: o número é dado
+        quando se imprime o PDF."""
         self.ensure_one()
         if self.state != 'issued':
             raise UserError(self.env._('Emita a conclusão antes de imprimir o diploma ou o certificado.'))
-        document = self.document_ids.filtered(lambda d: d.document_type == kind and d.state == 'issued')[:1]
+        documents = self.document_ids.filtered(lambda d: d.document_type == kind)
+        document = (
+            documents.filtered(lambda d: d.state == 'issued')[:1]
+            or documents.filtered(lambda d: d.state == 'draft')[:1]
+        )
         if not document:
             document = self.env['edu.document'].create(
                 {
@@ -304,7 +308,6 @@ class EduGraduation(models.Model):
                     'company_id': self.company_id.id,
                 }
             )
-            document.action_issue()
         return document
 
     def action_print_diploma(self):
@@ -341,3 +344,19 @@ class EduYearResult(models.Model):
                 }
             )
         return rows
+
+
+class IrActionsReport(models.Model):
+    _inherit = 'ir.actions.report'
+
+    def _render_qweb_pdf(self, report_ref, res_ids=None, data=None):
+        """Os documentos escolares contam quando sai o PDF (o «Imprimir» da janela), não quando se vêem: o rascunho é
+        emitido (recebe o número) e a impressão conta; da segunda em diante sai «2.ª VIA»."""
+        report = self._get_report(report_ref)
+        if report.model == 'edu.document' and res_ids:
+            ids = [res_ids] if isinstance(res_ids, int) else res_ids
+            documents = self.env['edu.document'].browse(ids).exists()
+            documents.filtered(lambda d: d.state == 'draft').action_issue()
+            for document in documents.filtered(lambda d: d.state == 'issued'):
+                document.sudo().print_count += 1
+        return super()._render_qweb_pdf(report_ref, res_ids=res_ids, data=data)

@@ -160,7 +160,7 @@ class TestEduTimetable(TransactionCase):
         # professor da turma; quem tem aula noutra turma à mesma hora também fica de fora.
         teacher3 = self.env['hr.employee'].create({'name': 'Sara Livre', 'edu_is_teacher': True})
         busy = self.env['hr.employee'].create({'name': 'Tomé Ocupado', 'edu_is_teacher': True})
-        self.env['edu.schedule'].create(
+        busy_lesson = self.env['edu.schedule'].create(
             {
                 'class_id': self.class_b.id,
                 'subject_id': self.mat.id,
@@ -170,6 +170,17 @@ class TestEduTimetable(TransactionCase):
                 'hour_to': 8.25,
             }
         )
+        # O Pedro falta às 7:30 de segunda (a aula dele tem substituto): não é livre para substituir outra a essa hora.
+        self.assertNotIn(
+            self.teacher.id,
+            self.env['edu.schedule.replacement']
+            .new({'schedule_id': busy_lesson.id, 'date': monday})
+            .free_teacher_ids._origin.ids,
+        )
+        with self.assertRaises(ValidationError):
+            self.env['edu.schedule.replacement'].create(
+                {'schedule_id': busy_lesson.id, 'date': monday, 'replacement_teacher_id': self.teacher.id}
+            )
         other = self.env['edu.schedule'].create(
             {
                 'class_id': self.class_b.id,

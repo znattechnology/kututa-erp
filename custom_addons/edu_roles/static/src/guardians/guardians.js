@@ -140,9 +140,14 @@ export class GuardiansPage extends Component {
 
     async selectMissClass(classId) {
         this.state.missClassId = classId;
-        this.state.missStudents = classId
+        // A resposta de uma turma escolhida antes não se sobrepõe à da turma actual.
+        const request = (this.missRequest = (this.missRequest || 0) + 1);
+        const students = classId
             ? await this.orm.call("edu.guardian.page", "students_without_guardian", [classId])
             : [];
+        if (request === this.missRequest) {
+            this.state.missStudents = students;
+        }
     }
 
     /** «Vincular» a partir do aluno sem encarregado: o ecrã de vincular com o aluno já escolhido. */

@@ -206,7 +206,8 @@ export class TrainingPage extends Component {
 
     /** Os números da lista dos Serviços Académicos (no ano escolhido). */
     get listKpis() {
-        const rows = this.yearRows;
+        // Os anulados não contam: nem no total, nem na média.
+        const rows = this.yearRows.filter((r) => r.state !== "cancelled");
         const open = rows.filter((r) => !["passed", "failed", "cancelled"].includes(r.state));
         const graded = rows.filter((r) => r.grade !== null && r.grade !== undefined);
         const kpis = {
@@ -430,9 +431,13 @@ export class TrainingPage extends Component {
     async selectClass(classId) {
         this.state.classId = classId;
         this.state.chosen = {};
-        this.state.students = classId
-            ? await this.orm.call("edu.training.page", "class_students", [this.kind, classId])
-            : [];
+        this.state.students = [];
+        // A resposta de uma turma escolhida antes não se sobrepõe à da turma actual.
+        const request = (this.classRequest = (this.classRequest || 0) + 1);
+        const students = classId ? await this.orm.call("edu.training.page", "class_students", [this.kind, classId]) : [];
+        if (request === this.classRequest) {
+            this.state.students = students;
+        }
     }
 
     get freeStudents() {

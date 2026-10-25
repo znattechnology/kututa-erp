@@ -559,7 +559,7 @@
                 <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
             </span>
             <t t-set="steps" t-value="this.orientSteps(r, 'internship')"/>
-            <t t-call="edu_records.TrainingPage.Steps"/>
+            <t t-if="r.state !== 'cancelled'" t-call="edu_records.TrainingPage.Steps"/>
             <span class="o_edu_tr_ocard_facts">
                 <span><i class="oi me-1" data-icon="location_on" aria-hidden="true"/><t t-if="r.entity" t-out="r.entity"/><t t-else="">Entidade por definir</t><t t-if="r.supervisor"> (<t t-out="r.supervisor"/>)</t></span>
                 <span t-if="r.start or r.end"><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/><t t-out="r.start or '?'"/> a <t t-out="r.end or '?'"/></span>
@@ -581,7 +581,7 @@
                 <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
             </span>
             <t t-set="steps" t-value="this.orientSteps(r, 'project')"/>
-            <t t-call="edu_records.TrainingPage.Steps"/>
+            <t t-if="r.state !== 'cancelled'" t-call="edu_records.TrainingPage.Steps"/>
             <span class="o_edu_tr_ocard_facts">
             <span t-if="this.state.isStaff" t-att-class="r.advisor ? '' : 'text-danger'"><i class="oi me-1" data-icon="person" aria-hidden="true"/><t t-if="r.advisor">Orientador: <t t-out="r.advisor"/></t><t t-else="">Orientador por atribuir</t></span>
                 <span><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/>Defesa <t t-if="r.defense" t-out="r.defense"/><t t-else="">por marcar</t></span>

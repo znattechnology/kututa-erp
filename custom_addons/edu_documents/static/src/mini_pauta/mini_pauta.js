@@ -107,17 +107,24 @@ export class MiniPauta extends Component {
         if (!this.selectedClass || !this.state.trimesterId) {
             return;
         }
+        // A resposta de uma turma ou trimestre escolhido antes não se sobrepõe à da escolha actual.
+        const request = (this.refreshRequest = (this.refreshRequest || 0) + 1);
         try {
             const action = await this.orm.call("edu.mini.pauta", "page_open", [
                 this.state.classId,
                 this.state.trimesterId,
                 true,
             ]);
+            if (request !== this.refreshRequest) {
+                return;
+            }
             const { kututa_preview: _flag, ...context } = action.context || {};
             this.state.report = { ...action, context };
             this.state.url = getReportUrl(this.state.report, "html", user.context);
         } catch (error) {
-            this.state.error = error.data?.message || error.message;
+            if (request === this.refreshRequest) {
+                this.state.error = error.data?.message || error.message;
+            }
         }
     }
 
@@ -150,7 +157,13 @@ export class MiniPauta extends Component {
         }
         this.state.busy = true;
         try {
-            await this.action.doAction({ ...this.state.report, report_type: "qweb-pdf" });
+            // De novo no servidor: o registo temporário da mini-pauta à vista pode já ter sido limpo pelo Odoo.
+            const action = await this.orm.call("edu.mini.pauta", "page_open", [
+                this.state.classId,
+                this.state.trimesterId,
+                false,
+            ]);
+            await this.action.doAction(action);
         } finally {
             this.state.busy = false;
         }

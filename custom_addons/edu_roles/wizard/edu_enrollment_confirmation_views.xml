@@ -16,6 +16,7 @@
                             invisible="state != 'prepared'"
                             confirm="Confirmar as matrículas dos alunos «A confirmar»? Os pendentes ficam na lista para resolver."/>
                     <button name="action_prepare" type="object" string="Preparar de novo" invisible="state != 'prepared'"/>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" invisible="state == 'draft'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet class="o_edu_confirm">

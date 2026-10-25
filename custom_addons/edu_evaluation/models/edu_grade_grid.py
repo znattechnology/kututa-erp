@@ -123,12 +123,19 @@ class EduGradeGrid(models.AbstractModel):
         lines = edu_class.sudo().subject_line_ids.filtered('weekly_hours').sorted(lambda li: li.subject_id.name or '')
         # Quantos alunos já têm a média do trimestre em curso, por disciplina: o painel diz que pautas faltam.
         trimester = edu_class.academic_year_id.trimester_ids.filtered('is_current')[:1]
+        enrolled = edu_class.sudo().enrollment_ids.filtered(lambda e: e.state in ENROLLED)
+        # Só os alunos matriculados contam (um transferido com média não faz a disciplina parecer completa).
         graded = (
             dict(
                 self.env['edu.term.result']
                 .sudo()
                 ._read_group(
-                    [('class_id', '=', edu_class.id), ('trimester_id', '=', trimester.id), ('has_mt', '=', True)],
+                    [
+                        ('class_id', '=', edu_class.id),
+                        ('trimester_id', '=', trimester.id),
+                        ('has_mt', '=', True),
+                        ('enrollment_id', 'in', enrolled.ids),
+                    ],
                     ['subject_id'],
                     ['__count'],
                 )
@@ -136,7 +143,7 @@ class EduGradeGrid(models.AbstractModel):
             if trimester
             else {}
         )
-        students = len(edu_class.sudo().enrollment_ids.filtered(lambda e: e.state in ENROLLED))
+        students = len(enrolled)
         subjects = []
         for line in lines:
             subject = line.subject_id

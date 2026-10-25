@@ -97,6 +97,10 @@ export class Appeals extends Component {
     async choose(row) {
         this.state.pick = row;
         const options = await this.orm.call("edu.appeal.page", "request_options", [row.enrollment_id]);
+        // Entretanto escolheu «Outro aluno» ou outro aluno: esta resposta já não serve.
+        if (this.state.pick !== row) {
+            return;
+        }
         this.state.options = options;
         this.state.form = {
             subjectId: false,

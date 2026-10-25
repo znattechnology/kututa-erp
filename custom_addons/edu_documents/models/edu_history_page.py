@@ -1,4 +1,4 @@
-from odoo import api, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 # O resultado do ano no passado, como no secPed (o ano já fechou), e a cor da linha.
@@ -100,7 +100,12 @@ class EduHistoryPage(models.AbstractModel):
         if not result.decided_by_id:
             # Decisões que vieram da migração (a pauta assinada): só o fundamento.
             return result.reason or self.env._('Decisão manual')
-        when = result.decided_date.strftime('%d/%m/%Y') if result.decided_date else ''
+        # Na data local (a data guardada é UTC: perto da meia-noite em Luanda seria o dia errado).
+        when = (
+            fields.Datetime.context_timestamp(self, result.decided_date).strftime('%d/%m/%Y')
+            if result.decided_date
+            else ''
+        )
         head = self.env._('Decisão da direcção (%s)', ', '.join(filter(None, [result.decided_by_id.name, when])))
         return f'{head}: {result.reason}' if result.reason else head
 

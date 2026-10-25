@@ -91,6 +91,11 @@ class TestEduExam(TransactionCase):
         other.room_ids = [Command.create({'room_id': self.room1.id})]
         with self.assertRaises(ValidationError):
             other.date = date(2027, 7, 5)
+        # Na mesma prova, o mesmo vigilante não fica em duas salas.
+        with self.assertRaises(ValidationError):
+            other.room_ids = [
+                Command.create({'room_id': self.room2.id, 'supervisor_ids': [Command.set(self.teacher.ids)]}),
+            ] + [Command.update(other.room_ids.id, {'supervisor_ids': [Command.set(self.teacher.ids)]})]
 
     def test_trimester_test_session(self):
         carla, ana, bento = self.students

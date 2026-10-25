@@ -342,7 +342,10 @@ class EduScheduleReplacement(models.Model):
                 ('id', '!=', schedule.id),
             ]
         )
-        busy = self.env['hr.employee'].union(*[lesson._teacher_on(day) for lesson in lessons if lesson._occurs_on(day)])
+        # Quem dá aula a essa hora, e também quem falta a essa hora (a aula dele tem substituto): não substitui.
+        busy = self.env['hr.employee'].union(
+            *[lesson._teacher_on(day) | lesson.teacher_id for lesson in lessons if lesson._occurs_on(day)]
+        )
         others = self.search(
             [
                 ('id', '!=', self._origin.id or 0),
@@ -382,10 +385,12 @@ class EduScheduleReplacement(models.Model):
                 ]
             )
             teacher = replacement.replacement_teacher_id
-            if any(
-                other._occurs_on(replacement.date) and other._teacher_on(replacement.date) == teacher for other in busy
-            ):
+            mine = busy.filtered(lambda other, day=replacement.date: other._occurs_on(day))
+            if any(other._teacher_on(replacement.date) == teacher for other in mine):
                 raise ValidationError(self.env._('%s tem aula a essa hora.', replacement.replacement_teacher_id.name))
+            if mine:
+                # A aula dele a essa hora tem substituto: está a faltar, não pode substituir outra.
+                raise ValidationError(self.env._('%s falta a essa hora: a aula dele já tem substituto.', teacher.name))
             other = self.search(
                 [
                     ('id', '!=', replacement.id),

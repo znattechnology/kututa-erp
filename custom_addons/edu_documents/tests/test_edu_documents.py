@@ -120,11 +120,14 @@ class TestEduDocuments(TransactionCase):
                      'Anexo V · Despacho n.º 60/08', 'processo n.º', 'edu-blank'):  # fmt: skip
             self.assertIn(text, html)
         action = document.action_print()
-        # Os documentos escolares não passam pelo assistente do layout das facturas.
+        # Os documentos escolares não passam pelo assistente do layout das facturas; ver não conta como impressão.
         self.assertEqual(action['type'], 'ir.actions.report')
+        self.assertEqual(document.print_count, 0)
+        Report = self.env['ir.actions.report']
+        Report._render_qweb_pdf('edu_documents.action_report_declaration_frequency', document.ids)
         self.assertEqual(document.print_count, 1)
         self.assertNotIn('2.ª VIA', self._render('edu_documents.action_report_declaration_frequency', document))
-        document.action_print()
+        Report._render_qweb_pdf('edu_documents.action_report_declaration_frequency', document.ids)
         self.assertIn('2.ª VIA', self._render('edu_documents.action_report_declaration_frequency', document))
         # Os dados que faltam completam-se no documento e ficam na ficha do aluno.
         self.assertFalse(document.identity_complete)
@@ -230,6 +233,10 @@ class TestEduDocuments(TransactionCase):
         graduation.action_print_diploma()
         diploma = graduation.document_ids.filtered(lambda d: d.document_type == 'diploma')
         self.assertEqual(len(diploma), 1)
+        # Ver não emite o diploma; imprimir o PDF dá-lhe o número.
+        self.assertEqual(diploma.state, 'draft')
+        self.env['ir.actions.report']._render_qweb_pdf('edu_documents.action_report_diploma', diploma.ids)
+        self.assertEqual((diploma.state, diploma.print_count), ('issued', 1))
         html = self._render('edu_documents.action_report_diploma', diploma)
         self.assertIn('Formação Média Técnica', html)
         self.assertIn(graduation.diploma_number, html)
@@ -342,9 +349,11 @@ class TestEduDocuments(TransactionCase):
         plan = self._render('edu_documents.action_report_curriculum', self.course.curriculum_id)
         for text in ('PLANO CURRICULAR', 'REPÚBLICA DE ANGOLA', 'Sociocultural', 'Tempos por semana', 'CURSO:'):
             self.assertIn(text, plan)
-        self.assertIn(
-            'Pessoal e intransmissível', self._render('edu_documents.action_report_student_card', self.student)
-        )
+        # Com o edu_fees, o cartão só se imprime depois de emitido (taxa paga e fotografia): testado lá.
+        if 'edu.student.card' not in self.env:
+            self.assertIn(
+                'Pessoal e intransmissível', self._render('edu_documents.action_report_student_card', self.student)
+            )
 
     def test_transfer_guide(self):
         transfer = self.env['edu.transfer'].create(
@@ -454,7 +463,10 @@ class TestEduDocuments(TransactionCase):
         documents = Page.student_data(self.enrollment.id, 'frequency')['documents']
         self.assertEqual([d['id'] for d in documents], draft.ids)
         Page.reprint(draft.id)
-        self.assertEqual(draft.print_count, 2)
+        self.assertEqual(draft.print_count, 0)
+        # O PDF (o «Imprimir» da janela) é que conta.
+        self.env['ir.actions.report']._render_qweb_pdf('edu_documents.action_report_declaration_frequency', draft.ids)
+        self.assertEqual(draft.print_count, 1)
         with self.assertRaises(UserError):
             Page.preview(self.enrollment.id, 'grades', identity, '')
 

@@ -98,7 +98,13 @@ export class StudentPanel extends Component {
         this.state.classId = classId;
         this.state.filter = "";
         remember(this.props.storageKey, classId);
-        this.state.students = await this.orm.call("edu.student.picker", "class_students", [classId]);
+        this.state.students = [];
+        // A resposta de uma turma escolhida antes não se sobrepõe à da turma actual.
+        const request = (this.classRequest = (this.classRequest || 0) + 1);
+        const students = await this.orm.call("edu.student.picker", "class_students", [classId]);
+        if (request === this.classRequest) {
+            this.state.students = students;
+        }
     }
 
     backToClasses() {

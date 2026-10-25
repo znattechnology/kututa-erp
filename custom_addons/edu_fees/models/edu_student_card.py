@@ -1,7 +1,7 @@
 import uuid
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 CARD_STATES = [
     ('ready', 'Pronto a imprimir'),
@@ -55,12 +55,13 @@ class EduStudent(models.Model):
     _inherit = 'edu.student'
 
     edu_card_ids = fields.One2many('edu.student.card', 'student_id', string='Cartões')
-    edu_card_id = fields.Many2one('edu.student.card', string='Cartão activo', compute='_compute_edu_card_state')
+    edu_card_id = fields.Many2one('edu.student.card', string='Cartão activo', compute='_compute_edu_card')
     edu_card_state = fields.Selection(
         CARD_STATES, string='Cartão', compute='_compute_edu_card_state', store=True, index=True,
         group_expand='_edu_expand_card_states',
     )  # fmt: skip
-    edu_card_revoked = fields.Boolean(string='Já teve cartão', compute='_compute_edu_card_state')
+    edu_card_revoked = fields.Boolean(string='Já teve cartão', compute='_compute_edu_card')
+    edu_card_expired = fields.Boolean(string='Cartão caducado', compute='_compute_edu_card')
     edu_card_expiry = fields.Date(related='edu_card_id.expiry_date', string='Cartão válido até')
 
     def _edu_card_invoices(self):
@@ -74,6 +75,16 @@ class EduStudent(models.Model):
         used = self.sudo().edu_card_ids.invoice_id
         return self._edu_card_invoices().filtered(lambda m: m.payment_state in PAID and m not in used)[:1]
 
+    @api.depends('edu_card_ids.state', 'edu_card_ids.expiry_date')
+    def _compute_edu_card(self):
+        today = fields.Date.context_today(self)
+        for student in self:
+            cards = student.sudo().edu_card_ids
+            active = cards.filtered(lambda c: c.state == 'active')[:1]
+            student.edu_card_id = active
+            student.edu_card_revoked = bool(cards - active)
+            student.edu_card_expired = bool(active.expiry_date and active.expiry_date < today)
+
     @api.depends(
         'edu_card_ids.state',
         'edu_invoice_ids.state',
@@ -82,14 +93,12 @@ class EduStudent(models.Model):
     )
     def _compute_edu_card_state(self):
         for student in self:
-            cards = student.sudo().edu_card_ids
-            active = cards.filtered(lambda c: c.state == 'active')[:1]
-            student.edu_card_id = active
-            student.edu_card_revoked = bool(cards - active)
-            if active:
-                state = 'issued'
-            elif student._edu_card_payable_invoice():
+            active = student.sudo().edu_card_ids.filtered(lambda c: c.state == 'active')
+            # Uma taxa nova paga vem antes do cartão activo: é a renovação (no ano seguinte), que substitui o antigo.
+            if student._edu_card_payable_invoice():
                 state = 'ready'
+            elif active:
+                state = 'issued'
             elif student._edu_card_invoices().filtered(lambda m: m.payment_state not in PAID + ('reversed',)):
                 state = 'awaiting'
             else:
@@ -102,6 +111,8 @@ class EduStudent(models.Model):
     def action_edu_issue_card(self):
         """Emite o cartão e abre a impressão. Sem fotografia ou sem a taxa paga, recusa e diz o que falta."""
         self.ensure_one()
+        if not self.env.user.has_group('edu_core.group_edu_user'):
+            raise AccessError(self.env._('Só os Serviços Académicos emitem o cartão de estudante.'))
         if not self.image_1920:
             raise UserError(
                 self.env._('%s ainda não tem fotografia: junte a foto na ficha do aluno antes de emitir.', self.name)
@@ -113,7 +124,10 @@ class EduStudent(models.Model):
                     'A taxa do cartão de %s ainda não está paga: o aluno paga primeiro na tesouraria.', self.name
                 )
             )
-        year = self.company_id.edu_current_year_id
+        # O cartão vale o ano lectivo da matrícula em curso (ou, sem ela, o ano corrente da escola).
+        year = self.current_enrollment_id.academic_year_id or self.company_id.edu_current_year_id
+        if not year:
+            raise UserError(self.env._('Não há ano lectivo em curso: marque-o em Configuração › Anos lectivos.'))
         Card = self.env['edu.student.card'].sudo()
         Card.search([('student_id', '=', self.id), ('state', '=', 'active')])._revoke(
             self.env._('Substituído por nova emissão')
