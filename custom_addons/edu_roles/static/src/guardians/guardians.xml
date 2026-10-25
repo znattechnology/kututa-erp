@@ -22,54 +22,136 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="o_edu_gd_bar">
-                            <p t-if="this.summary" class="mb-0">
-                                <t t-out="this.summary.text"/>
-                                <span t-if="this.summary.alert" class="text-danger"> <t t-out="this.summary.alert"/></span>
-                            </p>
-                            <input type="search" class="form-control o_edu_gd_search" aria-label="Procurar" placeholder="Nome, telefone, NIF ou aluno"
-                                   t-att-value="this.state.query" t-on-input="(ev) => this.onQuery(ev)"/>
+                        <t t-set="k" t-value="this.kpis"/>
+                        <div class="o_edu_kpis">
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Alunos com encarregado</span>
+                                <span class="o_edu_kpi_value"><t t-out="k.covered"/><small class="fs-6 fw-normal text-muted"> de <t t-out="k.students"/></small></span>
+                                <span class="o_edu_meter w-100" t-att-title="k.pct + '%'"><span t-att-style="'width: ' + k.pct + '%'"/></span>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Alunos sem encarregado</span>
+                                <span class="o_edu_kpi_value" t-att-class="k.missing ? 'text-danger' : 'text-success'" t-out="k.missing"/>
+                                <span class="o_edu_kpi_detail" t-out="k.missing ? 'Matriculados este ano' : 'Todos têm encarregado'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Encarregados registados</span>
+                                <span class="o_edu_kpi_value" t-out="k.guardians"/>
+                                <span class="o_edu_kpi_detail">Com o telefone para contacto</span>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Sem e-mail</span>
+                                <span class="o_edu_kpi_value" t-att-class="k.noEmail ? 'text-warning' : ''" t-out="k.noEmail"/>
+                                <span class="o_edu_kpi_detail">Não podem ter conta no portal</span>
+                            </div>
                         </div>
-                        <div class="o_edu_gd_card">
-                            <p t-if="!this.visibleRows.length" class="mb-0 text-muted p-3">
+
+                        <div class="o_edu_gd_bar">
+                            <div role="tablist" aria-label="Ver" class="o_edu_gd_tabs">
+                                <button type="button" role="tab" class="btn btn-sm" t-att-class="this.state.tab === 'guardians' ? 'btn-primary' : 'btn-secondary'"
+                                        t-att-aria-selected="this.state.tab === 'guardians' ? 'true' : 'false'" t-on-click="() => this.state.tab = 'guardians'">
+                                    Encarregados <span class="opacity-75" t-out="k.guardians"/>
+                                </button>
+                                <button type="button" role="tab" class="btn btn-sm" t-att-class="this.state.tab === 'missing' ? 'btn-primary' : 'btn-secondary'"
+                                        t-att-aria-selected="this.state.tab === 'missing' ? 'true' : 'false'" t-on-click="() => this.state.tab = 'missing'">
+                                    Alunos sem encarregado <span class="opacity-75" t-out="k.missing"/>
+                                </button>
+                            </div>
+                            <input t-if="this.state.tab === 'guardians'" type="search" class="form-control o_edu_gd_search" aria-label="Procurar"
+                                   placeholder="Nome, telefone, NIF ou aluno" t-att-value="this.state.query" t-on-input="(ev) => this.onQuery(ev)"/>
+                        </div>
+
+                        <!-- Encarregados -->
+                        <t t-if="this.state.tab === 'guardians'">
+                            <p t-if="this.summary and this.summary.alert" class="mb-0 text-danger" t-out="this.summary.alert"/>
+                            <p t-if="!this.visibleRows.length" class="o_edu_gd_card mb-0 text-muted p-3">
                                 <t t-if="this.state.query.trim()">Nenhum encarregado corresponde a «<t t-out="this.state.query.trim()"/>».</t>
                                 <t t-else="">Ainda não há encarregados registados. «Novo encarregado» regista um e leva logo a vinculá-lo a um aluno.</t>
                             </p>
-                            <div t-else="" class="table-responsive">
-                                <table class="table table-sm table-hover o_edu_gd_table mb-0">
-                                    <thead>
-                                        <tr><th>Encarregado</th><th>Contacto</th><th>Educandos</th><th><span class="visually-hidden">Acções</span></th></tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr t-foreach="this.visibleRows" t-as="r" t-key="r.id">
-                                            <td>
-                                                <button type="button" class="btn btn-link p-0 fw-semibold text-start" t-on-click="() => this.openGuardian(r)" t-out="r.name"/>
-                                                <div t-if="r.occupation" class="small text-muted" t-out="r.occupation"/>
-                                            </td>
-                                            <td>
-                                                <div class="text-nowrap" t-out="r.phone"/>
-                                                <div t-if="r.email" class="small text-muted text-truncate o_edu_gd_email" t-out="r.email"/>
-                                            </td>
-                                            <td>
-                                                <span t-if="!r.links.length" class="text-danger">Nenhum</span>
-                                                <ul t-else="" class="list-unstyled mb-0">
-                                                    <li t-foreach="r.links" t-as="l" t-key="l.id">
-                                                        <t t-out="l.student"/>
-                                                        <span class="small text-muted"> · <t t-out="l.relationship"/><t t-if="l.primary">, principal</t></span>
-                                                    </li>
-                                                </ul>
-                                            </td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-secondary btn-sm text-nowrap" t-att-aria-label="'Vincular ' + r.name + ' a um aluno'"
-                                                        t-on-click="() => this.linkFrom(r)">
+                            <div t-else="" class="o_edu_gd_card">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover o_edu_gd_table mb-0">
+                                        <thead>
+                                            <tr><th>Encarregado</th><th>Contacto</th><th>Educandos</th><th><span class="visually-hidden">Acções</span></th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="this.pagedRows" t-as="r" t-key="r.id" t-att-class="{ o_edu_gd_alone: !r.links.length }">
+                                                <td>
+                                                    <button type="button" class="btn btn-link p-0 fw-semibold text-start" t-on-click="() => this.openGuardian(r)" t-out="r.name"/>
+                                                    <div t-if="r.occupation" class="small text-muted" t-out="r.occupation"/>
+                                                </td>
+                                                <td>
+                                                    <div class="text-nowrap" t-out="r.phone or '—'"/>
+                                                    <div class="small text-truncate o_edu_gd_email" t-att-class="r.email ? 'text-muted' : 'text-warning'" t-out="r.email or 'Sem e-mail'"/>
+                                                </td>
+                                                <td>
+                                                    <span t-if="!r.links.length" class="text-danger small">Nenhum aluno</span>
+                                                    <div t-else="" class="o_edu_gd_students">
+                                                        <span t-foreach="r.links" t-as="l" t-key="l.id" class="o_edu_gd_chip" t-att-class="{ o_primary: l.primary }"
+                                                              t-att-title="l.primary ? 'Encarregado principal' : ''">
+                                                            <t t-out="l.student"/> <span class="text-muted" t-out="'· ' + l.relationship.toLowerCase()"/>
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-secondary btn-sm text-nowrap" t-att-aria-label="'Vincular ' + r.name + ' a um aluno'"
+                                                            t-on-click="() => this.linkFrom(r)">
+                                                        <i class="oi me-1" data-icon="link" aria-hidden="true"/>Vincular
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="o_edu_gd_pager">
+                                    <span class="small text-muted" t-out="this.pagerText"/>
+                                    <button t-if="this.pagedRows.length lt this.visibleRows.length" type="button" class="btn btn-link btn-sm"
+                                            t-on-click="() => this.state.shown += 50">Mostrar mais 50</button>
+                                </div>
+                            </div>
+                        </t>
+
+                        <!-- Alunos sem encarregado -->
+                        <t t-else="">
+                            <p t-if="!this.state.classes.length" class="o_edu_gd_card mb-0 text-success p-3">
+                                Todos os alunos matriculados este ano têm encarregado.
+                            </p>
+                            <div t-else="" class="o_edu_gd_layout">
+                                <aside class="o_edu_gd_panel" aria-label="Turmas">
+                                    <section t-foreach="this.missClassGroups" t-as="g" t-key="g.course">
+                                        <h6 class="o_edu_gd_panel_head" t-out="g.course"/>
+                                        <button t-foreach="g.classes" t-as="c" t-key="c.id" type="button" class="o_edu_gd_panel_item"
+                                                t-att-class="{ o_active: c.id === this.state.missClassId }" t-att-aria-pressed="c.id === this.state.missClassId"
+                                                t-on-click="() => this.selectMissClass(c.id)">
+                                            <span class="text-truncate flex-grow-1" t-out="c.label"/>
+                                            <span class="small text-danger text-nowrap" t-out="c.missing"/>
+                                        </button>
+                                    </section>
+                                </aside>
+                                <section class="o_edu_gd_main">
+                                    <p t-if="!this.missClass" class="o_edu_gd_card mb-0 text-muted p-3">
+                                        Escolha a turma à esquerda: o número diz quantos alunos ainda não têm encarregado. Cada aluno
+                                        vincula-se a um encarregado que já existe ou a um novo.
+                                    </p>
+                                    <div t-else="" class="o_edu_gd_card">
+                                        <div class="o_edu_gd_card_head">
+                                            <strong t-out="this.missClass.label"/>
+                                            <span class="small text-muted" t-out="this.state.missStudents.length === 1 ? '1 aluno sem encarregado' : this.state.missStudents.length + ' alunos sem encarregado'"/>
+                                        </div>
+                                        <ul class="o_edu_gd_missing">
+                                            <li t-foreach="this.state.missStudents" t-as="m" t-key="m.enrollment_id">
+                                                <span class="o_edu_gd_num" t-out="m.number"/>
+                                                <span class="flex-grow-1 text-truncate" t-out="m.name"/>
+                                                <button type="button" class="btn btn-secondary btn-sm" t-att-aria-label="'Vincular um encarregado a ' + m.name"
+                                                        t-on-click="() => this.linkStudent(m)">
                                                     <i class="oi me-1" data-icon="link" aria-hidden="true"/>Vincular
                                                 </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </section>
                             </div>
-                        </div>
+                        </t>
                     </t>
 
                     <!-- Criar encarregado -->

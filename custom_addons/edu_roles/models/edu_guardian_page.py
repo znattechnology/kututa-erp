@@ -45,9 +45,54 @@ class EduGuardianPage(models.AbstractModel):
         }
 
     @api.model
+    def _current_enrollments(self):
+        """As matrículas em curso no ano lectivo corrente (os alunos que precisam de encarregado)."""
+        years = self.env['edu.academic.year'].search(
+            [('is_current', '=', True), ('company_id', 'in', self.env.companies.ids)]
+        )
+        return self.env['edu.enrollment'].search(
+            [('academic_year_id', 'in', years.ids), ('state', 'in', ('active', 'irregular'))]
+        )
+
+    @api.model
     def listing(self):
         guardians = self.env['edu.guardian'].search([('company_id', 'in', self.env.companies.ids)])
-        return {'rows': [self._row(g) for g in guardians]}
+        enrollments = self._current_enrollments()
+        missing = enrollments.filtered(lambda e: not e.student_id.guardian_link_ids)
+        classes = {}
+        for enrollment in missing:
+            edu_class = enrollment.class_id
+            entry = classes.setdefault(
+                edu_class.id,
+                {'id': edu_class.id, 'label': edu_class._editor_label(), 'course': edu_class.course_id.name or '',
+                 'missing': 0},
+            )  # fmt: skip
+            entry['missing'] += 1
+        return {
+            'rows': [self._row(g) for g in guardians],
+            'coverage': {
+                'students': len(enrollments.student_id),
+                'missing': len(missing.student_id),
+            },
+            'classes': sorted(classes.values(), key=lambda c: (c['course'], c['label'])),
+        }
+
+    @api.model
+    def students_without_guardian(self, class_id):
+        """Os alunos da turma (matrícula em curso) que ainda não têm encarregado, pelo número."""
+        enrollments = self._current_enrollments().filtered(
+            lambda e: e.class_id.id == class_id and not e.student_id.guardian_link_ids
+        )
+        return [
+            {
+                'student_id': e.student_id.id,
+                'enrollment_id': e.id,
+                'name': e.student_id.name,
+                'number': e.order_number or '',
+                'class': e.class_id._editor_label(),
+            }
+            for e in enrollments.sorted(lambda e: (e.order_number or 9999, e.student_id.name))
+        ]
 
     @api.model
     def search_guardians(self, query, student_id=False):

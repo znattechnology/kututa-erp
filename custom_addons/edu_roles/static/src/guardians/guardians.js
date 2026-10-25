@@ -34,7 +34,14 @@ export class GuardiansPage extends Component {
         const context = this.props.action.context || {};
         this.state = proxy({
             mode: "list",
+            tab: "guardians",
+            // Quantos encarregados se mostram (a lista pode ter centenas).
+            shown: 50,
             rows: [],
+            coverage: { students: 0, missing: 0 },
+            classes: [],
+            missClassId: false,
+            missStudents: [],
             query: "",
             busy: false,
             relationships: [],
@@ -87,6 +94,61 @@ export class GuardiansPage extends Component {
     async load() {
         const data = await this.orm.call("edu.guardian.page", "listing", []);
         this.state.rows = data.rows;
+        this.state.coverage = data.coverage;
+        this.state.classes = data.classes;
+        if (this.state.missClassId) {
+            // Depois de vincular: a turma pode já não ter alunos sem encarregado.
+            await this.selectMissClass(
+                data.classes.some((c) => c.id === this.state.missClassId) ? this.state.missClassId : false
+            );
+        }
+    }
+
+    /** Os números da página: encarregados, alunos com e sem encarregado, sem e-mail (sem portal). */
+    get kpis() {
+        const { students, missing } = this.state.coverage;
+        const covered = students - missing;
+        return {
+            guardians: this.state.rows.length,
+            covered,
+            students,
+            pct: students ? Math.round((covered / students) * 100) : 0,
+            missing,
+            noEmail: this.state.rows.filter((r) => !r.email).length,
+        };
+    }
+
+    // Alunos sem encarregado
+
+    get missClassGroups() {
+        const groups = [];
+        for (const c of this.state.classes) {
+            const course = c.course || "Sem curso";
+            let group = groups.find((g) => g.course === course);
+            if (!group) {
+                group = { course, classes: [] };
+                groups.push(group);
+            }
+            group.classes.push(c);
+        }
+        return groups;
+    }
+
+    get missClass() {
+        return this.state.classes.find((c) => c.id === this.state.missClassId);
+    }
+
+    async selectMissClass(classId) {
+        this.state.missClassId = classId;
+        this.state.missStudents = classId
+            ? await this.orm.call("edu.guardian.page", "students_without_guardian", [classId])
+            : [];
+    }
+
+    /** «Vincular» a partir do aluno sem encarregado: o ecrã de vincular com o aluno já escolhido. */
+    async linkStudent(row) {
+        await this.openLink(null);
+        await this.pickStudent(row);
     }
 
     async backToList() {
@@ -96,6 +158,18 @@ export class GuardiansPage extends Component {
 
     onQuery(ev) {
         this.state.query = ev.target.value;
+        this.state.shown = 50;
+    }
+
+    get pagedRows() {
+        return this.visibleRows.slice(0, this.state.shown);
+    }
+
+    get pagerText() {
+        const total = this.visibleRows.length;
+        const shown = this.pagedRows.length;
+        const what = total === 1 ? "1 encarregado" : `${total} encarregados`;
+        return shown < total ? `${shown} de ${what}.` : `${what}.`;
     }
 
     get visibleRows() {
