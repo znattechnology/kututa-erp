@@ -165,6 +165,10 @@
         list-style: none;
     }
 
+    .o_edu_gd_team_wide {
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+
     .o_edu_gd_member {
         display: flex;
         align-items: center;
@@ -221,5 +225,44 @@
 
     .o_edu_gd_appreciation {
         border-left: 4px solid $primary;
+    }
+
+    // Meu perfil: quem é (com os contactos), os dados em grelha e os educandos.
+    .o_edu_gd_me {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .o_edu_gd_contacts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        margin-top: 8px;
+    }
+
+    .o_edu_gd_contact {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .o_edu_gd_fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_gd_field {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
     }
 }

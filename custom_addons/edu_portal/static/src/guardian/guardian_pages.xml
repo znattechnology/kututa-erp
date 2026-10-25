@@ -619,45 +619,63 @@
                     <t t-if="!d.has_guardian" t-call="edu_portal.GuardianPage.Empty"/>
                     <t t-else="">
                         <t t-set="p" t-value="d.profile"/>
-                        <div class="o_edu_st_two">
-                            <section class="o_edu_st_card" aria-labelledby="o_edu_gd_data">
-                                <h2 id="o_edu_gd_data" class="o_edu_st_h2">Os teus dados</h2>
-                                <dl class="o_edu_st_fields">
-                                    <dt>Nome</dt><dd t-out="p.name"/>
-                                    <dt>Email</dt>
-                                    <dd><t t-if="p.email" t-out="p.email"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Telefone</dt>
-                                    <dd><t t-if="p.phone" t-out="p.phone"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Morada</dt>
-                                    <dd><t t-if="p.address" t-out="p.address"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>BI ou passaporte</dt>
-                                    <dd><t t-if="p.id_number" t-out="p.id_number"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>NIF</dt>
-                                    <dd><t t-if="p.vat" t-out="p.vat"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                    <dt>Profissão</dt>
-                                    <dd><t t-if="p.occupation" t-out="p.occupation"/><span t-else="" class="text-muted">Por preencher</span></dd>
-                                </dl>
-                                <p class="mb-0 small text-muted">O NIF vai nas facturas das propinas. Se algum dado estiver errado, pede à secretaria para o corrigir.</p>
-                            </section>
-                            <section class="o_edu_st_card" aria-labelledby="o_edu_gd_kids">
-                                <h2 id="o_edu_gd_kids" class="o_edu_st_h2">Educandos associados</h2>
-                                <p t-if="!p.children.length" class="mb-0 text-muted">Nenhum educando com acesso ao portal. Fala com a secretaria.</p>
-                                <ul t-else="" class="o_edu_st_list">
-                                    <li t-foreach="p.children" t-as="c" t-key="c.id">
-                                        <span class="o_edu_gd_avatar" aria-hidden="true" t-out="c.name.charAt(0)"/>
-                                        <div class="flex-grow-1">
-                                            <div class="fw-semibold"><t t-out="c.name"/><span t-if="c.primary" class="badge text-bg-info ms-1">Principal</span></div>
-                                            <div class="small text-muted"><t t-out="c.relationship"/>, <t t-if="c.matricula">n.º <t t-out="c.matricula"/></t><t t-else="">sem n.º de matrícula</t></div>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </section>
+                        <!-- Quem é, e como a escola o contacta -->
+                        <section class="o_edu_st_card o_edu_gd_me" aria-labelledby="o_edu_gd_me">
+                            <span class="o_edu_gd_avatar o_edu_gd_avatar_xl" aria-hidden="true" t-out="this.initials(p.name)"/>
+                            <div class="min-w-0 flex-grow-1">
+                                <h2 id="o_edu_gd_me" class="o_edu_gd_name" t-out="p.name"/>
+                                <div class="text-muted">Encarregado de educação de <t t-out="this.list(p.children.map((c) => c.name.split(' ')[0]))"/></div>
+                                <div class="o_edu_gd_contacts">
+                                    <a t-if="p.phone" t-att-href="'tel:' + p.phone" class="o_edu_gd_contact"><i class="oi" data-icon="phone" aria-hidden="true"/><t t-out="p.phone"/></a>
+                                    <a t-if="p.email" t-att-href="'mailto:' + p.email" class="o_edu_gd_contact"><i class="oi" data-icon="mail" aria-hidden="true"/><t t-out="p.email"/></a>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div t-if="p.missing.length" class="alert alert-warning mb-0 d-flex gap-2" role="status">
+                            <i class="oi" data-icon="info" aria-hidden="true"/>
+                            <div>Faltam <t t-out="this.list(p.missing)"/>. Pede à secretaria para os completar.</div>
                         </div>
+
+                        <section class="o_edu_st_section" aria-labelledby="o_edu_gd_data">
+                            <h2 id="o_edu_gd_data" class="o_edu_st_h2 mb-0">Os teus dados</h2>
+                            <ul class="o_edu_gd_fields">
+                                <li t-foreach="this.fields" t-as="f" t-key="f.key" class="o_edu_gd_field">
+                                    <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" t-att-data-icon="f.icon"/></span>
+                                    <div class="min-w-0">
+                                        <div class="small text-muted" t-out="f.label"/>
+                                        <div t-if="f.value" class="text-break" t-out="f.value"/>
+                                        <div t-else="" class="text-muted">Por preencher</div>
+                                    </div>
+                                </li>
+                            </ul>
+                            <p class="mb-0 small text-muted">Estes dados são da secretaria: se algum estiver errado, pede-lhe para o corrigir. O NIF vai nas facturas das propinas.</p>
+                        </section>
+
+                        <section class="o_edu_st_section" aria-labelledby="o_edu_gd_kids">
+                            <h2 id="o_edu_gd_kids" class="o_edu_st_h2 mb-0">Educandos associados</h2>
+                            <p t-if="!p.children.length" class="o_edu_st_card mb-0 text-muted">Nenhum educando com acesso ao portal. Fala com a secretaria.</p>
+                            <ul t-else="" class="o_edu_gd_team o_edu_gd_team_wide">
+                                <li t-foreach="p.children" t-as="c" t-key="c.id" class="o_edu_gd_member">
+                                    <span class="o_edu_gd_avatar" aria-hidden="true" t-out="this.initials(c.name)"/>
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="fw-semibold"><t t-out="c.name"/><span t-if="c.primary" class="badge text-bg-info ms-1">Principal</span></div>
+                                        <div class="small text-muted"><t t-out="c.relationship"/><t t-if="c.class">, <t t-out="c.class"/></t><t t-if="c.matricula">, n.º <t t-out="c.matricula"/></t></div>
+                                    </div>
+                                    <button type="button" class="btn btn-light btn-sm" t-att-aria-label="'Abrir a ficha de ' + c.name" t-att-title="'Abrir a ficha de ' + c.name" t-on-click="() => this.openChild(c)">
+                                        <i class="oi" data-icon="chevron_right" aria-hidden="true"/>
+                                    </button>
+                                </li>
+                            </ul>
+                        </section>
+
                         <section class="o_edu_st_card" aria-labelledby="o_edu_gd_security">
                             <h2 id="o_edu_gd_security" class="o_edu_st_h2">Segurança</h2>
                             <div class="o_edu_st_row">
                                 <p class="mb-0 text-muted">Muda a palavra-passe se achares que alguém a sabe.</p>
-                                <button type="button" class="btn btn-secondary" t-on-click="() => this.changePassword()">Alterar a palavra-passe</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.changePassword()">
+                                    <i class="oi me-1" data-icon="lock" aria-hidden="true"/>Alterar a palavra-passe
+                                </button>
                             </div>
                         </section>
                     </t>

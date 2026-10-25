@@ -374,6 +374,17 @@ class EduGuardianPortal(models.AbstractModel):
         """Os dados do encarregado na escola (só para ler: corrige-os a secretaria) e os educandos ligados."""
         guardian = guardians[:1]
         links = self._links().sorted(lambda link: (not link.is_primary, link.student_id.name or ''))
+        Portal = self.env['edu.student.portal']
+        # O que falta para as facturas e para a escola contactar o encarregado.
+        missing = [
+            label
+            for label, filled in (
+                ('o NIF (vai nas facturas das propinas)', guardian.vat),
+                ('o telefone', guardian.phone),
+                ('o BI ou passaporte', guardian.id_number),
+            )
+            if not filled
+        ]
         return {
             'name': guardian.name or self.env.user.name,
             'email': guardian.email or self.env.user.email or '',
@@ -389,9 +400,13 @@ class EduGuardianPortal(models.AbstractModel):
                     'matricula': link.student_id.matricula_number or '',
                     'relationship': RELATIONSHIPS.get(link.relationship, 'Familiar'),
                     'primary': link.is_primary,
+                    'class': Portal._enrollment(link.student_id).class_id._editor_label()
+                    if Portal._enrollment(link.student_id)
+                    else '',
                 }
                 for link in links
             ],
+            'missing': missing,
         }
 
     # As mensagens

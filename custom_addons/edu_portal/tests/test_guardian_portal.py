@@ -148,6 +148,11 @@ class TestGuardianPortal(HttpCase):
         self.assertEqual((grades['year'], grades['year_missing']), ('2026/2027', '2025/2026'))
         grades = Portal.page_data('grades', {'student_id': self.ana.id, 'academic_year_id': self.year.id})['grades']
         self.assertEqual(grades['year_missing'], '')
+        # O perfil: o que falta (o Gil tem telefone, mas não tem NIF nem BI) e a turma de cada educando.
+        profile = Portal.page_data('profile')['profile']
+        self.assertEqual(len(profile['missing']), 2)
+        self.assertIn('NIF', profile['missing'][0])
+        self.assertEqual(profile['children'][0]['class'], self.edu_class._editor_label())
         # O calendário: o da escola e as provas dos educandos (só as deles).
         calendar = Portal.calendar_data()
         self.assertEqual([c['id'] for c in calendar['children']], self.ana.ids)

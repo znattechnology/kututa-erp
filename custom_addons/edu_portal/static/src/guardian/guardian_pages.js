@@ -394,6 +394,28 @@ export class GuardianProfile extends GuardianPage(GuardianBase) {
     static template = "edu_portal.GuardianProfile";
     static page = "profile";
 
+    initials(name) {
+        const parts = (name || "").split(" ").filter(Boolean);
+        return (parts[0] ? parts[0][0] : "") + (parts.length > 1 ? parts[parts.length - 1][0] : "");
+    }
+
+    /** Os dados em grelha, com o ícone de cada um (os que faltam ficam «Por preencher»). */
+    get fields() {
+        const p = this.state.data.profile;
+        return [
+            { key: "phone", label: "Telefone", icon: "phone", value: p.phone },
+            { key: "email", label: "Email", icon: "mail", value: p.email },
+            { key: "address", label: "Morada", icon: "location_on", value: p.address },
+            { key: "id_number", label: "BI ou passaporte", icon: "badge", value: p.id_number },
+            { key: "vat", label: "NIF", icon: "receipt_long", value: p.vat },
+            { key: "occupation", label: "Profissão", icon: "work", value: p.occupation },
+        ];
+    }
+
+    openChild(child) {
+        return this.openFor("edu_portal.action_guardian_children", child.id);
+    }
+
     async changePassword() {
         const action = await this.orm.call("edu.student.portal", "change_password", []);
         return this.action.doAction(action);
