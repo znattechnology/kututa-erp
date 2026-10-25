@@ -133,4 +133,54 @@
     <record id="edu_core.action_edu_room" model="ir.actions.act_window">
         <field name="view_mode">kanban,list,form</field>
     </record>
+
+    <!-- Professores por disciplina em cartões, uma coluna por turma: a disciplina e os tempos, o período, o
+         professor (com a fotografia, troca-se no próprio cartão) ou «Por atribuir», a carga do professor face ao
+         limite e o aviso de quem não está habilitado. A lista editável fica. -->
+    <record id="edu_teaching_assignment_kanban" model="ir.ui.view">
+        <field name="name">edu.teaching.assignment.kanban</field>
+        <field name="model">edu.teaching.assignment</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_assign_kanban" default_order="subject_id" records_draggable="0" quick_create="0"
+                    group_create="0" group_delete="0" group_edit="0">
+                <header>
+                    <button name="%(action_edu_class_missing_teachers)d" type="action" string="Disciplinas sem professor"
+                            icon="person_search" display="always"/>
+                    <button name="action_print_assignments" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
+                <field name="teacher_id"/>
+                <field name="trimester_id"/>
+                <field name="weekly_hours"/>
+                <field name="teacher_load_label"/>
+                <field name="teacher_load_over"/>
+                <field name="qualified"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_assign_card" t-att-class="{'o_edu_assign_missing': !record.teacher_id.raw_value}">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <field name="subject_id" class="o_edu_assign_subject"/>
+                                <span class="small text-muted text-nowrap"><t t-out="record.weekly_hours.raw_value"/> tempos</span>
+                            </div>
+                            <div t-if="record.trimester_id.raw_value" class="small text-muted"><field name="trimester_id"/></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <field name="teacher_id" widget="many2one_avatar_employee" options="{'no_create': True}"/>
+                                <span t-if="record.teacher_id.raw_value" class="small text-truncate" t-out="record.teacher_id.value"/>
+                                <span t-else="" class="small text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Por atribuir</span>
+                            </div>
+                            <div t-if="record.teacher_id.raw_value" class="o_edu_assign_notes">
+                                <span t-att-class="{'text-danger fw-semibold': record.teacher_load_over.raw_value}">
+                                    Carga: <t t-out="record.teacher_load_label.raw_value"/>
+                                </span>
+                                <span t-if="!record.qualified.raw_value" class="text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Não habilitado(a)</span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_timetable.action_edu_teaching_assignment" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list</field>
+    </record>
 </odoo>

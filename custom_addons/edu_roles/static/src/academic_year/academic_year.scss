@@ -623,3 +623,34 @@
         font-size: 0.8125rem;
     }
 }
+
+// Professores por disciplina em cartões, uma coluna por turma: os por atribuir com a margem do aviso.
+.o_edu_assign_kanban {
+    .o_kanban_group {
+        min-width: 300px;
+    }
+
+    .o_edu_assign_card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 2px;
+    }
+
+    .o_edu_assign_missing {
+        box-shadow: inset 4px 0 0 $warning;
+        padding-left: 10px;
+    }
+
+    .o_edu_assign_subject {
+        font-weight: 600;
+    }
+
+    .o_edu_assign_notes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 12px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+    }
+}
