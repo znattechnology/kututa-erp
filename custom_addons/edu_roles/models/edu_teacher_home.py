@@ -587,6 +587,7 @@ class EduTeacherHome(models.AbstractModel):
             'has_employee': bool(employee),
             'has_payroll': 'l10n_ao_payroll.payslip' in self.env,
             'payslips': [],
+            'year_totals': None,
             'time_off': None,
         }
         if not employee:
@@ -608,9 +609,27 @@ class EduTeacherHome(models.AbstractModel):
                     'gross': format_amount(self.env, slip.gross, slip.currency_id),
                     'deductions': format_amount(self.env, slip.deductions, slip.currency_id),
                     'net': format_amount(self.env, slip.net, slip.currency_id),
+                    # Os números, para o gráfico do líquido e a parte dos descontos em cada recibo.
+                    'year': slip.run_id.year,
+                    'month': int(slip.run_id.month or 0),
+                    'net_value': slip.net,
+                    'gross_value': slip.gross,
+                    'deductions_value': slip.deductions,
                 }
                 for slip in payslips
             ]
+            # O ano do último recibo: o bruto, os descontos e o líquido somados.
+            if payslips:
+                last_year = payslips[0].run_id.year
+                of_year = payslips.filtered(lambda slip: slip.run_id.year == last_year)
+                currency = payslips[0].currency_id
+                data['year_totals'] = {
+                    'year': last_year,
+                    'count': len(of_year),
+                    'gross': format_amount(self.env, sum(of_year.mapped('gross')), currency),
+                    'deductions': format_amount(self.env, sum(of_year.mapped('deductions')), currency),
+                    'net': format_amount(self.env, sum(of_year.mapped('net')), currency),
+                }
         group = self.env.ref('hr_holidays.group_hr_holidays_employee', raise_if_not_found=False)
         if 'hr.leave' in self.env and group and group in self.env.user.all_group_ids:
             today = fields.Date.context_today(self)

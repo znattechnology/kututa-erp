@@ -127,14 +127,44 @@
                         O seu utilizador ainda não está ligado a uma ficha de professor. Peça à secretaria para o associar.
                     </section>
                     <t t-else="">
+                        <!-- Os números: o último recibo e o ano; as férias, quando há acesso a elas -->
+                        <div t-if="d.payslips.length or d.time_off" class="o_edu_kpis o_edu_ta_kpis">
+                            <t t-if="d.payslips.length">
+                                <t t-set="last" t-value="d.payslips[0]"/>
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Último líquido</span>
+                                    <span class="o_edu_kpi_value o_edu_ta_money" t-out="last.net"/>
+                                    <span class="o_edu_kpi_detail" t-out="last.period"/>
+                                </div>
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Líquido em <t t-out="d.year_totals.year"/></span>
+                                    <span class="o_edu_kpi_value o_edu_ta_money" t-out="d.year_totals.net"/>
+                                    <span class="o_edu_kpi_detail" t-out="d.year_totals.count === 1 ? 'De um recibo' : 'De ' + d.year_totals.count + ' recibos'"/>
+                                </div>
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Bruto em <t t-out="d.year_totals.year"/></span>
+                                    <span class="o_edu_kpi_value o_edu_ta_money" t-out="d.year_totals.gross"/>
+                                    <span class="o_edu_kpi_detail">Descontos: <t t-out="d.year_totals.deductions"/></span>
+                                </div>
+                            </t>
+                            <div t-if="d.time_off" class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Férias e ausências</span>
+                                <span class="o_edu_kpi_value"><t t-out="this.leaveTotals.days"/><small class="fs-6 fw-normal text-muted"> dias</small></span>
+                                <span class="o_edu_kpi_detail" t-out="this.leaveTotals.pending ? this.leaveTotals.pending + ' por aprovar' : 'Aprovadas este ano'"/>
+                            </div>
+                        </div>
+
                         <section t-if="d.time_off" aria-labelledby="o_edu_ta_leaves" class="o_edu_ta_section">
                             <div class="o_edu_ta_row">
                                 <h2 id="o_edu_ta_leaves" class="o_edu_ta_h2 mb-0">Férias e ausências deste ano</h2>
-                                <button type="button" class="btn btn-primary" t-on-click="() => this.requestTimeOff()">Pedir férias ou ausência</button>
+                                <button type="button" class="btn btn-primary" t-on-click="() => this.requestTimeOff()">
+                                    <i class="oi me-1" data-icon="add" aria-hidden="true"/>Pedir férias ou ausência
+                                </button>
                             </div>
                             <p t-if="!d.time_off.length" class="o_edu_ta_card mb-0 text-muted">Ainda não pediu férias nem ausências este ano.</p>
                             <ul t-else="" class="o_edu_ta_card o_edu_ta_list">
                                 <li t-foreach="d.time_off" t-as="leave" t-key="leave.id">
+                                    <span class="o_edu_ta_icon" aria-hidden="true"><i class="oi" data-icon="calendar_today"/></span>
                                     <span class="flex-grow-1">
                                         <span class="d-block fw-semibold" t-out="leave.type"/>
                                         <span class="d-block small text-muted"><t t-out="leave.from"/><t t-if="leave.to !== leave.from"> a <t t-out="leave.to"/></t>, <t t-out="this.days(leave)"/></span>
@@ -144,23 +174,48 @@
                             </ul>
                         </section>
 
+                        <!-- O líquido mês a mês -->
+                        <section t-if="this.netCols.length > 1" class="o_edu_ta_card" aria-labelledby="o_edu_ta_net_chart">
+                            <h2 id="o_edu_ta_net_chart" class="o_edu_ta_h2 mb-0">O líquido mês a mês</h2>
+                            <div class="o_edu_cols o_edu_ta_cols" role="list">
+                                <div t-foreach="this.netCols" t-as="col" t-key="col.id" class="o_edu_col_slot" role="listitem" t-att-title="col.title">
+                                    <span class="o_edu_col" t-att-style="'height: ' + col.height + '%'"/>
+                                </div>
+                            </div>
+                            <div class="o_edu_cols_labels o_edu_ta_cols_labels">
+                                <span t-foreach="this.netCols" t-as="col" t-key="col.id" t-out="col.label"/>
+                            </div>
+                        </section>
+
                         <section aria-labelledby="o_edu_ta_slips" class="o_edu_ta_section">
                             <h2 id="o_edu_ta_slips" class="o_edu_ta_h2 mb-0">Recibos de vencimento</h2>
-                            <p t-if="!d.has_payroll" class="o_edu_ta_card mb-0 text-muted">O processamento salarial não está activo nesta escola.</p>
-                            <p t-elif="!d.payslips.length" class="o_edu_ta_card mb-0 text-muted">
-                                Ainda não há recibos fechados. Aparecem aqui quando os Recursos Humanos fecham a folha do mês.
-                            </p>
+                            <div t-if="!d.has_payroll or !d.payslips.length" class="o_edu_ta_card o_edu_ta_empty">
+                                <span class="o_edu_ta_icon" aria-hidden="true"><i class="oi" data-icon="receipt_long"/></span>
+                                <p class="mb-0 text-muted">
+                                    <t t-if="!d.has_payroll">O processamento salarial não está activo nesta escola: os recibos entregam-se em papel.</t>
+                                    <t t-else="">Ainda não há recibos fechados. Cada recibo aparece aqui quando os Recursos Humanos fecham a folha do mês, para ver e descarregar em PDF.</t>
+                                </p>
+                            </div>
                             <ul t-else="" class="o_edu_ta_card o_edu_ta_list">
                                 <li t-foreach="d.payslips" t-as="slip" t-key="slip.id">
-                                    <span class="flex-grow-1">
-                                        <span class="d-block fw-semibold"><t t-out="slip.period"/><t t-if="slip.final"> · contas finais</t></span>
-                                        <span class="d-block small text-muted">Bruto <t t-out="slip.gross"/>, descontos <t t-out="slip.deductions"/><t t-if="slip.number"> · n.º <t t-out="slip.number"/></t></span>
+                                    <span class="flex-grow-1 min-w-0">
+                                        <span class="d-block fw-semibold"><t t-out="slip.period"/><span t-if="slip.final" class="badge text-bg-light ms-2">Contas finais</span></span>
+                                        <span class="d-block small text-muted">Bruto <t t-out="slip.gross"/>, descontos <t t-out="slip.deductions"/><t t-if="slip.number">, n.º <t t-out="slip.number"/></t></span>
+                                        <span class="o_edu_ta_split" t-att-title="'Descontos: ' + this.deductionShare(slip) + '% do bruto'" aria-hidden="true">
+                                            <span class="o_edu_ta_split_net" t-att-style="'flex-grow: ' + slip.net_value"/>
+                                            <span class="o_edu_ta_split_ded" t-att-style="'flex-grow: ' + slip.deductions_value"/>
+                                        </span>
                                     </span>
                                     <span class="o_edu_ta_net" t-out="slip.net"/>
-                                    <button type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openPayslip(slip, true)">Ver</button>
-                                    <button type="button" class="btn btn-sm btn-secondary" title="O recibo em PDF" t-on-click="() => this.openPayslip(slip, false)">PDF</button>
+                                    <button type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.openPayslip(slip, true)">
+                                        <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>Ver
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-secondary" title="O recibo em PDF" t-on-click="() => this.openPayslip(slip, false)">
+                                        <i class="oi me-1" data-icon="print" aria-hidden="true"/>PDF
+                                    </button>
                                 </li>
                             </ul>
+                            <p t-if="d.payslips.length" class="mb-0 small text-muted">A barra de cada recibo mostra o líquido (azul) e os descontos (cinzento) sobre o bruto.</p>
                         </section>
                     </t>
                 </div>

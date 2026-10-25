@@ -202,4 +202,43 @@
         color: $primary;
         font-size: 1.1rem;
     }
+
+    // Recibos e férias: o valor em dinheiro mais pequeno que um número, o gráfico do líquido e a barra de cada recibo.
+    .o_edu_ta_money {
+        font-size: 1.15rem;
+        overflow-wrap: anywhere;
+    }
+
+    .o_edu_ta_cols {
+        height: 120px;
+        gap: 8px;
+    }
+
+    .o_edu_ta_cols_labels {
+        gap: 8px;
+    }
+
+    .o_edu_ta_split {
+        display: flex;
+        gap: 2px;
+        max-width: 280px;
+        height: 6px;
+        margin-top: 6px;
+        overflow: hidden;
+        border-radius: 3px;
+    }
+
+    .o_edu_ta_split_net {
+        background: var(--edu-chart-series);
+    }
+
+    .o_edu_ta_split_ded {
+        background: $gray-400;
+    }
+
+    .o_edu_ta_empty {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 }

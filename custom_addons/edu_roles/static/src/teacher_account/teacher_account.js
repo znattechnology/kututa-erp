@@ -120,6 +120,32 @@ export class TeacherPayslipsPage extends Component {
         return this.action.doAction(action, { onClose: () => this.load() });
     }
 
+    /** O líquido dos últimos 12 recibos normais (sem as contas finais), do mais antigo ao mais recente. */
+    get netCols() {
+        const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const slips = this.state.data.payslips.filter((slip) => !slip.final).slice(0, 12).reverse();
+        const max = Math.max(...slips.map((slip) => slip.net_value), 0);
+        return slips.map((slip) => ({
+            id: slip.id,
+            label: slip.month ? MONTHS[slip.month - 1] : "",
+            title: `${slip.period}: ${slip.net}`,
+            height: max ? Math.max(2, (100 * slip.net_value) / max) : 0,
+        }));
+    }
+
+    deductionShare(slip) {
+        return slip.gross_value ? Math.round((100 * slip.deductions_value) / slip.gross_value) : 0;
+    }
+
+    /** Os dias aprovados este ano e os pedidos por aprovar. */
+    get leaveTotals() {
+        const leaves = this.state.data.time_off || [];
+        return {
+            days: leaves.filter((l) => l.state === "validate").reduce((sum, l) => sum + l.days, 0).toLocaleString("pt-PT"),
+            pending: leaves.filter((l) => ["confirm", "validate1"].includes(l.state)).length,
+        };
+    }
+
     leaveClass(leave) {
         return (
             { validate: "text-bg-success", confirm: "text-bg-warning", validate1: "text-bg-warning", refuse: "text-bg-danger" }[
