@@ -627,16 +627,34 @@
                             <span class="badge" t-att-class="this.stateClass(p)" t-out="p.state_label"/>
                         </div>
                         <div class="o_edu_st_card_body">
-                            <p class="fs-6" t-out="p.sentence"/>
-                            <dl class="o_edu_st_fields o_edu_st_fields_grid">
-                                <div><dt>Orientador</dt><dd><t t-if="p.advisor" t-out="p.advisor"/><span t-else="" class="text-muted">Por atribuir</span></dd></div>
-                                <div><dt>Júri</dt><dd><t t-if="p.jury" t-out="p.jury"/><span t-else="" class="text-muted">Por nomear</span></dd></div>
-                                <div><dt>Entregue em</dt><dd><t t-if="p.submitted" t-out="p.submitted"/><span t-else="" class="text-muted">Por entregar</span></dd></div>
-                                <div><dt>Defesa</dt><dd><t t-if="p.defense" t-out="p.defense"/><span t-else="" class="text-muted">Por marcar</span></dd></div>
-                                <div>
-                                    <dt>Nota</dt>
-                                    <dd><span t-if="p.grade" class="fw-semibold" t-att-class="p.grade.pos ? 'text-primary' : 'text-danger'" t-out="p.grade.text"/><span t-else="" class="text-muted">Por lançar</span></dd>
+                            <t t-set="steps" t-value="p.steps"/>
+                            <t t-call="edu_portal.Part.TrainingSteps"/>
+                            <p class="fs-6 mt-3" t-out="p.sentence"/>
+                            <div class="o_edu_kpis o_edu_st_training_kpis">
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Orientador(a)</span>
+                                    <span class="o_edu_kpi_value o_edu_kpi_money" t-out="p.advisor or '—'"/>
+                                    <span class="o_edu_kpi_detail" t-out="p.advisor ? 'Acompanha o trabalho' : 'Por atribuir'"/>
                                 </div>
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Defesa</span>
+                                    <span class="o_edu_kpi_value o_edu_kpi_money" t-out="p.defense ? p.defense.split(' de ').slice(0, 2).join(' de ') : '—'"/>
+                                    <span class="o_edu_kpi_detail" t-att-class="{'text-primary fw-semibold': this.defenseSoon(p)}" t-out="this.defenseText(p)"/>
+                                </div>
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Nota final</span>
+                                    <span class="o_edu_kpi_value" t-att-class="p.grade ? (p.grade.pos ? 'text-primary' : 'text-danger') : ''" t-out="p.grade ? p.grade.text : '—'"/>
+                                    <span class="o_edu_kpi_detail" t-out="p.grade ? 'valores' : 'Por lançar'"/>
+                                </div>
+                                <div class="o_edu_kpi">
+                                    <span class="o_edu_kpi_label">Júri</span>
+                                    <span class="o_edu_kpi_value" t-out="p.jury_count or '—'"/>
+                                    <span class="o_edu_kpi_detail text-truncate" t-out="p.jury or 'Por nomear'"/>
+                                </div>
+                            </div>
+                            <dl class="o_edu_st_fields o_edu_st_fields_grid mt-3">
+                                <div><dt>Entregue em</dt><dd><t t-if="p.submitted" t-out="p.submitted"/><span t-else="" class="text-muted">Por entregar</span></dd></div>
+                                <div><dt>Data da defesa</dt><dd><t t-if="p.defense" t-out="p.defense"/><span t-else="" class="text-muted">Por marcar</span></dd></div>
                             </dl>
                             <div t-if="p.description" class="mt-3">
                                 <h3 class="small text-muted mb-1">Resumo do trabalho</h3>

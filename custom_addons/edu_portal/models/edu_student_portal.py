@@ -1502,9 +1502,32 @@ class EduStudentPortal(models.AbstractModel):
                     'defense': defense,
                     'grade': grade,
                     'description': project.description or '',
+                    # Para quanto falta para a defesa, e para as etapas.
+                    'defense_iso': fields.Date.to_string(project.defense_date) if project.defense_date else '',
+                    'jury_count': len(project.jury_ids),
+                    'steps': self._project_steps(project),
                 }
             )
         return rows
+
+    @api.model
+    def _project_steps(self, project):
+        """As etapas da PAP: proposto, em elaboração, entregue, defendido e o resultado (aprovado ou reprovado)."""
+        order = ['proposed', 'ongoing', 'submitted', 'defended', 'result']
+        current = 'result' if project.state in ('passed', 'failed') else project.state
+        position = order.index(current) if current in order else 0
+        result_label = {'passed': 'Aprovado', 'failed': 'Reprovado'}.get(project.state, 'Resultado')
+        labels = ['Proposto', 'Em elaboração', 'Entregue', 'Defendido', result_label]
+        return [
+            {
+                'key': key,
+                'label': label,
+                'done': index < position or (key == 'result' and project.state in ('passed', 'failed')),
+                'current': index == position,
+                'bad': key == 'result' and project.state == 'failed',
+            }
+            for index, (key, label) in enumerate(zip(order, labels, strict=True))
+        ]
 
     # Perfil
 

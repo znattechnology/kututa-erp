@@ -692,6 +692,34 @@ export class StudentProject extends StudentPage {
     static template = "edu_portal.StudentProject";
     static page = "project";
 
+    /** Os dias até à defesa (negativo depois dela). */
+    defenseDays(project) {
+        if (!project.defense_iso) {
+            return null;
+        }
+        const [y, m, d] = project.defense_iso.split("-").map((part) => parseInt(part, 10));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return Math.round((new Date(y, m - 1, d) - today) / 86400000);
+    }
+
+    defenseSoon(project) {
+        const days = this.defenseDays(project);
+        return days !== null && days >= 0 && days <= 7 && !["defended", "passed", "failed"].includes(project.state);
+    }
+
+    /** «Daqui a 12 dias», «Amanhã», «Hoje», «Já defendida» ou «Por marcar». */
+    defenseText(project) {
+        const days = this.defenseDays(project);
+        if (days === null) {
+            return "Por marcar";
+        }
+        if (days < 0 || ["defended", "passed", "failed"].includes(project.state)) {
+            return "Já defendida";
+        }
+        return days === 0 ? "Hoje" : days === 1 ? "Amanhã" : `Daqui a ${days} dias`;
+    }
+
     stateClass(record) {
         return TRAINING_STATE_CLASS[record.state] || "text-bg-light";
     }

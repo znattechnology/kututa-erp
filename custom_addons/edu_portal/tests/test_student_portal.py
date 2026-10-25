@@ -340,6 +340,11 @@ class TestStudentPortal(HttpCase):
         projects = Portal.page_data('project')['projects']
         self.assertEqual(projects[0]['title'], 'Higiene hospitalar')
         self.assertIn('ainda não tens orientador', projects[0]['sentence'])
+        self.assertEqual(
+            [st['label'] for st in projects[0]['steps']],
+            ['Proposto', 'Em elaboração', 'Entregue', 'Defendido', 'Resultado'],
+        )
+        self.assertTrue(projects[0]['steps'][0]['current'])
         menus = self.env['ir.ui.menu'].with_user(self.ana_user)._load_menus_blacklist()
         self.assertNotIn(self.env.ref('edu_portal.menu_student_training').id, menus)
 
