@@ -271,6 +271,7 @@
                                 <button t-if="k.director.partner_id" type="button" class="btn btn-primary" t-on-click="() => this.writeTo(k.director)">
                                     <i class="oi me-1" data-icon="forum" aria-hidden="true"/>Escrever
                                 </button>
+                                <span t-else="" class="small text-muted" title="Sem conta no sistema, não recebe mensagens. Fala com a secretaria.">Sem conta no sistema</span>
                             </div>
                             <p t-else="" class="o_edu_st_card mb-0 text-muted">A <t t-out="k.class"/> ainda não tem director de turma.</p>
 
@@ -288,6 +289,7 @@
                                         </div>
                                     </div>
                                     <t t-foreach="this.otherTeachers(s)" t-as="p" t-key="p_index">
+                                        <span t-if="!p.partner_id" class="o_edu_gd_noaccount" t-att-title="p.name + ' não tem conta no sistema: não recebe mensagens.'">Sem conta</span>
                                         <button t-if="p.partner_id" type="button" class="btn btn-light btn-sm o_edu_gd_write"
                                                 t-att-title="'Escrever a ' + p.name" t-att-aria-label="'Escrever a ' + p.name" t-on-click="() => this.writeTo(p)">
                                             <i class="oi" data-icon="forum" aria-hidden="true"/>
@@ -295,7 +297,9 @@
                                     </t>
                                 </li>
                             </ul>
-                            <p class="mb-0 small text-muted">As conversas ficam em Mensagens. Para outros assuntos, a secretaria também responde lá.</p>
+                            <p class="mb-0 small text-muted">
+                                As conversas ficam em Mensagens. Só se escreve a quem tem conta no sistema; para falar com os outros professores, ou para outros assuntos, escreve à secretaria.
+                            </p>
                         </section>
                     </t>
                 </div>
@@ -370,7 +374,7 @@
                             <select t-if="r.trimesters.length" class="form-select w-auto" aria-label="Trimestre" t-on-change="(ev) => this.selectTrimester(ev)">
                                 <option t-foreach="r.trimesters" t-as="t" t-key="t.id" t-att-value="t.id" t-att-selected="t.id === r.trimester_id" t-out="t.name"/>
                             </select>
-                            <button t-if="r.rdec_id and r.state !== 'todo'" type="button" class="btn btn-secondary" t-on-click="() => this.openReport()"
+                            <button t-if="r.rdec_id" type="button" class="btn btn-secondary" t-on-click="() => this.openReport()"
                                     title="O RDEC da escola em folha A4, na aplicação">
                                 <i class="oi me-1" data-icon="print" aria-hidden="true"/>Ver RDEC
                             </button>
@@ -388,12 +392,13 @@
                             O RDEC de <t t-out="d.child.first_name"/> está bloqueado porque há propinas em atraso. Volta a ver-se quando as propinas vencidas forem pagas.
                             <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.openFor('edu_portal.action_guardian_fees')">Ver as propinas</button>
                         </section>
-                        <section t-elif="!r.rdec_id or r.state === 'todo'" class="o_edu_st_card text-muted">
+                        <section t-elif="!r.rdec_id" class="o_edu_st_card text-muted">
                             <t t-if="r.director"><t t-out="r.director"/> ainda não começou</t><t t-else="">O educador ainda não começou</t> o relatório do <t t-out="r.trimester"/>. Aparece aqui à medida que for preenchido.
                         </section>
                         <t t-else="">
                             <p class="mb-0">
-                                <t t-if="r.state === 'done'">O relatório do <t t-out="r.trimester"/> está completo.</t>
+                                <t t-if="r.state === 'todo'"><t t-if="r.director"><t t-out="r.director"/> ainda não começou</t><t t-else="">O educador ainda não começou</t> o relatório do <t t-out="r.trimester"/>: as áreas aparecem avaliadas à medida que for preenchido.</t>
+                                <t t-elif="r.state === 'done'">O relatório do <t t-out="r.trimester"/> está completo.</t>
                                 <t t-else="">O relatório do <t t-out="r.trimester"/> está a ser preenchido: <t t-out="r.done"/> de <t t-out="r.total"/> áreas avaliadas.</t>
                                 <span class="text-muted"> <t t-out="r.absences_unjustified + r.absences_justified === 0 ? 'Sem faltas no trimestre.' : 'No trimestre: ' + this.count(r.absences_justified, '1 falta justificada', 'faltas justificadas') + ' e ' + this.count(r.absences_unjustified, '1 injustificada', 'injustificadas') + '.'"/></span>
                             </p>

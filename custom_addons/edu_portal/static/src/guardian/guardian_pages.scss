@@ -178,4 +178,10 @@
     .o_edu_gd_write {
         flex: none;
     }
+
+    .o_edu_gd_noaccount {
+        flex: none;
+        color: $text-muted;
+        font-size: 0.75rem;
+    }
 }
