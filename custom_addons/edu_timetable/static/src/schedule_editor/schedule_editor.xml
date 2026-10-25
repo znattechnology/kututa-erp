@@ -14,20 +14,6 @@
                                     t-att-class="this.state.mode === 'teacher' ? 'btn-primary' : 'btn-secondary'"
                                     t-on-click="() => this.setMode('teacher')">Por professor</button>
                         </div>
-                        <select t-if="this.state.mode === 'class'" class="form-select" aria-label="Turma"
-                                t-on-change="(ev) => this.onClassChange(ev)">
-                            <option value="">Escolher a turma…</option>
-                            <t t-foreach="this.state.options.classes" t-as="c" t-key="c.id">
-                                <option t-att-value="c.id" t-att-selected="c.id === this.state.classId" t-out="c.name"/>
-                            </t>
-                        </select>
-                        <select t-else="" class="form-select" aria-label="Professor"
-                                t-on-change="(ev) => this.onTeacherChange(ev)">
-                            <option value="">Escolher o professor…</option>
-                            <t t-foreach="this.state.options.teachers" t-as="p" t-key="p.id">
-                                <option t-att-value="p.id" t-att-selected="p.id === this.state.teacherId" t-out="p.name"/>
-                            </t>
-                        </select>
                         <select t-if="this.state.options.trimesters.length" class="form-select" aria-label="Período"
                                 t-on-change="(ev) => this.onTrimesterChange(ev)">
                             <option value="">Ano todo</option>
@@ -48,9 +34,42 @@
                         </button>
                     </div>
 
+                    <div class="o_edu_se_layout">
+                    <aside class="o_edu_se_panel" t-ref="this.panel" t-att-aria-label="this.state.mode === 'class' ? 'Turmas' : 'Professores'">
+                        <input type="search" class="form-control form-control-sm o_edu_se_panel_search"
+                               t-att-placeholder="this.state.mode === 'class' ? 'Procurar a turma…' : 'Procurar o professor…'"
+                               t-att-aria-label="this.state.mode === 'class' ? 'Procurar a turma' : 'Procurar o professor'"
+                               t-att-value="this.state.filter" t-on-input="(ev) => this.state.filter = ev.target.value"/>
+                        <t t-if="this.state.mode === 'class'">
+                            <p t-if="!this.classGroups.length" class="text-muted small">Nenhuma turma.</p>
+                            <section t-foreach="this.classGroups" t-as="group" t-key="group.course">
+                                <h6 class="o_edu_se_panel_head" t-out="group.course"/>
+                                <button t-foreach="group.classes" t-as="c" t-key="c.id" type="button" class="o_edu_se_panel_item"
+                                        t-att-class="{ o_active: c.id === this.state.classId }" t-att-aria-pressed="c.id === this.state.classId"
+                                        t-on-click="() => this.selectClass(c.id)">
+                                    <span class="text-truncate" t-out="c.name"/>
+                                    <span t-if="c.planned" class="badge" t-att-class="this.progressClass(c)"
+                                          t-att-title="c.placed + ' de ' + c.planned + ' tempos por semana colocados'"
+                                          t-out="c.placed + '/' + c.planned"/>
+                                </button>
+                            </section>
+                        </t>
+                        <t t-else="">
+                            <p t-if="!this.teachers.length" class="text-muted small">Nenhum professor.</p>
+                            <button t-foreach="this.teachers" t-as="p" t-key="p.id" type="button" class="o_edu_se_panel_item"
+                                    t-att-class="{ o_active: p.id === this.state.teacherId }" t-att-aria-pressed="p.id === this.state.teacherId"
+                                    t-on-click="() => this.selectTeacher(p.id)">
+                                <span class="text-truncate" t-out="p.name"/>
+                                <span class="small text-nowrap" t-att-class="p.load > p.load_max ? 'text-danger' : 'text-muted'"
+                                      t-att-title="p.load + ' de ' + p.load_max + ' tempos semanais'"
+                                      t-out="p.load + '/' + p.load_max"/>
+                            </button>
+                        </t>
+                    </aside>
+                    <div class="o_edu_se_content">
                     <t t-if="!this.state.data">
-                        <p class="o_edu_se_empty" t-if="this.state.mode === 'class'">Escolha a turma cujo horário quer montar.</p>
-                        <p class="o_edu_se_empty" t-else="">Escolha um professor para ver as aulas dele em todas as turmas.</p>
+                        <p class="o_edu_se_empty" t-if="this.state.mode === 'class'">Escolha à esquerda a turma cujo horário quer montar. O número ao lado é o dos tempos por semana já colocados face ao plano.</p>
+                        <p class="o_edu_se_empty" t-else="">Escolha à esquerda um professor para ver as aulas dele em todas as turmas.</p>
                     </t>
 
                     <t t-elif="this.state.mode === 'class'">
@@ -72,7 +91,8 @@
                             <span t-if="summary.extra.length" class="text-warning"> Acima do plano: <t t-out="summary.extra.join(', ')"/>.</span>
                             <span t-if="summary.withoutTeacher" class="text-muted">
                                 <t t-out="summary.withoutTeacher === 1 ? ' Uma disciplina sem professor' : ' ' + summary.withoutTeacher + ' disciplinas sem professor'"/>:
-                                as aulas ficam sem professor até à colocação.</span>
+                                as aulas ficam sem professor até à colocação
+                                (<a href="#" t-on-click.prevent="() => this.openAssignments()">atribuir</a>).</span>
                         </p>
 
                         <div class="o_edu_se_main">
@@ -82,7 +102,7 @@
                                     <t t-foreach="this.subjects" t-as="subject" t-key="subject.id">
                                         <li>
                                             <button type="button" class="o_edu_se_subject" draggable="true"
-                                                    t-att-class="{ o_selected: subject.id === this.state.selectedSubjectId }"
+                                                    t-att-class="this.subjectColor(subject.id) + (subject.id === this.state.selectedSubjectId ? ' o_selected' : '')"
                                                     t-att-aria-pressed="subject.id === this.state.selectedSubjectId"
                                                     t-on-click="() => this.toggleSubject(subject)"
                                                     t-on-dragstart="(ev) => this.onDragSubject(ev, subject)"
@@ -123,6 +143,8 @@
                             <t t-call="edu_timetable.ScheduleEditorGrid"/>
                         </div>
                     </t>
+                    </div>
+                    </div>
                 </div>
             </Layout>
         </div>
@@ -143,7 +165,7 @@
                 <tr t-foreach="this.rows" t-as="row" t-key="row.from + '-' + row.to">
                     <th class="o_edu_se_hour" t-out="row.label"/>
                     <t t-foreach="row.cells" t-as="cell" t-key="cell.key">
-                        <td t-if="cell.lesson" class="o_edu_se_lesson">
+                        <td t-if="cell.lesson" class="o_edu_se_lesson" t-att-class="this.subjectColor(cell.lesson.subject_id)">
                             <div t-if="cell.first" t-att-draggable="this.state.mode === 'class' ? 'true' : 'false'"
                                  t-att-class="{ o_dragging: this.state.drag and this.state.drag.lessonId === cell.lesson.id }"
                                  t-on-dragstart="(ev) => this.onDragLesson(ev, cell.lesson)"

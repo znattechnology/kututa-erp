@@ -7,6 +7,80 @@ $o-edu-se-head: #969696;
         padding: 16px 24px 32px;
     }
 
+    // O painel das turmas (ou dos professores) à esquerda, como o painel de pesquisa das listas.
+    .o_edu_se_layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .o_edu_se_panel {
+        position: sticky;
+        top: 0;
+        flex: 0 0 200px;
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .o_edu_se_panel_search {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        margin-bottom: 8px;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_se_panel_head {
+        margin: 12px 0 4px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: $o-gray-700;
+    }
+
+    .o_edu_se_panel_item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        padding: 4px 8px;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        text-align: left;
+
+        &:hover {
+            background: $o-gray-100;
+        }
+
+        &.o_active {
+            background: rgba($o-action, 0.12);
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_se_content {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    // Uma cor por disciplina: uma barra à esquerda na lista e na grelha, sem encher a célula (a grelha continua a
+    // ler-se como a pauta impressa).
+    @each $index, $color in (
+            0: #4e79a7, 1: #f28e2b, 2: #59a14f, 3: #e15759, 4: #76b7b2, 5: #b07aa1,
+            6: #edc948, 7: #9c755f, 8: #ff9da7, 9: #86bcb6, 10: #8cd17d, 11: #a0cbe8
+        ) {
+        .o_edu_se_c#{$index} {
+            --o-edu-se-color: #{$color};
+        }
+    }
+
+    .o_edu_se_subject,
+    .o_edu_se_lesson {
+        box-shadow: inset 4px 0 0 var(--o-edu-se-color, transparent);
+    }
+
     .o_edu_se_toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -39,7 +113,7 @@ $o-edu-se-head: #969696;
     .o_edu_se_subjects {
         position: sticky;
         top: 0;
-        flex: 0 0 272px;
+        flex: 0 0 240px;
         max-height: calc(100vh - 160px);
         overflow-y: auto;
 
@@ -63,7 +137,7 @@ $o-edu-se-head: #969696;
 
         &.o_selected {
             border-color: $o-black;
-            box-shadow: inset 0 0 0 1px $o-black;
+            box-shadow: inset 4px 0 0 var(--o-edu-se-color, transparent), inset 0 0 0 1px $o-black;
         }
     }
 

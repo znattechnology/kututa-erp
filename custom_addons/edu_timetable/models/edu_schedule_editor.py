@@ -31,10 +31,24 @@ class EduSchedule(models.Model):
             .sudo()
             .search([('edu_is_teacher', '=', True), ('company_id', 'in', self.env.companies.ids)], order='name')
         )
+        progress = self._editor_progress(classes) if year else {}
         return {
             'year': year.name if year else False,
-            'classes': [{'id': c.id, 'name': c._editor_label()} for c in classes],
-            'teachers': [{'id': t.id, 'name': t.name} for t in teachers],
+            'classes': [
+                {
+                    'id': c.id,
+                    'name': c._editor_label(),
+                    'course': c.course_id.name or False,
+                    **progress.get(c.id, {'placed': 0, 'planned': 0}),
+                }
+                for c in classes.sorted(lambda c: (c.course_id.name or '', c.class_number, c.name or ''))
+            ]
+            if year
+            else [],
+            'teachers': [
+                {'id': t.id, 'name': t.name, 'load': t.edu_weekly_load, 'load_max': t.edu_weekly_load_max}
+                for t in teachers
+            ],
             'trimesters': [{'id': t.id, 'name': t.name} for t in year.trimester_ids] if year else [],
             # O horário impresso é do edu_documents (pode não estar instalado).
             'can_print': hasattr(self.env['edu.class'], 'action_print_schedule'),
@@ -143,6 +157,28 @@ class EduSchedule(models.Model):
         return {'id': self.id, 'warning': self._editor_load_warning()}
 
     # Auxiliares
+
+    @api.model
+    def _editor_progress(self, classes):
+        """Por turma, os tempos colocados (no ano todo) face ao plano: o painel diz que horários faltam acabar."""
+        placed = {
+            (edu_class.id, subject.id): count
+            for edu_class, subject, count in self._read_group(
+                [('class_id', 'in', classes.ids), ('trimester_id', '=', False)],
+                ['class_id', 'subject_id'],
+                ['__count'],
+            )
+        }
+        progress = {}
+        for edu_class in classes:
+            lines = edu_class.subject_line_ids.filtered('weekly_hours')
+            progress[edu_class.id] = {
+                'planned': sum(lines.mapped('weekly_hours')),
+                'placed': sum(
+                    min(placed.get((edu_class.id, line.subject_id.id), 0), line.weekly_hours) for line in lines
+                ),
+            }
+        return progress
 
     @api.model
     def _editor_scope(self, lessons, trimester_id):

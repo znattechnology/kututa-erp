@@ -1,4 +1,4 @@
-import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
+import { Component, onMounted, onWillStart, proxy, signal, useProps } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
@@ -37,6 +37,7 @@ export class ScheduleEditor extends Component {
     static components = { Layout };
 
     props = useProps(standardActionServiceProps);
+    panel = signal.ref();
 
     setup() {
         this.orm = useService("orm");
@@ -55,6 +56,16 @@ export class ScheduleEditor extends Component {
             drag: null,
             dropTarget: null,
             busy: false,
+            // A pesquisa do painel da esquerda (turma ou professor).
+            filter: "",
+        });
+        // A turma aberta (a última usada) à vista no painel, mesmo que esteja lá em baixo.
+        onMounted(() => {
+            const panel = this.panel();
+            const active = panel?.querySelector(".o_active");
+            if (active) {
+                panel.scrollTop = active.offsetTop - panel.clientHeight / 2;
+            }
         });
         onWillStart(async () => {
             this.state.options = await this.orm.call("edu.schedule", "editor_options", []);
@@ -90,21 +101,72 @@ export class ScheduleEditor extends Component {
     async setMode(mode) {
         this.state.mode = mode;
         this.state.selectedSubjectId = false;
-        await this.load();
-    }
-
-    async onClassChange(ev) {
-        this.state.classId = parseInt(ev.target.value, 10) || false;
-        this.state.selectedSubjectId = false;
-        if (this.state.classId) {
-            remember(this.state.classId);
+        this.state.filter = "";
+        if (this.panel()) {
+            this.panel().scrollTop = 0;
         }
         await this.load();
     }
 
-    async onTeacherChange(ev) {
-        this.state.teacherId = parseInt(ev.target.value, 10) || false;
+    async selectClass(classId) {
+        this.state.classId = classId;
+        this.state.selectedSubjectId = false;
+        remember(classId);
         await this.load();
+    }
+
+    async selectTeacher(teacherId) {
+        this.state.teacherId = teacherId;
+        await this.load();
+    }
+
+    // Painel da esquerda
+
+    matches(name) {
+        const filter = this.state.filter.trim().toLowerCase();
+        return !filter || name.toLowerCase().includes(filter);
+    }
+
+    /** As turmas por curso, com os tempos colocados face ao plano. */
+    get classGroups() {
+        const groups = [];
+        for (const c of this.state.options.classes) {
+            if (!this.matches(`${c.name} ${c.course || ""}`)) {
+                continue;
+            }
+            const course = c.course || "Sem curso";
+            let group = groups.find((g) => g.course === course);
+            if (!group) {
+                group = { course, classes: [] };
+                groups.push(group);
+            }
+            group.classes.push(c);
+        }
+        return groups;
+    }
+
+    get teachers() {
+        return this.state.options.teachers.filter((t) => this.matches(t.name));
+    }
+
+    progressClass(c) {
+        if (!c.planned) {
+            return "text-muted";
+        }
+        return c.placed >= c.planned ? "text-bg-success" : c.placed ? "text-bg-warning" : "text-bg-light";
+    }
+
+    /** A cor da disciplina: na turma, pela ordem da lista (cores diferentes até 12 disciplinas); no horário do
+     * professor, pela disciplina. */
+    subjectColor(subjectId) {
+        const index = this.subjects.findIndex((s) => s.id === subjectId);
+        return `o_edu_se_c${(index >= 0 ? index : subjectId) % 12}`;
+    }
+
+    async openAssignments() {
+        await this.action.doAction("edu_timetable.action_edu_teaching_assignment", {
+            additionalContext: { searchpanel_default_class_id: this.state.classId },
+        });
     }
 
     async onTrimesterChange(ev) {
@@ -310,7 +372,9 @@ export class ScheduleEditor extends Component {
             this.notification.add(error.data?.message || error.message, { type: "danger" });
         } finally {
             this.state.busy = false;
-            await this.load();
+            // As contagens do painel (turma completa, carga dos professores) mudam com cada aula.
+            const [options] = await Promise.all([this.orm.call("edu.schedule", "editor_options", []), this.load()]);
+            this.state.options = options;
         }
     }
 }
