@@ -223,4 +223,152 @@
         flex-direction: column;
         gap: 8px;
     }
+
+    // Orientações: os números, os cartões (um por estágio e por PAP) e as etapas em pequeno.
+    .o_edu_tr_kpis {
+        margin-bottom: 4px;
+
+        .o_edu_kpi:hover {
+            border-color: $border-color;
+        }
+    }
+
+    .o_edu_tr_kpi_text {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_tr_cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_tr_ocard {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        height: 100%;
+        padding: 14px 18px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+        color: inherit;
+        text-align: start;
+
+        &:hover {
+            border-color: $o-action;
+        }
+    }
+
+    .o_edu_tr_ocard_head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+
+        > .badge {
+            flex: none;
+        }
+    }
+
+    .o_edu_tr_ocard_facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+
+        .fw-semibold {
+            color: $body-color;
+        }
+    }
+
+    .o_edu_tr_when {
+        padding: 0 8px;
+        border-radius: 999px;
+        background: rgba($o-action, 0.12);
+        color: $o-action;
+        font-weight: 600;
+    }
+
+    .o_edu_tr_steps {
+        display: flex;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_tr_step {
+        position: relative;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        color: $text-muted;
+        font-size: 0.7rem;
+        text-align: center;
+    }
+
+    .o_edu_tr_step + .o_edu_tr_step::before {
+        content: "";
+        position: absolute;
+        top: 9px;
+        right: calc(50% + 11px);
+        left: calc(-50% + 11px);
+        border-top: 2px solid $border-color;
+    }
+
+    .o_edu_tr_step + .o_edu_tr_step_done::before,
+    .o_edu_tr_step + .o_edu_tr_step_current::before {
+        border-top-color: $o-action;
+    }
+
+    .o_edu_tr_step_dot {
+        display: grid;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        border: 2px solid $border-color;
+        border-radius: 50%;
+        background: $o-view-background-color;
+        color: #fff;
+        font-size: 0.75rem;
+    }
+
+    .o_edu_tr_step_done {
+        color: $body-color;
+
+        .o_edu_tr_step_dot {
+            border-color: $o-action;
+            background: $o-action;
+        }
+    }
+
+    .o_edu_tr_step_current {
+        color: $body-color;
+        font-weight: 600;
+
+        .o_edu_tr_step_dot {
+            border-color: $o-action;
+            box-shadow: 0 0 0 3px rgba($o-action, 0.15);
+        }
+    }
+
+    .o_edu_tr_step_bad .o_edu_tr_step_dot {
+        border-color: $danger;
+        background: $danger;
+    }
+
+    .o_edu_tr_step_label {
+        max-width: 100%;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
 }

@@ -233,6 +233,78 @@ export class TrainingPage extends Component {
         this.state.yearId = parseInt(ev.target.value, 10) || "";
     }
 
+    // Orientações: as etapas de cada estágio e de cada PAP, os números e quanto falta para a defesa.
+
+    /** As etapas, como nas páginas do aluno: as feitas com o visto, a actual destacada, o resultado no fim. */
+    orientSteps(row, kind) {
+        const order = kind === "project" ? ["proposed", "ongoing", "submitted", "defended", "result"] : ["planned", "ongoing", "result"];
+        const labels =
+            kind === "project"
+                ? ["Proposto", "Em elaboração", "Entregue", "Defendido", { passed: "Aprovado", failed: "Reprovado" }[row.state] || "Resultado"]
+                : ["Por começar", "A decorrer", { passed: "Aprovado", failed: "Não aprovado" }[row.state] || "Resultado"];
+        const closed = ["passed", "failed"].includes(row.state);
+        const position = Math.max(0, order.indexOf(closed ? "result" : row.state));
+        return order.map((key, index) => ({
+            key,
+            label: labels[index],
+            done: index < position || (key === "result" && closed),
+            current: index === position && !closed,
+            bad: key === "result" && row.state === "failed",
+        }));
+    }
+
+    /** Os dias de hoje até uma data ISO (negativo se já passou). */
+    daysTo(iso) {
+        const [y, m, d] = iso.split("-").map(Number);
+        const now = new Date();
+        return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+    }
+
+    defenseWhen(row) {
+        if (!row.defense_iso) {
+            return "";
+        }
+        const days = this.daysTo(row.defense_iso);
+        if (days < 0) {
+            return "";
+        }
+        if (days <= 1) {
+            return days === 0 ? "Hoje" : "Amanhã";
+        }
+        return days < 21 ? `Daqui a ${days} dias` : `Daqui a ${Math.round(days / 7)} semanas`;
+    }
+
+    /** O tempo decorrido de um estágio (sem datas, nada). */
+    internshipProgress(row) {
+        if (!row.start_iso || !row.end_iso) {
+            return null;
+        }
+        const total = this.daysTo(row.end_iso) - this.daysTo(row.start_iso);
+        if (total <= 0) {
+            return null;
+        }
+        const elapsed = Math.min(Math.max(-this.daysTo(row.start_iso), 0), total);
+        return Math.round((100 * elapsed) / total);
+    }
+
+    get orientKpis() {
+        const both = this.state.both;
+        const open = (rows) => rows.filter((r) => !["passed", "failed", "cancelled"].includes(r.state)).length;
+        const graded = [...both.internship, ...both.project].filter((r) => r.grade !== null && r.grade !== undefined);
+        const next = both.project
+            .filter((r) => r.defense_iso && this.daysTo(r.defense_iso) >= 0 && !["passed", "failed"].includes(r.state))
+            .sort((a, b) => a.defense_iso.localeCompare(b.defense_iso))[0];
+        return {
+            internships: open(both.internship),
+            internshipsTotal: both.internship.length,
+            projects: open(both.project),
+            projectsTotal: both.project.length,
+            next,
+            graded: graded.length,
+            average: graded.length ? graded.reduce((sum, r) => sum + r.grade, 0) / graded.length : null,
+        };
+    }
+
     stateClass(state) {
         return (
             {

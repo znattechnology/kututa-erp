@@ -423,57 +423,104 @@
         </div>
     </t>
 
+    <!-- «Orientações» do professor: os números, depois um cartão por estágio e por PAP, com as etapas. -->
     <t t-name="edu_records.TrainingPage.Orientations">
+        <t t-set="k" t-value="this.orientKpis"/>
+        <div t-if="k.internshipsTotal or k.projectsTotal" class="o_edu_kpis o_edu_tr_kpis">
+            <div class="o_edu_kpi">
+                <span class="o_edu_kpi_label">Estágios a acompanhar</span>
+                <span class="o_edu_kpi_value"><t t-out="k.internships"/><small class="fs-6 fw-normal text-muted"> de <t t-out="k.internshipsTotal"/></small></span>
+                <span class="o_edu_kpi_detail">Por começar ou a decorrer</span>
+            </div>
+            <div class="o_edu_kpi">
+                <span class="o_edu_kpi_label">PAP a orientar</span>
+                <span class="o_edu_kpi_value"><t t-out="k.projects"/><small class="fs-6 fw-normal text-muted"> de <t t-out="k.projectsTotal"/></small></span>
+                <span class="o_edu_kpi_detail">Ainda sem nota final</span>
+            </div>
+            <div class="o_edu_kpi">
+                <span class="o_edu_kpi_label">Próxima defesa</span>
+                <t t-if="k.next">
+                    <span class="o_edu_tr_kpi_text text-truncate w-100" t-out="k.next.student"/>
+                    <span class="o_edu_kpi_detail"><t t-out="this.defenseWhen(k.next)"/>, <t t-out="k.next.defense"/></span>
+                </t>
+                <t t-else=""><span class="o_edu_kpi_value">—</span><span class="o_edu_kpi_detail">Nenhuma marcada</span></t>
+            </div>
+            <div class="o_edu_kpi">
+                <span class="o_edu_kpi_label">Média das notas</span>
+                <span class="o_edu_kpi_value" t-out="k.average !== null ? this.fmtGrade(Math.round(k.average * 10) / 10) : '—'"/>
+                <span class="o_edu_kpi_detail" t-out="k.graded === 1 ? 'De uma nota dada' : k.graded ? 'De ' + k.graded + ' notas dadas' : 'Ainda sem notas'"/>
+            </div>
+        </div>
+
         <section class="o_edu_tr_orient" aria-labelledby="o_edu_tr_orient_internships">
             <h3 id="o_edu_tr_orient_internships" class="o_edu_tr_h3" t-out="this.state.isStaff ? 'Estágios' : 'Estágios de que é tutor'"/>
             <p t-if="!this.state.both.internship.length" class="o_edu_tr_card mb-0 text-muted p-3">
                 Não é tutor de nenhum estágio. Os tutores são escolhidos pelos Serviços Académicos.
             </p>
-            <div t-else="" class="o_edu_tr_card table-responsive">
-                <table class="table table-sm table-hover o_edu_tr_table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Aluno</th><th>Entidade</th><th>Período</th>
-                            <th class="text-end">Horas</th><th class="text-end">Nota</th><th>Situação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr t-foreach="this.state.both.internship" t-as="r" t-key="r.id" class="o_edu_tr_row" t-on-click="() => this.open(r, 'internship')">
-                            <td><div class="fw-semibold" t-out="r.student"/><div class="small text-muted" t-out="r.class"/></td>
-                            <td><t t-if="r.entity" t-out="r.entity"/><span t-else="" class="text-muted">Por definir</span><div t-if="r.supervisor" class="small text-muted" t-out="r.supervisor"/></td>
-                            <td class="text-nowrap">
-                                <t t-if="r.start or r.end"><t t-out="r.start or '?'"/> a <t t-out="r.end or '?'"/></t>
-                                <span t-else="" class="text-muted">—</span>
-                            </td>
-                            <td class="text-end tabular-nums" t-out="r.hours"/>
-                            <td class="text-end" t-out="this.fmtGrade(r.grade)"/>
-                            <td><span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <ul t-else="" class="o_edu_tr_cards">
+                <li t-foreach="this.state.both.internship" t-as="r" t-key="r.id">
+                    <button type="button" class="o_edu_tr_ocard" t-on-click="() => this.open(r, 'internship')">
+                        <span class="o_edu_tr_ocard_head">
+                            <span class="min-w-0">
+                                <span class="d-block fw-semibold text-truncate" t-out="r.student"/>
+                                <span class="d-block small text-muted text-truncate" t-out="r.class"/>
+                            </span>
+                            <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
+                        </span>
+                        <t t-set="steps" t-value="this.orientSteps(r, 'internship')"/>
+                        <t t-call="edu_records.TrainingPage.Steps"/>
+                        <span class="o_edu_tr_ocard_facts">
+                            <span><i class="oi me-1" data-icon="location_on" aria-hidden="true"/><t t-if="r.entity" t-out="r.entity"/><t t-else="">Entidade por definir</t></span>
+                            <span t-if="r.start or r.end"><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/><t t-out="r.start or '?'"/> a <t t-out="r.end or '?'"/></span>
+                            <span><i class="oi me-1" data-icon="schedule" aria-hidden="true"/><t t-out="r.hours"/> horas</span>
+                            <span t-if="r.grade !== null and r.grade !== undefined" class="fw-semibold">Nota <t t-out="this.fmtGrade(r.grade)"/></span>
+                        </span>
+                        <t t-set="pct" t-value="r.state === 'ongoing' ? this.internshipProgress(r) : null"/>
+                        <span t-if="pct !== null" class="o_edu_meter w-100" t-att-title="pct + '% do período'"><span t-att-style="'width: ' + pct + '%'"/></span>
+                    </button>
+                </li>
+            </ul>
         </section>
         <section class="o_edu_tr_orient" aria-labelledby="o_edu_tr_orient_projects">
             <h3 id="o_edu_tr_orient_projects" class="o_edu_tr_h3" t-out="this.state.isStaff ? 'PAP' : 'PAP que orienta ou de que é júri'"/>
             <p t-if="!this.state.both.project.length" class="o_edu_tr_card mb-0 text-muted p-3">
                 Não é orientador nem júri de nenhuma PAP. Os orientadores são escolhidos pelos Serviços Académicos.
             </p>
-            <div t-else="" class="o_edu_tr_card table-responsive">
-                <table class="table table-sm table-hover o_edu_tr_table mb-0">
-                    <thead>
-                        <tr><th>Trabalho</th><th>Aluno</th><th>Defesa</th><th class="text-end">Nota</th><th>Situação</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr t-foreach="this.state.both.project" t-as="r" t-key="r.id" class="o_edu_tr_row" t-on-click="() => this.open(r, 'project')">
-                            <td><div class="fw-semibold" t-out="r.title"/><div class="small text-muted" t-out="r.course"/></td>
-                            <td><div t-out="r.student"/><div class="small text-muted" t-out="r.class"/></td>
-                            <td class="text-nowrap"><t t-if="r.defense" t-out="r.defense"/><span t-else="" class="text-muted">Por marcar</span></td>
-                            <td class="text-end" t-out="this.fmtGrade(r.grade)"/>
-                            <td><span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <ul t-else="" class="o_edu_tr_cards">
+                <li t-foreach="this.state.both.project" t-as="r" t-key="r.id">
+                    <button type="button" class="o_edu_tr_ocard" t-on-click="() => this.open(r, 'project')">
+                        <span class="o_edu_tr_ocard_head">
+                            <span class="min-w-0">
+                                <span class="d-block fw-semibold" t-out="r.title"/>
+                                <span class="d-block small text-muted text-truncate"><t t-out="r.student"/>, <t t-out="r.class"/></span>
+                            </span>
+                            <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
+                        </span>
+                        <t t-set="steps" t-value="this.orientSteps(r, 'project')"/>
+                        <t t-call="edu_records.TrainingPage.Steps"/>
+                        <span class="o_edu_tr_ocard_facts">
+                            <span><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/>Defesa <t t-if="r.defense" t-out="r.defense"/><t t-else="">por marcar</t></span>
+                            <span t-if="this.defenseWhen(r) and !['passed', 'failed'].includes(r.state)" class="o_edu_tr_when" t-out="this.defenseWhen(r)"/>
+                            <span t-if="r.grade !== null and r.grade !== undefined" class="fw-semibold">Nota <t t-out="this.fmtGrade(r.grade)"/></span>
+                        </span>
+                    </button>
+                </li>
+            </ul>
         </section>
+    </t>
+
+    <!-- As etapas de um estágio ou de uma PAP. Usa ``steps``. -->
+    <t t-name="edu_records.TrainingPage.Steps">
+        <ol class="o_edu_tr_steps" aria-label="Etapas">
+            <li t-foreach="steps" t-as="step" t-key="step.key" class="o_edu_tr_step"
+                t-att-class="{'o_edu_tr_step_done': step.done, 'o_edu_tr_step_current': step.current, 'o_edu_tr_step_bad': step.bad}"
+                t-att-aria-current="step.current ? 'step' : undefined">
+                <span class="o_edu_tr_step_dot" aria-hidden="true">
+                    <i t-if="step.done and !step.bad" class="oi" data-icon="check"/>
+                    <i t-elif="step.bad" class="oi" data-icon="close"/>
+                </span>
+                <span class="o_edu_tr_step_label" t-out="step.label"/>
+            </li>
+        </ol>
     </t>
 </templates>

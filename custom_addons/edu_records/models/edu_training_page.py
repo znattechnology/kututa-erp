@@ -100,6 +100,8 @@ class EduTrainingPage(models.AbstractModel):
                     'tutor': staff.tutor_id.name or '',
                     'start': _fmt(record.date_start),
                     'end': _fmt(record.date_end),
+                    'start_iso': fields.Date.to_string(record.date_start) if record.date_start else '',
+                    'end_iso': fields.Date.to_string(record.date_end) if record.date_end else '',
                     'hours': record.hours,
                 }
             )
@@ -110,6 +112,7 @@ class EduTrainingPage(models.AbstractModel):
                     'course': staff.course_id.name or '',
                     'advisor': staff.advisor_id.name or '',
                     'defense': _fmt(record.defense_date),
+                    'defense_iso': fields.Date.to_string(record.defense_date) if record.defense_date else '',
                 }
             )
         return row
