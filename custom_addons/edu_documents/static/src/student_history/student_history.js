@@ -1,27 +1,68 @@
-import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
+import { Component, onWillStart, onWillUnmount, proxy, useProps } from "@odoo/owl";
+import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { StudentPicker } from "../student_picker/student_picker";
+
+const LAST_CLASS_KEY = "edu_documents.student_history.class";
+
+function remembered() {
+    try {
+        return parseInt(window.localStorage.getItem(LAST_CLASS_KEY), 10) || false;
+    } catch {
+        return false;
+    }
+}
+
+function remember(classId) {
+    try {
+        window.localStorage.setItem(LAST_CLASS_KEY, String(classId || ""));
+    } catch {
+        // Sem armazenamento: fica só nesta visita.
+    }
+}
 
 /**
- * «Histórico do aluno», como a página do secPed-Express: escolhe-se o aluno (pela turma ou pelo nome) e vê-se o
- * percurso na escola, um ano lectivo por linha, do primeiro ao último: a turma, a média final, a assiduidade e o
- * resultado do conselho; o ano em curso e as saídas também. Daqui imprime-se o termo de cada ano e o do curso.
+ * «Histórico do aluno», como a página do secPed-Express, no formato da mini-pauta: à esquerda o ano lectivo, as
+ * turmas (por curso) e os alunos da turma, ou a pesquisa pelo nome; à direita o percurso do aluno na escola, um ano
+ * lectivo por linha, do primeiro ao último: a turma, a média final, a assiduidade e o resultado do conselho; o ano em
+ * curso e as saídas também. Daqui imprime-se o termo de cada ano e o do curso (com pré-visualização).
  */
 export class StudentHistory extends Component {
     static template = "edu_documents.StudentHistory";
-    static components = { Layout, StudentPicker };
+    static components = { Layout };
 
     props = useProps(standardActionServiceProps);
 
     setup() {
         this.orm = useService("orm");
         this.action = useService("action");
+        this.dialog = useService("dialog");
         this.notification = useService("notification");
-        this.state = proxy({ studentId: false, data: null, busy: false, editing: null, status: "", reason: "" });
+        this.state = proxy({
+            // O painel: o ano, as turmas, a turma escolhida e os seus alunos, ou a pesquisa pelo nome.
+            yearId: false,
+            years: [],
+            classes: [],
+            classId: false,
+            students: [],
+            filter: "",
+            query: "",
+            results: [],
+            searching: false,
+            // O aluno à vista.
+            studentId: false,
+            data: null,
+            busy: false,
+            editing: null,
+            status: "",
+            reason: "",
+        });
+        this.searchTimer = null;
+        onWillUnmount(() => clearTimeout(this.searchTimer));
         onWillStart(async () => {
+            await this.loadYear(false, remembered());
             const studentId = (this.props.action.context || {}).default_student_id;
             if (studentId) {
                 await this.load(studentId);
@@ -33,8 +74,100 @@ export class StudentHistory extends Component {
         return { controlPanel: {} };
     }
 
+    // Painel
+
+    async loadYear(yearId, classId = false) {
+        const options = await this.orm.call("edu.student.picker", "picker_options", [yearId]);
+        Object.assign(this.state, {
+            yearId: options.year_id,
+            years: options.years,
+            classes: options.classes,
+            classId: false,
+            students: [],
+            results: [],
+            query: "",
+        });
+        if (classId && options.classes.some((c) => c.id === classId)) {
+            await this.selectClass(classId);
+        }
+    }
+
+    async onYearChange(ev) {
+        await this.loadYear(parseInt(ev.target.value, 10) || false);
+    }
+
+    get selectedClass() {
+        return this.state.classes.find((c) => c.id === this.state.classId);
+    }
+
+    /** As turmas por curso, filtradas pela pesquisa da turma. */
+    get classGroups() {
+        const filter = this.state.filter.trim().toLowerCase();
+        const groups = [];
+        for (const c of this.state.classes) {
+            if (filter && !`${c.name} ${c.course || ""}`.toLowerCase().includes(filter)) {
+                continue;
+            }
+            const course = c.course || "Sem curso";
+            let group = groups.find((g) => g.course === course);
+            if (!group) {
+                group = { course, classes: [] };
+                groups.push(group);
+            }
+            group.classes.push(c);
+        }
+        return groups;
+    }
+
+    async selectClass(classId) {
+        this.state.classId = classId;
+        this.state.filter = "";
+        remember(classId);
+        this.state.students = await this.orm.call("edu.student.picker", "class_students", [classId]);
+    }
+
+    backToClasses() {
+        this.state.classId = false;
+        this.state.students = [];
+        remember(false);
+    }
+
+    get searchMode() {
+        return this.state.query.trim().length >= 2;
+    }
+
+    onQuery(ev) {
+        this.state.query = ev.target.value;
+        clearTimeout(this.searchTimer);
+        this.searchTimer = setTimeout(() => this.search(), 300);
+    }
+
+    async search() {
+        const query = this.state.query.trim();
+        if (query.length < 2) {
+            this.state.results = [];
+            return;
+        }
+        // Uma resposta antiga (lenta) não se sobrepõe à da pesquisa mais recente.
+        const request = (this.searchRequest = (this.searchRequest || 0) + 1);
+        this.state.searching = true;
+        try {
+            const results = await this.orm.call("edu.student.picker", "search_students", [this.state.yearId, query]);
+            if (request === this.searchRequest) {
+                this.state.results = results;
+            }
+        } finally {
+            if (request === this.searchRequest) {
+                this.state.searching = false;
+            }
+        }
+    }
+
+    // Aluno
+
     async load(studentId) {
         this.state.studentId = studentId;
+        this.state.editing = null;
         this.state.data = await this.orm.call("edu.history.page", "student_history", [studentId]);
     }
 
@@ -42,10 +175,17 @@ export class StudentHistory extends Component {
         return this.load(row.student_id);
     }
 
-    otherStudent() {
-        this.state.studentId = false;
-        this.state.data = null;
-        this.state.editing = null;
+    /** Os números do percurso: anos na escola, média dos anos com média e os resultados. */
+    get stats() {
+        const rows = this.state.data ? this.state.data.rows : [];
+        const averages = rows.map((r) => r.average).filter((a) => a !== null && a !== undefined);
+        const count = (tones) => rows.filter((r) => r.year_result_id && tones.includes(r.tone)).length;
+        return {
+            years: new Set(rows.map((r) => r.year)).size,
+            average: averages.length ? averages.reduce((a, b) => a + b, 0) / averages.length : null,
+            passed: count(["pos"]),
+            failed: count(["neg"]),
+        };
     }
 
     // Decisão da direcção
@@ -96,18 +236,28 @@ export class StudentHistory extends Component {
         }
     }
 
-    async resetDecision(row) {
-        if (this.state.busy || !window.confirm("Voltar à decisão automática (a das regras, com as notas do ano)?")) {
+    resetDecision(row) {
+        if (this.state.busy) {
             return;
         }
-        this.state.busy = true;
-        try {
-            this.state.data = await this.orm.call("edu.history.page", "reset_decision", [row.year_result_id]);
-            this.notification.add("Decisão automática reposta.", { type: "success" });
-        } finally {
-            this.state.busy = false;
-        }
+        this.dialog.add(ConfirmationDialog, {
+            title: "Voltar à decisão automática",
+            body: `A decisão de ${row.year} volta a ser a das regras, com as notas do ano.`,
+            confirmLabel: "Voltar à automática",
+            confirm: async () => {
+                this.state.busy = true;
+                try {
+                    this.state.data = await this.orm.call("edu.history.page", "reset_decision", [row.year_result_id]);
+                    this.notification.add("Decisão automática reposta.", { type: "success" });
+                } finally {
+                    this.state.busy = false;
+                }
+            },
+            cancel: () => {},
+        });
     }
+
+    // Apresentação
 
     fmtAverage(value) {
         return value === null || value === undefined ? "—" : String(Math.round(value * 10) / 10).replace(".", ",");
@@ -121,18 +271,20 @@ export class StudentHistory extends Component {
         if (value === null || value === undefined) {
             return "text-muted";
         }
-        return value >= 10 ? "text-primary" : "text-danger";
+        return value >= 10 ? "text-success" : "text-danger";
     }
 
-    toneClass(tone) {
+    badgeClass(tone) {
         return {
-            pos: "text-primary",
-            neg: "text-danger",
-            warn: "text-warning",
-            current: "fw-semibold",
-            muted: "text-muted",
+            pos: "text-bg-success",
+            neg: "text-bg-danger",
+            warn: "text-bg-warning",
+            current: "text-bg-info",
+            muted: "text-bg-light",
         }[tone];
     }
+
+    // Impressão
 
     async run(method, args) {
         if (this.state.busy) {

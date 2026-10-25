@@ -1,32 +1,108 @@
-// Histórico do aluno: a página do secPed-Express (escolher o aluno e o percurso, um ano por linha).
+// Histórico do aluno: as turmas e os alunos à esquerda (como na mini-pauta) e o percurso, um ano por linha.
 .o_edu_student_history {
     .o_edu_sh_body {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        max-width: 1040px;
-        margin: 0 auto;
-        padding: 24px 16px 32px;
+        padding: 16px 24px 24px;
     }
 
-    .o_edu_sh_lead {
-        max-width: 72ch;
-        margin: 0;
+    .o_edu_sh_layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 24px;
+    }
+
+    // Painel
+
+    .o_edu_sh_panel {
+        position: sticky;
+        top: 0;
+        flex: 0 0 240px;
+        max-height: calc(100vh - 110px);
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .o_edu_sh_panel_top {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-bottom: 4px;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_sh_panel_head {
+        margin: 12px 0 4px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: $o-gray-700;
+    }
+
+    .o_edu_sh_item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 4px 8px;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        text-align: left;
+
+        &:hover {
+            background: $o-gray-100;
+        }
+
+        &.o_active {
+            background: rgba($o-action, 0.12);
+            font-weight: 600;
+        }
+
+        &.o_gone {
+            color: $text-muted;
+        }
+    }
+
+    .o_edu_sh_item_text {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .o_edu_sh_num {
+        flex: 0 0 2ch;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+
+    // Aluno
+
+    .o_edu_sh_main {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 1100px;
+    }
+
+    .o_edu_sh_empty {
+        max-width: 64ch;
+        padding: 24px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
         color: $text-muted;
     }
 
     .o_edu_sh_card {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        padding: 20px;
+        padding: 16px 20px;
         border: 1px solid $border-color;
         border-radius: $border-radius-lg;
         background: $o-view-background-color;
     }
 
-    .o_edu_sh_student,
-    .o_edu_sh_head {
+    .o_edu_sh_student {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -39,12 +115,129 @@
         font-weight: 600;
     }
 
-    .o_edu_sh_table {
-        font-variant-numeric: tabular-nums;
+    .o_edu_sh_buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 
-        th,
-        td {
-            vertical-align: middle;
+    .o_edu_sh_stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .o_edu_sh_stat {
+        display: flex;
+        flex-direction: column;
+        padding: 12px 16px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_sh_stat_value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_sh_stat_label {
+        color: $text-muted;
+        font-size: 0.8125rem;
+    }
+
+    .o_edu_sh_summary {
+        margin: 12px 0;
+        color: $o-gray-700;
+    }
+
+    // Percurso: um ano por linha, com a barra lateral da cor do resultado.
+
+    .o_edu_sh_years {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_sh_year {
+        padding: 12px 16px;
+        border: 1px solid $border-color;
+        border-left: 4px solid $o-gray-300;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+
+        &.o_edu_sh_tone_pos {
+            border-left-color: $success;
+        }
+
+        &.o_edu_sh_tone_neg {
+            border-left-color: $danger;
+        }
+
+        &.o_edu_sh_tone_warn {
+            border-left-color: $warning;
+        }
+
+        &.o_edu_sh_tone_current {
+            border-left-color: $info;
+            background: rgba($info, 0.04);
+        }
+    }
+
+    // Colunas fixas, para os anos ficarem alinhados uns por baixo dos outros.
+    .o_edu_sh_year_main {
+        display: grid;
+        grid-template-columns: 96px minmax(160px, 1fr) 84px 84px minmax(160px, 220px) minmax(130px, auto);
+        align-items: center;
+        gap: 8px 16px;
+    }
+
+    .o_edu_sh_no_attendance .o_edu_sh_year_main {
+        grid-template-columns: 96px minmax(160px, 1fr) 84px minmax(160px, 220px) minmax(130px, auto);
+    }
+
+    .o_edu_sh_year_label {
+        display: flex;
+        flex-direction: column;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_sh_year_class {
+        min-width: 0;
+    }
+
+    .o_edu_sh_metric {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .o_edu_sh_metric_value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_sh_metric_label {
+        color: $text-muted;
+        font-size: 0.75rem;
+    }
+
+    .o_edu_sh_result {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+
+        .badge {
+            white-space: normal;
+            text-align: left;
         }
     }
 
@@ -55,19 +248,42 @@
         gap: 4px;
     }
 
-    .o_edu_sh_decision td {
-        background: $o-gray-100;
+    .o_edu_sh_note {
+        margin: 8px 0 0;
+        color: $text-muted;
+        font-size: 0.8125rem;
     }
 
-    .o_edu_sh_decision_form {
+    .o_edu_sh_decision {
         display: flex;
         flex-direction: column;
         gap: 8px;
         max-width: 560px;
-        padding: 8px 4px;
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: $border-radius;
+        background: $o-gray-100;
     }
 
-    .o_edu_sh_current td {
-        background: rgba($info, 0.06);
+    @media (max-width: 767.98px) {
+        .o_edu_sh_body {
+            padding: 12px 16px;
+        }
+
+        .o_edu_sh_layout {
+            flex-direction: column;
+        }
+
+        .o_edu_sh_year_main,
+        .o_edu_sh_no_attendance .o_edu_sh_year_main {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .o_edu_sh_panel {
+            position: static;
+            flex: none;
+            width: 100%;
+            max-height: 320px;
+        }
     }
 }
