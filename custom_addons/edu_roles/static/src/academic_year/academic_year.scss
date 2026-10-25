@@ -807,3 +807,26 @@
         opacity: 0.6;
     }
 }
+
+// A nova matrícula: os três passos com o número num círculo.
+.o_edu_new_enroll {
+    .o_edu_new_step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 20px 0 4px;
+        font-size: 1rem;
+        font-weight: 600;
+
+        > span {
+            display: inline-grid;
+            place-items: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: $o-action;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+    }
+}

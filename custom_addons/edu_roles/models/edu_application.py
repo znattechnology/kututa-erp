@@ -21,3 +21,8 @@ class EduEnrollment(models.Model):
 
     # O nome do aluno sem o n.º de matrícula à frente (o cartão mostra o número à parte).
     edu_student_name = fields.Char(related='student_id.name', string='Aluno (nome)')
+    # A turma escolhida na nova matrícula: os alunos, as vagas e o turno, à vista enquanto se escolhe.
+    edu_class_students = fields.Integer(related='class_id.student_count', string='Alunos na turma')
+    edu_class_capacity = fields.Integer(related='class_id.capacity', string='Vagas da turma')
+    edu_class_seats = fields.Integer(related='class_id.seats_available', string='Vagas livres')
+    edu_class_shift = fields.Char(related='class_id.shift_id.name', string='Turno')

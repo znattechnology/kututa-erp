@@ -62,4 +62,104 @@
     <record id="edu_enrollment.action_edu_enrollment" model="ir.actions.act_window">
         <field name="view_mode">kanban,list,form</field>
     </record>
+
+    <!-- A nova matrícula em três passos: o aluno (escolhe-se ou cria-se aqui), a turma (com os alunos, as vagas e o
+         turno à vista) e a matrícula (o tipo, a data e o motivo se for fora de prazo). Ao guardar juntam-se as
+         disciplinas do plano e os documentos a entregar; depois confirma-se. -->
+    <record id="edu_enrollment_new_form" model="ir.ui.view">
+        <field name="name">edu.enrollment.form.new</field>
+        <field name="model">edu.enrollment</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <form string="Nova matrícula">
+                <header>
+                    <button name="action_confirm" type="object" string="Confirmar a matrícula" class="btn-primary"
+                            invisible="not id or state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active" invisible="not id"/>
+                </header>
+                <sheet class="o_edu_new_enroll">
+                    <div class="alert alert-warning" role="alert" invisible="not warning"><field name="warning" nolabel="1"/></div>
+                    <div class="oe_title">
+                        <h1 invisible="id">Nova matrícula</h1>
+                        <h1 invisible="not id"><field name="display_name" readonly="1"/></h1>
+                        <p class="text-muted mb-0" invisible="id">Escolha o aluno e a turma. Ao guardar juntam-se as disciplinas do plano e os documentos a entregar.</p>
+                    </div>
+
+                    <h3 class="o_edu_new_step"><span>1</span>O aluno</h3>
+                    <group>
+                        <group>
+                            <field name="student_id" readonly="state != 'draft'" options="{'no_quick_create': True}"
+                                   placeholder="Procure pelo nome, n.º de matrícula ou BI; se for novo, «Criar e editar»"/>
+                        </group>
+                        <group>
+                            <field name="matricula_number" invisible="not student_id"/>
+                        </group>
+                    </group>
+
+                    <h3 class="o_edu_new_step"><span>2</span>A turma</h3>
+                    <group>
+                        <group>
+                            <field name="class_id" readonly="state != 'draft'" options="{'no_create': True}"
+                                   domain="[('academic_year_id.is_current', '=', True)]"
+                                   placeholder="A turma do ano lectivo em curso"/>
+                        </group>
+                        <group invisible="not class_id">
+                            <label for="edu_class_students" string="Alunos"/>
+                            <div>
+                                <field name="edu_class_students" class="d-inline"/> de <field name="edu_class_capacity" class="d-inline"/>
+                                <span class="ms-2" invisible="edu_class_seats &lt;= 0">
+                                    (<field name="edu_class_seats" class="d-inline"/> vagas livres)
+                                </span>
+                                <span class="ms-2 text-danger fw-semibold" invisible="edu_class_seats &gt; 0">Sem vagas livres</span>
+                            </div>
+                            <field name="edu_class_shift" invisible="not edu_class_shift"/>
+                        </group>
+                    </group>
+
+                    <h3 class="o_edu_new_step"><span>3</span>A matrícula</h3>
+                    <group>
+                        <group>
+                            <field name="enrollment_type" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="late_reason" invisible="enrollment_type not in ('new', 'transfer_in')"
+                                   readonly="state != 'draft'" placeholder="Só se a matrícula for fora do prazo"/>
+                            <field name="order_number" invisible="not order_number"/>
+                        </group>
+                    </group>
+
+                    <notebook invisible="not id">
+                        <page string="Documentos a entregar" name="documents" invisible="not document_ids">
+                            <field name="document_ids">
+                                <list editable="bottom" create="false" delete="false" decoration-muted="delivered">
+                                    <field name="type_id" readonly="1"/>
+                                    <field name="delivered"/>
+                                    <field name="delivered_date"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Disciplinas" name="subjects">
+                            <field name="subject_ids" readonly="state != 'draft'">
+                                <list>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="component"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                    <field name="company_id" invisible="1"/>
+                    <field name="academic_year_id" invisible="1"/>
+                    <field name="edu_class_seats" invisible="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edu_enrollment_new" model="ir.actions.act_window">
+        <field name="view_id" ref="edu_enrollment_new_form"/>
+    </record>
 </odoo>
