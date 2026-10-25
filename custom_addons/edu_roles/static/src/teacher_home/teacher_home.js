@@ -68,6 +68,111 @@ export class TeacherHome extends Component {
         return db.expected ? Math.round((100 * db.graded) / db.expected) : 0;
     }
 
+    /**
+     * O que pede atenção, antes de tudo (como nos painéis do aluno e do encarregado): as aulas por registar, os alunos
+     * no limite de faltas, as notas em falta com os dias até ao fim do trimestre e a vigilância de hoje ou amanhã.
+     */
+    get warnings() {
+        const d = this.state.data;
+        const db = d.dashboard;
+        const plural = (n, one, many) => (n === 1 ? one : `${n} ${many}`);
+        const items = [];
+        if (db.pending_lessons) {
+            items.push({
+                key: "lessons",
+                icon: "fact_check",
+                text: `${plural(db.pending_lessons, "Uma aula dada", "aulas dadas")} sem chamada ou sumário`,
+                action: "edu_roles.action_teacher_attendance",
+                bad: db.pending_lessons > 3,
+            });
+        }
+        if (db.failed || db.at_risk) {
+            const parts = [];
+            if (db.failed) {
+                parts.push(`${plural(db.failed, "um aluno passou", "alunos passaram")} o limite de faltas`);
+            }
+            if (db.at_risk) {
+                parts.push(`${plural(db.at_risk, "um está", "estão")} a uma falta dele`);
+            }
+            const text = parts.join(" e ");
+            items.push({
+                key: "absences",
+                icon: "person_off",
+                text: text[0].toUpperCase() + text.slice(1),
+                action: "edu_roles.action_teacher_absence_report",
+                bad: Boolean(db.failed),
+            });
+        }
+        const missing = db.expected - db.graded;
+        if (db.expected && missing > 0 && db.trimester_days !== null && db.trimester_days <= 21) {
+            const left = db.trimester_days <= 0 ? "o trimestre acaba hoje" : `faltam ${plural(db.trimester_days, "um dia", "dias")} para o fim do ${db.trimester}`;
+            items.push({
+                key: "grades",
+                icon: "edit_document",
+                text: `${plural(missing, "Uma classificação", "classificações")} por lançar: ${left}`,
+                action: "edu_evaluation.action_edu_grade_grid",
+                bad: db.trimester_days <= 7,
+            });
+        }
+        const soon = d.supervisions.find((s) => s.days <= 1);
+        if (soon) {
+            items.push({
+                key: "supervision",
+                icon: "visibility",
+                text: [`Vigilância ${soon.days <= 0 ? "hoje" : "amanhã"}: ${soon.subject}`, soon.hours, soon.rooms]
+                    .filter(Boolean)
+                    .join(", "),
+                action: "edu_roles.action_teacher_supervisions",
+            });
+        }
+        return items;
+    }
+
+    get shortcuts() {
+        return [
+            { action: "edu_roles.action_teacher_schedule", icon: "calendar_today", label: "Meu horário" },
+            { action: "edu_roles.action_teacher_attendance", icon: "fact_check", label: "Presenças" },
+            { action: "edu_roles.action_teacher_absence_report", icon: "check_circle", label: "Relatório de faltas" },
+            { action: "edu_evaluation.action_edu_grade_grid", icon: "edit_document", label: "Lançar notas" },
+            { action: "mail.action_discuss", icon: "forum", label: "Mensagens" },
+            { action: "edu_roles.action_teacher_profile_page", icon: "person", label: "Meu perfil" },
+        ];
+    }
+
+    /** Quanto falta para uma vigilância. */
+    whenLabel(days) {
+        return days <= 0 ? "Hoje" : days === 1 ? "Amanhã" : `Daqui a ${days} dias`;
+    }
+
+    /** «Agora» na aula a decorrer e «A seguir» na próxima de hoje (pela hora do browser). */
+    get lessonTags() {
+        const d = this.state.data;
+        const tags = {};
+        if (d.lessons_day) {
+            return tags;
+        }
+        const now = new Date();
+        const minutes = now.getHours() * 60 + now.getMinutes();
+        const toMin = (text) => {
+            const [h, m] = text.split(":").map(Number);
+            return h * 60 + m;
+        };
+        let next = null;
+        for (const l of d.lessons) {
+            const [from, to] = l.hours.split("–").map(toMin);
+            const key = l.schedule_id + "-" + l.date;
+            if (minutes >= from && minutes < to) {
+                tags[key] = "now";
+            } else if (from > minutes && !next) {
+                next = key;
+            }
+        }
+        if (next) {
+            tags[next] = "next";
+        }
+        return tags;
+    }
+
     stateLabel(lesson) {
         return { scheduled: "Por dar", done: "Dada", cancelled: "Não se realizou" }[lesson.state] || lesson.state;
     }

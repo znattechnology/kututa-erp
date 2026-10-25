@@ -21,6 +21,21 @@
                     <t t-else="">
                     <!-- Os números principais -->
                     <t t-set="db" t-value="d.dashboard"/>
+                    <!-- O que pede atenção, antes de tudo (como nos painéis do aluno e do encarregado) -->
+                    <t t-set="warnings" t-value="this.warnings"/>
+                    <section t-if="warnings.length" class="o_edu_th_card o_edu_th_attention" aria-labelledby="o_edu_th_attention">
+                        <h2 id="o_edu_th_attention" class="o_edu_th_h2 mb-1">O que pede atenção</h2>
+                        <ul class="o_edu_th_warnings">
+                            <li t-foreach="warnings" t-as="w" t-key="w.key">
+                                <button type="button" class="o_edu_th_warning" t-on-click="() => this.openAction(w.action)">
+                                    <span class="o_edu_th_icon" aria-hidden="true"><i class="oi" t-att-data-icon="w.icon"/></span>
+                                    <span class="flex-grow-1" t-att-class="{'text-danger': w.bad}" t-out="w.text"/>
+                                    <i class="oi text-muted" data-icon="chevron_right" aria-hidden="true"/>
+                                </button>
+                            </li>
+                        </ul>
+                    </section>
+                    <p t-else="" class="mb-0 text-muted"><i class="oi me-1 text-success" data-icon="check_circle" aria-hidden="true"/>Está tudo em dia: aulas registadas e nenhum aluno no limite de faltas.</p>
                     <div class="o_edu_kpis">
                         <button type="button" class="o_edu_kpi" t-on-click="() => this.openAction('edu_roles.action_teacher_schedule')">
                             <span class="o_edu_kpi_label">Carga semanal</span>
@@ -67,14 +82,20 @@
                                     <t t-if="d.lessons_day">Próximas aulas: <t t-out="d.lessons_day"/></t>
                                     <t t-else="">Aulas de hoje</t>
                                 </h2>
+                                <t t-set="tags" t-value="this.lessonTags"/>
                                 <p t-if="!d.lessons.length" class="mb-0 text-muted">
                                     Não tem aulas no horário nas próximas duas semanas.
                                 </p>
                                 <ul t-else="" class="o_edu_th_list">
-                                    <li t-foreach="d.lessons" t-as="l" t-key="l.schedule_id + '-' + l.date">
+                                    <li t-foreach="d.lessons" t-as="l" t-key="l.schedule_id + '-' + l.date"
+                                        t-att-class="{'o_edu_th_now': tags[l.schedule_id + '-' + l.date] === 'now', 'o_edu_th_next': tags[l.schedule_id + '-' + l.date] === 'next'}">
                                         <span class="o_edu_th_time" t-out="l.hours"/>
                                         <div class="flex-grow-1">
-                                            <div class="fw-semibold" t-out="l.subject"/>
+                                            <div class="fw-semibold">
+                                                <t t-out="l.subject"/>
+                                                <span t-if="tags[l.schedule_id + '-' + l.date] === 'now'" class="o_edu_th_tag">Agora</span>
+                                                <span t-elif="tags[l.schedule_id + '-' + l.date] === 'next'" class="o_edu_th_tag o_edu_th_tag_soft">A seguir</span>
+                                            </div>
                                             <div class="small text-muted"><t t-out="l.class"/><t t-if="l.room">, <t t-out="l.room"/></t></div>
                                         </div>
                                         <span class="badge" t-att-class="this.stateClass(l)" t-out="this.stateLabel(l)"/>
@@ -188,29 +209,27 @@
                                 </ul>
                             </section>
                             <section class="o_edu_th_card">
-                                <h2 class="o_edu_th_h2">Vigilâncias</h2>
+                                <div class="d-flex flex-wrap justify-content-between gap-2">
+                                    <h2 class="o_edu_th_h2">Vigilâncias</h2>
+                                    <button t-if="d.supervisions.length" type="button" class="btn btn-link p-0 align-self-start" t-on-click="() => this.openAction('edu_roles.action_teacher_supervisions')">Ver todas</button>
+                                </div>
                                 <p t-if="!d.supervisions.length" class="mb-0 text-muted">Não tem vigilâncias marcadas.</p>
                                 <ul t-else="" class="o_edu_th_plain">
-                                    <li t-foreach="d.supervisions" t-as="s" t-key="s_index">
-                                        <div class="fw-semibold" t-out="s.subject"/>
-                                        <div class="small text-muted"><t t-out="s.date"/>, <t t-out="s.hours"/><t t-if="s.rooms">, <t t-out="s.rooms"/></t></div>
+                                    <li t-foreach="d.supervisions" t-as="s" t-key="s_index" class="o_edu_th_supervision">
+                                        <div class="min-w-0">
+                                            <div class="fw-semibold" t-out="s.subject"/>
+                                            <div class="small text-muted"><t t-out="s.date"/>, <t t-out="s.hours"/><t t-if="s.rooms">, <t t-out="s.rooms"/></t></div>
+                                        </div>
+                                        <span class="o_edu_th_when" t-att-class="{'o_edu_th_when_soon': s.days &lt;= 1}" t-out="this.whenLabel(s.days)"/>
                                     </li>
                                 </ul>
                             </section>
                             <section class="o_edu_th_card">
                                 <h2 class="o_edu_th_h2">Atalhos</h2>
                                 <div class="o_edu_th_links">
-                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_schedule')">
-                                        <i class="oi me-2" data-icon="calendar_today" aria-hidden="true"/>Meu horário
-                                    </button>
-                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_absence_report')">
-                                        <i class="oi me-2" data-icon="check_circle" aria-hidden="true"/>Relatório de faltas
-                                    </button>
-                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('mail.action_discuss')">
-                                        <i class="oi me-2" data-icon="forum" aria-hidden="true"/>Mensagens
-                                    </button>
-                                    <button type="button" class="btn btn-link" t-on-click="() => this.openAction('edu_roles.action_teacher_profile_page')">
-                                        <i class="oi me-2" data-icon="person" aria-hidden="true"/>Meu perfil
+                                    <button t-foreach="this.shortcuts" t-as="link" t-key="link.action" type="button" class="o_edu_th_link" t-on-click="() => this.openAction(link.action)">
+                                        <span class="o_edu_th_icon" aria-hidden="true"><i class="oi" t-att-data-icon="link.icon"/></span>
+                                        <span t-out="link.label"/>
                                     </button>
                                 </div>
                             </section>

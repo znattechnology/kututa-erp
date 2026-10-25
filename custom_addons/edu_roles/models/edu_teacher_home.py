@@ -69,6 +69,7 @@ class EduTeacherHome(models.AbstractModel):
         data['supervisions'] = [
             {
                 'date': s.date.strftime('%d/%m/%Y'),
+                'days': (s.date - today).days,
                 'hours': f'{_hour(s.hour_from)}–{_hour(s.hour_to)}',
                 'subject': s.subject_id.name,
                 'rooms': ', '.join(r.room_id.name for r in s.room_ids.filtered(lambda r: employee in r.supervisor_ids)),
@@ -88,6 +89,8 @@ class EduTeacherHome(models.AbstractModel):
         teacher = employee.sudo()
         result = {
             'trimester': trimester.name or '',
+            # Os dias até ao fim do trimestre em curso, para o aviso das notas em falta.
+            'trimester_days': (trimester.date_end - today).days if trimester else None,
             'load': {'count': teacher.edu_weekly_load, 'limit': teacher.edu_weekly_load_max},
             'pending_lessons': 0,
             'grades': [],
