@@ -1,60 +1,98 @@
-// Mini-pauta: a página do secPed-Express (ano, turma, trimestre e o documento) com as cores do sistema.
+// Mini-pauta: as turmas à esquerda (como no editor de horários), o ano e o trimestre no topo e a folha A4 na página.
 .o_edu_mini_pauta {
     .o_edu_mp_body {
-        max-width: 760px;
-        margin: 0 auto;
-        padding: 24px 16px 32px;
+        padding: 16px 24px 24px;
     }
 
-    .o_edu_mp_lead {
-        max-width: 64ch;
-        color: $text-muted;
-    }
-
-    .o_edu_mp_card {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        padding: 20px;
-        border: 1px solid $border-color;
-        border-radius: $border-radius-lg;
-        background: $o-view-background-color;
-    }
-
-    .o_edu_mp_fields {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-
-        @include media-breakpoint-down(sm) {
-            grid-template-columns: minmax(0, 1fr);
-        }
-    }
-
-    .o_edu_mp_field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin: 0;
-
-        > span:first-child {
-            font-size: 0.875rem;
-            color: $text-muted;
-        }
-    }
-
-    .o_edu_mp_tabs {
+    .o_edu_mp_toolbar {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .o_edu_mp_year {
+        width: auto;
+        min-width: 180px;
     }
 
     .o_edu_mp_tag {
         opacity: 0.75;
     }
 
-    .o_edu_mp_action {
-        padding-top: 20px;
-        border-top: 1px solid $border-color;
+    .o_edu_mp_layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .o_edu_mp_panel {
+        position: sticky;
+        top: 0;
+        flex: 0 0 200px;
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .o_edu_mp_search {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        margin-bottom: 8px;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_mp_panel_head {
+        margin: 12px 0 4px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: $o-gray-700;
+    }
+
+    .o_edu_mp_panel_item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        padding: 4px 8px;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        text-align: left;
+
+        &:hover {
+            background: $o-gray-100;
+        }
+
+        &.o_active {
+            background: rgba($o-action, 0.12);
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_mp_sheet {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .o_edu_mp_frame {
+        display: block;
+        width: 100%;
+        height: calc(100vh - 150px);
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_mp_empty {
+        max-width: 64ch;
+        padding: 24px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+        color: $text-muted;
     }
 }

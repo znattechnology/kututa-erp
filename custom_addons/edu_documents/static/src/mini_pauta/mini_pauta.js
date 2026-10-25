@@ -1,8 +1,10 @@
 import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
 import { registry } from "@web/core/registry";
+import { user } from "@web/core/user";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
+import { getReportUrl } from "@web/webclient/actions/reports/utils";
 
 const LAST_CLASS_KEY = "edu_documents.mini_pauta.class";
 
@@ -25,7 +27,8 @@ function remember(classId) {
 /**
  * «Mini-pauta», como a do secPed-Express: o mapa de aproveitamento da turma num trimestre (uma letra por
  * disciplina, a CT/MT de cada aluno, ou a CF no fim do ano, e as faltas), numa folha A4 para imprimir e assinar.
- * Escolhe-se o ano lectivo (os anos fechados também se imprimem, para o arquivo), a turma e o trimestre.
+ * As turmas à esquerda (por curso), o ano e o trimestre no topo, e a mini-pauta na própria página: escolhida a turma,
+ * aparece logo; «Imprimir» gera o PDF. Os anos fechados também se abrem, para o arquivo.
  */
 export class MiniPauta extends Component {
     static template = "edu_documents.MiniPauta";
@@ -43,6 +46,11 @@ export class MiniPauta extends Component {
             classId: false,
             trimesters: [],
             trimesterId: false,
+            filter: "",
+            // O documento à vista: o URL da mini-pauta em HTML e a acção para o PDF.
+            url: false,
+            report: null,
+            error: false,
             busy: false,
         });
         onWillStart(() => {
@@ -65,51 +73,84 @@ export class MiniPauta extends Component {
         this.state.classId = (this.state.classes.find((c) => c.id === wanted) || {}).id || false;
         const current = options.trimesters.find((t) => t.is_current) || options.trimesters[0];
         this.state.trimesterId = current ? current.id : false;
-    }
-
-    get year() {
-        return this.state.years.find((y) => y.id === this.state.yearId);
+        await this.refresh();
     }
 
     get selectedClass() {
         return this.state.classes.find((c) => c.id === this.state.classId);
     }
 
-    get trimester() {
-        return this.state.trimesters.find((t) => t.id === this.state.trimesterId);
+    /** As turmas por curso, filtradas pela pesquisa. */
+    get classGroups() {
+        const filter = this.state.filter.trim().toLowerCase();
+        const groups = [];
+        for (const c of this.state.classes) {
+            if (filter && !`${c.name} ${c.course || ""}`.toLowerCase().includes(filter)) {
+                continue;
+            }
+            const course = c.course || "Sem curso";
+            let group = groups.find((g) => g.course === course);
+            if (!group) {
+                group = { course, classes: [] };
+                groups.push(group);
+            }
+            group.classes.push(c);
+        }
+        return groups;
     }
 
-    get ready() {
-        return Boolean(this.selectedClass && this.trimester);
+    /** Prepara a mini-pauta da turma e do trimestre escolhidos e mostra-a na página. */
+    async refresh() {
+        this.state.url = false;
+        this.state.report = null;
+        this.state.error = false;
+        if (!this.selectedClass || !this.state.trimesterId) {
+            return;
+        }
+        try {
+            const action = await this.orm.call("edu.mini.pauta", "page_open", [
+                this.state.classId,
+                this.state.trimesterId,
+                true,
+            ]);
+            const { kututa_preview: _flag, ...context } = action.context || {};
+            this.state.report = { ...action, context };
+            this.state.url = getReportUrl(this.state.report, "html", user.context);
+        } catch (error) {
+            this.state.error = error.data?.message || error.message;
+        }
     }
 
     async onYearChange(ev) {
         await this.load(parseInt(ev.target.value, 10) || false);
     }
 
-    onClassChange(ev) {
-        this.state.classId = parseInt(ev.target.value, 10) || false;
-        if (this.state.classId) {
-            remember(this.state.classId);
+    async selectClass(classId) {
+        this.state.classId = classId;
+        remember(classId);
+        await this.refresh();
+    }
+
+    async selectTrimester(trimester) {
+        this.state.trimesterId = trimester.id;
+        await this.refresh();
+    }
+
+    onFrameLoad(ev) {
+        const body = ev.currentTarget.contentDocument?.body;
+        if (body) {
+            body.classList.add("o_in_iframe", "container-fluid");
+            body.classList.remove("container");
         }
     }
 
-    selectTrimester(trimester) {
-        this.state.trimesterId = trimester.id;
-    }
-
-    async open(preview) {
-        if (!this.ready || this.state.busy) {
+    async print() {
+        if (!this.state.report || this.state.busy) {
             return;
         }
-        this.state.busy = preview ? "open" : "print";
+        this.state.busy = true;
         try {
-            const action = await this.orm.call("edu.mini.pauta", "page_open", [
-                this.state.classId,
-                this.state.trimesterId,
-                preview,
-            ]);
-            await this.action.doAction(action);
+            await this.action.doAction({ ...this.state.report, report_type: "qweb-pdf" });
         } finally {
             this.state.busy = false;
         }
