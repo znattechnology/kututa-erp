@@ -294,3 +294,101 @@
         font-weight: 600;
     }
 }
+
+// Os cursos em cartões: o código em destaque, as exigências em etiquetas e os alunos por classe em barras.
+.o_edu_course_kanban {
+    .o_kanban_record {
+        min-width: 340px;
+    }
+
+    .o_edu_course_card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_course_code {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        min-width: 44px;
+        height: 44px;
+        padding: 0 6px;
+        border-radius: $border-radius-lg;
+        background: rgba($primary, 0.1);
+        color: $primary;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .o_edu_course_name {
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .o_edu_course_tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        &:empty {
+            display: none;
+        }
+
+        > li {
+            padding: 2px 10px;
+            border: 1px solid $border-color;
+            border-radius: $border-radius-pill;
+            font-size: $font-size-sm;
+        }
+    }
+
+    .o_edu_course_classes {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .o_edu_course_class {
+        display: grid;
+        grid-template-columns: 3em minmax(0, 1fr) 3em;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8125rem;
+    }
+
+    .o_edu_course_class_label {
+        color: $text-muted;
+    }
+
+    .o_edu_course_class_track {
+        height: 8px;
+        overflow: hidden;
+        border-radius: 4px;
+        background: $gray-200;
+
+        > span {
+            display: block;
+            height: 100%;
+            border-radius: 4px;
+            background: $o-action;
+        }
+    }
+
+    .o_edu_course_class_value {
+        text-align: end;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_course_counts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        color: $text-muted;
+        font-size: 0.875rem;
+    }
+}

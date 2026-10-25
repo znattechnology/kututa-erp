@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Os cursos em cartões: o código, o nível, a coordenação, a duração e o plano em vigor, o que o curso exige
+         (estágio, PAP, exames) e os números deste ano (turmas, alunos, vagas e alunos por classe). A lista e o
+         formulário ficam como estavam. -->
+    <record id="edu_course_kanban" model="ir.ui.view">
+        <field name="name">edu.course.kanban</field>
+        <field name="model">edu.course</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_course_kanban">
+                <field name="code"/>
+                <field name="coordination_id"/>
+                <field name="curriculum_id"/>
+                <field name="requires_internship"/>
+                <field name="requires_final_project"/>
+                <field name="has_national_exam"/>
+                <field name="has_special_exam"/>
+                <field name="edu_class_count"/>
+                <field name="edu_student_count"/>
+                <field name="edu_occupancy"/>
+                <field name="edu_per_class"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_course_card">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="o_edu_course_code" t-out="record.code.raw_value or '—'"/>
+                                <div class="flex-grow-1 min-w-0">
+                                    <field name="name" class="o_edu_course_name"/>
+                                    <div class="small text-muted"><field name="level_id"/>, <field name="duration_years"/> anos</div>
+                                </div>
+                            </div>
+                            <div class="small">
+                                <div t-if="record.coordination_id.raw_value"><span class="text-muted">Coordenação:</span> <field name="coordination_id"/></div>
+                                <div t-if="record.curriculum_id.raw_value"><span class="text-muted">Plano:</span> <field name="curriculum_id"/></div>
+                                <div t-else="" class="text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Sem plano curricular</div>
+                            </div>
+                            <ul class="o_edu_course_tags">
+                                <li t-if="record.requires_internship.raw_value">Estágio</li>
+                                <li t-if="record.requires_final_project.raw_value">PAP</li>
+                                <li t-if="record.has_national_exam.raw_value">Exame nacional</li>
+                                <li t-if="record.has_special_exam.raw_value">Exame especial</li>
+                            </ul>
+                            <div t-if="record.edu_per_class.raw_value and record.edu_per_class.raw_value.length" class="o_edu_course_classes">
+                                <div t-foreach="record.edu_per_class.raw_value" t-as="row" t-key="row.label" class="o_edu_course_class"
+                                     t-att-title="row.label + ' classe: ' + row.students + ' alunos em ' + row.classes + (row.classes === 1 ? ' turma' : ' turmas')">
+                                    <span class="o_edu_course_class_label" t-out="row.label"/>
+                                    <span class="o_edu_course_class_track"><span t-att-style="'width: ' + row.width + '%'"/></span>
+                                    <span class="o_edu_course_class_value" t-out="row.students"/>
+                                </div>
+                            </div>
+                            <div class="o_edu_course_counts">
+                                <span><i class="oi me-1" data-icon="groups" aria-hidden="true"/><t t-out="record.edu_class_count.raw_value === 1 ? '1 turma' : record.edu_class_count.raw_value + ' turmas'"/></span>
+                                <span><i class="oi me-1" data-icon="school" aria-hidden="true"/><t t-out="record.edu_student_count.raw_value === 1 ? '1 aluno' : record.edu_student_count.raw_value + ' alunos'"/></span>
+                                <span t-if="record.edu_class_count.raw_value" t-att-class="{'text-danger': record.edu_occupancy.raw_value > 100}">
+                                    <i class="oi me-1" data-icon="pie_chart" aria-hidden="true"/><t t-out="record.edu_occupancy.raw_value"/>% das vagas
+                                </span>
+                                <span t-else="" class="text-muted">Sem turmas este ano</span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_core.action_edu_course" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>
