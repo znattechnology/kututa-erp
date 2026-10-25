@@ -3,6 +3,7 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.addons.edu_timetable.models.hr_employee import _current_year
 from odoo.exceptions import AccessError
+from odoo.tools.misc import format_amount
 
 ENROLLED = ('active', 'irregular')
 MONTHS = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.']
@@ -134,6 +135,16 @@ class EduSecretariaHome(models.AbstractModel):
             {'label': f'{number}ª classe' if number else 'Iniciação', 'count': count}
             for number, count in sorted(per_number.items())
         ]
+        # Os alunos por curso (os mais numerosos primeiro).
+        per_course = {}
+        for row in rows:
+            if row['course']:
+                per_course[row['course']] = per_course.get(row['course'], 0) + row['students']
+        data['per_course'] = [
+            {'label': name, 'count': count} for name, count in sorted(per_course.items(), key=lambda item: -item[1])
+        ]
+        data['today'] = self._today(classes, today)
+        data['fees'] = self._overdue_fees(today)
         data['pending'] = self._pending(year, rows, trimester)
         # Os eventos das próximas duas semanas no calendário escolar.
         events = (
@@ -158,6 +169,8 @@ class EduSecretariaHome(models.AbstractModel):
             {
                 'id': event.id,
                 'name': event.name,
+                'start': fields.Date.to_string(event.date_start),
+                'end': fields.Date.to_string(event.date_end or event.date_start),
                 'day': str(event.date_start.day),
                 'month': MONTHS[event.date_start.month - 1],
                 'type': types.get(event.event_type, ''),
@@ -166,6 +179,57 @@ class EduSecretariaHome(models.AbstractModel):
             for event in events
         ]
         return data
+
+    @api.model
+    def _today(self, classes, today):
+        """Hoje na escola: as aulas do horário de hoje (sem as turmas em feriado ou pausa), quantas já têm a chamada, e
+        as faltas e os atrasos marcados hoje."""
+        Home = self.env['edu.teacher.home']
+        planned = 0
+        for edu_class in classes:
+            if Home._no_lessons_on(edu_class, today):
+                continue
+            planned += len(edu_class._edu_current_schedules().filtered(lambda s: s._occurs_on(today)))
+        lessons = self.env['edu.lesson'].sudo().search([('class_id', 'in', classes.ids), ('date', '=', today)])
+        marks = (
+            self.env['edu.lesson.attendance']
+            .sudo()
+            ._read_group([('lesson_id', 'in', lessons.ids)], ['state'], ['__count'])
+        )
+        counts = dict(marks)
+        return {
+            'planned': planned,
+            'rolled': len(lessons.filtered('attendance_ids')),
+            'absent': counts.get('absent', 0),
+            'late': counts.get('late', 0),
+            'excused': counts.get('excused', 0),
+        }
+
+    @api.model
+    def _overdue_fees(self, today):
+        """As propinas e as outras facturas escolares vencidas e por pagar: quantas, de quantos alunos e o valor."""
+        if 'edu_student_id' not in self.env['account.move']._fields:
+            return None
+        company = self.env.company
+        moves = (
+            self.env['account.move']
+            .sudo()
+            .search(
+                [
+                    ('company_id', '=', company.id),
+                    ('edu_student_id', '!=', False),
+                    ('move_type', '=', 'out_invoice'),
+                    ('state', '=', 'posted'),
+                    ('payment_state', 'in', ('not_paid', 'partial')),
+                    ('invoice_date_due', '<', today),
+                ]
+            )
+        )
+        return {
+            'count': len(moves),
+            'students': len(moves.edu_student_id),
+            'amount': format_amount(self.env, sum(moves.mapped('amount_residual')), company.currency_id),
+        }
 
     @api.model
     def _pending(self, year, rows, trimester):
@@ -234,6 +298,18 @@ class EduSecretariaHome(models.AbstractModel):
             'enrollments': ('edu_enrollment.action_edu_enrollment', [*this_year, ('state', '=', 'draft')]),
             'students': ('edu_enrollment.action_edu_enrollment', [*this_year, ('state', 'in', ENROLLED)]),
             'documents': ('edu_documents.action_edu_document', [*mine, ('state', '=', 'draft')]),
+            'fees': (
+                'edu_fees.action_edu_invoices',
+                [
+                    *mine,
+                    ('edu_student_id', '!=', False),
+                    ('move_type', '=', 'out_invoice'),
+                    ('state', '=', 'posted'),
+                    ('payment_state', 'in', ('not_paid', 'partial')),
+                    ('invoice_date_due', '<', fields.Date.context_today(self)),
+                ],
+            ),
+            'lessons': ('edu_attendance.action_edu_lesson', [*mine, ('date', '=', fields.Date.context_today(self))]),
             'capacity': ('edu_core.action_edu_class', this_year),
             'calendar': ('edu_core.action_edu_calendar_event', mine),
         }[key]
