@@ -43,10 +43,17 @@ class EduAbsenceJustify(models.TransientModel):
             raise UserError(self.env._('%s não tem faltas injustificadas nesse período.', self.student_id.name))
         lines._check_can_justify()
         lines.write({'justification': self.justification, 'state': 'excused'})
+        # Fecha a janela e fica na página de onde se veio (que se actualiza), com um aviso do que foi feito.
+        message = (
+            self.env._('1 falta justificada.') if len(lines) == 1 else self.env._('%s faltas justificadas.', len(lines))
+        )
         return {
-            'type': 'ir.actions.act_window',
-            'name': self.env._('Faltas justificadas'),
-            'res_model': 'edu.lesson.attendance',
-            'view_mode': 'list',
-            'domain': [('id', 'in', lines.ids)],
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': self.student_id.name,
+                'message': message,
+                'type': 'success',
+                'next': {'type': 'ir.actions.act_window_close'},
+            },
         }

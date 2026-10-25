@@ -1032,3 +1032,18 @@
         white-space: pre-line;
     }
 }
+
+// Justificação de faltas: um cartão por falta, com o estado e «Justificar» no fundo.
+.o_edu_absence_kanban {
+    .o_kanban_record {
+        min-width: 280px;
+    }
+
+    .o_edu_absence_card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        height: 100%;
+        padding: 2px;
+    }
+}

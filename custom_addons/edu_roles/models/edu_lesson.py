@@ -25,3 +25,36 @@ class EduLesson(models.Model):
             )
             lesson.edu_class_label = lesson.class_id._editor_label() if lesson.class_id else False
             lesson.edu_overdue = lesson.state == 'scheduled' and bool(day) and day < today
+
+
+class EduLessonAttendance(models.Model):
+    """A justificação de faltas em cartões (secretaria e directores de turma): quando foi a falta, a turma e a
+    disciplina, e «Justificar», que abre a justificação do período já com o aluno e o dia."""
+
+    _inherit = 'edu.lesson.attendance'
+
+    edu_when_label = fields.Char(string='Quando', compute='_compute_edu_labels')
+    edu_class_label = fields.Char(string='Turma (curta)', compute='_compute_edu_labels')
+    edu_student_name = fields.Char(related='student_id.name', string='Aluno (nome)')
+
+    @api.depends('lesson_id.date', 'lesson_id.hour_from', 'lesson_id.hour_to', 'class_id')
+    def _compute_edu_labels(self):
+        for line in self:
+            line.edu_when_label = line.lesson_id.edu_when_label
+            line.edu_class_label = line.class_id._editor_label() if line.class_id else False
+
+    def action_edu_justify(self):
+        """Abre a justificação do período com o aluno e o dia da falta (o atestado pode cobrir mais dias)."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.env._('Justificar faltas'),
+            'res_model': 'edu.absence.justify',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_student_id': self.student_id.id,
+                'default_date_from': self.date,
+                'default_date_to': self.date,
+            },
+        }

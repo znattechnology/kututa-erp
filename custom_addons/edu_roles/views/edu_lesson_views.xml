@@ -125,4 +125,79 @@
             sumário e as faltas. Tire o filtro «Esta semana» para ver as outras.</p>
         </field>
     </record>
+
+    <!-- Justificação de faltas em cartões, para a secretaria e os directores de turma (quem marca as faltas é o
+         professor, na chamada). Um cartão por falta; «Justificar» abre a justificação do período já com o aluno e o
+         dia, porque um atestado cobre muitas vezes várias aulas. À esquerda, a turma e o estado. -->
+    <record id="view_edu_lesson_attendance_kanban" model="ir.ui.view">
+        <field name="name">edu.lesson.attendance.kanban</field>
+        <field name="model">edu.lesson.attendance</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_absence_kanban" create="false" delete="false" default_order="date desc, student_id">
+                <header>
+                    <button name="%(edu_attendance.action_edu_absence_justify)d" type="action" string="Justificar um período"
+                            class="btn-primary" display="always"/>
+                </header>
+                <field name="state"/>
+                <field name="can_justify"/>
+                <field name="justification"/>
+                <field name="justified_by_id"/>
+                <field name="edu_student_name"/>
+                <field name="edu_when_label"/>
+                <field name="edu_class_label"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_absence_card">
+                            <div class="d-flex align-items-center gap-2">
+                                <field name="student_id" widget="many2one_avatar" readonly="1"/>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold text-truncate" t-out="record.edu_student_name.raw_value"/>
+                                    <div class="small text-muted" t-out="record.edu_class_label.raw_value"/>
+                                </div>
+                            </div>
+                            <div class="small">
+                                <span class="fw-semibold" t-out="record.edu_when_label.raw_value"/>
+                                <span class="text-muted"> · <field name="subject_id"/></span>
+                            </div>
+                            <div t-if="record.state.raw_value === 'excused'" class="small text-muted text-truncate">
+                                <t t-out="record.justification.raw_value"/>
+                                <t t-if="record.justified_by_id.raw_value"> · por <field name="justified_by_id"/></t>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 mt-auto">
+                                <span t-if="record.state.raw_value === 'absent'" class="badge text-bg-danger">Por justificar</span>
+                                <span t-else="" class="badge text-bg-success">Justificada</span>
+                                <button t-if="record.state.raw_value === 'absent' and record.can_justify.raw_value"
+                                        name="action_edu_justify" type="object" class="btn btn-sm btn-primary ms-auto">Justificar</button>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_edu_lesson_attendance_search_panel" model="ir.ui.view">
+        <field name="name">edu.lesson.attendance.search.panel</field>
+        <field name="model">edu.lesson.attendance</field>
+        <field name="inherit_id" ref="edu_attendance.edu_lesson_attendance_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <searchpanel view_types="kanban,list">
+                    <field name="class_id" select="one" icon="groups" enable_counters="1"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_attendance.action_edu_lesson_attendance" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_edu_lesson_attendance_kanban')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('edu_attendance.edu_lesson_attendance_list')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Não há faltas por justificar</p>
+            <p>As faltas marcam-nas os professores na chamada. Justificam-nas a secretaria e o director de turma do
+            aluno: «Justificar» num cartão, ou «Justificar um período» para um atestado de vários dias.</p>
+        </field>
+    </record>
 </odoo>
