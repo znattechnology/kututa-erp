@@ -66,4 +66,62 @@
     <record id="edu_core.action_edu_course" model="ir.actions.act_window">
         <field name="view_mode">kanban,list,form</field>
     </record>
+
+    <!-- Os planos curriculares em cartões: o curso, o nível e as classes; por classe, os tempos semanais e as
+         disciplinas, numa barra pelas componentes (a cor de cada uma, com a legenda); as disciplinas e as turmas
+         deste ano. A lista e o formulário (com a matriz do plano) ficam como estavam. -->
+    <record id="edu_curriculum_kanban" model="ir.ui.view">
+        <field name="name">edu.curriculum.kanban</field>
+        <field name="model">edu.curriculum</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_plan_kanban">
+                <field name="course_id"/>
+                <field name="class_from"/>
+                <field name="class_to"/>
+                <field name="is_national"/>
+                <field name="edu_years"/>
+                <field name="edu_subject_count"/>
+                <field name="edu_class_count"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_plan_card">
+                            <div>
+                                <div class="o_edu_plan_name"><t t-if="record.course_id.raw_value"><field name="course_id"/></t><t t-else=""><field name="name"/></t></div>
+                                <div class="small text-muted">
+                                    <field name="level_id"/>, <t t-out="record.class_from.raw_value"/>ª a <t t-out="record.class_to.raw_value"/>ª classe<t t-if="record.is_national.raw_value">, plano nacional</t>
+                                </div>
+                            </div>
+                            <ul class="o_edu_plan_legend" aria-label="Componentes">
+                                <li><span class="o_edu_plan_key o_edu_subj_1"/>Sociocultural</li>
+                                <li><span class="o_edu_plan_key o_edu_subj_2"/>Científica</li>
+                                <li><span class="o_edu_plan_key o_edu_subj_3"/>Técnica</li>
+                                <li><span class="o_edu_plan_key o_edu_subj_4"/>Estágio</li>
+                            </ul>
+                            <div class="o_edu_plan_years">
+                                <div t-foreach="record.edu_years.raw_value" t-as="year" t-key="year.id" class="o_edu_plan_year">
+                                    <div class="d-flex justify-content-between small">
+                                        <span class="fw-semibold" t-out="year.label"/>
+                                        <span class="text-muted"><t t-out="year.hours"/> tempos, <t t-out="year.subjects"/> disciplinas</span>
+                                    </div>
+                                    <span class="o_edu_plan_bar" t-att-style="'width: ' + year.width + '%'">
+                                        <span t-foreach="year.parts" t-as="part" t-key="part.key" t-att-class="part.css"
+                                              t-att-style="'flex-grow: ' + part.hours" t-att-title="part.label + ': ' + part.hours + ' tempos'"/>
+                                    </span>
+                                </div>
+                                <p t-if="!record.edu_years.raw_value.length" class="mb-0 small text-warning">Ainda sem anos nem disciplinas.</p>
+                            </div>
+                            <div class="o_edu_plan_counts">
+                                <span><i class="oi me-1" data-icon="menu_book" aria-hidden="true"/><field name="edu_subject_count"/> disciplinas</span>
+                                <span><i class="oi me-1" data-icon="groups" aria-hidden="true"/><t t-out="record.edu_class_count.raw_value === 1 ? '1 turma' : record.edu_class_count.raw_value + ' turmas'"/> este ano</span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_core.action_edu_curriculum" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
 </odoo>

@@ -74,3 +74,58 @@ class EduCourse(models.Model):
                 }
                 for number, row in sorted(per_number.items())
             ]
+
+
+# As componentes do plano pela ordem da legenda, cada uma com a sua cor da paleta categórica (o_edu_subj_N).
+COMPONENT_ORDER = ['socio_cultural', 'scientific', 'technical', 'internship']
+
+
+class EduCurriculum(models.Model):
+    """O plano curricular para os cartões da secretaria: por classe, os tempos semanais e as disciplinas, com os
+    tempos de cada componente; as disciplinas do plano e as turmas deste ano que o seguem."""
+
+    _inherit = 'edu.curriculum'
+
+    edu_years = fields.Json(string='Anos (cartão)', compute='_compute_edu_card')
+    edu_subject_count = fields.Integer(string='Disciplinas', compute='_compute_edu_card')
+    edu_class_count = fields.Integer(string='Turmas este ano', compute='_compute_edu_card')
+
+    def _compute_edu_card(self):
+        Class = self.env['edu.class'].sudo()
+        labels = dict(self.env['edu.curriculum.line']._fields['component'].selection)
+        for curriculum in self:
+            years = []
+            for year in curriculum.year_ids.sorted('class_number'):
+                hours = {}
+                for line in year.line_ids:
+                    hours[line.component or 'technical'] = (
+                        hours.get(line.component or 'technical', 0) + line.weekly_hours
+                    )
+                total = sum(hours.values())
+                years.append(
+                    {
+                        'id': year.id,
+                        'label': f'{year.class_number}ª classe' if year.class_number else 'Iniciação',
+                        'hours': total,
+                        'subjects': len(year.line_ids),
+                        'parts': [
+                            {
+                                'key': key,
+                                'css': f'o_edu_subj_{index + 1}',
+                                'label': labels.get(key, key),
+                                'hours': hours[key],
+                            }
+                            for index, key in enumerate(COMPONENT_ORDER)
+                            if hours.get(key)
+                        ],
+                    }
+                )
+            # A barra de cada classe com a largura dos seus tempos face à classe com mais tempos.
+            top = max([y['hours'] for y in years] or [0]) or 1
+            for year in years:
+                year['width'] = round(100 * year['hours'] / top, 1)
+            curriculum.edu_years = years
+            curriculum.edu_subject_count = len(curriculum.line_ids.subject_id)
+            curriculum.edu_class_count = Class.search_count(
+                [('curriculum_id', '=', curriculum.id), ('academic_year_id.is_current', '=', True)]
+            )

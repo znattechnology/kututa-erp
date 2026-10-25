@@ -483,3 +483,74 @@
         }
     }
 }
+
+// Os planos curriculares em cartões: cada classe numa barra pelas componentes, com a cor da paleta (o_edu_subj_N).
+.o_edu_plan_kanban {
+    .o_kanban_record {
+        min-width: 340px;
+    }
+
+    .o_edu_plan_card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_plan_name {
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .o_edu_plan_legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 12px;
+        margin: 0;
+        padding: 0;
+        color: $text-muted;
+        font-size: 0.75rem;
+        list-style: none;
+
+        > li {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+    }
+
+    .o_edu_plan_key {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        background: var(--edu-subj);
+    }
+
+    .o_edu_plan_years {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .o_edu_plan_bar {
+        display: flex;
+        gap: 2px;
+        min-width: 4px;
+        height: 10px;
+        margin-top: 3px;
+        overflow: hidden;
+        border-radius: 4px;
+
+        > span {
+            background: var(--edu-subj);
+        }
+    }
+
+    .o_edu_plan_counts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        color: $text-muted;
+        font-size: 0.875rem;
+    }
+}
