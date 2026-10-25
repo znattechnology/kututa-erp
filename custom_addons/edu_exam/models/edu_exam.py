@@ -156,7 +156,8 @@ class EduExamSession(models.Model):
                 raise ValidationError(
                     self.env._('A sala %s já tem outra sessão a essa hora.', ', '.join(rooms.mapped('display_name')))
                 )
-            supervisors = session.room_ids.supervisor_ids & others.room_ids.supervisor_ids
+            # Em sudo: a secretaria não lê a ficha dos funcionários e não via os vigilantes (nem o choque).
+            supervisors = session.sudo().room_ids.supervisor_ids & others.sudo().room_ids.supervisor_ids
             if supervisors:
                 raise ValidationError(
                     self.env._('%s já vigia outra sessão a essa hora.', ', '.join(supervisors.mapped('name')))

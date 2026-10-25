@@ -197,6 +197,22 @@ class TestEduExam(TransactionCase):
         self.assertFalse(second.incomplete)
         data = period.planner_data()
         self.assertEqual(len(data['sessions']), 2)
+        # A secretaria não lê a ficha dos funcionários, mas vê os vigilantes; distribuir não os substitui e o mesmo
+        # vigilante noutra prova à mesma hora continua a ser recusado.
+        clerk = self.env['res.users'].create(
+            {
+                'name': 'Secretaria',
+                'login': 'secretaria_calendario',
+                'group_ids': [Command.set([self.env.ref('edu_core.group_edu_user').id])],
+            }
+        )
+        as_clerk = period.with_user(clerk)
+        seen = {s['id']: [t['id'] for t in s['supervisors']] for s in as_clerk.planner_data()['sessions']}
+        self.assertEqual(seen, {first.id: [self.teacher.id], second.id: [other_teacher.id]})
+        self.assertEqual(as_clerk.planner_distribute('2026-12-09', 8.0, 10.0)['assigned'], 0)
+        self.assertEqual(second.room_ids.supervisor_ids, other_teacher)
+        with self.assertRaises(ValidationError):
+            Period.with_user(clerk).planner_set_supervisor(second.id, self.teacher.id)
         self.assertEqual({s['class'] for s in data['sessions']}, {'7ª A · SEC1', '7ª B · SEC1'})
         # Sem sala não há vigilante; remover uma prova sem notas.
         Period.planner_set_room(second.id, False)

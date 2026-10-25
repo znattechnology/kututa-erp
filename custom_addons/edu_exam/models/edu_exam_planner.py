@@ -183,7 +183,7 @@ class EduExamPeriod(models.Model):
                     'label': f'{session.subject_id.name} ({session.period_id.name})',
                 }
                 for session in others
-                for teacher in session.room_ids.supervisor_ids
+                for teacher in session._supervisors()
             ],
         }
 
@@ -250,10 +250,10 @@ class EduExamPeriod(models.Model):
                 ('hour_to', '>', hour_from),
             ]
         )
-        busy = set(overlapping.room_ids.supervisor_ids.ids)
+        busy = set(overlapping._supervisors().ids)
         load = Counter()
         for session in self.session_ids:
-            for teacher in session.room_ids.supervisor_ids:
+            for teacher in session._supervisors():
                 load[teacher.id] += 1
         teachers = (
             self.env['hr.employee']
@@ -276,7 +276,7 @@ class EduExamPeriod(models.Model):
         in_shift = set(lessons.teacher_id.ids)
         Assignment = self.env['edu.teaching.assignment'].sudo()
         assigned = without = no_room = 0
-        for session in sessions.filtered(lambda s: not s.room_ids.supervisor_ids):
+        for session in sessions.filtered(lambda s: not s._supervisors()):
             if not session.room_ids:
                 no_room += 1
                 continue
@@ -294,7 +294,7 @@ class EduExamPeriod(models.Model):
                 without += 1
                 continue
             teacher = candidates[0]
-            session.room_ids[:1].supervisor_ids = teacher
+            session.room_ids[:1].sudo().supervisor_ids = teacher
             busy.add(teacher.id)
             load[teacher.id] += 1
             assigned += 1
@@ -309,7 +309,9 @@ class EduExamPeriod(models.Model):
             raise UserError(self.env._('A prova já não existe.'))
         if not session.room_ids:
             raise UserError(self.env._('Escolha primeiro a sala da prova.'))
-        session.room_ids[:1].supervisor_ids = self.env['hr.employee'].browse(teacher_id or [])
+        # Em sudo (depois do _planner_check): a secretaria não lê a ficha dos funcionários e o Odoo recusava gravar o
+        # vigilante. Os choques continuam a ser verificados (_check_conflicts).
+        session.room_ids[:1].sudo().supervisor_ids = self.env['hr.employee'].browse(teacher_id or [])
         return session._planner_session()
 
     @api.model
@@ -360,15 +362,21 @@ class EduExamSession(models.Model):
     def _compute_labels(self):
         for session in self:
             session.room_label = ', '.join(session.room_ids.room_id.mapped('display_name')) or False
-            session.supervisor_label = ', '.join(session.room_ids.supervisor_ids.mapped('name')) or False
-            session.incomplete = not session.room_ids or not session.room_ids.supervisor_ids
+            supervisors = session._supervisors()
+            session.supervisor_label = ', '.join(supervisors.mapped('name')) or False
+            session.incomplete = not session.room_ids or not supervisors
 
     def _search_incomplete(self, operator, value):
         if operator not in ('=', '!='):
             return NotImplemented
-        complete = self.search([('room_ids.supervisor_ids', '!=', False)]).ids
+        complete = self.sudo().search([('room_ids.supervisor_ids', '!=', False)]).ids
         wanted = (operator == '=') == bool(value)
         return [('id', 'not in' if wanted else 'in', complete)]
+
+    def _supervisors(self):
+        """Os vigilantes das provas. Em sudo: a secretaria não lê a ficha dos funcionários e o Odoo escondia-lhe os
+        vigilantes (a prova parecia sem vigilante e «Distribuir vigilantes» substituía-o)."""
+        return self.sudo().room_ids.supervisor_ids
 
     def _planner_session(self):
         self.ensure_one()
@@ -387,7 +395,7 @@ class EduExamSession(models.Model):
             'room_id': self.room_ids[:1].room_id.id,
             'room': self.room_label or False,
             'room_count': len(self.room_ids),
-            'supervisors': [{'id': t.id, 'name': t.name} for t in self.room_ids.supervisor_ids],
+            'supervisors': [{'id': t.id, 'name': t.name} for t in self._supervisors()],
             'seats': len(self.seat_ids),
             'state': self.state,
         }
