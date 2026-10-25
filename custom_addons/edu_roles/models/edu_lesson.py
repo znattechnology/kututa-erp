@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.edu_attendance.models.absence_rules import GENERAL
 from odoo.addons.edu_timetable.models.edu_time_slot import format_hour
 
 DAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
@@ -58,3 +59,48 @@ class EduLessonAttendance(models.Model):
                 'default_date_to': self.date,
             },
         }
+
+
+class EduAbsenceSummary(models.Model):
+    """O resumo de faltas em cartões: as injustificadas que contam numa barra face ao limite da lei (por trimestre no
+    geral, no ano no técnico), com as justificadas e os atrasos ao lado."""
+
+    _inherit = 'edu.absence.summary'
+
+    edu_class_label = fields.Char(string='Turma (curta)', compute='_compute_edu_meter')
+    edu_student_name = fields.Char(related='student_id.name', string='Aluno (nome)')
+    edu_meter = fields.Integer(string='Barra (%)', compute='_compute_edu_meter')
+    edu_meter_label = fields.Char(string='Faltas que contam', compute='_compute_edu_meter')
+
+    @api.depends('status', 'counted', 'limit')
+    def _compute_edu_meter(self):
+        for summary in self:
+            summary.edu_class_label = summary.class_id._editor_label() if summary.class_id else False
+            if not summary.limit:
+                summary.edu_meter = 0
+                summary.edu_meter_label = self.env._('%s injustificadas (sem limite por disciplina)', summary.counted)
+                continue
+            general = summary.class_id.sudo()._edu_regime() == GENERAL
+            # No geral retém ao atingir o limite; no técnico reprova ao passar o máximo.
+            failing = summary.limit if general else summary.limit + 1
+            summary.edu_meter = min(100, round(summary.counted * 100 / failing))
+            summary.edu_meter_label = (
+                self.env._('%(count)s de %(limit)s no trimestre (retido com %(limit)s)', count=summary.counted,
+                           limit=summary.limit)
+                if general
+                else self.env._('%(count)s no ano (máximo %(limit)s)', count=summary.counted, limit=summary.limit)
+            )  # fmt: skip
+
+    def action_edu_open_absences(self):
+        """As faltas do aluno nesta disciplina, na justificação de faltas."""
+        self.ensure_one()
+        action = self.env['ir.actions.actions']._for_xml_id('edu_attendance.action_edu_lesson_attendance')
+        action['domain'] = [
+            ('enrollment_id', '=', self.enrollment_id.id),
+            ('subject_id', '=', self.subject_id.id),
+            ('state', 'in', ('absent', 'excused')),
+            ('lesson_state', '=', 'done'),
+        ]
+        action['context'] = {}
+        action['name'] = f'{self.student_id.name} · {self.subject_id.name}'
+        return action

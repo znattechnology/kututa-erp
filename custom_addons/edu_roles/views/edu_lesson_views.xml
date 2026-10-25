@@ -200,4 +200,78 @@
             aluno: «Justificar» num cartão, ou «Justificar um período» para um atestado de vários dias.</p>
         </field>
     </record>
+
+    <!-- Resumo de faltas em cartões: um por aluno e disciplina, com as injustificadas que contam numa barra face ao
+         limite (verde, amarela em risco, vermelha reprovado) e «Ver as faltas». À esquerda, a turma e o trimestre. -->
+    <record id="view_edu_absence_summary_kanban" model="ir.ui.view">
+        <field name="name">edu.absence.summary.kanban</field>
+        <field name="model">edu.absence.summary</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_abs_kanban" create="false" delete="false" default_order="class_id, order_number">
+                <field name="status"/>
+                <field name="excused"/>
+                <field name="late"/>
+                <field name="lessons"/>
+                <field name="edu_student_name"/>
+                <field name="edu_class_label"/>
+                <field name="edu_meter"/>
+                <field name="edu_meter_label"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_abs_card">
+                            <div class="d-flex align-items-center gap-2">
+                                <field name="student_id" widget="many2one_avatar" readonly="1"/>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold text-truncate" t-out="record.edu_student_name.raw_value"/>
+                                    <div class="small text-muted" t-out="record.edu_class_label.raw_value"/>
+                                </div>
+                                <span t-if="record.status.raw_value === 'failed'" class="badge text-bg-danger">Reprovado por faltas</span>
+                                <span t-elif="record.status.raw_value === 'at_risk'" class="badge text-bg-warning">Em risco</span>
+                            </div>
+                            <div class="small"><span class="fw-semibold"><field name="subject_id"/></span> · <field name="trimester_id"/></div>
+                            <div class="o_edu_abs_meter" role="meter" t-att-aria-valuenow="record.edu_meter.raw_value" aria-valuemin="0" aria-valuemax="100"
+                                 t-att-aria-label="record.edu_meter_label.raw_value">
+                                <span t-attf-class="o_edu_abs_bar o_edu_abs_{{ record.status.raw_value }}" t-attf-style="width: {{ record.edu_meter.raw_value }}%"/>
+                            </div>
+                            <div class="small" t-out="record.edu_meter_label.raw_value"/>
+                            <div class="d-flex align-items-center gap-3 small text-muted mt-auto">
+                                <span t-out="record.lessons.raw_value + (record.lessons.raw_value === 1 ? ' aula' : ' aulas')"/>
+                                <span t-if="record.excused.raw_value" t-out="record.excused.raw_value + (record.excused.raw_value === 1 ? ' justificada' : ' justificadas')"/>
+                                <span t-if="record.late.raw_value" t-out="record.late.raw_value + (record.late.raw_value === 1 ? ' atraso' : ' atrasos')"/>
+                                <button name="action_edu_open_absences" type="object" class="btn btn-sm btn-link ms-auto p-0">Ver as faltas</button>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_edu_absence_summary_search_panel" model="ir.ui.view">
+        <field name="name">edu.absence.summary.search.panel</field>
+        <field name="model">edu.absence.summary</field>
+        <field name="inherit_id" ref="edu_attendance.edu_absence_summary_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <searchpanel view_types="kanban,list,pivot">
+                    <field name="class_id" select="one" icon="groups" enable_counters="1"/>
+                    <field name="trimester_id" select="one" icon="calendar_today"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_attendance.action_edu_absence_summary" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,pivot</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_edu_absence_summary_kanban')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('edu_attendance.edu_absence_summary_list')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('edu_attendance.edu_absence_summary_pivot')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nenhum aluno em risco de reprovar por faltas</p>
+            <p>O resumo conta as faltas injustificadas por aluno e disciplina face ao limite da lei: no ensino geral, 3,
+            4 ou 5 por trimestre, conforme os tempos semanais (Decreto Executivo 424/25); no técnico, o triplo dos
+            tempos semanais no ano (Despacho 60/08). Tire o filtro «Em risco ou reprovados» para ver todos.</p>
+        </field>
+    </record>
 </odoo>

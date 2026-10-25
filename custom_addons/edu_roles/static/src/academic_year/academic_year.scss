@@ -1047,3 +1047,40 @@
         padding: 2px;
     }
 }
+
+// Resumo de faltas: a barra das injustificadas que contam face ao limite.
+.o_edu_abs_kanban {
+    .o_kanban_record {
+        min-width: 300px;
+    }
+
+    .o_edu_abs_card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        height: 100%;
+        padding: 2px;
+    }
+
+    .o_edu_abs_meter {
+        height: 8px;
+        border-radius: 4px;
+        background: $gray-200;
+        overflow: hidden;
+    }
+
+    .o_edu_abs_bar {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+        background: $success;
+    }
+
+    .o_edu_abs_at_risk {
+        background: $warning;
+    }
+
+    .o_edu_abs_failed {
+        background: $danger;
+    }
+}
