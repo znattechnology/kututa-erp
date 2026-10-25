@@ -46,44 +46,13 @@
                                        t-att-placeholder="this.isProject ? 'Aluno, tema ou orientador' : 'Aluno, entidade ou tutor'"/>
                             </div>
                         </div>
-                        <div class="o_edu_tr_card">
-                            <p t-if="!this.visibleRows.length" class="mb-0 text-muted p-3" t-out="this.emptyText"/>
-                            <div t-else="" class="table-responsive">
-                                <table class="table table-sm table-hover o_edu_tr_table mb-0">
-                                    <thead>
-                                        <tr t-if="this.isProject">
-                                            <th>Aluno</th><th>Tema</th><th>Orientador</th><th>Defesa</th>
-                                            <th class="text-center">Nota</th><th>Estado</th>
-                                        </tr>
-                                        <tr t-else="">
-                                            <th>Aluno</th><th>Entidade</th><th>Tutor da escola</th><th>Período</th>
-                                            <th class="text-center">Horas</th><th class="text-center">Nota</th><th>Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr t-foreach="this.visibleRows" t-as="r" t-key="r.id" class="o_edu_tr_row" t-on-click="() => this.open(r)">
-                                            <td><div class="fw-semibold" t-out="r.student"/><div class="small text-muted" t-out="r.class"/></td>
-                                            <t t-if="this.isProject">
-                                                <td><div t-out="r.title"/><div class="small text-muted" t-out="r.course"/></td>
-                                                <td><t t-if="r.advisor" t-out="r.advisor"/><span t-else="" class="text-danger">Por atribuir</span></td>
-                                                <td class="text-nowrap"><t t-if="r.defense" t-out="r.defense"/><span t-else="" class="text-muted">Por marcar</span></td>
-                                            </t>
-                                            <t t-else="">
-                                                <td><div t-out="r.entity"/><div t-if="r.supervisor" class="small text-muted" t-out="r.supervisor"/></td>
-                                                <td><t t-if="r.tutor" t-out="r.tutor"/><span t-else="" class="text-muted">Por atribuir</span></td>
-                                                <td class="text-nowrap">
-                                                    <t t-if="r.start or r.end"><t t-out="r.start or '?'"/> – <t t-out="r.end or '?'"/></t>
-                                                    <span t-else="" class="text-muted">—</span>
-                                                </td>
-                                                <td class="text-center tabular-nums" t-out="r.hours"/>
-                                            </t>
-                                            <td class="text-center" t-out="this.fmtGrade(r.grade)"/>
-                                            <td><span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <p t-if="!this.visibleRows.length" class="o_edu_tr_card mb-0 text-muted p-3" t-out="this.emptyText"/>
+                        <ul t-else="" class="o_edu_tr_cards">
+                            <li t-foreach="this.visibleRows" t-as="r" t-key="r.id">
+                                <t t-if="this.isProject" t-call="edu_records.TrainingPage.ProjectCard"/>
+                                <t t-else="" t-call="edu_records.TrainingPage.InternshipCard"/>
+                            </li>
+                        </ul>
                         </t>
                     </t>
 
@@ -512,25 +481,7 @@
             </p>
             <ul t-else="" class="o_edu_tr_cards">
                 <li t-foreach="this.state.both.internship" t-as="r" t-key="r.id">
-                    <button type="button" class="o_edu_tr_ocard" t-on-click="() => this.open(r, 'internship')">
-                        <span class="o_edu_tr_ocard_head">
-                            <span class="min-w-0">
-                                <span class="d-block fw-semibold text-truncate" t-out="r.student"/>
-                                <span class="d-block small text-muted text-truncate" t-out="r.class"/>
-                            </span>
-                            <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
-                        </span>
-                        <t t-set="steps" t-value="this.orientSteps(r, 'internship')"/>
-                        <t t-call="edu_records.TrainingPage.Steps"/>
-                        <span class="o_edu_tr_ocard_facts">
-                            <span><i class="oi me-1" data-icon="location_on" aria-hidden="true"/><t t-if="r.entity" t-out="r.entity"/><t t-else="">Entidade por definir</t></span>
-                            <span t-if="r.start or r.end"><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/><t t-out="r.start or '?'"/> a <t t-out="r.end or '?'"/></span>
-                            <span><i class="oi me-1" data-icon="schedule" aria-hidden="true"/><t t-out="r.hours"/> horas</span>
-                            <span t-if="r.grade !== null and r.grade !== undefined" class="fw-semibold">Nota <t t-out="this.fmtGrade(r.grade)"/></span>
-                        </span>
-                        <t t-set="pct" t-value="r.state === 'ongoing' ? this.internshipProgress(r) : null"/>
-                        <span t-if="pct !== null" class="o_edu_meter w-100" t-att-title="pct + '% do período'"><span t-att-style="'width: ' + pct + '%'"/></span>
-                    </button>
+                    <t t-call="edu_records.TrainingPage.InternshipCard"/>
                 </li>
             </ul>
         </section>
@@ -541,25 +492,53 @@
             </p>
             <ul t-else="" class="o_edu_tr_cards">
                 <li t-foreach="this.state.both.project" t-as="r" t-key="r.id">
-                    <button type="button" class="o_edu_tr_ocard" t-on-click="() => this.open(r, 'project')">
-                        <span class="o_edu_tr_ocard_head">
-                            <span class="min-w-0">
-                                <span class="d-block fw-semibold" t-out="r.title"/>
-                                <span class="d-block small text-muted text-truncate"><t t-out="r.student"/>, <t t-out="r.class"/></span>
-                            </span>
-                            <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
-                        </span>
-                        <t t-set="steps" t-value="this.orientSteps(r, 'project')"/>
-                        <t t-call="edu_records.TrainingPage.Steps"/>
-                        <span class="o_edu_tr_ocard_facts">
-                            <span><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/>Defesa <t t-if="r.defense" t-out="r.defense"/><t t-else="">por marcar</t></span>
-                            <span t-if="this.defenseWhen(r) and !['passed', 'failed'].includes(r.state)" class="o_edu_tr_when" t-out="this.defenseWhen(r)"/>
-                            <span t-if="r.grade !== null and r.grade !== undefined" class="fw-semibold">Nota <t t-out="this.fmtGrade(r.grade)"/></span>
-                        </span>
-                    </button>
+                    <t t-call="edu_records.TrainingPage.ProjectCard"/>
                 </li>
             </ul>
         </section>
+    </t>
+
+    <!-- Um cartão de estágio e um de PAP (nas Orientações e na lista dos Serviços Académicos). Usam ``r``. -->
+    <t t-name="edu_records.TrainingPage.InternshipCard">
+        <button type="button" class="o_edu_tr_ocard" t-on-click="() => this.open(r, 'internship')">
+            <span class="o_edu_tr_ocard_head">
+                <span class="min-w-0">
+                    <span class="d-block fw-semibold text-truncate" t-out="r.student"/>
+                    <span class="d-block small text-muted text-truncate" t-out="r.class"/>
+                </span>
+                <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
+            </span>
+            <t t-set="steps" t-value="this.orientSteps(r, 'internship')"/>
+            <t t-call="edu_records.TrainingPage.Steps"/>
+            <span class="o_edu_tr_ocard_facts">
+                <span><i class="oi me-1" data-icon="location_on" aria-hidden="true"/><t t-if="r.entity" t-out="r.entity"/><t t-else="">Entidade por definir</t><t t-if="r.supervisor"> (<t t-out="r.supervisor"/>)</t></span>
+                <span t-if="r.start or r.end"><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/><t t-out="r.start or '?'"/> a <t t-out="r.end or '?'"/></span>
+                <span><i class="oi me-1" data-icon="schedule" aria-hidden="true"/><t t-out="r.hours"/> horas</span>
+            <span t-if="this.state.isStaff"><i class="oi me-1" data-icon="person" aria-hidden="true"/><t t-if="r.tutor">Tutor: <t t-out="r.tutor"/></t><t t-else="">Tutor por atribuir</t></span>
+                <span t-if="r.grade !== null and r.grade !== undefined" class="fw-semibold">Nota <t t-out="this.fmtGrade(r.grade)"/></span>
+            </span>
+            <t t-set="pct" t-value="r.state === 'ongoing' ? this.internshipProgress(r) : null"/>
+            <span t-if="pct !== null" class="o_edu_meter w-100" t-att-title="pct + '% do período'"><span t-att-style="'width: ' + pct + '%'"/></span>
+        </button>
+    </t>
+    <t t-name="edu_records.TrainingPage.ProjectCard">
+        <button type="button" class="o_edu_tr_ocard" t-on-click="() => this.open(r, 'project')">
+            <span class="o_edu_tr_ocard_head">
+                <span class="min-w-0">
+                    <span class="d-block fw-semibold" t-out="r.title"/>
+                    <span class="d-block small text-muted text-truncate"><t t-out="r.student"/>, <t t-out="r.class"/></span>
+                </span>
+                <span class="badge" t-att-class="this.stateClass(r.state)" t-out="r.state_label"/>
+            </span>
+            <t t-set="steps" t-value="this.orientSteps(r, 'project')"/>
+            <t t-call="edu_records.TrainingPage.Steps"/>
+            <span class="o_edu_tr_ocard_facts">
+            <span t-if="this.state.isStaff" t-att-class="r.advisor ? '' : 'text-danger'"><i class="oi me-1" data-icon="person" aria-hidden="true"/><t t-if="r.advisor">Orientador: <t t-out="r.advisor"/></t><t t-else="">Orientador por atribuir</t></span>
+                <span><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/>Defesa <t t-if="r.defense" t-out="r.defense"/><t t-else="">por marcar</t></span>
+                <span t-if="this.defenseWhen(r) and !['passed', 'failed'].includes(r.state)" class="o_edu_tr_when" t-out="this.defenseWhen(r)"/>
+                <span t-if="r.grade !== null and r.grade !== undefined" class="fw-semibold">Nota <t t-out="this.fmtGrade(r.grade)"/></span>
+            </span>
+        </button>
     </t>
 
     <!-- As etapas de um estágio ou de uma PAP. Usa ``steps``. -->
