@@ -5,6 +5,19 @@
             <div t-if="this.eduIntro.groups.length" class="o_edu_discuss_intro">
                 <h2 class="o_edu_discuss_intro_title">Mensagens</h2>
                 <p class="text-muted">Escolha a quem quer escrever. As conversas ficam guardadas à esquerda.</p>
+                <section t-if="this.eduUnread.length" class="o_edu_discuss_group o_edu_discuss_unread" aria-label="Por ler">
+                    <h3 class="o_edu_discuss_group_title">Por ler</h3>
+                    <ul class="o_edu_discuss_contacts">
+                        <li t-foreach="this.eduUnread" t-as="channel" t-key="channel.localId" class="o_edu_discuss_contact">
+                            <img class="o_edu_discuss_photo" t-att-src="channel.avatarUrl" alt="" aria-hidden="true"/>
+                            <span class="o_edu_discuss_who">
+                                <span class="o_edu_discuss_name" t-out="channel.thread.displayName"/>
+                                <span class="o_edu_discuss_detail"><t t-out="channel.self_member_id.message_unread_counter_ui === 1 ? '1 mensagem nova' : channel.self_member_id.message_unread_counter_ui + ' mensagens novas'"/></span>
+                            </span>
+                            <button type="button" class="btn btn-sm btn-primary" t-on-click="() => this.eduOpenChannel(channel)">Abrir</button>
+                        </li>
+                    </ul>
+                </section>
                 <section t-foreach="this.eduIntro.groups" t-as="group" t-key="group.key" class="o_edu_discuss_group"
                          t-att-aria-label="group.label">
                     <h3 class="o_edu_discuss_group_title" t-out="group.label"/>

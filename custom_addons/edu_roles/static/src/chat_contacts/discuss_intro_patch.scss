@@ -1,4 +1,4 @@
-// As Mensagens sem conversa aberta (aluno e encarregado): os contactos em grelha, com quem é e o «Escrever».
+// As Mensagens sem conversa aberta (professor, aluno e encarregado): os contactos em grelha, com quem é e o «Escrever».
 .o_edu_discuss_intro {
     width: 100%;
     max-width: 880px;
@@ -76,4 +76,17 @@
     font-size: 0.8125rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+// As conversas por ler: a fotografia da conversa (a do Odoo) e a margem da cor de acção.
+.o_edu_discuss_photo {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.o_edu_discuss_unread .o_edu_discuss_contact {
+    border-left: 4px solid $o-action;
 }
