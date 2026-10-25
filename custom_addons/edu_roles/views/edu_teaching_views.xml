@@ -26,6 +26,12 @@
         <field name="name">Calendário académico</field>
         <field name="tag">edu_roles.academic_calendar</field>
     </record>
+    <!-- O Calendário escolar da secretaria: o mesmo calendário, com «Novo evento», a edição de cada evento e a lista. -->
+    <record id="action_edu_school_calendar" model="ir.actions.client">
+        <field name="name">Calendário escolar</field>
+        <field name="tag">edu_roles.academic_calendar</field>
+        <field name="context">{'calendar_manage': True}</field>
+    </record>
 
     <menuitem id="menu_edu_teacher_root" name="Painel do Professor" sequence="2" groups="edu_core.group_edu_teacher"
               action="action_teacher_home" web_icon="edu_roles,static/description/icon_teacher.png"/>

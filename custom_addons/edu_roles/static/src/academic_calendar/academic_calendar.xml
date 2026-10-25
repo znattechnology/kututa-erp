@@ -5,9 +5,19 @@
         <div class="o_action o_edu_academic_calendar">
             <Layout display="this.display">
                 <div class="o_edu_ca_body" t-if="this.state.data">
-                    <header>
-                        <h1 class="o_edu_ca_title">Calendário académico<t t-if="this.state.data.year">, <t t-out="this.state.data.year"/></t></h1>
-                        <p class="mb-0 text-muted" t-out="this.subtitle"/>
+                    <header class="o_edu_ca_head">
+                        <div>
+                            <h1 class="o_edu_ca_title"><t t-out="this.manage ? 'Calendário escolar' : 'Calendário académico'"/><t t-if="this.state.data.year">, <t t-out="this.state.data.year"/></t></h1>
+                            <p class="mb-0 text-muted" t-out="this.subtitle"/>
+                        </div>
+                        <div t-if="this.manage" class="o_edu_ca_actions">
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.openList()">
+                                <i class="oi me-1" data-icon="view_list" aria-hidden="true"/>Ver em lista
+                            </button>
+                            <button type="button" class="btn btn-primary" t-att-disabled="!this.state.data.year_id" t-on-click="() => this.newEvent()">
+                                <i class="oi me-1" data-icon="add" aria-hidden="true"/>Novo evento
+                            </button>
+                        </div>
                     </header>
                     <div t-if="this.filters" class="btn-group flex-wrap align-self-start" role="group" aria-label="Filtro">
                         <button t-foreach="this.filters" t-as="f" t-key="f.key" type="button" class="btn"
@@ -94,10 +104,18 @@
                                     <t t-out="this.selectedTitle"/>
                                     <span t-if="this.state.selected === this.today" class="o_edu_ca_today_tag">hoje</span>
                                 </h3>
-                                <p t-if="!this.selectedEvents.length" class="o_edu_ca_card mb-0 text-muted">Nada marcado neste dia.</p>
+                                <p t-if="!this.selectedEvents.length" class="o_edu_ca_card mb-0 text-muted">
+                                    Nada marcado neste dia.
+                                    <button t-if="this.manage and this.state.data.year_id" type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.newEvent()">Juntar um evento</button>
+                                </p>
                                 <ul t-else="" class="o_edu_ca_card o_edu_ca_list">
                                     <li t-foreach="this.selectedEvents" t-as="event" t-key="event.id">
-                                        <div t-out="event.name"/>
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+                                            <span t-out="event.name"/>
+                                            <button t-if="this.canEdit(event)" type="button" class="btn btn-link btn-sm p-0" t-att-aria-label="'Editar ' + event.name" t-att-title="'Editar ' + event.name" t-on-click="() => this.openEvent(event)">
+                                                <i class="oi" data-icon="edit" aria-hidden="true"/>
+                                            </button>
+                                        </div>
                                         <div class="o_edu_ca_meta">
                                             <span class="o_edu_ca_dot" t-att-class="this.typeClass(event)" aria-hidden="true"/>
                                             <t t-out="this.typeLabel(event)"/><t t-if="event.end !== event.start">, <t t-out="this.span(event)"/></t>

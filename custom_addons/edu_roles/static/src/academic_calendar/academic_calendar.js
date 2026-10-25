@@ -45,6 +45,7 @@ export class AcademicCalendarPage extends Component {
 
     setup() {
         this.orm = useService("orm");
+        this.action = useService("action");
         this.weekdays = WEEKDAYS;
         this.types = TYPES;
         const today = new Date();
@@ -67,13 +68,63 @@ export class AcademicCalendarPage extends Component {
         return this.orm.call("edu.teacher.home", "calendar_data", []);
     }
 
+    // A gestão (o Calendário escolar da secretaria): criar um evento no dia escolhido, abrir um para o editar, a lista.
+
+    /** A secretaria gere o calendário: o mesmo calendário, com «Novo evento», a edição e a lista. */
+    get manage() {
+        return Boolean(this.props.action?.context?.calendar_manage);
+    }
+
+    /** Os eventos da escola abrem-se para editar (o início e o fim dos trimestres vêm dos Trimestres). */
+    canEdit(event) {
+        return this.manage && /^e\d+$/.test(event.id);
+    }
+
+    async reload() {
+        this.state.data = await this.loadData();
+    }
+
+    openEvent(event) {
+        return this.action.doAction(
+            {
+                type: "ir.actions.act_window",
+                name: event.name,
+                res_model: "edu.calendar.event",
+                res_id: parseInt(event.id.slice(1), 10),
+                views: [[false, "form"]],
+                target: "new",
+            },
+            { onClose: () => this.reload() }
+        );
+    }
+
+    newEvent() {
+        return this.action.doAction(
+            {
+                type: "ir.actions.act_window",
+                name: "Novo evento",
+                res_model: "edu.calendar.event",
+                views: [[false, "form"]],
+                target: "new",
+                context: { default_date_start: this.state.selected, default_academic_year_id: this.state.data.year_id },
+            },
+            { onClose: () => this.reload() }
+        );
+    }
+
+    openList() {
+        return this.action.doAction("edu_core.action_edu_calendar_event");
+    }
+
     /** As datas comemorativas à vista por omissão. */
     get showCommemorative() {
         return true;
     }
 
     get subtitle() {
-        return "Os eventos, as provas e os prazos da escola.";
+        return this.manage
+            ? "Os feriados, as pausas, as provas, as reuniões e as actividades da escola. Clique num dia para lhe juntar um evento."
+            : "Os eventos, as provas e os prazos da escola.";
     }
 
     /** Os botões por cima do mês ([{key, label}]), por exemplo os educandos; ``null`` sem filtros. */

@@ -286,6 +286,8 @@ class EduSecretariaHome(models.AbstractModel):
             }
         if key in ('schedules', 'teachers'):
             return self.env['ir.actions.actions']._for_xml_id('edu_timetable.action_edu_schedule_editor')
+        if key == 'calendar':
+            return self.env['ir.actions.actions']._for_xml_id('edu_roles.action_edu_school_calendar')
         if key == 'directors':
             return self.env['ir.actions.actions']._for_xml_id('edu_roles.action_edu_class_directors')
         mine = [('company_id', '=', company.id)]
@@ -311,7 +313,6 @@ class EduSecretariaHome(models.AbstractModel):
             ),
             'lessons': ('edu_attendance.action_edu_lesson', [*mine, ('date', '=', fields.Date.context_today(self))]),
             'capacity': ('edu_core.action_edu_class', this_year),
-            'calendar': ('edu_core.action_edu_calendar_event', mine),
         }[key]
         action = self.env['ir.actions.actions']._for_xml_id(xmlid)
         action['domain'] = domain

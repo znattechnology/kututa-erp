@@ -418,7 +418,7 @@ class EduTeacherHome(models.AbstractModel):
         nacional, em que há aulas) e o início e o fim de cada trimestre."""
         company = self.env.user.employee_id.company_id or self.env.company
         year = _current_year(self.env, company)
-        data = {'year': year.name if year else '', 'events': []}
+        data = {'year': year.name if year else '', 'year_id': year.id if year else False, 'events': []}
         if not year:
             return data
         events = self.env['edu.calendar.event'].sudo().search([('academic_year_id', '=', year.id)])

@@ -333,4 +333,19 @@
         color: $o-action;
         font-weight: 600;
     }
+
+    // A secretaria: os botões de gestão à direita do título.
+    .o_edu_ca_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_ca_actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 }
