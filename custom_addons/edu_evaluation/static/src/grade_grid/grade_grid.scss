@@ -102,6 +102,12 @@
         text-overflow: ellipsis;
     }
 
+    .o_edu_gg_subject_count {
+        flex-shrink: 0;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
     .o_edu_gg_head {
         display: flex;
         flex-wrap: wrap;

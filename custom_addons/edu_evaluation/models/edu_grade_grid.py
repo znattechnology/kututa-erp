@@ -121,6 +121,22 @@ class EduGradeGrid(models.AbstractModel):
         mine = edu_class.sudo().assignment_ids.filtered(lambda a: a.teacher_id == employee).subject_id
         directs = bool(employee) and edu_class.sudo().director_id == employee
         lines = edu_class.sudo().subject_line_ids.filtered('weekly_hours').sorted(lambda li: li.subject_id.name or '')
+        # Quantos alunos já têm a média do trimestre em curso, por disciplina: o painel diz que pautas faltam.
+        trimester = edu_class.academic_year_id.trimester_ids.filtered('is_current')[:1]
+        graded = (
+            dict(
+                self.env['edu.term.result']
+                .sudo()
+                ._read_group(
+                    [('class_id', '=', edu_class.id), ('trimester_id', '=', trimester.id), ('has_mt', '=', True)],
+                    ['subject_id'],
+                    ['__count'],
+                )
+            )
+            if trimester
+            else {}
+        )
+        students = len(edu_class.sudo().enrollment_ids.filtered(lambda e: e.state in ENROLLED))
         subjects = []
         for line in lines:
             subject = line.subject_id
@@ -133,6 +149,9 @@ class EduGradeGrid(models.AbstractModel):
                     'code': subject.code or '',
                     # A pauta só a edita o professor que lecciona a disciplina; a secretaria e o director consultam.
                     'editable': subject in mine,
+                    'graded': graded.get(subject, 0),
+                    'students': students,
+                    'trimester': trimester.name or False,
                 }
             )
         return subjects

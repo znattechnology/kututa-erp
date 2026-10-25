@@ -80,6 +80,7 @@ export class GradeGrid extends Component {
             busy: false,
             version: 0,
             printTrimesterId: false,
+            staff: false,
         });
         onWillStart(async () => {
             const context = this.props.action.context || {};
@@ -95,6 +96,7 @@ export class GradeGrid extends Component {
         this.state.yearId = options.year_id;
         this.state.years = options.years;
         this.state.classes = options.classes;
+        this.state.staff = Boolean(options.staff);
         this.state.classId = false;
         this.state.subjects = [];
         this.state.subjectId = false;
@@ -195,6 +197,21 @@ export class GradeGrid extends Component {
 
     onPrintTrimesterChange(ev) {
         this.state.printTrimesterId = parseInt(ev.target.value, 10) || false;
+    }
+
+    /** As turmas agrupadas por curso, para a lista da turma (a secretaria escolhe entre dezenas). */
+    get classGroups() {
+        const groups = [];
+        for (const c of this.state.classes) {
+            const course = c.course || "Sem curso";
+            let group = groups.find((g) => g.course === course);
+            if (!group) {
+                group = { course, classes: [] };
+                groups.push(group);
+            }
+            group.classes.push(c);
+        }
+        return groups;
     }
 
     async printPauta(preview) {

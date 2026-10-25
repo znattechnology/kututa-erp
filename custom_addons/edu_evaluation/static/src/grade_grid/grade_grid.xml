@@ -31,11 +31,13 @@
                         </select>
                         <select class="form-select" aria-label="Turma" t-on-change="(ev) => this.onClassChange(ev)">
                             <option t-if="!this.state.classId" value="">Escolher a turma…</option>
-                            <t t-foreach="this.state.classes" t-as="c" t-key="c.id">
-                                <option t-att-value="c.id" t-att-selected="c.id === this.state.classId">
-                                    <t t-out="c.name"/> (<t t-out="c.students"/> alunos)<t t-if="c.directs"> · dirijo</t>
-                                </option>
-                            </t>
+                            <optgroup t-foreach="this.classGroups" t-as="g" t-key="g.course" t-att-label="g.course">
+                                <t t-foreach="g.classes" t-as="c" t-key="c.id">
+                                    <option t-att-value="c.id" t-att-selected="c.id === this.state.classId">
+                                        <t t-out="c.name"/> (<t t-out="c.students"/> alunos)<t t-if="c.directs"> · dirijo</t>
+                                    </option>
+                                </t>
+                            </optgroup>
                         </select>
                         <span t-if="this.pastYear" class="badge text-bg-secondary">Ano passado: só consulta</span>
                         <div t-if="this.classLinks.length" class="o_edu_gg_links">
@@ -68,7 +70,11 @@
                                     t-att-aria-current="s.id === this.state.subjectId ? 'true' : 'false'"
                                     t-on-click="() => this.openSubject(s.id)">
                                 <span class="o_edu_gg_subject_name" t-out="s.name"/>
-                                <i t-if="!s.editable" class="oi text-muted" data-icon="visibility" title="Só consulta" aria-label="Só consulta"/>
+                                <span t-if="s.trimester and s.students" class="o_edu_gg_subject_count"
+                                      t-att-class="s.graded >= s.students ? 'text-success' : (s.graded ? 'text-warning' : 'text-muted')"
+                                      t-att-title="s.graded + ' de ' + s.students + ' alunos com a média do ' + s.trimester"
+                                      t-out="s.graded + '/' + s.students"/>
+                                <i t-if="!s.editable and !this.state.staff" class="oi text-muted" data-icon="visibility" title="Só consulta" aria-label="Só consulta"/>
                             </button>
                         </nav>
 
@@ -95,11 +101,7 @@
                                                 t-att-selected="t.id === this.state.printTrimesterId" t-out="t.name"/>
                                     </select>
                                     <button type="button" class="btn btn-secondary" t-on-click="() => this.printPauta(true)"
-                                            title="Ver a pauta da turma na aplicação">
-                                        <i class="oi me-1" data-icon="visibility" aria-hidden="true"/>Visualizar pauta
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" t-on-click="() => this.printPauta(false)"
-                                            title="Pauta da turma em PDF (A3)">
+                                            title="Ver a pauta da turma e imprimi-la (A3)">
                                         <i class="oi me-1" data-icon="print" aria-hidden="true"/>Imprimir pauta
                                     </button>
                                 </div>
