@@ -35,6 +35,12 @@ class EduGradePermissionPage(models.AbstractModel):
             situation, tone = 'Expirada', 'muted'
         else:
             situation, tone = f'Até {self._local_day(permission.date_expiry)}', 'pos'
+            last = fields.Datetime.context_timestamp(self, permission.date_expiry).date()
+            days = (last - fields.Date.context_today(self)).days
+            if days < 1:
+                situation += ' · termina hoje'
+            else:
+                situation += ' · falta 1 dia' if days == 1 else f' · faltam {days} dias'
         trimester = permission.trimester_id
         return {
             'id': permission.id,

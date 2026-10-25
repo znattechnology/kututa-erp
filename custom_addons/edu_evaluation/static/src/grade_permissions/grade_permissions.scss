@@ -40,17 +40,38 @@
         background: $o-view-background-color;
     }
 
-    .o_edu_gp_table {
-        th,
-        td {
-            vertical-align: middle;
-            padding-left: 12px;
-            padding-right: 12px;
+    // As autorizações em cartões: quem, onde, o motivo e a situação em baixo.
+    .o_edu_gp_grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+
+    .o_edu_gp_item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 12px 14px;
+        border: 1px solid $border-color;
+        border-left: 4px solid $success;
+        border-radius: $border-radius;
+        background: $o-view-background-color;
+
+        &.o_inactive {
+            border-left-color: $gray-400;
+            opacity: 0.8;
         }
     }
 
     .o_edu_gp_reason {
-        max-width: 32ch;
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .o_edu_gp_new {
+        padding: 16px 20px;
     }
 
     .o_edu_gp_form {
@@ -58,7 +79,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 16px;
         max-width: 760px;
-        padding: 20px;
+        padding-top: 8px;
 
         @include media-breakpoint-down(sm) {
             grid-template-columns: minmax(0, 1fr);
