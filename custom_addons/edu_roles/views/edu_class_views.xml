@@ -134,7 +134,7 @@
         <field name="view_mode">kanban,list,form</field>
     </record>
 
-    <!-- Professores por disciplina em cartões, uma coluna por turma: a disciplina e os tempos, o período, o
+    <!-- Professores por disciplina em cartões (as turmas à esquerda): a disciplina, a turma e os tempos, o período, o
          professor (com a fotografia, troca-se no próprio cartão) ou «Por atribuir», a carga do professor face ao
          limite e o aviso de quem não está habilitado. A lista editável fica. -->
     <record id="edu_teaching_assignment_kanban" model="ir.ui.view">
@@ -149,6 +149,7 @@
                     <button name="action_print_assignments" type="object" string="Imprimir" icon="print" display="always"/>
                 </header>
                 <field name="teacher_id"/>
+                <field name="class_id"/>
                 <field name="trimester_id"/>
                 <field name="weekly_hours"/>
                 <field name="teacher_load_label"/>
@@ -161,7 +162,9 @@
                                 <field name="subject_id" class="o_edu_assign_subject"/>
                                 <span class="small text-muted text-nowrap"><t t-out="record.weekly_hours.raw_value"/> tempos</span>
                             </div>
-                            <div t-if="record.trimester_id.raw_value" class="small text-muted"><field name="trimester_id"/></div>
+                            <div class="small text-muted">
+                                <field name="class_id"/><t t-if="record.trimester_id.raw_value">, <field name="trimester_id"/></t>
+                            </div>
                             <div class="d-flex align-items-center gap-2">
                                 <field name="teacher_id" widget="many2one_avatar_employee" options="{'no_create': True}"/>
                                 <span t-if="record.teacher_id.raw_value" class="small text-truncate" t-out="record.teacher_id.value"/>
@@ -180,7 +183,21 @@
         </field>
     </record>
 
+    <!-- As turmas do ano em curso à esquerda: uma turma mostra as suas disciplinas (sem colunas para o lado). -->
+    <record id="edu_teaching_assignment_search_panel" model="ir.ui.view">
+        <field name="name">edu.teaching.assignment.search.panel</field>
+        <field name="model">edu.teaching.assignment</field>
+        <field name="inherit_id" ref="edu_timetable.edu_teaching_assignment_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <searchpanel view_types="kanban,list">
+                    <field name="class_id" select="one" icon="groups" enable_counters="1"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
     <record id="edu_timetable.action_edu_teaching_assignment" model="ir.actions.act_window">
         <field name="view_mode">kanban,list</field>
+        <field name="context">{'search_default_current_year': 1}</field>
     </record>
 </odoo>

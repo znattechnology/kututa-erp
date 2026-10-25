@@ -626,8 +626,8 @@
 
 // Professores por disciplina em cartões, uma coluna por turma: os por atribuir com a margem do aviso.
 .o_edu_assign_kanban {
-    .o_kanban_group {
-        min-width: 300px;
+    .o_kanban_record {
+        min-width: 280px;
     }
 
     .o_edu_assign_card {
@@ -652,5 +652,38 @@
         gap: 2px 12px;
         color: $text-muted;
         font-size: 0.8125rem;
+    }
+}
+
+// Os cartões em colunas (trimestres, tempos, disciplinas, professores por disciplina): quando há mais colunas
+// do que cabem, uma sombra à direita diz que há mais para o lado, e a barra de deslocamento fica sempre à vista
+// (o macOS esconde-a por omissão).
+.o_edu_term_kanban,
+.o_edu_slot_kanban,
+.o_edu_subject_kanban,
+.o_edu_assign_kanban {
+    &.o_kanban_grouped {
+        &::after {
+            content: "";
+            position: sticky;
+            right: 0;
+            flex: 0 0 40px;
+            margin-left: -40px;
+            background: linear-gradient(to right, rgba($o-webclient-background-color, 0), $o-webclient-background-color);
+            pointer-events: none;
+        }
+
+        &::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 5px;
+            background: $gray-400;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: $gray-100;
+        }
     }
 }
