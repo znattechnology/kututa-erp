@@ -910,10 +910,10 @@
                 <h3 class="o_edu_feed_day" t-out="group.label"/>
                 <ul class="o_edu_feed_list">
                     <li t-foreach="group.items" t-as="item" t-key="item.key">
-                        <button type="button" class="o_edu_feed_item" t-on-click="() => this.openItem(item)">
+                        <button type="button" class="o_edu_feed_item" t-att-class="{'o_edu_feed_new': this.isNew and this.isNew(item)}" t-on-click="() => this.openItem(item)">
                             <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" t-att-data-icon="item.icon"/></span>
                             <span class="o_edu_feed_text">
-                                <span t-out="item.text"/>
+                                <span><t t-out="item.text"/><span t-if="this.isNew and this.isNew(item)" class="o_edu_feed_badge">Nova</span></span>
                                 <span class="small text-muted">
                                     <t t-if="showChild"><t t-out="item.first_name"/><t t-if="group.key === 'week' or group.key === 'older'">, </t></t>
                                     <t t-if="group.key === 'week' or group.key === 'older'" t-out="(showChild ? this.when(item).toLowerCase() : this.when(item))"/>

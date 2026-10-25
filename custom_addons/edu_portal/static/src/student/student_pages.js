@@ -1,4 +1,6 @@
-import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
+import { Component, onMounted, onWillStart, proxy, useProps } from "@odoo/owl";
+import { user } from "@web/core/user";
+import { browser } from "@web/core/browser/browser";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
@@ -832,6 +834,31 @@ export const FeedFilters = (Base) =>
             super.setup();
             this.state.feedType = "all";
             this.state.feedChild = "all";
+            this.state.newKeys = [];
+            // As novidades já vistas ficam guardadas neste browser (uma conveniência de quem vê, não um registo): ao abrir
+            // a página, as que ainda não estavam vistas ficam marcadas como novas, e passam a vistas.
+            onMounted(() => {
+                const storageKey = `edu_portal.feed_seen.${user.userId}`;
+                const keys = (this.state.data.feed || []).map((i) => i.key);
+                let seen = null;
+                try {
+                    seen = JSON.parse(browser.localStorage.getItem(storageKey) || "null");
+                } catch {
+                    seen = null;
+                }
+                // Na primeira visita não há o que comparar: nada fica marcado como novo.
+                this.state.newKeys = Array.isArray(seen) ? keys.filter((k) => !seen.includes(k)) : [];
+                try {
+                    const all = [...new Set([...keys, ...(Array.isArray(seen) ? seen : [])])].slice(0, 300);
+                    browser.localStorage.setItem(storageKey, JSON.stringify(all));
+                } catch {
+                    // Sem armazenamento (janela privada, dados bloqueados): a página funciona sem as marcas.
+                }
+            });
+        }
+
+        isNew(item) {
+            return this.state.newKeys.includes(item.key);
         }
 
         get feedTypeFilters() {
@@ -865,7 +892,9 @@ export const FeedFilters = (Base) =>
             const parts = FEED_TYPES.map((t) => [t, feed.filter((i) => i.page === t.key).length])
                 .filter(([, n]) => n)
                 .map(([t, n]) => `${n} ${t.phrase}`);
-            return `${count(feed.length, "Uma novidade", "novidades")}${parts.length ? ": " + list(parts) : ""}.`;
+            const fresh = feed.filter((i) => this.isNew(i)).length;
+            const news = fresh ? ` ${count(fresh, "Uma nova", "novas")} desde a última visita.` : "";
+            return `${count(feed.length, "Uma novidade", "novidades")}${parts.length ? ": " + list(parts) : ""}.${news}`;
         }
 
         setFeedType(key) {
