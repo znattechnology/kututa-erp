@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Os formulários das páginas de configuração que só tinham lista: sem eles o Odoo gera um com todos os campos,
+         incluindo os que só servem os cartões (em bruto). -->
+    <record id="edu_room_form" model="ir.ui.view">
+        <field name="name">edu.room.form</field>
+        <field name="model">edu.room</field>
+        <field name="arch" type="xml">
+            <form string="Sala">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="Sala 01"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="room_type"/>
+                            <field name="capacity"/>
+                        </group>
+                        <group>
+                            <field name="building_id"/>
+                            <field name="floor"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Equipamento">
+                            <field name="has_projector"/>
+                            <field name="has_ac"/>
+                        </group>
+                        <group string="Este ano">
+                            <field name="edu_week_used" string="Aulas por semana"/>
+                            <field name="edu_free_shifts" string="Livre nos turnos"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Notas"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_time_slot_form" model="ir.ui.view">
+        <field name="name">edu.time.slot.form</field>
+        <field name="model">edu.time.slot</field>
+        <field name="arch" type="xml">
+            <form string="Tempo lectivo">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="1º tempo"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="shift_id"/>
+                            <field name="is_break"/>
+                        </group>
+                        <group>
+                            <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                            <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
+                            <field name="edu_lesson_count" string="Aulas por semana (este ano)"/>
+                        </group>
+                    </group>
+                    <field name="company_id" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_enrollment_document_type_form" model="ir.ui.view">
+        <field name="name">edu.enrollment.document.type.form</field>
+        <field name="model">edu.enrollment.document.type</field>
+        <field name="arch" type="xml">
+            <form string="Documento da matrícula">
+                <sheet>
+                    <widget name="web_ribbon" title="Arquivado" bg_color="text-bg-secondary" invisible="active"/>
+                    <div class="oe_title"><h1><field name="name" placeholder="Cópia do Bilhete de Identidade"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="level_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="Todos os níveis"/>
+                            <field name="company_id" groups="base.group_multi_company" placeholder="Todas as escolas"/>
+                        </group>
+                        <group>
+                            <field name="edu_requested" string="Pedido em (matrículas deste ano)"/>
+                            <field name="edu_delivered" string="Entregue em"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_trimester_form" model="ir.ui.view">
+        <field name="name">edu.trimester.form</field>
+        <field name="model">edu.trimester</field>
+        <field name="arch" type="xml">
+            <form string="Trimestre">
+                <header>
+                    <button name="action_close" type="object" string="Fechar" icon="lock" invisible="state != 'open'"
+                            confirm="Fechado o trimestre, as notas só se corrigem por reapreciação. Continuar?"/>
+                    <button name="action_reopen" type="object" string="Reabrir" icon="lock_open" invisible="state != 'closed'"
+                            groups="edu_core.group_edu_manager"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Em curso" invisible="not is_current"/>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="academic_year_id"/>
+                            <field name="number"/>
+                            <field name="is_current"/>
+                        </group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="edu_grades" string="Notas lançadas (%)"/>
+                            <field name="edu_closed_info" string="Fecho" invisible="state != 'closed'"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -29,6 +29,7 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
         'views/edu_coordination_views.xml',
         'views/edu_course_views.xml',
         'views/edu_class_views.xml',
+        'views/edu_config_forms.xml',
         'views/edu_enrollment_document_views.xml',
     ],
     'assets': {
