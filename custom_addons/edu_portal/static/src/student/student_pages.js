@@ -213,6 +213,15 @@ class StudentPage extends Component {
         ];
     }
 
+    /** Quantos dias faltam para uma prova: «Hoje», «Amanhã», «Daqui a 3 dias». */
+    countdown(row) {
+        const [y, m, d] = row.date.split("-").map((part) => parseInt(part, 10));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const days = Math.round((new Date(y, m - 1, d) - today) / 86400000);
+        return days <= 0 ? "Hoje" : days === 1 ? "Amanhã" : `Daqui a ${days} dias`;
+    }
+
     /** «Subiu de 14,5 no 1.º trimestre» (a comparação com o trimestre anterior, quando é possível). */
     trendText(previous) {
         if (!previous) {
@@ -292,8 +301,59 @@ export class StudentHome extends StudentPage {
         return { value: String(a.absent), detail, bad: a.failed.length > 0, warn: !a.failed.length && a.at_risk.length > 0 };
     }
 
+    /** O que pede atenção, como no painel do encarregado: uma prova hoje ou amanhã, as propinas em atraso, as
+     * disciplinas no limite de faltas e as negativas do trimestre. */
+    get warnings() {
+        const d = this.state.data;
+        const out = [];
+        const soon = d.next_exams.filter((e) => ["Hoje", "Amanhã"].includes(this.countdown(e)));
+        for (const e of soon) {
+            out.push({ key: `exam-${e.id}`, icon: "edit_note", text: `${this.countdown(e)} tens prova de ${e.subject}, às ${e.hours.split("–")[0]}${e.rooms ? ", " + e.rooms : ""}.`, action: "edu_portal.action_student_exams" });
+        }
+        const f = d.fees_summary;
+        if (f && f.overdue) {
+            out.push({ key: "fees", icon: "payments", text: `Tens ${f.overdue_total} de propinas em atraso (${count(f.overdue, "uma factura", "facturas")}).`, action: "edu_portal.action_student_fees", bad: true });
+        }
+        const a = d.absences;
+        const technical = a.regime === "technical";
+        if (a.failed && a.failed.length) {
+            out.push({ key: "failed", icon: "person_off", text: `${technical ? "Passaste" : "Atingiste"} o limite de faltas a ${list(a.failed)}.`, action: "edu_portal.action_student_absences", bad: true });
+        }
+        if (a.at_risk && a.at_risk.length) {
+            out.push({ key: "risk", icon: "person_off", text: `${technical ? "Estás no limite de faltas" : "Estás a uma falta do limite"} a ${list(a.at_risk)}.`, action: "edu_portal.action_student_absences" });
+        }
+        const g = d.grades;
+        if (g.active && g.subjects && !g.blocked) {
+            const negatives = g.subjects.filter((s) => s.by_trimester[g.active.id].ct && !s.by_trimester[g.active.id].ct.pos).map((s) => s.name);
+            if (negatives.length) {
+                out.push({ key: "neg", icon: "school", text: `${negatives.length === 1 ? "Negativa" : "Negativas"} no ${g.active.name.replace("Trimestre", "trimestre")} a ${list(negatives)}.`, action: "edu_portal.action_student_grades", bad: true });
+            }
+        }
+        return out;
+    }
+
+    /** As disciplinas com faltas injustificadas face ao limite (sem faltas, a frase basta). */
+    get countedMeters() {
+        return this.absenceMeters.filter((m) => m.counted);
+    }
+
+    when(item) {
+        return feedWhen(item.date);
+    }
+
+    get feedGroups() {
+        return feedGroups(this.state.data.feed || []);
+    }
+
+    openItem(item) {
+        return this.open(STUDENT_FEED_ACTIONS[item.page]);
+    }
+
     get feesTile() {
         const f = this.state.data.fees_summary;
+        if (f && !f.invoiced) {
+            return { value: "Sem facturas", detail: "Ainda sem propinas facturadas" };
+        }
         if (!f || !f.count) {
             return { value: "Em dia", detail: "Não tens nada por pagar" };
         }
@@ -350,15 +410,6 @@ export class StudentSchedule extends StudentPage {
 export class StudentExams extends StudentPage {
     static template = "edu_portal.StudentExams";
     static page = "exams";
-
-    /** Quantos dias faltam para uma prova: «Hoje», «Amanhã», «Daqui a 3 dias». */
-    countdown(row) {
-        const [y, m, d] = row.date.split("-").map((part) => parseInt(part, 10));
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const days = Math.round((new Date(y, m - 1, d) - today) / 86400000);
-        return days <= 0 ? "Hoje" : days === 1 ? "Amanhã" : `Daqui a ${days} dias`;
-    }
 
     /** Os números das provas: marcadas, feitas, por fazer e em quantos dias. */
     get examTiles() {

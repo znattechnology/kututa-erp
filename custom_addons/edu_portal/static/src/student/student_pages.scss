@@ -578,6 +578,11 @@
         align-items: center;
         gap: 12px 16px;
     }
+
+    // O painel do aluno: o que pede atenção, com a margem do crítico.
+    .o_edu_st_attention {
+        border-left: 4px solid $danger;
+    }
 }
 
 // As provas já feitas, acinzentadas (o Bootstrap põe a cor em cada célula, não na linha).

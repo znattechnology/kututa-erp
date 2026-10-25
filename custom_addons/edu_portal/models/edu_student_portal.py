@@ -200,7 +200,10 @@ class EduStudentPortal(models.AbstractModel):
                 'count': len(fees['due']),
                 'total': fees['total_due'],
                 'overdue': fees['overdue'],
+                'overdue_total': fees['overdue_total'],
+                'invoiced': bool(fees['rows']),
             }
+            data['feed'] = self._feed(student)[:5]
         elif page == 'grades':
             data['grades'] = self._grades_page(student, enrollment, options)
         elif page == 'schedule':

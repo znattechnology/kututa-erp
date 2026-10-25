@@ -55,6 +55,19 @@
                     <t t-else="">
                         <t t-call="edu_portal.StudentPage.Debt"/>
                         <t t-set="g" t-value="d.grades"/>
+                        <!-- O que pede atenção, antes de tudo (como no painel do encarregado) -->
+                        <t t-set="warnings" t-value="this.warnings"/>
+                        <section t-if="warnings.length" class="o_edu_st_card o_edu_st_attention" aria-labelledby="o_edu_st_attention">
+                            <h2 id="o_edu_st_attention" class="o_edu_st_h2 mb-1">O que pede atenção</h2>
+                            <ul class="o_edu_feed_list">
+                                <li t-foreach="warnings" t-as="w" t-key="w.key">
+                                    <button type="button" class="o_edu_feed_item" t-on-click="() => this.open(w.action)">
+                                        <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" t-att-data-icon="w.icon"/></span>
+                                        <span class="o_edu_feed_text"><span t-att-class="{'text-danger': w.bad}" t-out="w.text"/></span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </section>
 
                         <!-- Os números principais -->
                         <div class="o_edu_kpis">
@@ -155,6 +168,7 @@
                                             <div class="fw-semibold" t-out="row.subject"/>
                                             <div class="small text-muted"><t t-if="row.today">Hoje</t><t t-else="" t-out="row.day.split(',')[0]"/>, <t t-out="row.hours"/><t t-if="row.rooms">, <t t-out="row.rooms"/></t></div>
                                         </div>
+                                        <div class="small fw-semibold text-nowrap" t-att-class="row.today ? 'text-success' : 'text-primary'" t-out="this.countdown(row)"/>
                                     </li>
                                 </ul>
                                 <p t-if="d.exams_left > d.next_exams.length" class="mb-0 mt-2 small text-muted">
@@ -164,35 +178,49 @@
                         </div>
 
                         <div class="o_edu_st_grid">
-                            <!-- As notas do trimestre por disciplina -->
-                            <section class="o_edu_st_card" aria-labelledby="o_edu_st_chart_grades">
-                                <div class="o_edu_st_row mb-1">
-                                    <h2 id="o_edu_st_chart_grades" class="o_edu_st_h2 mb-0">Notas do <t t-out="g.active ? g.active.name : 'trimestre'"/></h2>
-                                    <button t-if="d.has_enrollment and !g.blocked" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_grades')">Ver a pauta</button>
-                                </div>
-                                <p t-if="!d.has_enrollment" class="mb-0 text-muted">Não tens matrícula neste ano lectivo.</p>
-                                <p t-elif="g.blocked" class="mb-0 text-danger">As tuas notas estão bloqueadas porque há propinas em atraso. Voltam a ver-se quando as propinas vencidas forem pagas.</p>
-                                <p t-elif="g.preschool" class="mb-0 text-muted">Na Iniciação a avaliação é descritiva: os professores escrevem um relatório por trimestre, sem notas de 0 a 20.</p>
-                                <p t-elif="!g.active" class="mb-0 text-muted">A escola ainda não tem trimestres neste ano lectivo.</p>
-                                <t t-else="">
-                                    <p class="small text-muted mb-3" t-out="g.summary"/>
-                                    <div class="o_edu_hbars" role="list">
-                                        <div t-foreach="this.gradeBars" t-as="bar" t-key="bar.id" class="o_edu_hbar_row" role="listitem"
-                                             t-att-title="bar.name + ': ' + (bar.grade ? bar.grade.text + ' valores' + (bar.grade.pos ? '' : ', negativa') : 'sem nota')">
-                                            <span class="o_edu_hbar_name" t-out="bar.name"/>
-                                            <span class="o_edu_hbar_track">
-                                                <span class="o_edu_hbar_pass" t-att-style="'left: ' + this.passLeft + '%'"/>
-                                                <span t-if="bar.grade" class="o_edu_hbar" t-att-class="{'o_edu_chart_neg': !bar.grade.pos}" t-att-style="'width: ' + bar.width + '%'"/>
-                                            </span>
-                                            <span class="o_edu_hbar_value">
-                                                <t t-if="bar.grade"><t t-out="bar.grade.text"/><span t-if="!bar.grade.pos" class="o_edu_hbar_flag">negativa</span></t>
-                                                <span t-else="" class="text-muted small">sem nota</span>
-                                            </span>
-                                        </div>
+                            <div class="o_edu_st_main">
+                                <!-- As notas do trimestre por disciplina -->
+                                <section class="o_edu_st_card" aria-labelledby="o_edu_st_chart_grades">
+                                    <div class="o_edu_st_row mb-1">
+                                        <h2 id="o_edu_st_chart_grades" class="o_edu_st_h2 mb-0">Notas do <t t-out="g.active ? g.active.name : 'trimestre'"/></h2>
+                                        <button t-if="d.has_enrollment and !g.blocked" type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_grades')">Ver a pauta</button>
                                     </div>
-                                    <p class="small text-muted mb-0 mt-2">A linha marca a positiva (<t t-out="g.pass_text"/> valores). Escala de 0 a <t t-out="g.scale_max"/>.</p>
-                                </t>
-                            </section>
+                                    <p t-if="!d.has_enrollment" class="mb-0 text-muted">Não tens matrícula neste ano lectivo.</p>
+                                    <p t-elif="g.blocked" class="mb-0 text-danger">As tuas notas estão bloqueadas porque há propinas em atraso. Voltam a ver-se quando as propinas vencidas forem pagas.</p>
+                                    <p t-elif="g.preschool" class="mb-0 text-muted">Na Iniciação a avaliação é descritiva: os professores escrevem um relatório por trimestre, sem notas de 0 a 20.</p>
+                                    <p t-elif="!g.active" class="mb-0 text-muted">A escola ainda não tem trimestres neste ano lectivo.</p>
+                                    <t t-else="">
+                                        <p class="small text-muted mb-3" t-out="g.summary"/>
+                                        <div class="o_edu_hbars" role="list">
+                                            <div t-foreach="this.gradeBars.filter((b) => b.grade)" t-as="bar" t-key="bar.id" class="o_edu_hbar_row" role="listitem"
+                                                 t-att-title="bar.name + ': ' + (bar.grade ? bar.grade.text + ' valores' + (bar.grade.pos ? '' : ', negativa') : 'sem nota')">
+                                                <span class="o_edu_hbar_name" t-out="bar.name"/>
+                                                <span class="o_edu_hbar_track">
+                                                    <span class="o_edu_hbar_pass" t-att-style="'left: ' + this.passLeft + '%'"/>
+                                                    <span t-if="bar.grade" class="o_edu_hbar" t-att-class="{'o_edu_chart_neg': !bar.grade.pos}" t-att-style="'width: ' + bar.width + '%'"/>
+                                                </span>
+                                                <span class="o_edu_hbar_value">
+                                                    <t t-if="bar.grade"><t t-out="bar.grade.text"/><span t-if="!bar.grade.pos" class="o_edu_hbar_flag">negativa</span></t>
+                                                    <span t-else="" class="text-muted small">sem nota</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <t t-set="ungraded" t-value="this.gradeBars.filter((b) => !b.grade)"/>
+                                        <p t-if="ungraded.length" class="small mb-0 mt-3"><span class="text-muted">Sem nota (<t t-out="ungraded.length"/>):</span> <t t-out="this.list(ungraded.map((b) => b.name))"/>.</p>
+                                        <p class="small text-muted mb-0 mt-2">A linha marca a positiva (<t t-out="g.pass_text"/> valores). Escala de 0 a <t t-out="g.scale_max"/>.</p>
+                                    </t>
+                                </section>
+
+                                <!-- As novidades dos últimos dias -->
+                                <section class="o_edu_st_section" aria-labelledby="o_edu_st_news">
+                                    <div class="o_edu_st_row">
+                                        <h2 id="o_edu_st_news" class="o_edu_st_h2 mb-0">Novidades</h2>
+                                        <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_notifications')">Ver todas</button>
+                                    </div>
+                                    <p t-if="!d.feed.length" class="o_edu_st_card mb-0 text-muted">Sem novidades nos últimos 30 dias.</p>
+                                    <t t-else="" t-call="edu_portal.Part.Feed"/>
+                                </section>
+                            </div>
 
                             <div class="o_edu_st_side">
                                 <!-- A evolução da média -->
@@ -226,8 +254,11 @@
                                     <p t-elif="d.absences.preschool" class="mb-0 text-muted">Estiveste em <t t-out="d.absences.rate"/>% das aulas. Na Iniciação as faltas não contam para passar de ano.</p>
                                     <p t-elif="d.absences.regime === 'primary'" class="mb-0 text-muted">Estiveste em <t t-out="d.absences.rate"/>% das aulas. No primário não há limite de faltas por disciplina: conta a frequência do ano, que tem de chegar a dois terços das aulas.</p>
                                     <p t-elif="!this.absenceMeters.length" class="mb-0 text-muted">As disciplinas não têm limite de faltas no plano curricular.</p>
+                                    <p t-elif="!this.countedMeters.length" class="mb-0">
+                                        <i class="oi me-1 text-success" data-icon="check_circle" aria-hidden="true"/>Nenhuma falta injustificada: dentro do limite nas <t t-out="this.absenceMeters.length"/> disciplinas.
+                                    </p>
                                     <ul t-else="" class="o_edu_meters">
-                                        <li t-foreach="this.absenceMeters" t-as="m" t-key="m_index" t-att-title="m.name + ': ' + m.counted + ' de ' + m.limit + ' faltas injustificadas, ' + m.status_label.toLowerCase()">
+                                        <li t-foreach="this.countedMeters" t-as="m" t-key="m_index" t-att-title="m.name + ': ' + m.counted + ' de ' + m.limit + ' faltas injustificadas, ' + m.status_label.toLowerCase()">
                                             <div class="d-flex justify-content-between gap-2 small">
                                                 <span t-out="m.name"/>
                                                 <span class="o_edu_st_num text-nowrap" t-att-class="this.statusClass(m)"><t t-out="m.counted"/> de <t t-out="m.limit"/></span>
