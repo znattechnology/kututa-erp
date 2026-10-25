@@ -141,7 +141,7 @@ class TestStudentPortal(HttpCase):
 
     def test_pages_and_privacy(self):
         Portal = self.env['edu.student.portal'].with_user(self.ana_user)
-        for page in ('home', 'grades', 'schedule', 'exams', 'absences', 'fees', 'profile'):
+        for page in ('home', 'grades', 'schedule', 'exams', 'absences', 'fees', 'profile', 'help'):
             with self.subTest(page=page):
                 data = Portal.page_data(page)
                 self.assertTrue(data['has_student'])

@@ -1006,23 +1006,66 @@ export const HelpPage = (Base) =>
         }
     };
 
-/** A ajuda do aluno. */
+/** A ajuda do aluno: um tema por área da barra lateral (o estágio e a PAP só no técnico). */
 export class StudentHelp extends HelpPage(StudentPage) {
     static template = "edu_portal.StudentHelp";
+    static page = "help";
+
+    async load() {
+        // Sem os dados, a ajuda abre na mesma: só fica sem o tema do técnico.
+        try {
+            this.state.data = await this.orm.silent.call("edu.student.portal", "page_data", ["help"]);
+        } catch {
+            this.state.data = {};
+        }
+    }
 
     get helpTopics() {
-        return [
+        const topics = [
             {
                 key: "grades",
-                label: "Notas e faltas",
+                label: "Notas",
                 icon: "school",
                 questions: [
                     { q: "Quando aparecem as notas?", a: "Assim que o professor as lança. Nas notificações aparece «Notas novas» da disciplina (sem a nota, que pode mudar até o trimestre fechar). O mínimo para a positiva está escrito por baixo da pauta.", action: "edu_portal.action_student_grades", actionLabel: "Ver as notas" },
                     { q: "O que querem dizer NPP, NPT, CT, MAC e MT?", a: "No ensino técnico, NPP é a nota do professor e NPT a da prova do trimestre; a classificação do trimestre (CT) junta as duas. No ensino geral, MAC é a média das avaliações contínuas e MT a média do trimestre. A legenda completa está por baixo da pauta.", action: "edu_portal.action_student_grades", actionLabel: "Ver as notas" },
-                    { q: "Como se conta a minha assiduidade?", a: "Só contam as aulas dadas em que o professor fez a chamada. Chegar atrasado conta como presença e como atraso. Cada disciplina tem um limite de faltas injustificadas, que depende dos tempos semanais; no painel e nas faltas vês quando estás perto dele.", action: "edu_portal.action_student_absences", actionLabel: "Ver as faltas" },
-                    { q: "Onde vejo o horário, as provas e os anos anteriores?", a: "O horário da turma está em Horário, as provas marcadas em Provas e o resultado de cada ano em Histórico. Se a escola ainda não publicou o horário, a página diz isso.", action: "edu_portal.action_student_history", actionLabel: "Ver o histórico" },
+                    { q: "Posso ver as notas de anos anteriores?", a: "Sim. Nas notas, escolhe o ano lectivo por cima da pauta. Em Histórico tens o resumo de cada ano: a turma, a média final e a decisão.", action: "edu_portal.action_student_history", actionLabel: "Ver o histórico" },
+                    { q: "Porque é que não consigo ver as notas?", a: "Se houver propinas vencidas e a escola fechar as notas aos devedores, a página diz isso e mostra o caminho para as propinas. Abre de novo quando o pagamento for confirmado.", action: "edu_portal.action_student_fees", actionLabel: "Ver as propinas" },
                 ],
             },
+            {
+                key: "absences",
+                label: "Faltas",
+                icon: "event_busy",
+                questions: [
+                    { q: "Como se conta a minha assiduidade?", a: "Só contam as aulas dadas em que o professor fez a chamada. Chegar atrasado conta como presença e como atraso. Cada disciplina tem um limite de faltas injustificadas, que depende dos tempos semanais; no painel e nas faltas vês quando estás perto dele.", action: "edu_portal.action_student_absences", actionLabel: "Ver as faltas" },
+                    { q: "Como justifico uma falta?", a: "Junto do director de turma, com o documento que a justifica (por exemplo, um atestado médico). Quando é aceite, a falta passa a justificada e deixa de contar para o limite." },
+                    { q: "O que acontece se passar o limite de faltas?", a: "Nessa disciplina, o regulamento da escola pode levar à reprovação por faltas. Assim que te aproximares do limite, fala com o director de turma.", action: "edu_portal.action_student_absences", actionLabel: "Ver as faltas" },
+                ],
+            },
+            {
+                key: "schedule",
+                label: "Horário e provas",
+                icon: "schedule",
+                questions: [
+                    { q: "Onde vejo o horário da turma?", a: "Em Horário, com a aula de hoje em destaque e uma cor por disciplina. Se a escola ainda não publicou o horário, a página diz isso. Podes exportá-lo em PDF.", action: "edu_portal.action_student_schedule", actionLabel: "Ver o horário" },
+                    { q: "Quando são as provas?", a: "Em Provas estão as provas marcadas para a tua turma, com o dia, a hora e quantos dias faltam. As próximas aparecem também no painel.", action: "edu_portal.action_student_exams", actionLabel: "Ver as provas" },
+                ],
+            },
+        ];
+        if (this.state.data?.technical) {
+            topics.push({
+                key: "training",
+                label: "Estágio e PAP",
+                icon: "work",
+                questions: [
+                    { q: "O que vejo em O Meu Estágio?", a: "A entidade, as etapas do estágio, as horas feitas e as que faltam, e os relatórios. A página é só para ler: quem regista o estágio é a escola.", action: "edu_portal.action_student_internship", actionLabel: "Ver o estágio" },
+                    { q: "O que vejo em A Minha PAP?", a: "O tema, o orientador, as etapas da Prova de Aptidão Profissional, a data da defesa com quanto falta, e depois a nota e o júri.", action: "edu_portal.action_student_project", actionLabel: "Ver a PAP" },
+                    { q: "Como entrego um relatório ou mudo o tema da PAP?", a: "Com o orientador ou com a escola. Quando a escola os regista, aparecem aqui." },
+                ],
+            });
+        }
+        topics.push(
             {
                 key: "fees",
                 label: "Propinas",
@@ -1034,17 +1077,27 @@ export class StudentHelp extends HelpPage(StudentPage) {
                 ],
             },
             {
+                key: "records",
+                label: "Percurso e documentos",
+                icon: "history_edu",
+                questions: [
+                    { q: "Quando entra um ano no Histórico?", a: "Quando a escola toma a decisão do fim do ano (transitou, não transitou ou concluiu). Até lá, o ano em curso está nas notas.", action: "edu_portal.action_student_history", actionLabel: "Ver o histórico" },
+                    { q: "Como peço uma declaração ou um certificado?", a: "Na secretaria da escola. Antes, vê em Meu perfil se os teus dados estão completos: são os que vão nos documentos.", action: "edu_portal.action_student_profile", actionLabel: "Ver o perfil" },
+                    { q: "Os meus dados estão errados ou em falta. O que faço?", a: "Vê-os em Meu perfil. Para os corrigir ou completar, fala com a secretaria.", action: "edu_portal.action_student_profile", actionLabel: "Ver o perfil" },
+                ],
+            },
+            {
                 key: "account",
                 label: "Mensagens e conta",
                 icon: "forum",
                 questions: [
-                    { q: "A quem posso escrever?", a: "Aos professores da tua turma, ao director de turma e à secretaria. Em Mensagens, começa uma conversa nova e escolhe a pessoa.", action: "mail.action_discuss", actionLabel: "Abrir as mensagens" },
-                    { q: "Como peço uma declaração ou um certificado?", a: "Na secretaria da escola. Antes, vê em Meu perfil se os teus dados estão completos: são os que vão nos documentos.", action: "edu_portal.action_student_profile", actionLabel: "Ver o perfil" },
-                    { q: "Os meus dados estão errados ou em falta. O que faço?", a: "Vê-os em Meu perfil. Para os corrigir ou completar, fala com a secretaria.", action: "edu_portal.action_student_profile", actionLabel: "Ver o perfil" },
+                    { q: "A quem posso escrever?", a: "Aos professores da tua turma, ao director de turma e à secretaria. Em Mensagens, escolhe a pessoa na lista e carrega em «Escrever».", action: "mail.action_discuss", actionLabel: "Abrir as mensagens" },
+                    { q: "O que são as notificações «Nova»?", a: "Nas Notificações, as que chegaram desde a última vez que abriste a página têm a etiqueta «Nova». Podes filtrá-las por tipo: notas, faltas, provas e propinas.", action: "edu_portal.action_student_notifications", actionLabel: "Ver as notificações" },
                     { q: "Esqueci-me da palavra-passe.", a: "Pede à secretaria uma palavra-passe nova. Depois de entrares, podes mudá-la em Meu perfil, em Segurança." },
                 ],
-            },
-        ];
+            }
+        );
+        return topics;
     }
 }
 

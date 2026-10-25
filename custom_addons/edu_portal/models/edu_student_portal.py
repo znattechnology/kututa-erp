@@ -163,7 +163,7 @@ class EduStudentPortal(models.AbstractModel):
     def page_data(self, page, options=None):
         """Os dados de uma página da área do estudante (as acções cliente ``edu_portal.student_*``), sempre do aluno do
         utilizador: ``home``, ``grades`` (com ``{'trimester_id'}``), ``schedule``, ``exams``, ``absences``, ``fees``,
-        ``profile``, ``internship``, ``project``, ``history`` e ``notifications``."""
+        ``profile``, ``internship``, ``project``, ``history``, ``notifications`` e ``help``."""
         options = options or {}
         student = self._student()
         data = {'has_student': bool(student), 'page': page}
@@ -234,6 +234,9 @@ class EduStudentPortal(models.AbstractModel):
             data['history'] = self._history(student)
         elif page == 'notifications':
             data['feed'] = self._feed(student)
+        elif page == 'help':
+            # A ajuda só fala do estágio e da PAP a quem é do técnico.
+            data['technical'] = self._is_technical(student)
         return data
 
     @api.model
