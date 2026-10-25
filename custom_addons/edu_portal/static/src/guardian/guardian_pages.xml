@@ -176,16 +176,17 @@
                                     <!-- As propinas do ano, mês a mês -->
                                     <div class="o_edu_gd_chart">
                                         <h3 class="o_edu_gd_chart_title">Propinas do ano</h3>
-                                        <div class="o_edu_gd_big o_edu_gd_big_money" t-att-class="{'text-danger': c.overdue}">
+                                        <div class="o_edu_gd_big o_edu_gd_big_money" t-att-class="{'text-danger': c.overdue, 'text-muted': !c.overdue and !this.hasInvoices(c)}">
                                             <t t-if="c.overdue"><t t-out="c.overdue_total"/><span class="o_edu_gd_big_of"> em atraso</span></t>
-                                            <t t-else="">Em dia</t>
+                                            <t t-elif="this.hasInvoices(c)">Em dia</t>
+                                            <t t-else="">Sem facturas</t>
                                         </div>
                                         <p class="small text-muted mb-2" t-out="this.monthsText(c)"/>
-                                        <ul t-if="c.months.length" class="o_edu_months" aria-label="Propinas por mês" t-att-style="'--edu-months: ' + c.months.length">
+                                        <ul t-if="this.hasInvoices(c)" class="o_edu_months" aria-label="Propinas por mês" t-att-style="'--edu-months: ' + c.months.length">
                                             <li t-foreach="c.months" t-as="m" t-key="m.key" class="o_edu_month" t-att-class="'o_edu_month_' + m.state"
                                                 t-att-title="this.monthTitle(m)" t-att-aria-label="this.monthTitle(m)" t-out="m.label"/>
                                         </ul>
-                                        <ul t-if="c.months.length" class="o_edu_chart_legend mt-2 mb-0">
+                                        <ul t-if="this.hasInvoices(c)" class="o_edu_chart_legend mt-2 mb-0">
                                             <li><span class="o_edu_chart_key o_edu_month_paid"/>Paga</li>
                                             <li><span class="o_edu_chart_key o_edu_month_due"/>Por pagar</li>
                                             <li><span class="o_edu_chart_key o_edu_month_overdue"/>Em atraso</li>

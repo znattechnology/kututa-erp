@@ -158,6 +158,11 @@ export class GuardianHome extends GuardianPage(GuardianBase) {
         return `${parts.join(", ")}.`;
     }
 
+    /** Há propinas facturadas neste ano (sem nenhuma, «Em dia» e uma fila vazia não diziam nada). */
+    hasInvoices(c) {
+        return c.months.some((m) => m.state !== "none");
+    }
+
     monthTitle(m) {
         const state = { paid: "paga", due: "por pagar", overdue: "em atraso", exempt: "isenta", none: "ainda sem factura" }[m.state];
         return `Propina de ${m.name}: ${state}${m.due ? ", faltam " + m.due : ""}`;
