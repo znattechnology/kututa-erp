@@ -282,6 +282,9 @@
         <field name="model">edu.exam.session</field>
         <field name="arch" type="xml">
             <kanban class="o_edu_exs_kanban" default_order="date, hour_from">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
                 <field name="state"/>
                 <field name="kind"/>
                 <field name="seat_count"/>
@@ -313,6 +316,19 @@
                     </t>
                 </templates>
             </kanban>
+        </field>
+    </record>
+
+    <record id="view_edu_exam_session_list_print" model="ir.ui.view">
+        <field name="name">edu.exam.session.list.print</field>
+        <field name="model">edu.exam.session</field>
+        <field name="inherit_id" ref="edu_exam.edu_exam_session_list"/>
+        <field name="arch" type="xml">
+            <list position="inside">
+                <header>
+                    <button name="action_print_listing" type="object" string="Imprimir" icon="print" display="always"/>
+                </header>
+            </list>
         </field>
     </record>
 

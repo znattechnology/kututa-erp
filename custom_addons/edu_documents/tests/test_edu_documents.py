@@ -379,6 +379,11 @@ class TestEduDocuments(TransactionCase):
         html = self._render('edu_documents.action_report_exam_calendar', document)
         self.assertIn('ESCALA DE VIGILÂNCIA', html)
         self.assertIn('13ª A', html)
+        # Lista das sessões de exame: por dia, com a sala e o vigilante.
+        self.assertEqual(session.action_print_listing()['report_type'], 'qweb-html')
+        html = self._render('edu_documents.action_report_listing_exam_session', session)
+        for text in ('SESSÕES DE EXAME', 'Quarta-feira, 9 de Dezembro', '08:00–10:00', 'Zeca Vigilante', 'Sala 7'):
+            self.assertIn(text, html)
 
     def test_grade_grid_print(self):
         """Na grelha «Notas da turma», a secretaria visualiza e imprime a pauta da turma do trimestre."""

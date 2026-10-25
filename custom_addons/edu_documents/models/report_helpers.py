@@ -212,6 +212,7 @@ ReportListingStudent = _document_report('report_listing_student', 'edu.student')
 ReportListingConfirmation = _document_report('report_listing_confirmation', 'edu.enrollment.confirmation')
 ReportApplicationReceipt = _document_report('report_application_receipt', 'edu.application')
 ReportListingCalendar = _document_report('report_listing_calendar', 'edu.calendar.event')
+ReportListingExamSession = _document_report('report_listing_exam_session', 'edu.exam.session')
 ReportRdec = _document_report('report_rdec', 'edu.rdec')
 
 

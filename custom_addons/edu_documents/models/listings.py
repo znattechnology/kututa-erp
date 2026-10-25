@@ -255,6 +255,7 @@ class EduStudent(models.Model):
         }
 
 
+WEEKDAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
 MONTHS = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro',
     'Dezembro',
@@ -292,5 +293,52 @@ class EduCalendarEvent(models.Model):
                     'rows': [[when(e), e.name, ', '.join(e.level_ids.mapped('name')) or 'Todos'] for e in events],
                 }
                 for (year, month), events in groups.items()
+            ],
+        }
+
+
+class EduExamSession(models.Model):
+    _name = 'edu.exam.session'
+    _inherit = ['edu.exam.session', 'edu.listing.mixin']
+    _listing_report = 'edu_documents.action_report_listing_exam_session'
+
+    @api.model
+    def _listing_default(self):
+        return self.search([('academic_year_id.is_current', '=', True), ('state', '!=', 'cancelled')])
+
+    def _listing_data(self):
+        days = {}
+        for session in self.sorted(lambda s: (s.date, s.hour_from, s.id)):
+            days.setdefault(session.date, []).append(session)
+
+        def hours(session):
+            start, end = divmod(round(session.hour_from * 60), 60), divmod(round(session.hour_to * 60), 60)
+            return '{:02d}:{:02d}–{:02d}:{:02d}'.format(*start, *end)
+
+        return {
+            'title': self.env._('SESSÕES DE EXAME'),
+            'context': EM.join([f'ANO LECTIVO: {self._listing_year()}', self.env._('%s PROVAS', len(self))]),
+            'columns': [
+                (self.env._('Hora'), 12, 'c'),
+                (self.env._('Disciplina'), 0, 'l'),
+                (self.env._('Turma'), 18, 'l'),
+                (self.env._('Sala'), 14, 'l'),
+                (self.env._('Vigilante'), 22, 'l'),
+            ],
+            'groups': [
+                {
+                    'label': f'{WEEKDAYS[day.weekday()]}, {day.day} de {MONTHS[day.month - 1]}',
+                    'rows': [
+                        [
+                            hours(s),
+                            s.subject_id.name,
+                            ', '.join(c._editor_label() for c in s.class_ids),
+                            s.room_label or '',
+                            s.supervisor_label or '',
+                        ]
+                        for s in sessions
+                    ],
+                }
+                for day, sessions in days.items()
             ],
         }
