@@ -1106,22 +1106,38 @@
                 </span>
             </div>
         </div>
-        <section t-if="this.hasInvoices(d)" class="o_edu_st_card" aria-labelledby="o_edu_st_fee_months">
-            <div class="o_edu_st_row mb-2">
-                <h2 id="o_edu_st_fee_months" class="o_edu_st_h2 mb-0">Propinas do ano</h2>
-                <span class="small text-muted" t-out="this.monthsText(d)"/>
-            </div>
-            <ul class="o_edu_months o_edu_st_months_lg" aria-label="Propinas por mês" t-att-style="'--edu-months: ' + d.months.length">
-                <li t-foreach="d.months" t-as="m" t-key="m.key" class="o_edu_month" t-att-class="'o_edu_month_' + m.state"
-                    t-att-title="this.monthTitle(m)" t-att-aria-label="this.monthTitle(m)" t-out="m.label"/>
-            </ul>
-            <ul class="o_edu_chart_legend mt-2 mb-0">
-                <li><span class="o_edu_chart_key o_edu_month_paid"/>Paga</li>
-                <li><span class="o_edu_chart_key o_edu_month_due"/>Por pagar</li>
-                <li><span class="o_edu_chart_key o_edu_month_overdue"/>Em atraso</li>
-                <li><span class="o_edu_chart_key o_edu_month_exempt"/>Isenta</li>
-            </ul>
-        </section>
+        <div t-if="this.hasInvoices(d) or d.fees.by_category.length" class="o_edu_st_grid">
+            <section t-if="this.hasInvoices(d)" class="o_edu_st_card" aria-labelledby="o_edu_st_fee_months">
+                <div class="o_edu_st_row mb-2">
+                    <h2 id="o_edu_st_fee_months" class="o_edu_st_h2 mb-0">Propinas do ano</h2>
+                    <span class="small text-muted" t-out="this.monthsText(d)"/>
+                </div>
+                <ul class="o_edu_months o_edu_st_months_lg" aria-label="Propinas por mês" t-att-style="'--edu-months: ' + d.months.length">
+                    <li t-foreach="d.months" t-as="m" t-key="m.key" class="o_edu_month" t-att-class="'o_edu_month_' + m.state"
+                        t-att-title="this.monthTitle(m)" t-att-aria-label="this.monthTitle(m)" t-out="m.label"/>
+                </ul>
+                <ul class="o_edu_chart_legend mt-2 mb-0">
+                    <li><span class="o_edu_chart_key o_edu_month_paid"/>Paga</li>
+                    <li><span class="o_edu_chart_key o_edu_month_due"/>Por pagar</li>
+                    <li><span class="o_edu_chart_key o_edu_month_overdue"/>Em atraso</li>
+                    <li><span class="o_edu_chart_key o_edu_month_exempt"/>Isenta</li>
+                </ul>
+            </section>
+            <!-- Por tipo: o que foi facturado de cada tipo e quanto já está pago -->
+            <section t-if="d.fees.by_category.length" class="o_edu_st_card" aria-labelledby="o_edu_st_fee_types">
+                <h2 id="o_edu_st_fee_types" class="o_edu_st_h2">Por tipo</h2>
+                <ul class="o_edu_meters">
+                    <li t-foreach="d.fees.by_category" t-as="c" t-key="c.key" t-att-title="c.label + ': ' + c.total + ', pago ' + c.paid">
+                        <div class="d-flex justify-content-between gap-2 small">
+                            <span t-out="c.label"/>
+                            <span class="o_edu_st_num text-nowrap fw-semibold" t-out="c.total"/>
+                        </div>
+                        <span class="o_edu_meter"><span t-att-style="'width: ' + c.paid_pct + '%'"/></span>
+                        <div class="small text-muted mt-1" t-out="c.paid_pct === 100 ? 'Tudo pago' : (c.paid_pct ? 'Pago ' + c.paid : 'Nada pago')"/>
+                    </li>
+                </ul>
+            </section>
+        </div>
     </t>
 
     <!-- Os filtros das notificações: por educando (no encarregado) e por tipo, com quantas há de cada. -->

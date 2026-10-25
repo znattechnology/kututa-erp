@@ -1010,6 +1010,8 @@ class EduStudentPortal(models.AbstractModel):
                     'paid': money(paid) if tab == 'due' and paid > 0.005 else '',
                     'due_value': due,
                     'paid_value': paid if tab == 'due' else (total if tab == 'paid' else 0.0),
+                    'total_value': total if tab != 'other' else 0.0,
+                    'category': move.edu_category or 'other',
                     'fine_value': sum(fines.mapped('amount_residual')),
                     'status': status,
                     'css': css,
@@ -1035,6 +1037,7 @@ class EduStudentPortal(models.AbstractModel):
             'restricted': len([r for r in overdue_rows if r['late_days'] > grace]),
             'grace_days': grace,
             'total_paid': money(sum(r['paid_value'] for r in rows)),
+            'by_category': self._fees_by_category(rows, money),
             # O próximo vencimento: a primeira factura por pagar ainda dentro do prazo.
             'next_due': next(
                 (
@@ -1312,6 +1315,32 @@ class EduStudentPortal(models.AbstractModel):
             )
             day = (day + timedelta(days=32)).replace(day=1)
         return months
+
+    @api.model
+    def _fees_by_category(self, rows, money):
+        """O que foi facturado por tipo (propinas, matrícula, exames, serviços…): o total e o que já está pago, do tipo
+        com mais para o com menos (as isentas e anuladas não contam)."""
+        labels = dict(self.env['account.move']._fields['edu_category']._description_selection(self.env))
+        groups = {}
+        for row in rows:
+            if row['total_value'] <= 0.005:
+                continue
+            item = groups.setdefault(row['category'], {'total': 0.0, 'paid': 0.0})
+            item['total'] += row['total_value']
+            item['paid'] += row['paid_value']
+        result = []
+        for key, item in sorted(groups.items(), key=lambda kv: -kv[1]['total']):
+            result.append(
+                {
+                    'key': key,
+                    'label': labels.get(key, 'Outro'),
+                    'total': money(item['total']),
+                    'paid': money(item['paid']),
+                    'total_value': item['total'],
+                    'paid_pct': round(100 * item['paid'] / item['total']) if item['total'] else 0,
+                }
+            )
+        return result
 
     # Formação técnica
 
