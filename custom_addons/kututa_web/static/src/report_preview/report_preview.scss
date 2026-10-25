@@ -1,0 +1,14 @@
+// A pré-visualização do documento: a janela quase do tamanho do ecrã, com o documento a deslizar lá dentro.
+.o_kututa_report_preview {
+    .modal-body {
+        padding: 0;
+        background: $o-gray-200;
+    }
+
+    .o_kututa_report_frame {
+        display: block;
+        width: 100%;
+        height: 75vh;
+        border: 0;
+    }
+}

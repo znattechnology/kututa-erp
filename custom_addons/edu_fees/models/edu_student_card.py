@@ -130,7 +130,7 @@ class EduStudent(models.Model):
         return self.action_edu_print_card()
 
     def action_edu_print_card(self):
-        return self.env.ref('edu_documents.action_report_student_card').report_action(self)
+        return self.env.ref('edu_documents.action_report_student_card').preview_action(self)
 
     def action_edu_charge_card(self):
         """A tesouraria cobra a taxa do cartão: o serviço «Cartão de estudante» do plano do aluno."""

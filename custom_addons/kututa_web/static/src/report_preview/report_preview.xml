@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="kututa_web.ReportPreviewDialog">
+        <Dialog size="'xl'" title="this.title" contentClass="'o_kututa_report_preview'">
+            <iframe class="o_kututa_report_frame" t-att-src="this.url" t-on-load="(ev) => this.onLoad(ev)"
+                    t-att-title="this.title"/>
+            <t t-set-slot="footer">
+                <button type="button" class="btn btn-primary" t-on-click="() => this.print()">
+                    <i class="oi me-1" data-icon="print" aria-hidden="true"/>Imprimir
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="() => this.props.close()">Fechar</button>
+            </t>
+        </Dialog>
+    </t>
+
+</templates>
