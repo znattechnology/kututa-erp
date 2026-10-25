@@ -219,6 +219,7 @@ class EduStudentPortal(models.AbstractModel):
             data['absence_months'] = self._absence_months(student, enrollment)
         elif page == 'fees':
             data['fees'] = self.fees(student)
+            data['months'] = self._tuition_months(student, enrollment)
         elif page == 'profile':
             data['profile'] = self.profile(student, enrollment)
         elif page == 'internship':
@@ -975,14 +976,17 @@ class EduStudentPortal(models.AbstractModel):
                     'total': money(total),
                     'paid': money(paid) if tab == 'due' and paid > 0.005 else '',
                     'due_value': due,
+                    'paid_value': paid if tab == 'due' else (total if tab == 'paid' else 0.0),
                     'fine_value': sum(fines.mapped('amount_residual')),
                     'status': status,
                     'css': css,
                 }
             )
         due_rows = [r for r in rows if r['tab'] == 'due']
-        # Em atraso como no aviso das propinas: depois dos dias de tolerância da escola.
-        overdue_rows = [r for r in due_rows if r['late_days'] > (student.company_id.edu_gate_grace_days or 0)]
+        # Em atraso desde o dia seguinte ao vencimento, como na tabela; as restrições (o aviso das propinas e o
+        # bloqueio) só depois dos dias de tolerância da escola.
+        grace = student.company_id.edu_gate_grace_days or 0
+        overdue_rows = [r for r in due_rows if r['late_days']]
         return {
             'rows': rows,
             'due': due_rows,
@@ -995,6 +999,18 @@ class EduStudentPortal(models.AbstractModel):
             'charges_fines': any(r['fine'] for r in rows),
             'overdue': len(overdue_rows),
             'overdue_total': money(sum(r['due_value'] for r in overdue_rows)),
+            'restricted': len([r for r in overdue_rows if r['late_days'] > grace]),
+            'grace_days': grace,
+            'total_paid': money(sum(r['paid_value'] for r in rows)),
+            # O próximo vencimento: a primeira factura por pagar ainda dentro do prazo.
+            'next_due': next(
+                (
+                    {'date': r['due_date'], 'amount': r['due'], 'name': r['name']}
+                    for r in due_rows
+                    if not r['late_days']
+                ),
+                None,
+            ),
         }
 
     @api.model
@@ -1203,6 +1219,62 @@ class EduStudentPortal(models.AbstractModel):
             if contacts:
                 groups.append({'key': key, 'label': label, 'contacts': contacts})
         return groups
+
+    @api.model
+    def _tuition_months(self, student, enrollment):
+        """As propinas do ano lectivo mês a mês, de Setembro a Julho: paga, por pagar, em atraso (depois do vencimento,
+        como na tabela das facturas), isenta, ou ainda sem factura."""
+        year = enrollment.academic_year_id
+        if not year or not year.date_start or not year.date_end:
+            return []
+        moves = (
+            self.env['account.move']
+            .sudo()
+            .search(
+                [
+                    ('edu_student_id', '=', student.id),
+                    ('move_type', '=', 'out_invoice'),
+                    ('edu_category', '=', 'tuition'),
+                    '|',
+                    ('state', '=', 'posted'),
+                    ('edu_exempt', '=', True),
+                ]
+            )
+        )
+        today = self._now(student).date()
+        by_month = {}
+        for move in moves:
+            day = move.edu_due_period or move.invoice_date_due or move.invoice_date
+            if day and year.date_start <= day <= year.date_end:
+                by_month.setdefault((day.year, day.month), self.env['account.move'])
+                by_month[(day.year, day.month)] |= move
+        months = []
+        day = year.date_start.replace(day=1)
+        while day <= year.date_end:
+            found = by_month.get((day.year, day.month), self.env['account.move'])
+            live = found.filtered(lambda m: m.state == 'posted' and m.payment_state != 'reversed' and not m.edu_exempt)
+            due = sum(live.mapped('amount_residual'))
+            if not found:
+                state = 'none'
+            elif not live:
+                state = 'exempt'
+            elif due <= 0.005:
+                state = 'paid'
+            elif any(m.invoice_date_due and m.invoice_date_due < today and m.amount_residual > 0.005 for m in live):
+                state = 'overdue'
+            else:
+                state = 'due'
+            months.append(
+                {
+                    'key': f'{day.year}-{day.month:02d}',
+                    'label': MONTHS[day.month - 1][:3].capitalize(),
+                    'name': f'{MONTHS[day.month - 1]} de {day.year}',
+                    'state': state,
+                    'due': format_amount(self.env, due, student.edu_currency_id) if due > 0.005 else '',
+                }
+            )
+            day = (day + timedelta(days=32)).replace(day=1)
+        return months
 
     # Formação técnica
 

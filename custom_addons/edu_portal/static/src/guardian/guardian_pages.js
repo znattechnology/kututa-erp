@@ -140,34 +140,6 @@ export class GuardianHome extends GuardianPage(GuardianBase) {
         return { at_risk: "o_edu_meter_warn", failed: "o_edu_meter_bad" }[m.status] || "";
     }
 
-    /** «Pagas 2 de 3, uma em atraso.» — o que a fila dos meses mostra, em palavras. */
-    monthsText(c) {
-        const issued = c.months.filter((m) => m.state !== "none");
-        if (!issued.length) {
-            return "Ainda sem propinas facturadas neste ano lectivo.";
-        }
-        const n = (state) => c.months.filter((m) => m.state === state).length;
-        const paid = n("paid");
-        const parts = [`${paid === 1 ? "Paga" : "Pagas"} ${paid} de ${issued.length}`];
-        if (n("overdue")) {
-            parts.push(count(n("overdue"), "uma em atraso", "em atraso"));
-        }
-        if (n("due")) {
-            parts.push(count(n("due"), "uma por pagar", "por pagar"));
-        }
-        return `${parts.join(", ")}.`;
-    }
-
-    /** Há propinas facturadas neste ano (sem nenhuma, «Em dia» e uma fila vazia não diziam nada). */
-    hasInvoices(c) {
-        return c.months.some((m) => m.state !== "none");
-    }
-
-    monthTitle(m) {
-        const state = { paid: "paga", due: "por pagar", overdue: "em atraso", exempt: "isenta", none: "ainda sem factura" }[m.state];
-        return `Propina de ${m.name}: ${state}${m.due ? ", faltam " + m.due : ""}`;
-    }
-
     /** O que pede atenção, como no secPed: propinas em atraso, faltas no limite e médias negativas. */
     get warnings() {
         const out = [];

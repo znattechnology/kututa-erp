@@ -449,15 +449,9 @@
                     <t t-if="!d.has_student" t-call="edu_portal.StudentPage.NoStudent"/>
                     <t t-else="">
                         <t t-set="f" t-value="d.fees"/>
-                        <p class="mb-0">
-                            <t t-if="!f.rows.length">Ainda não tens facturas de propinas.</t>
-                            <t t-elif="!f.due.length">Não tens nada por pagar.</t>
-                            <t t-else="">
-                                <t t-out="'Tens ' + (f.due.length === 1 ? 'uma factura' : f.due.length + ' facturas') + ' por pagar, no total de '"/><span class="o_edu_st_num" t-out="f.total_due"/><span t-if="this.overdueText" class="text-danger" t-out="'; ' + this.overdueText"/>.
-                                <t t-if="f.has_fines"> Deste valor, <span class="o_edu_st_num" t-out="f.total_fines"/> são multas por atraso.</t>
-                            </t>
-                        </p>
+                        <p t-if="!f.rows.length" class="mb-0">Ainda não tens facturas de propinas.</p>
 
+                        <t t-call="edu_portal.Part.FeesOverview"/>
                         <t t-call="edu_portal.Part.FeesTable"/>
 
                         <p class="mb-0 small text-muted">
@@ -1019,6 +1013,36 @@
                     <span class="small" t-out="day.month"/>
                     <span class="o_edu_st_exam_day_count" t-out="day.count === 1 ? '1 prova' : day.count + ' provas'"/>
                 </li>
+            </ul>
+        </section>
+    </t>
+
+    <!-- O resumo das propinas por cima das facturas (o aluno e o encarregado): quatro números e as propinas do ano mês a
+         mês (paga, por pagar, em atraso, isenta, sem factura). Usa ``d.fees`` e ``d.months``. -->
+    <t t-name="edu_portal.Part.FeesOverview">
+        <div class="o_edu_kpis">
+            <div t-foreach="this.feeTiles" t-as="t" t-key="t.key" class="o_edu_kpi">
+                <span class="o_edu_kpi_label" t-out="t.label"/>
+                <span class="o_edu_kpi_value o_edu_kpi_money" t-att-class="{'text-danger': t.bad}" t-out="t.value"/>
+                <span class="o_edu_kpi_detail" t-att-class="{'text-danger': t.bad}">
+                    <i t-if="t.bad" class="oi me-1" data-icon="warning" aria-hidden="true"/><t t-out="t.detail"/>
+                </span>
+            </div>
+        </div>
+        <section t-if="this.hasInvoices(d)" class="o_edu_st_card" aria-labelledby="o_edu_st_fee_months">
+            <div class="o_edu_st_row mb-2">
+                <h2 id="o_edu_st_fee_months" class="o_edu_st_h2 mb-0">Propinas do ano</h2>
+                <span class="small text-muted" t-out="this.monthsText(d)"/>
+            </div>
+            <ul class="o_edu_months o_edu_st_months_lg" aria-label="Propinas por mês" t-att-style="'--edu-months: ' + d.months.length">
+                <li t-foreach="d.months" t-as="m" t-key="m.key" class="o_edu_month" t-att-class="'o_edu_month_' + m.state"
+                    t-att-title="this.monthTitle(m)" t-att-aria-label="this.monthTitle(m)" t-out="m.label"/>
+            </ul>
+            <ul class="o_edu_chart_legend mt-2 mb-0">
+                <li><span class="o_edu_chart_key o_edu_month_paid"/>Paga</li>
+                <li><span class="o_edu_chart_key o_edu_month_due"/>Por pagar</li>
+                <li><span class="o_edu_chart_key o_edu_month_overdue"/>Em atraso</li>
+                <li><span class="o_edu_chart_key o_edu_month_exempt"/>Isenta</li>
             </ul>
         </section>
     </t>

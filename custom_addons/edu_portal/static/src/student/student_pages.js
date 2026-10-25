@@ -155,6 +155,64 @@ class StudentPage extends Component {
         }));
     }
 
+    /** «Pagas 2 de 3, uma em atraso.» — o que a fila dos meses mostra, em palavras. */
+    monthsText(c) {
+        const issued = c.months.filter((m) => m.state !== "none");
+        if (!issued.length) {
+            return "Ainda sem propinas facturadas neste ano lectivo.";
+        }
+        const n = (state) => c.months.filter((m) => m.state === state).length;
+        const paid = n("paid");
+        const parts = [`${paid === 1 ? "Paga" : "Pagas"} ${paid} de ${issued.length}`];
+        if (n("overdue")) {
+            parts.push(count(n("overdue"), "uma em atraso", "em atraso"));
+        }
+        if (n("due")) {
+            parts.push(count(n("due"), "uma por pagar", "por pagar"));
+        }
+        return `${parts.join(", ")}.`;
+    }
+
+    /** Há propinas facturadas neste ano (sem nenhuma, «Em dia» e uma fila vazia não diziam nada). */
+    hasInvoices(c) {
+        return c.months.some((m) => m.state !== "none");
+    }
+
+    monthTitle(m) {
+        const state = { paid: "paga", due: "por pagar", overdue: "em atraso", exempt: "isenta", none: "ainda sem factura" }[m.state];
+        return `Propina de ${m.name}: ${state}${m.due ? ", faltam " + m.due : ""}`;
+    }
+
+    /** Os números das propinas, por cima das facturas (o aluno e o encarregado). */
+    get feeTiles() {
+        const f = this.state.data.fees;
+        return [
+            {
+                key: "due",
+                label: "Por pagar",
+                value: f.due.length ? f.total_due : "Nada",
+                detail: f.due.length ? count(f.due.length, "uma factura", "facturas") : "Está tudo pago",
+            },
+            {
+                key: "overdue",
+                label: "Em atraso",
+                value: f.overdue ? f.overdue_total : "Nada",
+                detail: !f.overdue
+                    ? "Nenhuma factura em atraso"
+                    : count(f.overdue, "uma factura", "facturas") +
+                      (!f.restricted && f.grace_days ? `, dentro da tolerância de ${f.grace_days} dias (sem restrições)` : f.has_fines ? ", com multas" : ""),
+                bad: f.overdue > 0,
+            },
+            { key: "paid", label: "Já pago", value: f.total_paid, detail: "Em todas as facturas pagas" },
+            {
+                key: "next",
+                label: "Próximo vencimento",
+                value: f.next_due ? f.next_due.date.split(" de ").slice(0, 2).join(" de ") : "—",
+                detail: f.next_due ? `${f.next_due.name}, ${f.next_due.amount}` : "Nada a vencer",
+            },
+        ];
+    }
+
     /** «Subiu de 14,5 no 1.º trimestre» (a comparação com o trimestre anterior, quando é possível). */
     trendText(previous) {
         if (!previous) {
@@ -392,19 +450,6 @@ export class StudentFees extends StudentPage {
 
     get rows() {
         return this.state.data.fees[this.tab];
-    }
-
-    /** O que está em atraso, a vermelho na frase de cima (como no secPed). */
-    get overdueText() {
-        const f = this.state.data.fees;
-        const n = f.due.length;
-        if (!f.overdue) {
-            return "";
-        }
-        if (f.overdue === n) {
-            return n === 1 ? "está em atraso" : "estão todas em atraso";
-        }
-        return f.overdue + " em atraso";
     }
 
     get dateHeader() {

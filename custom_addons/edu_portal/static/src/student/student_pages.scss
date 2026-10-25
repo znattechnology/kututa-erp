@@ -470,6 +470,12 @@
         border-color: $o-action;
         box-shadow: inset 0 0 0 1px $o-action;
     }
+
+    // As propinas do ano na página das propinas: os meses maiores, com o nome inteiro (abreviado).
+    .o_edu_st_months_lg .o_edu_month {
+        height: 40px;
+        font-size: 0.8rem;
+    }
 }
 
 // As provas já feitas, acinzentadas (o Bootstrap põe a cor em cada célula, não na linha).

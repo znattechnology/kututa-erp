@@ -1,11 +1,8 @@
-from datetime import timedelta
-
 from odoo import api, models
 from odoo.addons.edu_evaluation.models.edu_rdec import RDEC_LEVELS, RDEC_STATES
 from odoo.exceptions import UserError
-from odoo.tools import format_amount
 
-from .edu_student_portal import ABSENCE_KINDS, MONTHS, RELATIONSHIPS, day_label, first_name
+from .edu_student_portal import ABSENCE_KINDS, RELATIONSHIPS, day_label, first_name
 
 
 class EduGuardianPortal(models.AbstractModel):
@@ -127,6 +124,7 @@ class EduGuardianPortal(models.AbstractModel):
             data['exams'] = Portal.exams(student, enrollment)
         elif page == 'fees':
             data['fees'] = Portal.fees(student)
+            data['months'] = Portal._tuition_months(student, enrollment)
         return data
 
     # O painel
@@ -182,67 +180,8 @@ class EduGuardianPortal(models.AbstractModel):
                 key=lambda m: (-m['counted'] / m['limit'], m['name'].lower()),
             )[:3],
             'rdec': self._rdec(student, enrollment) if edu_class.level_id.code == 'INICIACAO' else None,
-            'months': self._tuition_months(student, enrollment),
+            'months': Portal._tuition_months(student, enrollment),
         }
-
-    @api.model
-    def _tuition_months(self, student, enrollment):
-        """As propinas do ano lectivo mês a mês, de Setembro a Julho: paga, por pagar, em atraso (depois dos dias de
-        tolerância da escola), isenta, ou ainda sem factura."""
-        year = enrollment.academic_year_id
-        if not year or not year.date_start or not year.date_end:
-            return []
-        moves = (
-            self.env['account.move']
-            .sudo()
-            .search(
-                [
-                    ('edu_student_id', '=', student.id),
-                    ('move_type', '=', 'out_invoice'),
-                    ('edu_category', '=', 'tuition'),
-                    '|',
-                    ('state', '=', 'posted'),
-                    ('edu_exempt', '=', True),
-                ]
-            )
-        )
-        today = self.env['edu.student.portal']._now(student).date()
-        grace = timedelta(days=student.company_id.edu_gate_grace_days or 0)
-        by_month = {}
-        for move in moves:
-            day = move.edu_due_period or move.invoice_date_due or move.invoice_date
-            if day and year.date_start <= day <= year.date_end:
-                by_month.setdefault((day.year, day.month), self.env['account.move'])
-                by_month[(day.year, day.month)] |= move
-        months = []
-        day = year.date_start.replace(day=1)
-        while day <= year.date_end:
-            found = by_month.get((day.year, day.month), self.env['account.move'])
-            live = found.filtered(lambda m: m.state == 'posted' and m.payment_state != 'reversed' and not m.edu_exempt)
-            due = sum(live.mapped('amount_residual'))
-            if not found:
-                state = 'none'
-            elif not live:
-                state = 'exempt'
-            elif due <= 0.005:
-                state = 'paid'
-            elif any(
-                m.invoice_date_due and m.invoice_date_due + grace < today and m.amount_residual > 0.005 for m in live
-            ):
-                state = 'overdue'
-            else:
-                state = 'due'
-            months.append(
-                {
-                    'key': f'{day.year}-{day.month:02d}',
-                    'label': MONTHS[day.month - 1][:3].capitalize(),
-                    'name': f'{MONTHS[day.month - 1]} de {day.year}',
-                    'state': state,
-                    'due': format_amount(self.env, due, student.edu_currency_id) if due > 0.005 else '',
-                }
-            )
-            day = (day + timedelta(days=32)).replace(day=1)
-        return months
 
     # Os educandos
 

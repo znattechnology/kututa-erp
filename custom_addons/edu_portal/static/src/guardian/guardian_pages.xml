@@ -569,14 +569,8 @@
                     <t t-else="">
                         <t t-call="edu_portal.GuardianPage.Children"/>
                         <t t-set="f" t-value="d.fees"/>
-                        <p class="mb-0">
-                            <t t-if="!f.rows.length"><t t-out="d.child.first_name"/> ainda não tem facturas.</t>
-                            <t t-elif="!f.due.length">Não há nada por pagar.</t>
-                            <t t-else="">
-                                <t t-out="(f.due.length === 1 ? 'Há uma factura' : 'Há ' + f.due.length + ' facturas') + ' por pagar, no total de '"/><span class="o_edu_st_num" t-out="f.total_due"/><span t-if="this.overdueText" class="text-danger" t-out="'; ' + this.overdueText"/>.
-                                <t t-if="f.has_fines"> Deste valor, <span class="o_edu_st_num" t-out="f.total_fines"/> são multas por atraso.</t>
-                            </t>
-                        </p>
+                        <p t-if="!f.rows.length" class="mb-0"><t t-out="d.child.first_name"/> ainda não tem facturas.</p>
+                        <t t-call="edu_portal.Part.FeesOverview"/>
                         <t t-call="edu_portal.Part.FeesTable"/>
                         <p class="mb-0 small text-muted">
                             As propinas pagam-se na tesouraria da escola. Quando o pagamento é confirmado, a factura passa para «Pagas».
