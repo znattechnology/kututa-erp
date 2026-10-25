@@ -18,6 +18,47 @@
                         Ainda não está escalado para vigiar nenhuma prova. Quando a secretaria o escalar, aparece aqui.
                     </section>
 
+                    <t t-if="this.rows.length">
+                        <!-- A próxima vigilância, com quanto falta -->
+                        <t t-set="next" t-value="this.next"/>
+                        <section t-if="next" class="o_edu_tv_card o_edu_tv_next" t-att-class="{'o_edu_tv_next_soon': this.daysTo(next) &lt;= 1}" aria-labelledby="o_edu_tv_next_title">
+                            <p class="o_edu_tv_next_when" t-out="this.whenLabel(next)"/>
+                            <h2 id="o_edu_tv_next_title" class="o_edu_tv_next_subject" t-out="next.subject"/>
+                            <p class="mb-0 text-muted o_edu_tv_next_facts">
+                                <span><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/><t t-out="next.day"/></span>
+                                <span><i class="oi me-1" data-icon="schedule" aria-hidden="true"/><t t-out="this.hhmm(next.start)"/>–<t t-out="this.hhmm(next.end)"/></span>
+                                <span t-if="next.classes"><i class="oi me-1" data-icon="groups" aria-hidden="true"/><t t-out="next.classes"/></span>
+                                <span><i class="oi me-1" data-icon="location_on" aria-hidden="true"/><t t-out="next.rooms or 'Sala por definir'"/></span>
+                                <span t-if="next.partners"><i class="oi me-1" data-icon="person" aria-hidden="true"/>Com <t t-out="next.partners"/></span>
+                            </p>
+                        </section>
+
+                        <!-- Os números do ano -->
+                        <t t-set="k" t-value="this.kpis"/>
+                        <div class="o_edu_kpis o_edu_tv_kpis">
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Provas por vigiar</span>
+                                <span class="o_edu_kpi_value"><t t-out="k.left"/><small class="fs-6 fw-normal text-muted"> de <t t-out="k.total"/></small></span>
+                                <span class="o_edu_kpi_detail" t-out="k.total - k.left === 1 ? '1 já vigiada' : (k.total - k.left) + ' já vigiadas'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Dias com vigilância</span>
+                                <span class="o_edu_kpi_value" t-out="k.days"/>
+                                <span class="o_edu_kpi_detail">Ainda por vir</span>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Tempo de vigilância</span>
+                                <span class="o_edu_kpi_value" t-out="k.time"/>
+                                <span class="o_edu_kpi_detail">No ano lectivo</span>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Colegas na mesma sala</span>
+                                <span class="o_edu_kpi_value" t-out="k.partners"/>
+                                <span class="o_edu_kpi_detail" t-out="k.partners ? 'Vigiam consigo' : 'Vigia sozinho(a)'"/>
+                            </div>
+                        </div>
+                    </t>
+
                     <section t-foreach="d.periods" t-as="period" t-key="period.id" class="o_edu_tv_period" t-att-aria-label="period.name">
                         <div class="o_edu_tv_period_head">
                             <div>
@@ -41,17 +82,19 @@
                                         <th>Turma</th>
                                         <th>Sala</th>
                                         <th t-if="this.hasPartners(period)">Vigia com</th>
+                                        <th class="text-end">Quando</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr t-foreach="period.rows" t-as="row" t-key="row.id"
-                                        t-att-class="{'o_edu_tv_newday': this.firstOfDay(period, row_index) and row_index > 0, 'o_edu_tv_past': this.isPast(row)}">
+                                        t-att-class="{'o_edu_tv_newday': this.firstOfDay(period, row_index) and row_index > 0, 'o_edu_tv_past': this.isPast(row), 'o_edu_tv_today': !this.isPast(row) and this.daysTo(row) === 0}">
                                         <td class="o_edu_tv_day"><t t-if="this.firstOfDay(period, row_index)" t-out="row.day"/></td>
                                         <td class="o_edu_tv_hours"><t t-out="this.hhmm(row.start)"/>–<t t-out="this.hhmm(row.end)"/></td>
                                         <td class="fw-semibold" t-out="row.subject"/>
                                         <td t-out="row.classes or '—'"/>
                                         <td t-out="row.rooms or 'Sala por definir'"/>
                                         <td t-if="this.hasPartners(period)" class="text-muted" t-out="row.partners or '—'"/>
+                                        <td class="text-end"><span class="o_edu_tv_when" t-att-class="this.whenClass(row)" t-out="this.whenLabel(row)"/></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -65,7 +108,7 @@
                                     <li t-foreach="day.rows" t-as="row" t-key="row.id" t-att-class="{'o_edu_tv_past': this.isPast(row)}">
                                         <span class="o_edu_tv_hours"><t t-out="this.hhmm(row.start)"/>–<t t-out="this.hhmm(row.end)"/></span>
                                         <div>
-                                            <div class="fw-semibold" t-out="row.subject"/>
+                                            <div class="fw-semibold"><t t-out="row.subject"/> <span class="o_edu_tv_when ms-1" t-att-class="this.whenClass(row)" t-out="this.whenLabel(row)"/></div>
                                             <div class="small text-muted">
                                                 <t t-out="[row.classes, row.rooms or 'Sala por definir'].filter((part) => part).join(', ')"/>
                                                 <t t-if="row.partners"><br/>Vigia com <t t-out="row.partners"/></t>

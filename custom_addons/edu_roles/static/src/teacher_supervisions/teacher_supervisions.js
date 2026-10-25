@@ -50,20 +50,59 @@ export class TeacherSupervisionsPage extends Component {
         return row.date < now.date || (row.date === now.date && row.end <= now.minutes);
     }
 
+    /** A contagem do ano (a próxima vigilância tem o seu cartão por baixo). */
     get summary() {
         const rows = this.rows;
         const days = new Set(rows.map((r) => r.date)).size;
-        let text = `${rows.length} ${rows.length === 1 ? "prova" : "provas"} em ${days} ${days === 1 ? "dia" : "dias"} a vigiar.`;
-        const next = rows.find((r) => !this.isPast(r));
-        if (!next) {
-            return `${text} Já não há provas por vigiar.`;
+        const text = `${rows.length} ${rows.length === 1 ? "prova" : "provas"} em ${days} ${days === 1 ? "dia" : "dias"} a vigiar este ano lectivo.`;
+        return this.next ? text : `${text} Já não há provas por vigiar.`;
+    }
+
+    /** Os dias de hoje até ao dia da prova (0 = hoje), pelas datas do aparelho. */
+    daysTo(row) {
+        const [y, m, d] = row.date.split("-").map(Number);
+        const [ny, nm, nd] = this.now.date.split("-").map(Number);
+        return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ny, nm - 1, nd)) / 86400000);
+    }
+
+    /** Quanto falta: «A decorrer», «Hoje às 08:00», «Amanhã», «Daqui a N dias», ou «Feita». */
+    whenLabel(row) {
+        if (this.isPast(row)) {
+            return "Feita";
         }
-        const when = next.date === this.now.date ? "hoje" : next.day.replace(/^./, (c) => c.toLowerCase());
-        text += ` A próxima: ${when}, às ${hhmm(next.start)}, ${next.subject}`;
-        if (next.classes) {
-            text += ` na ${next.classes}`;
+        const days = this.daysTo(row);
+        if (days === 0) {
+            return row.start <= this.now.minutes ? "A decorrer" : `Hoje às ${hhmm(row.start)}`;
         }
-        return `${text}${next.rooms ? `, ${next.rooms}` : ""}.`;
+        return days === 1 ? "Amanhã" : `Daqui a ${days} dias`;
+    }
+
+    whenClass(row) {
+        if (this.isPast(row)) {
+            return "o_edu_tv_when_done";
+        }
+        return this.daysTo(row) <= 1 ? "o_edu_tv_when_soon" : "";
+    }
+
+    /** A próxima vigilância (ou a que está a decorrer), para o cartão de cima. */
+    get next() {
+        return this.rows.find((r) => !this.isPast(r)) || null;
+    }
+
+    /** Os números das vigilâncias do ano: as que faltam, os dias e as horas de vigilância. */
+    get kpis() {
+        const rows = this.rows;
+        const left = rows.filter((r) => !this.isPast(r));
+        const minutes = rows.reduce((sum, r) => sum + (r.end - r.start), 0);
+        const hours = Math.floor(minutes / 60);
+        const rest = minutes % 60;
+        return {
+            total: rows.length,
+            left: left.length,
+            days: new Set(left.map((r) => r.date)).size,
+            time: rest ? `${hours} h ${pad(rest)}` : `${hours} h`,
+            partners: new Set(rows.flatMap((r) => (r.partners ? r.partners.split(", ") : []))).size,
+        };
     }
 
     /** A primeira prova de cada dia leva o dia (as seguintes ficam por baixo, sem o repetir). */

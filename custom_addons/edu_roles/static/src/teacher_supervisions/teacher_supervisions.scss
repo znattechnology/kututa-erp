@@ -111,4 +111,66 @@
             }
         }
     }
+
+    // A próxima vigilância: a margem da cor de acção (a cheio quando é hoje ou amanhã) e os dados com ícones.
+    .o_edu_tv_next {
+        border-left: 4px solid $border-color;
+    }
+
+    .o_edu_tv_next_soon {
+        border-left-color: $o-action;
+    }
+
+    .o_edu_tv_next_when {
+        margin: 0 0 4px;
+        color: $text-muted;
+        font-size: 0.875rem;
+    }
+
+    .o_edu_tv_next_soon .o_edu_tv_next_when {
+        color: $o-action;
+        font-weight: 600;
+    }
+
+    .o_edu_tv_next_subject {
+        margin: 0 0 6px;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .o_edu_tv_next_facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 20px;
+    }
+
+    .o_edu_tv_kpis .o_edu_kpi:hover {
+        border-color: $border-color;
+    }
+
+    // Quanto falta, em cada prova: a de hoje ou amanhã destacada, as feitas apagadas.
+    .o_edu_tv_when {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: $gray-100;
+        color: $text-muted;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .o_edu_tv_when_soon {
+        background: rgba($o-action, 0.12);
+        color: $o-action;
+        font-weight: 600;
+    }
+
+    .o_edu_tv_when_done {
+        background: none;
+    }
+
+    .o_edu_tv_table tr.o_edu_tv_today > td {
+        background: rgba($o-action, 0.05);
+    }
 }
