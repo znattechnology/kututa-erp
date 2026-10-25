@@ -14,3 +14,10 @@ class EduApplication(models.Model):
 
     def _edu_expand_states(self, states, domain):
         return [s for s in ['draft', *BOARD_STATES, 'cancelled'] if s in BOARD_STATES or s in states]
+
+
+class EduEnrollment(models.Model):
+    _inherit = 'edu.enrollment'
+
+    # O nome do aluno sem o n.º de matrícula à frente (o cartão mostra o número à parte).
+    edu_student_name = fields.Char(related='student_id.name', string='Aluno (nome)')

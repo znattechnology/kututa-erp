@@ -770,3 +770,40 @@
         }
     }
 }
+
+// As matrículas em cartões: as irregulares e as pendentes com a margem do aviso, as anuladas apagadas.
+.o_edu_enroll_kanban {
+    .o_kanban_record {
+        min-width: 280px;
+    }
+
+    .o_edu_enroll_card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 2px;
+    }
+
+    .o_edu_enroll_name {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-height: 1.25;
+    }
+
+    .o_edu_enroll_irregular {
+        box-shadow: inset 4px 0 0 $warning;
+        padding-left: 10px;
+    }
+
+    .o_edu_enroll_draft {
+        box-shadow: inset 4px 0 0 $info;
+        padding-left: 10px;
+    }
+
+    .o_edu_enroll_dropped,
+    .o_edu_enroll_transferred {
+        opacity: 0.6;
+    }
+}
