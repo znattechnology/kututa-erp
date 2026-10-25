@@ -176,6 +176,60 @@ export class TeacherSchedulePage extends Component {
         return `${lesson.subject}, ${hhmm(lesson.start)}–${hhmm(lesson.end)}${detail ? `, ${detail}` : ""}`;
     }
 
+    /**
+     * As disciplinas por tempos semanais (as que têm mais primeiro), com as turmas; as 8 primeiras com uma cor da
+     * paleta categórica (a mesma do horário do aluno), as outras em cinzento: as cores não se repetem.
+     */
+    get subjects() {
+        const bySubject = {};
+        for (const lesson of this.lessons) {
+            const item = (bySubject[lesson.subject] ||= { name: lesson.subject, count: 0, classes: new Set() });
+            item.count++;
+            item.classes.add(lesson.class);
+        }
+        const max = Math.max(...Object.values(bySubject).map((i) => i.count));
+        return Object.values(bySubject)
+            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+            .map((item, index) => ({
+                ...item,
+                classes: [...item.classes].sort().join(", "),
+                css: `o_edu_subj_${index < 8 ? index + 1 : 0}`,
+                width: (item.count / max) * 100,
+            }));
+    }
+
+    subjectClass(lesson) {
+        const subject = this.subjects.find((s) => s.name === lesson.subject);
+        return subject ? subject.css : "o_edu_subj_0";
+    }
+
+    /** A aula a decorrer agora (realçada na grelha e na lista do dia). */
+    isNow(lesson) {
+        const now = this.state.now;
+        return lesson.weekday === now.day && lesson.start <= now.minutes && now.minutes < lesson.end;
+    }
+
+    /** Os números da semana: a carga (com o medidor), as aulas, as turmas e os dias com aulas. */
+    get kpis() {
+        const load = this.state.data.load;
+        const classes = new Set(this.lessons.map((l) => l.class_id)).size;
+        const days = new Set(this.lessons.map((l) => l.weekday)).size;
+        return {
+            load,
+            loadWidth: load && load.limit ? Math.min(100, (load.count / load.limit) * 100) : 0,
+            over: Boolean(load && load.limit && load.count > load.limit),
+            lessons: this.lessons.length,
+            classes,
+            days,
+        };
+    }
+
+    /** Os dias da semana sem aulas («Livre: quarta»), ou «Aulas todos os dias». */
+    get freeDays() {
+        const free = this.weekDays.filter((day) => !this.lessonsOn(day).length);
+        return free.length ? `Livre: ${free.map((day) => DAYS[day].split("-")[0].toLowerCase()).join(", ")}` : "Aulas todos os dias";
+    }
+
     // Visualizar e exportar
 
     async openReport(preview) {

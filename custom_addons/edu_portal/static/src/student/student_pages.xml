@@ -714,7 +714,7 @@
                             </ul>
                             <div t-if="p.enrollment and p.enrollment.subjects.length">
                                 <h3 class="small text-muted mb-2"><t t-out="p.enrollment.subjects.length === 1 ? 'A tua disciplina' : 'As tuas ' + p.enrollment.subjects.length + ' disciplinas'"/></h3>
-                                <ul class="o_edu_st_subjects">
+                                <ul class="o_edu_st_subject_tags">
                                     <li t-foreach="p.enrollment.subjects" t-as="subject" t-key="subject_index" t-out="subject"/>
                                 </ul>
                             </div>

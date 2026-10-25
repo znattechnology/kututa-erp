@@ -160,17 +160,77 @@
         margin: 1px 2px;
         padding: 4px 8px;
         overflow: hidden;
-        border: 1px solid mix($primary, $o-view-background-color, 55%);
-        border-left: 3px solid $primary;
+        border: 1px solid color-mix(in srgb, var(--edu-subj, #{$primary}) 45%, #{$o-view-background-color});
+        border-left: 4px solid var(--edu-subj, #{$primary});
         border-radius: $border-radius;
-        // Opaco: as linhas dos quartos de hora não atravessam a aula.
-        background: mix($primary, $o-view-background-color, 10%);
+        // Opaco (a cor da disciplina misturada com o fundo): as linhas dos quartos de hora não atravessam a aula.
+        background: color-mix(in srgb, var(--edu-subj, #{$primary}) 10%, #{$o-view-background-color});
         color: $body-color;
         text-align: left;
 
         &:hover,
         &:focus-visible {
-            background: mix($primary, $o-view-background-color, 18%);
+            background: color-mix(in srgb, var(--edu-subj, #{$primary}) 18%, #{$o-view-background-color});
+        }
+    }
+
+    // A aula a decorrer: o contorno da cor da disciplina e a etiqueta «Agora».
+    .o_edu_ts_block_now {
+        box-shadow: 0 0 0 2px var(--edu-subj, #{$primary});
+    }
+
+    .o_edu_ts_now_tag {
+        margin-left: 6px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: var(--edu-subj, #{$primary});
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .o_edu_ts_kpis .o_edu_kpi:hover {
+        border-color: $border-color;
+    }
+
+    // Por disciplina: a cor, os tempos por semana em barra e as turmas.
+    .o_edu_ts_subj_dot {
+        flex: none;
+        width: 10px;
+        height: 10px;
+        margin-top: 6px;
+        border-radius: 50%;
+        background: var(--edu-subj);
+    }
+
+    .o_edu_ts_subjects {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 12px 24px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+
+    .o_edu_ts_subj_bar {
+        display: block;
+        height: 6px;
+        margin-top: 6px;
+        overflow: hidden;
+        border-radius: 3px;
+        background: color-mix(in srgb, var(--edu-subj) 18%, #{$o-view-background-color});
+
+        > span {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+            background: var(--edu-subj);
         }
     }
 

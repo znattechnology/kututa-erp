@@ -4,8 +4,9 @@
     <!-- Uma aula na grelha ou na lista do dia: a disciplina e, por baixo, as horas, a turma e a sala. -->
     <t t-name="edu_roles.TeacherSchedule.Block">
         <button type="button" class="o_edu_ts_block" t-att-title="this.blockTitle(lesson)" t-att-style="style"
+                t-att-class="this.subjectClass(lesson) + (this.isNow(lesson) ? ' o_edu_ts_block_now' : '')"
                 t-on-click="() => this.openClass(lesson)">
-            <span class="o_edu_ts_block_subject" t-out="lesson.subject"/>
+            <span class="o_edu_ts_block_subject"><t t-out="lesson.subject"/><span t-if="this.isNow(lesson)" class="o_edu_ts_now_tag">Agora</span></span>
             <span class="o_edu_ts_block_detail">
                 <t t-out="this.hhmm(lesson.start)"/>–<t t-out="this.hhmm(lesson.end)"/><t t-if="this.lessonDetail(lesson)">, <t t-out="this.lessonDetail(lesson)"/></t>
             </span>
@@ -63,14 +64,42 @@
                             </div>
                         </section>
 
+                        <!-- Os números da semana -->
+                        <t t-set="k" t-value="this.kpis"/>
+                        <div t-if="k.lessons" class="o_edu_kpis o_edu_ts_kpis">
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Carga semanal</span>
+                                <t t-if="k.load">
+                                    <span class="o_edu_kpi_value" t-att-class="{'text-danger': k.over}"><t t-out="k.load.count"/><small class="fs-6 fw-normal text-muted"> de <t t-out="k.load.limit"/> tempos</small></span>
+                                    <span class="o_edu_meter mt-1 w-100" t-att-class="{'o_edu_meter_bad': k.over}"><span t-att-style="'width: ' + k.loadWidth + '%'"/></span>
+                                </t>
+                                <span t-else="" class="o_edu_kpi_value">—</span>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Aulas por semana</span>
+                                <span class="o_edu_kpi_value" t-out="k.lessons"/>
+                                <span class="o_edu_kpi_detail" t-out="this.subjects.length === 1 ? 'De uma disciplina' : 'De ' + this.subjects.length + ' disciplinas'"/>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Turmas</span>
+                                <span class="o_edu_kpi_value" t-out="k.classes"/>
+                                <span class="o_edu_kpi_detail">Com aulas no horário</span>
+                            </div>
+                            <div class="o_edu_kpi">
+                                <span class="o_edu_kpi_label">Dias com aulas</span>
+                                <span class="o_edu_kpi_value"><t t-out="k.days"/><small class="fs-6 fw-normal text-muted"> de <t t-out="this.weekDays.length"/></small></span>
+                                <span class="o_edu_kpi_detail" t-out="this.freeDays"/>
+                            </div>
+                        </div>
+
                         <section class="o_edu_ts_week" aria-labelledby="o_edu_ts_week_title">
                             <h2 id="o_edu_ts_week_title" class="o_edu_ts_h2 mb-1">A semana</h2>
                             <p class="text-muted">
                                 <span class="text-body" t-out="this.summary"/>
+                                <!-- A carga está no número de cima; aqui ficam as notas dela (o que conta a mais). -->
                                 <t t-set="load" t-value="this.load"/>
-                                <t t-if="load">
-                                    Usa <span t-att-class="load.over ? 'text-danger fw-semibold' : 'text-body'" t-out="load.text"/><t t-if="load.notes"> (<t t-out="load.notes"/>)</t><t t-if="load.over">, acima do máximo.</t><t t-else="">.</t>
-                                </t>
+                                <t t-if="load and load.notes">Na carga: <t t-out="load.notes"/>.</t>
+                                <span t-if="load and load.over" class="text-danger fw-semibold">Acima do máximo de tempos.</span>
                             </p>
 
                             <!-- Telemóvel: uma lista por dia (a grelha não cabe sem encolher a letra). -->
@@ -108,6 +137,25 @@
                                     <t t-call="edu_roles.TeacherSchedule.Block" style="this.blockStyle(lesson)"/>
                                 </t>
                             </div>
+                        </section>
+
+                        <!-- Por disciplina: a cor, os tempos por semana e as turmas -->
+                        <section t-if="this.subjects.length" class="o_edu_ts_card" aria-labelledby="o_edu_ts_subjects">
+                            <h2 id="o_edu_ts_subjects" class="o_edu_ts_h2">Por disciplina</h2>
+                            <ul class="o_edu_ts_subjects">
+                                <li t-foreach="this.subjects" t-as="subject" t-key="subject.name">
+                                    <span class="o_edu_ts_subj_dot" t-att-class="subject.css" aria-hidden="true"/>
+                                    <div class="min-w-0 flex-grow-1">
+                                        <div class="d-flex justify-content-between gap-2">
+                                            <span class="fw-semibold text-truncate" t-out="subject.name"/>
+                                            <span class="small text-muted text-nowrap" t-out="subject.count === 1 ? '1 tempo' : subject.count + ' tempos'"/>
+                                        </div>
+                                        <div class="small text-muted text-truncate" t-out="subject.classes"/>
+                                        <span class="o_edu_ts_subj_bar" t-att-class="subject.css"><span t-att-style="'width: ' + subject.width + '%'"/></span>
+                                    </div>
+                                </li>
+                            </ul>
+                            <p class="mb-0 mt-2 small text-muted">Tempos por semana. Cada disciplina tem a sua cor no horário.</p>
                         </section>
                     </t>
                 </div>

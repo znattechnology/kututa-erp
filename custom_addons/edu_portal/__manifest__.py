@@ -39,10 +39,6 @@ A área do encarregado, como a do secPed (perfil «Encarregado»: só vê a «Á
         'web.assets_backend': [
             'edu_portal/static/src/student/*',
             'edu_portal/static/src/guardian/*',
-            ('remove', 'edu_portal/static/src/student/*.dark.scss'),
-        ],
-        'web.assets_web_dark': [
-            'edu_portal/static/src/student/*.dark.scss',
         ],
     },
     'license': 'OPL-1',

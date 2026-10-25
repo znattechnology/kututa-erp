@@ -750,7 +750,7 @@
     }
 
     // Meu perfil: as disciplinas do ano em etiquetas.
-    .o_edu_st_subjects {
+    .o_edu_st_subject_tags {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
@@ -767,18 +767,6 @@
         }
     }
 }
-
-// A cor de cada disciplina no horário: a paleta categórica da série dos gráficos, pela ordem fixa (validada para o
-// daltonismo); a partir da 9.ª disciplina, cinzento (as cores não se repetem). O modo escuro troca os passos.
-.o_edu_subj_0 { --edu-subj: #{$gray-500}; }
-.o_edu_subj_1 { --edu-subj: #2a78d6; }
-.o_edu_subj_2 { --edu-subj: #eb6834; }
-.o_edu_subj_3 { --edu-subj: #1baf7a; }
-.o_edu_subj_4 { --edu-subj: #eda100; }
-.o_edu_subj_5 { --edu-subj: #e87ba4; }
-.o_edu_subj_6 { --edu-subj: #008300; }
-.o_edu_subj_7 { --edu-subj: #6250d6; }
-.o_edu_subj_8 { --edu-subj: #e34948; }
 
 // As provas já feitas, acinzentadas (o Bootstrap põe a cor em cada célula, não na linha).
 .o_edu_st_table tr.o_edu_st_done > td {
