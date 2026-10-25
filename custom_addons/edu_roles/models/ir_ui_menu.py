@@ -44,10 +44,7 @@ class IrUiMenu(models.Model):
         time_off = self.env.ref('hr_holidays.group_hr_holidays_employee', raise_if_not_found=False)
         if 'l10n_ao_payroll.payslip' not in self.env and not (time_off and time_off in user.all_group_ids):
             xmlids += (PAYSLIPS_MENU,)
-        other_roles = [self.env.ref(xmlid, raise_if_not_found=False) for xmlid in OTHER_ROLES]
-        if user.has_group('edu_core.group_edu_teacher') and not any(
-            group in user.all_group_ids for group in other_roles if group
-        ):
+        if user._edu_teacher_only():
             xmlids += TEACHER_HIDDEN_APPS
             # Numa escola com o geral e o técnico, a formação técnica só para quem dá aulas ou dirige turmas do técnico,
             # ou é tutor de estágio, orientador ou júri de uma PAP deste ano (como no secPed).

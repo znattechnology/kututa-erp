@@ -5,5 +5,7 @@ from . import (
     edu_report_page,
     edu_secretaria_home,
     edu_teacher_home,
+    ir_http,
     ir_ui_menu,
+    res_users,
 )
