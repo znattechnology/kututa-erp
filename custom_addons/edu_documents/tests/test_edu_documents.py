@@ -506,7 +506,7 @@ class TestEduDocuments(TransactionCase):
         self.assertTrue(row['diploma_number'])
         self.assertEqual(Page.print_document(row['id'], 'diploma')['report_type'], 'qweb-html')
         self.assertEqual(Page.print_document(row['id'], 'certificate')['report_type'], 'qweb-html')
-        self.assertEqual(Page.verify(row['id'])['diploma_label'], 'Verificado, falta assinar')
+        self.assertEqual(Page.verify(row['id'])['diploma_label'], 'Por assinar')
         self.assertEqual(Page.sign(row['id'])['diploma_label'], 'Assinado')
         self.assertEqual(Page.graduations(False)['summary']['signed'], 1)
 

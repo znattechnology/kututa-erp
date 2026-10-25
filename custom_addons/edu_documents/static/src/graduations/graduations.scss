@@ -1,51 +1,205 @@
-// Diplomas e certificados: a página do secPed-Express (lista, resumo, filtros e registar conclusões).
+// Diplomas e certificados: os diplomas em cartões, com os passos (emitido, verificado, assinado), e «Registar
+// conclusões» com as turmas da classe final à esquerda.
 .o_edu_graduations {
     .o_edu_gr_body {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        max-width: 1180px;
-        margin: 0 auto;
-        padding: 24px 16px 32px;
+        padding: 16px 24px 24px;
     }
 
-    .o_edu_gr_intro,
     .o_edu_gr_bar {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
+        margin-bottom: 12px;
     }
 
-    .o_edu_gr_intro {
-        justify-content: space-between;
-        align-items: flex-start;
-    }
-
-    .o_edu_gr_lead {
-        max-width: 72ch;
-        margin: 0;
-        color: $text-muted;
+    .o_edu_gr_select {
+        width: auto;
+        min-width: 180px;
     }
 
     .o_edu_gr_h2 {
-        margin: 4px 0;
-        font-size: 1.25rem;
+        margin: 0 8px;
+        font-size: 1.125rem;
         font-weight: 600;
     }
 
-    .o_edu_gr_filter {
+    .o_edu_gr_tabs {
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .o_edu_gr_summary {
+        max-width: 80ch;
+        margin: 12px 0 16px;
+        color: $o-gray-700;
+    }
+
+    .o_edu_gr_empty {
+        max-width: 64ch;
+        padding: 24px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+        color: $text-muted;
+    }
+
+    // Cartões
+
+    .o_edu_gr_grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 12px;
+    }
+
+    .o_edu_gr_item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid $border-color;
+        border-left: 4px solid $o-gray-300;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+
+        &.o_edu_gr_tone_pos {
+            border-left-color: $success;
+        }
+
+        &.o_edu_gr_tone_warn {
+            border-left-color: $warning;
+        }
+
+        &.o_edu_gr_tone_muted {
+            border-left-color: $o-gray-300;
+        }
+    }
+
+    .o_edu_gr_item_head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .o_edu_gr_student {
+        margin: 0 0 2px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_gr_facts {
+        display: flex;
+        gap: 32px;
+
+        > div {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .o_edu_gr_fact_value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_gr_fact_label {
+        color: $text-muted;
+        font-size: 0.75rem;
+    }
+
+    .o_edu_gr_steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
         gap: 8px;
         margin: 0;
-        font-size: 0.875rem;
-        color: $text-muted;
+        padding: 8px 0 0;
+        border-top: 1px solid $border-color;
+        list-style: none;
 
-        > .form-select {
-            width: auto;
-            min-width: 160px;
+        li {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            min-width: 0;
+            color: $text-muted;
+            font-size: 0.875rem;
+
+            &.o_done {
+                color: $body-color;
+
+                .oi {
+                    color: $success;
+                }
+            }
         }
+
+        .oi {
+            margin-top: 2px;
+        }
+    }
+
+    .o_edu_gr_actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-top: auto;
+    }
+
+    // Registar conclusões
+
+    .o_edu_gr_layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 24px;
+    }
+
+    .o_edu_gr_panel {
+        position: sticky;
+        top: 0;
+        flex: 0 0 220px;
+        max-height: calc(100vh - 170px);
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .o_edu_gr_panel_head {
+        margin: 12px 0 4px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: $o-gray-700;
+
+        &:first-child {
+            margin-top: 0;
+        }
+    }
+
+    .o_edu_gr_panel_item {
+        display: flex;
+        width: 100%;
+        padding: 4px 8px;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        text-align: left;
+
+        &:hover {
+            background: $o-gray-100;
+        }
+
+        &.o_active {
+            background: rgba($o-action, 0.12);
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_gr_main {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 760px;
     }
 
     .o_edu_gr_card {
@@ -54,69 +208,25 @@
         background: $o-view-background-color;
     }
 
-    .o_edu_gr_table {
-        th,
-        td {
-            vertical-align: middle;
-            padding-left: 12px;
-            padding-right: 12px;
-        }
-    }
-
-    .o_edu_gr_actions {
+    .o_edu_gr_card_head {
         display: flex;
         flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 4px;
-    }
-
-    .o_edu_gr_register {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        max-width: 760px;
-        padding: 20px;
-    }
-
-    .o_edu_gr_fields {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-
-        @include media-breakpoint-down(sm) {
-            grid-template-columns: minmax(0, 1fr);
-        }
-    }
-
-    .o_edu_gr_field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin: 0;
-
-        > span:first-child {
-            font-size: 0.875rem;
-            color: $text-muted;
-        }
-    }
-
-    .o_edu_gr_split {
-        padding-top: 20px;
-        border-top: 1px solid $border-color;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-bottom: 1px solid $border-color;
     }
 
     .o_edu_gr_list {
         margin: 0;
         padding: 0;
         list-style: none;
-        border: 1px solid $border-color;
-        border-radius: $border-radius;
 
-        > li {
+        li {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 14px;
+            padding: 8px 16px;
             border-bottom: 1px solid $border-color;
 
             &:last-child {
@@ -126,8 +236,30 @@
     }
 
     .o_edu_gr_num {
-        min-width: 2.5em;
+        flex: 0 0 2.5ch;
         color: $text-muted;
         font-variant-numeric: tabular-nums;
+        text-align: right;
+    }
+
+    @media (max-width: 767.98px) {
+        .o_edu_gr_body {
+            padding: 12px 16px;
+        }
+
+        .o_edu_gr_grid {
+            grid-template-columns: 1fr;
+        }
+
+        .o_edu_gr_layout {
+            flex-direction: column;
+        }
+
+        .o_edu_gr_panel {
+            position: static;
+            flex: none;
+            width: 100%;
+            max-height: 240px;
+        }
     }
 }

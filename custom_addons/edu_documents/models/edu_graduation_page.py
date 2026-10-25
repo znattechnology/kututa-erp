@@ -1,11 +1,11 @@
-from odoo import api, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 # Em que ponto está o diploma (e a conclusão), como no secPed, com o tom da coluna.
 DIPLOMA_STATES = {
     'draft': ('Por emitir', 'muted'),
     'to_verify': ('Por verificar', 'warn'),
-    'to_sign': ('Verificado, falta assinar', 'warn'),
+    'to_sign': ('Por assinar', 'warn'),
     'signed': ('Assinado', 'pos'),
     'cancelled': ('Anulado', 'muted'),
 }
@@ -58,8 +58,18 @@ class EduGraduationPage(models.AbstractModel):
             'diploma_label': label,
             'tone': tone,
             'verified': bool(graduation.verified_by_id),
+            'verified_label': self._who_when(graduation.verified_by_id, graduation.verified_date),
             'signed': bool(graduation.signed_by_id),
+            'signed_label': self._who_when(graduation.signed_by_id, graduation.signed_date),
         }
+
+    @api.model
+    def _who_when(self, user, when):
+        """«Maria, 12/07/2026» (na data local)."""
+        if not user:
+            return ''
+        day = fields.Datetime.context_timestamp(self, when).strftime('%d/%m/%Y') if when else ''
+        return ', '.join(filter(None, [user.name, day]))
 
     @api.model
     def graduations(self, year_id=False, course_id=False):

@@ -1,4 +1,5 @@
 import { Component, onWillStart, proxy, useProps } from "@odoo/owl";
+import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
@@ -6,9 +7,10 @@ import { standardActionServiceProps } from "@web/webclient/actions/action_plugin
 
 /**
  * «Diplomas e certificados», como a página do secPed-Express: os alunos que concluíram o curso, por ano lectivo e
- * curso, e o resumo (quantos com o diploma assinado, quantos por verificar). Em cada linha: emitir (dá o número do
- * diploma), o diploma e o certificado, verificar e assinar (a direcção). «Registar conclusões» mostra os alunos da
- * turma da classe final a quem o conselho de turma deu a conclusão do curso.
+ * curso, em cartões, com separadores por estado do diploma (por emitir, por verificar, por assinar, assinados). Em cada
+ * cartão: os três passos do diploma (emitido, verificado, assinado), emitir (dá o número do diploma), o diploma e o
+ * certificado (com pré-visualização), verificar e assinar (a direcção). «Registar conclusões» mostra as turmas da
+ * classe final à esquerda e os alunos a quem o conselho de turma deu a conclusão do curso.
  */
 export class Graduations extends Component {
     static template = "edu_documents.Graduations";
@@ -20,8 +22,10 @@ export class Graduations extends Component {
         this.orm = useService("orm");
         this.action = useService("action");
         this.notification = useService("notification");
+        this.dialog = useService("dialog");
         this.state = proxy({
             mode: "list",
+            tab: "all",
             years: [],
             courses: [],
             isManager: false,
@@ -78,6 +82,41 @@ export class Graduations extends Component {
         await this.load();
     }
 
+    /** Os separadores por estado do diploma, com as contagens. */
+    get tabs() {
+        const s = this.state.summary || {};
+        const cancelled = this.state.rows.filter((r) => r.state === "cancelled").length;
+        const tabs = [
+            { key: "all", label: "Todas", count: s.total || 0 },
+            { key: "draft", label: "Por emitir", count: s.draft || 0 },
+            { key: "to_verify", label: "Por verificar", count: s.to_verify || 0 },
+            { key: "to_sign", label: "Por assinar", count: s.to_sign || 0 },
+            { key: "signed", label: "Assinados", count: s.signed || 0 },
+        ];
+        if (cancelled) {
+            tabs.push({ key: "cancelled", label: "Anulados", count: cancelled });
+        }
+        return tabs;
+    }
+
+    get visibleRows() {
+        const tab = this.state.tab;
+        if (tab === "all") {
+            return this.state.rows.filter((r) => r.state !== "cancelled");
+        }
+        return this.state.rows.filter((r) => r.diploma_state === tab);
+    }
+
+    /** Os passos do diploma: emitido (com o número), verificado e assinado. */
+    steps(row) {
+        const issued = row.state === "issued";
+        return [
+            { key: "issued", label: "Emitido", done: issued, detail: "" },
+            { key: "verified", label: "Verificado", done: issued && row.verified, detail: row.verified_label },
+            { key: "signed", label: "Assinado", done: issued && row.signed, detail: row.signed_label },
+        ];
+    }
+
     get summaryText() {
         const s = this.state.summary;
         if (!s || !s.total) {
@@ -111,8 +150,8 @@ export class Graduations extends Component {
         );
     }
 
-    toneClass(tone) {
-        return { pos: "text-success", warn: "text-warning", muted: "text-muted" }[tone];
+    badgeClass(tone) {
+        return { pos: "text-bg-success", warn: "text-bg-warning", muted: "text-bg-light" }[tone];
     }
 
     fmtAverage(value) {
@@ -138,10 +177,21 @@ export class Graduations extends Component {
         }
     }
 
-    async rowAction(method, row) {
-        if (method === "issue" && !window.confirm(`Emitir a conclusão de ${row.student}? Atribui o número do diploma.`)) {
+    rowAction(method, row) {
+        if (method === "issue") {
+            this.dialog.add(ConfirmationDialog, {
+                title: "Emitir a conclusão",
+                body: `A conclusão de ${row.student} fica emitida e recebe o número do diploma, que não se repete.`,
+                confirmLabel: "Emitir",
+                confirm: () => this.doRowAction(method, row),
+                cancel: () => {},
+            });
             return;
         }
+        return this.doRowAction(method, row);
+    }
+
+    async doRowAction(method, row) {
         await this.run(async () => {
             this.replace(await this.orm.call("edu.graduation.page", method, [row.id]));
             await this.load();
@@ -187,19 +237,41 @@ export class Graduations extends Component {
         await this.loadClasses();
     }
 
-    async onRegClassChange(ev) {
-        this.state.classId = parseInt(ev.target.value, 10) || false;
-        await this.loadFinishers();
-    }
-
     async loadFinishers() {
         this.state.finishers = this.state.classId
             ? await this.orm.call("edu.graduation.page", "finishers", [this.state.classId])
             : [];
     }
 
+    /** As turmas da classe final por curso, para o painel. */
+    get classGroups() {
+        const groups = [];
+        for (const c of this.state.classes) {
+            const course = c.course || "Sem curso";
+            let group = groups.find((g) => g.course === course);
+            if (!group) {
+                group = { course, classes: [] };
+                groups.push(group);
+            }
+            group.classes.push(c);
+        }
+        return groups;
+    }
+
+    async selectRegClass(classId) {
+        this.state.classId = classId;
+        await this.loadFinishers();
+    }
+
     get selectedRegClass() {
         return this.state.classes.find((c) => c.id === this.state.classId);
+    }
+
+    get finishersText() {
+        const total = this.state.finishers.length;
+        const pending = this.pendingFinishers.length;
+        const head = total === 1 ? "1 aluno concluiu o curso" : `${total} alunos concluíram o curso`;
+        return pending ? `${head}; ${pending} por registar.` : `${head}; todos já registados.`;
     }
 
     get pendingFinishers() {
