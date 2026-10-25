@@ -81,7 +81,7 @@ export class TeacherHome extends Component {
             items.push({
                 key: "lessons",
                 icon: "fact_check",
-                text: `${plural(db.pending_lessons, "Uma aula dada", "aulas dadas")} sem chamada ou sumário`,
+                text: `${plural(db.pending_lessons, "Uma aula", "aulas")} sem chamada ou sumário`,
                 action: "edu_roles.action_teacher_attendance",
                 bad: db.pending_lessons > 3,
             });

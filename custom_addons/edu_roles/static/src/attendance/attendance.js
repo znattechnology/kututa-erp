@@ -132,7 +132,35 @@ export class AttendancePage extends Component {
         );
     }
 
+    // Por registar: as aulas dos dias anteriores que ainda não estão dadas (falta a chamada ou o sumário).
+
+    openPending(lesson) {
+        if (this.state.roll && this.state.roll.lesson.id === lesson.id) {
+            return;
+        }
+        this.guard(() => this.run(() => this.showLesson(lesson.id, lesson.class_id, lesson.subject_id)));
+    }
+
     // Outra aula
+
+    /** As turmas e as disciplinas do professor num só cartão cada uma («Matemática, 10ª A»), para um toque só. */
+    get assignments() {
+        return this.classes.flatMap((c) =>
+            c.subjects.map((s) => ({ key: `${c.id}-${s.id}`, classId: c.id, subjectId: s.id, subject: s.name, class: c.name, asDirector: s.as_director }))
+        );
+    }
+
+    pickAssignment(item) {
+        if (this.state.classId === item.classId && this.state.subjectId === item.subjectId) {
+            return;
+        }
+        this.guard(() =>
+            this.run(async () => {
+                Object.assign(this.state, { classId: item.classId, subjectId: item.subjectId, roll: null, form: null });
+                await this.loadLessons();
+            })
+        );
+    }
 
     get classes() {
         return this.state.data.classes;
@@ -149,25 +177,6 @@ export class AttendancePage extends Component {
     get asDirector() {
         const subject = this.subjects.find((s) => s.id === this.state.subjectId);
         return Boolean(subject && subject.as_director);
-    }
-
-    onClass(ev) {
-        const classId = parseInt(ev.target.value, 10) || false;
-        this.guard(() => {
-            Object.assign(this.state, { classId, subjectId: false, lessons: null, roll: null, form: null });
-        });
-        ev.target.value = this.state.classId || "";
-    }
-
-    onSubject(ev) {
-        const subjectId = parseInt(ev.target.value, 10) || false;
-        this.guard(() =>
-            this.run(async () => {
-                Object.assign(this.state, { subjectId, roll: null, form: null });
-                await this.loadLessons();
-            })
-        );
-        ev.target.value = this.state.subjectId || "";
     }
 
     async loadLessons() {
@@ -288,6 +297,12 @@ export class AttendancePage extends Component {
             counts[this.state.marks[row.enrollment_id].state]++;
         }
         return counts;
+    }
+
+    /** As partes da barra da chamada (presentes, atrasos, justificadas e faltas), pela ordem da marcação. */
+    get countBar() {
+        const c = this.counts;
+        return ["present", "late", "excused", "absent"].filter((key) => c[key]).map((key) => ({ key, count: c[key] }));
     }
 
     get countSentence() {

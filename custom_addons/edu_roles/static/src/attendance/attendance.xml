@@ -37,6 +37,25 @@
                             </ul>
                         </section>
 
+                        <!-- Por registar: as aulas dadas nos dias anteriores ainda sem chamada -->
+                        <section t-if="d.pending.length" class="o_edu_att_card o_edu_att_pending" aria-labelledby="o_edu_att_pending">
+                            <h2 id="o_edu_att_pending" class="o_edu_att_h2 mb-1">Por registar</h2>
+                            <p class="small text-muted mb-2">
+                                <t t-out="d.pending_count === 1 ? 'Uma aula ainda não está dada' : d.pending_count + ' aulas ainda não estão dadas'"/>: falta a chamada ou o sumário<t t-if="d.pending_count > d.pending.length"> (as <t t-out="d.pending.length"/> mais recentes)</t>.
+                            </p>
+                            <ul class="o_edu_att_list">
+                                <li t-foreach="d.pending" t-as="p" t-key="p.id">
+                                    <span class="o_edu_att_hours"><t t-out="p.day"/><span class="d-block small text-muted" t-out="p.hours"/></span>
+                                    <span class="flex-grow-1 min-w-0">
+                                        <span class="d-block fw-semibold" t-out="p.subject"/>
+                                        <span class="d-block small text-muted"><t t-out="p.class"/>, <span class="text-warning" t-out="p.roll_saved ? 'falta o sumário' : 'falta a chamada'"/></span>
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-primary" t-att-disabled="this.state.busy" t-on-click="() => this.openPending(p)"
+                                            t-out="p.roll_saved ? 'Escrever o sumário' : 'Fazer a chamada'"/>
+                                </li>
+                            </ul>
+                        </section>
+
                         <!-- Outra aula -->
                         <section aria-labelledby="o_edu_att_other" class="o_edu_att_other">
                             <div>
@@ -46,29 +65,22 @@
                             <p t-if="!this.classes.length" class="o_edu_att_card mb-0 text-muted">
                                 Ainda não tem turmas atribuídas. As atribuições são feitas pelos Serviços Académicos.
                             </p>
-                            <div t-else="" class="o_edu_att_pickers">
-                                <label>
-                                    <span class="small text-muted">Turma</span>
-                                    <select class="form-select" t-on-change="(ev) => this.onClass(ev)">
-                                        <option value="" t-att-selected="!this.state.classId">Escolha a turma</option>
-                                        <option t-foreach="this.classes" t-as="c" t-key="c.id" t-att-value="c.id" t-att-selected="c.id === this.state.classId">
-                                            <t t-out="c.name"/><t t-if="c.directs"> (é director)</t>
-                                        </option>
-                                    </select>
-                                </label>
-                                <label>
-                                    <span class="small text-muted">Disciplina</span>
-                                    <select class="form-select" t-att-disabled="!this.state.classId" t-on-change="(ev) => this.onSubject(ev)">
-                                        <option value="" t-att-selected="!this.state.subjectId">Escolha a disciplina</option>
-                                        <option t-foreach="this.subjects" t-as="s" t-key="s.id" t-att-value="s.id" t-att-selected="s.id === this.state.subjectId">
-                                            <t t-out="s.name"/><t t-if="s.as_director"> (como director)</t>
-                                        </option>
-                                    </select>
-                                </label>
-                                <button t-if="this.state.subjectId" type="button" class="btn btn-secondary" t-on-click="() => this.openForm()">
-                                    <i class="oi me-1" data-icon="add" aria-hidden="true"/>Registar outra aula
-                                </button>
-                            </div>
+                            <t t-else="">
+                                <div class="o_edu_att_picks" role="group" aria-label="Turma e disciplina">
+                                    <button t-foreach="this.assignments" t-as="item" t-key="item.key" type="button" class="o_edu_att_pick"
+                                            t-att-class="{'active': item.classId === this.state.classId and item.subjectId === this.state.subjectId}"
+                                            t-att-aria-pressed="item.classId === this.state.classId and item.subjectId === this.state.subjectId ? 'true' : 'false'"
+                                            t-on-click="() => this.pickAssignment(item)">
+                                        <span class="d-block fw-semibold text-truncate" t-out="item.subject"/>
+                                        <span class="d-block small text-muted text-truncate"><t t-out="item.class"/><t t-if="item.asDirector">, como director</t></span>
+                                    </button>
+                                </div>
+                                <div t-if="this.state.subjectId">
+                                    <button type="button" class="btn btn-secondary" t-on-click="() => this.openForm()">
+                                        <i class="oi me-1" data-icon="add" aria-hidden="true"/>Registar outra aula
+                                    </button>
+                                </div>
+                            </t>
                             <p t-if="this.asDirector" class="mb-0 small text-muted">Não dá esta disciplina: marca as faltas como director de turma.</p>
 
                             <!-- Registar outra aula -->
@@ -146,7 +158,12 @@
             <p t-if="!roll.rows.length" class="o_edu_att_card mb-0 text-muted">Não há alunos matriculados nesta disciplina no ano desta aula.</p>
             <div t-else="" class="o_edu_att_card p-0">
                 <div class="o_edu_att_roll_head">
-                    <p class="mb-0" t-out="this.countSentence"/>
+                    <div class="o_edu_att_count">
+                        <p class="mb-1" t-out="this.countSentence"/>
+                        <span class="o_edu_att_bar" aria-hidden="true">
+                            <span t-foreach="this.countBar" t-as="part" t-key="part.key" t-att-class="'o_edu_att_bar_' + part.key" t-att-style="'flex-grow: ' + part.count"/>
+                        </span>
+                    </div>
                     <div class="o_edu_att_roll_tools">
                         <input type="search" class="form-control" placeholder="Procurar aluno" aria-label="Procurar aluno" t-att-value="this.state.query" t-on-input="(ev) => (this.state.query = ev.target.value)"/>
                         <button t-if="!this.readonly" type="button" class="btn btn-secondary" t-on-click="() => this.allPresent()">Marcar todos presentes</button>

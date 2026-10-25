@@ -68,20 +68,6 @@
         gap: 12px;
     }
 
-    .o_edu_att_pickers {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        gap: 12px;
-
-        > label {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            min-width: 240px;
-        }
-    }
-
     .o_edu_att_form_grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -264,5 +250,71 @@
         padding: 12px 20px;
         border-top: 1px solid $border-color;
         background: $o-view-background-color;
+    }
+
+    // Por registar: a margem do aviso, como «O que pede atenção» no painel.
+    .o_edu_att_pending {
+        border-left: 4px solid $warning;
+
+        .o_edu_att_list {
+            padding: 0;
+        }
+
+        .o_edu_att_hours {
+            min-width: 13em;
+            color: $body-color;
+        }
+    }
+
+    // As turmas e as disciplinas em cartões de um toque.
+    .o_edu_att_picks {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 8px;
+    }
+
+    .o_edu_att_pick {
+        min-width: 0;
+        padding: 10px 14px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+        color: inherit;
+        text-align: start;
+
+        &:hover {
+            border-color: $o-action;
+        }
+
+        &.active {
+            border-color: $o-action;
+            box-shadow: inset 3px 0 0 $o-action;
+            background: mix($o-action, $o-view-background-color, 6%);
+        }
+    }
+
+    // A chamada: a frase e a barra das marcações, que muda a cada toque.
+    .o_edu_att_count {
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .o_edu_att_bar {
+        display: flex;
+        gap: 2px;
+        max-width: 420px;
+        height: 8px;
+        overflow: hidden;
+        border-radius: 4px;
+
+        > span {
+            min-width: 4px;
+        }
+    }
+
+    @each $name, $color in $marks {
+        .o_edu_att_bar_#{$name} {
+            background: $color;
+        }
     }
 }

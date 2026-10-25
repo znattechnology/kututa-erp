@@ -68,7 +68,8 @@ class EduAttendancePage(models.AbstractModel):
 
     @api.model
     def options(self):
-        """As aulas de hoje pelo horário e as turmas do professor (com as disciplinas que pode marcar)."""
+        """As aulas de hoje pelo horário, as dos dias anteriores que ainda não estão dadas (falta a chamada ou o
+        sumário) e as turmas do professor (com as disciplinas que pode marcar)."""
         employee = self.env.user.employee_id
         today = fields.Date.context_today(self)
         # «Hoje, sábado, 24/10/2026»: o dia da semana a meio da frase vai em minúsculas.
@@ -77,10 +78,24 @@ class EduAttendancePage(models.AbstractModel):
             'today': f'{WEEKDAYS[today.weekday()]}, {today.strftime("%d/%m/%Y")}',
             'today_iso': fields.Date.to_string(today),
             'lessons': [],
+            'pending': [],
+            'pending_count': 0,
             'classes': [],
         }
         if not employee:
             return data
+        pending_domain = [
+            ('teacher_id', '=', employee.id),
+            ('academic_year_id.is_current', '=', True),
+            ('state', '=', 'scheduled'),
+            ('date', '<', today),
+        ]
+        Lesson = self.env['edu.lesson'].sudo()
+        data['pending_count'] = Lesson.search_count(pending_domain)
+        data['pending'] = [
+            self._lesson_row(lesson)
+            for lesson in Lesson.search(pending_domain, order='date desc, hour_from desc, id desc', limit=8)
+        ]
         day, rows = self.env['edu.teacher.home']._next_lessons(employee, today)
         if day == today:
             lessons = self.env['edu.lesson'].sudo().browse([row['lesson_id'] for row in rows if row['lesson_id']])
