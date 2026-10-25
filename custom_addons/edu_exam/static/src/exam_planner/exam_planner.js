@@ -77,7 +77,7 @@ export class ExamPlanner extends Component {
         this.state = proxy({
             options: { periods: [], proposals: [], year: false, can_print: false },
             periodId: false,
-            mode: "session",
+            mode: "calendar",
             data: null,
             showProposals: false,
             marking: null,
@@ -185,6 +185,63 @@ export class ExamPlanner extends Component {
     async setMode(mode) {
         this.state.mode = mode;
         this.state.marking = null;
+    }
+
+    // Calendário: os dias da época em semanas (segunda a sexta, e sábado se houver provas), com as sessões de cada dia.
+
+    get calendarWeeks() {
+        const period = this.period;
+        if (!period) {
+            return [];
+        }
+        const byDay = new Map();
+        for (const group of this.groups) {
+            if (!byDay.has(group.date)) {
+                byDay.set(group.date, []);
+            }
+            byDay.get(group.date).push(group);
+        }
+        const iso = (d) =>
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const start = new Date(`${period.date_start}T00:00:00`);
+        const end = new Date(`${period.date_end}T00:00:00`);
+        const saturday = [...byDay.keys()].some((day) => new Date(`${day}T00:00:00`).getDay() === 6);
+        const monday = new Date(start);
+        monday.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+        const weeks = [];
+        for (const day = new Date(monday); day <= end; day.setDate(day.getDate() + 7)) {
+            const cells = [];
+            for (let offset = 0; offset < (saturday ? 6 : 5); offset++) {
+                const date = new Date(day);
+                date.setDate(day.getDate() + offset);
+                const key = iso(date);
+                cells.push({
+                    date: key,
+                    inPeriod: date >= start && date <= end,
+                    label: date
+                        .toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "numeric" })
+                        .replace(/^./, (c) => c.toUpperCase()),
+                    groups: byDay.get(key) || [],
+                });
+            }
+            weeks.push({ key: iso(day), cells });
+        }
+        return weeks;
+    }
+
+    get calendarColumns() {
+        return this.calendarWeeks[0]?.cells.length || 5;
+    }
+
+    async markFromCalendar() {
+        await this.setMode("session");
+        this.startMarking();
+    }
+
+    /** Do calendário para a sessão: abre-a (as outras fecham) na vista por sessão. */
+    async openGroup(group) {
+        this.state.open = Object.fromEntries(this.groups.map((g) => [g.key, g.key === group.key]));
+        await this.setMode("session");
     }
 
     // Provas
@@ -523,13 +580,9 @@ export class ExamPlanner extends Component {
         return this.sessions.filter((s) => this.incomplete(s)).length;
     }
 
-    onClassChange(ev) {
-        this.state.classId = parseInt(ev.target.value, 10) || false;
-        this.state.marking = null;
-    }
-
     openClass(classId) {
         this.state.classId = classId;
+        this.state.marking = null;
     }
 
     /** Linhas de uma lista de provas, com o dia só na primeira prova desse dia. */
@@ -592,10 +645,6 @@ export class ExamPlanner extends Component {
 
     get withoutSupervisor() {
         return this.sessions.filter((s) => s.supervisors.length === 0).length;
-    }
-
-    onTeacherChange(ev) {
-        this.state.teacherId = parseInt(ev.target.value, 10) || false;
     }
 
     openTeacher(teacherId) {

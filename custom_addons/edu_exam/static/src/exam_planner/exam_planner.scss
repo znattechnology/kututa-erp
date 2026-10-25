@@ -19,6 +19,103 @@
         }
     }
 
+    // O calendário da época: uma coluna por dia da semana, cada sessão num bloco.
+    .o_edu_ep_cal {
+        display: grid;
+        grid-template-columns: repeat(var(--o-edu-ep-cols, 5), minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .o_edu_ep_cal_day {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 110px;
+        padding: 8px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+
+        &.o_out {
+            background: transparent;
+            border-style: dashed;
+            opacity: 0.5;
+        }
+    }
+
+    .o_edu_ep_cal_head {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: $text-muted;
+    }
+
+    .o_edu_ep_cal_block {
+        display: block;
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid $border-color;
+        border-left: 4px solid $success;
+        border-radius: 4px;
+        background: $o-view-background-color;
+        text-align: left;
+        font-size: 0.875rem;
+
+        &:hover {
+            border-color: $o-action;
+        }
+
+        &.o_missing {
+            border-left-color: $warning;
+        }
+    }
+
+    .o_edu_ep_cal_free {
+        font-size: 0.8125rem;
+        color: $text-muted;
+    }
+
+    // Por turma e por professor: o painel à esquerda, como o do editor de horários.
+    .o_edu_ep_layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .o_edu_ep_panel {
+        position: sticky;
+        top: 0;
+        flex: 0 0 220px;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .o_edu_ep_panel_item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        padding: 4px 8px;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        text-align: left;
+
+        &:hover {
+            background: $o-gray-100;
+        }
+
+        &.o_active {
+            background: rgba($o-action, 0.12);
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_ep_content {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
     .o_edu_ep_dates {
         opacity: 0.75;
     }
@@ -157,31 +254,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-    }
-
-    // Por turma
-    .o_edu_ep_classes {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 8px;
-        margin: 12px 0 0;
-    }
-
-    .o_edu_ep_class_btn {
-        display: flex;
-        width: 100%;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        padding: 8px 12px;
-        border: 1px solid $border-color;
-        border-radius: $border-radius;
-        background: $o-view-background-color;
-        text-align: left;
-
-        &:hover {
-            background: $o-gray-100;
-        }
     }
 
     .o_edu_ep_table {

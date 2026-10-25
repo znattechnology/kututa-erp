@@ -63,6 +63,10 @@
                         </p>
                         <div class="o_edu_ep_toolbar">
                             <div class="btn-group" role="tablist" aria-label="Vista">
+                                <button type="button" class="btn" role="tab" t-att-aria-selected="this.state.mode === 'calendar'"
+                                        t-att-class="this.state.mode === 'calendar' ? 'btn-primary' : 'btn-secondary'"
+                                        t-on-click="() => this.setMode('calendar')">
+                                    <i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/>Calendário</button>
                                 <button type="button" class="btn" role="tab" t-att-aria-selected="this.state.mode === 'session'"
                                         t-att-class="this.state.mode === 'session' ? 'btn-primary' : 'btn-secondary'"
                                         t-on-click="() => this.setMode('session')">
@@ -78,13 +82,47 @@
                             </div>
                         </div>
 
-                        <t t-if="this.state.mode === 'session'" t-call="edu_exam.ExamPlannerSessions"/>
+                        <t t-if="this.state.mode === 'calendar'" t-call="edu_exam.ExamPlannerCalendar"/>
+                        <t t-elif="this.state.mode === 'session'" t-call="edu_exam.ExamPlannerSessions"/>
                         <t t-elif="this.state.mode === 'class'" t-call="edu_exam.ExamPlannerClasses"/>
                         <t t-else="" t-call="edu_exam.ExamPlannerTeachers"/>
                     </t>
                 </div>
             </Layout>
         </div>
+    </t>
+
+    <!-- Calendário: os dias da época, cada sessão num bloco (hora, disciplina, turmas, vigilantes em falta). -->
+    <t t-name="edu_exam.ExamPlannerCalendar">
+        <div class="o_edu_ep_toolbar">
+            <span>
+                <t t-if="!this.groups.length">Ainda não há provas nesta época.</t>
+                <t t-else=""><t t-out="this.plural(this.groups.length, 'sessão', 'sessões')"/>, <t t-out="this.plural(this.sessions.length, 'prova', 'provas')"/></t>
+                <span t-if="this.withoutSupervisor" class="text-warning"> · <t t-out="this.withoutSupervisor"/> sem vigilante</span>
+            </span>
+            <span class="flex-grow-1"/>
+            <button type="button" class="btn btn-primary" t-on-click="() => this.markFromCalendar()">
+                <i class="oi me-1" data-icon="add" aria-hidden="true"/>Marcar prova em várias turmas
+            </button>
+        </div>
+        <div class="o_edu_ep_cal" t-attf-style="--o-edu-ep-cols: {{ this.calendarColumns }}">
+            <t t-foreach="this.calendarWeeks" t-as="week" t-key="week.key">
+                <div t-foreach="week.cells" t-as="cell" t-key="cell.date" class="o_edu_ep_cal_day"
+                     t-att-class="{ o_out: !cell.inPeriod }">
+                    <div class="o_edu_ep_cal_head" t-out="cell.label"/>
+                    <button t-foreach="cell.groups" t-as="g" t-key="g.key" type="button" class="o_edu_ep_cal_block"
+                            t-att-class="{ o_missing: g.missing }" t-on-click="() => this.openGroup(g)"
+                            t-att-title="'Abrir a sessão de ' + g.subjects">
+                        <span class="o_edu_ep_nums fw-semibold"><t t-out="this.fmtHour(g.from)"/>–<t t-out="this.fmtHour(g.to)"/></span>
+                        <span class="d-block text-truncate" t-out="g.subjects"/>
+                        <span class="d-block small text-muted" t-out="this.plural(g.sessions.length, 'turma', 'turmas')"/>
+                        <span t-if="g.missing" class="d-block small text-warning"><t t-out="g.missing"/> sem vigilante</span>
+                    </button>
+                    <span t-if="cell.inPeriod and !cell.groups.length" class="o_edu_ep_cal_free">Sem provas</span>
+                </div>
+            </t>
+        </div>
+        <p class="small text-muted mt-2">Clique numa sessão para a abrir: as salas e os vigilantes de cada turma.</p>
     </t>
 
     <!-- Marcar a mesma prova em várias turmas -->
@@ -239,16 +277,22 @@
 
     <!-- Por turma -->
     <t t-name="edu_exam.ExamPlannerClasses">
+        <div class="o_edu_ep_layout">
+        <aside class="o_edu_ep_panel" aria-label="Turmas">
+            <button type="button" class="o_edu_ep_panel_item" t-att-class="{ o_active: !this.state.classId }"
+                    t-on-click="() => this.openClass(false)">
+                <span>Todas as turmas</span>
+            </button>
+            <button t-foreach="this.state.data.classes" t-as="c" t-key="c.id" type="button" class="o_edu_ep_panel_item"
+                    t-att-class="{ o_active: c.id === this.state.classId }" t-on-click="() => this.openClass(c.id)">
+                <t t-set="x" t-value="this.classSummary.get(c.id)"/>
+                <span class="text-truncate" t-out="c.name"/>
+                <span t-if="x" class="badge" t-att-class="x.incomplete ? 'text-bg-warning' : 'text-bg-success'"
+                      t-att-title="x.incomplete ? x.incomplete + ' por completar' : 'completas'" t-out="x.exams"/>
+            </button>
+        </aside>
+        <div class="o_edu_ep_content">
         <div class="o_edu_ep_toolbar">
-            <select class="form-select" aria-label="Turma" t-on-change="(ev) => this.onClassChange(ev)">
-                <option value="">Todas as turmas (resumo)</option>
-                <t t-foreach="this.state.data.classes" t-as="c" t-key="c.id">
-                    <t t-set="x" t-value="this.classSummary.get(c.id)"/>
-                    <option t-att-value="c.id" t-att-selected="c.id === this.state.classId">
-                        <t t-out="c.name"/><t t-if="c.course"> · <t t-out="c.course"/></t><t t-if="x"> — <t t-out="this.plural(x.exams, 'prova', 'provas')"/></t>
-                    </option>
-                </t>
-            </select>
             <span class="flex-grow-1"/>
             <t t-if="this.state.classId">
                 <button t-if="this.state.options.can_print" type="button" class="btn btn-secondary"
@@ -267,19 +311,8 @@
                 <t t-else=""><t t-out="this.classesWithExams"/> de <t t-out="this.state.data.classes.length"/> turmas com provas marcadas</t>
             </h2>
             <p class="text-muted"><t t-out="this.plural(this.sessions.length, 'prova', 'provas')"/> ao todo<t t-if="this.incompleteCount">;
-                <t t-out="this.incompleteCount"/> sem sala ou sem vigilante</t>. Escolha uma turma para ver o calendário dela.</p>
-            <ul class="list-unstyled o_edu_ep_classes">
-                <li t-foreach="this.state.data.classes" t-as="c" t-key="c.id">
-                    <t t-set="x" t-value="this.classSummary.get(c.id)"/>
-                    <button type="button" class="o_edu_ep_class_btn" t-on-click="() => this.openClass(c.id)">
-                        <span t-out="c.name"/>
-                        <span class="small" t-att-class="!x ? 'text-muted' : (x.incomplete ? 'text-warning' : 'text-success')">
-                            <t t-if="!x">sem provas</t>
-                            <t t-else=""><t t-out="x.exams"/><t t-if="x.incomplete">, <t t-out="x.incomplete"/> por completar</t></t>
-                        </span>
-                    </button>
-                </li>
-            </ul>
+                <t t-out="this.incompleteCount"/> sem sala ou sem vigilante</t>. Escolha uma turma à esquerda para ver o calendário dela;
+                o número é o das provas (amarelo se falta a sala ou o vigilante).</p>
         </section>
         <t t-else="">
             <p class="o_edu_ep_lead">
@@ -291,18 +324,27 @@
             <t t-set="variant" t-value="'class'"/>
             <t t-call="edu_exam.ExamPlannerTable"/>
         </t>
+        </div>
+        </div>
     </t>
 
     <!-- Vigilâncias por professor -->
     <t t-name="edu_exam.ExamPlannerTeachers">
+        <div class="o_edu_ep_layout">
+        <aside class="o_edu_ep_panel" aria-label="Professores">
+            <button type="button" class="o_edu_ep_panel_item" t-att-class="{ o_active: !this.state.teacherId }"
+                    t-on-click="() => this.openTeacher(false)">
+                <span>Todos os professores</span>
+            </button>
+            <button t-foreach="this.state.data.teachers" t-as="t" t-key="t.id" type="button" class="o_edu_ep_panel_item"
+                    t-att-class="{ o_active: t.id === this.state.teacherId }" t-on-click="() => this.openTeacher(t.id)">
+                <t t-set="n" t-value="this.supervisionCounts.get(t.id)"/>
+                <span class="text-truncate" t-out="t.name"/>
+                <span class="small text-nowrap" t-att-class="n ? '' : 'text-muted'" t-att-title="(n || 0) + ' vigilâncias'" t-out="n || 0"/>
+            </button>
+        </aside>
+        <div class="o_edu_ep_content">
         <div class="o_edu_ep_toolbar">
-            <select class="form-select" aria-label="Professor" t-on-change="(ev) => this.onTeacherChange(ev)">
-                <option value="">Todos os professores (resumo)</option>
-                <t t-foreach="this.state.data.teachers" t-as="t" t-key="t.id">
-                    <t t-set="n" t-value="this.supervisionCounts.get(t.id)"/>
-                    <option t-att-value="t.id" t-att-selected="t.id === this.state.teacherId"><t t-out="t.name"/><t t-if="n"> (<t t-out="n"/>)</t></option>
-                </t>
-            </select>
             <span t-if="this.selectedTeacher">
                 <t t-if="!this.selectedTeacher.sessions.length">Não vigia nenhuma prova nesta época.</t>
                 <t t-else="">Vigia <t t-out="this.plural(this.selectedTeacher.sessions.length, 'prova', 'provas')"/> em <t t-out="this.plural(this.selectedTeacher.days, 'dia', 'dias')"/>.</t>
@@ -339,6 +381,8 @@
             <t t-set="variant" t-value="'teacher'"/>
             <t t-call="edu_exam.ExamPlannerTable"/>
         </t>
+        </div>
+        </div>
     </t>
 
     <!-- O calendário de uma turma ou de um professor: o dia só na primeira prova desse dia. -->
