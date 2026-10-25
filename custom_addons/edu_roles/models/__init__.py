@@ -1,6 +1,7 @@
 from . import (
     edu_academic_year,
     edu_attendance_page,
+    edu_coordination,
     edu_grade_grid,
     edu_guardian_page,
     edu_report_page,

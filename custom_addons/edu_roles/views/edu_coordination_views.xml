@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- As coordenações em cartões: o tipo, o coordenador (ou «Por nomear»), os cursos e os professores, as turmas e
+         os alunos deste ano. A lista editável fica; o formulário mostra os cursos e as disciplinas. -->
+    <record id="edu_coordination_kanban" model="ir.ui.view">
+        <field name="name">edu.coordination.kanban</field>
+        <field name="model">edu.coordination</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_coord_kanban">
+                <field name="head_id"/>
+                <field name="code"/>
+                <field name="edu_course_names"/>
+                <field name="edu_teacher_count"/>
+                <field name="edu_class_count"/>
+                <field name="edu_student_count"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_coord_card">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="min-w-0">
+                                    <field name="name" class="o_edu_coord_name"/>
+                                    <div class="small text-muted">
+                                        <field name="coordination_type"/><t t-if="record.code.raw_value">, <field name="code"/></t>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_edu_coord_head">
+                                <t t-if="record.head_id.raw_value">
+                                    <field name="head_id" widget="many2one_avatar_employee"/>
+                                    <span class="ms-2"><span class="text-muted small d-block">Coordenador(a)</span><span class="fw-semibold" t-out="record.head_id.value"/></span>
+                                </t>
+                                <span t-else="" class="text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Coordenador(a) por nomear</span>
+                            </div>
+                            <ul t-if="record.edu_course_names.raw_value and record.edu_course_names.raw_value.length" class="o_edu_coord_tags">
+                                <li t-foreach="record.edu_course_names.raw_value" t-as="course" t-key="course_index" t-out="course"/>
+                            </ul>
+                            <div class="o_edu_coord_counts">
+                                <span><i class="oi me-1" data-icon="person" aria-hidden="true"/><t t-out="record.edu_teacher_count.raw_value === 1 ? '1 professor' : record.edu_teacher_count.raw_value + ' professores'"/></span>
+                                <span><i class="oi me-1" data-icon="groups" aria-hidden="true"/><t t-out="record.edu_class_count.raw_value === 1 ? '1 turma' : record.edu_class_count.raw_value + ' turmas'"/></span>
+                                <span><i class="oi me-1" data-icon="school" aria-hidden="true"/><t t-out="record.edu_student_count.raw_value === 1 ? '1 aluno' : record.edu_student_count.raw_value + ' alunos'"/></span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_coordination_form" model="ir.ui.view">
+        <field name="name">edu.coordination.form</field>
+        <field name="model">edu.coordination</field>
+        <field name="arch" type="xml">
+            <form string="Coordenação">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="Coordenação de Enfermagem"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="coordination_type"/>
+                            <field name="code"/>
+                        </group>
+                        <group>
+                            <field name="head_id" widget="many2one_avatar_employee"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Cursos" name="courses">
+                            <field name="course_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="level_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Disciplinas" name="subjects">
+                            <field name="subject_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_core.action_edu_coordination" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>
