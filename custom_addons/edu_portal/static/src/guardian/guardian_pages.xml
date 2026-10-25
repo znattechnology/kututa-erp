@@ -286,7 +286,7 @@
                             <select t-if="r.trimesters.length" class="form-select w-auto" aria-label="Trimestre" t-on-change="(ev) => this.selectTrimester(ev)">
                                 <option t-foreach="r.trimesters" t-as="t" t-key="t.id" t-att-value="t.id" t-att-selected="t.id === r.trimester_id" t-out="t.name"/>
                             </select>
-                            <button t-if="r.rdec_id" type="button" class="btn btn-secondary" t-on-click="() => this.openReport()"
+                            <button t-if="r.rdec_id and r.state !== 'todo'" type="button" class="btn btn-secondary" t-on-click="() => this.openReport()"
                                     title="O RDEC da escola em folha A4, na aplicação">
                                 <i class="oi me-1" data-icon="print" aria-hidden="true"/>Ver RDEC
                             </button>

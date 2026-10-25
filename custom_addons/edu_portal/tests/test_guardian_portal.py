@@ -166,6 +166,7 @@ class TestGuardianPortal(HttpCase):
         self.assertIn(rdec_menu, Menu._load_menus_blacklist(), 'sem educandos na Iniciação, sem RDEC')
         carla, rdec = self._iniciacao()
         self.assertNotIn(rdec_menu, Menu._load_menus_blacklist())
+        self.assertEqual(Portal.page_data('rdec')['child_id'], carla.id, 'sem escolha, o educando da Iniciação')
         data = Portal.page_data('rdec', {'student_id': carla.id})['rdec']
         self.assertTrue(data['applicable'])
         self.assertEqual(data['state'], 'progress')

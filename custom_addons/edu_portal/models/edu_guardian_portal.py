@@ -83,6 +83,10 @@ class EduGuardianPortal(models.AbstractModel):
             data['profile'] = self._profile(guardians, children)
             return data
         student = self._child(options.get('student_id'))
+        if page == 'rdec' and not options.get('student_id'):
+            # Sem educando escolhido, o RDEC abre no primeiro da Iniciação.
+            preschool = children.filtered(lambda s: Portal._enrollment(s).class_id.level_id.code == 'INICIACAO')
+            student = preschool[:1] or student
         if not student:
             return data
         enrollment = Portal._enrollment(student)
