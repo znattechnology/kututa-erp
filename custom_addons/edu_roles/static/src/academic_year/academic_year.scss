@@ -423,3 +423,63 @@
         }
     }
 }
+
+// As salas em cartões: o código em destaque e a ocupação por turno.
+.o_edu_room_kanban {
+    .o_kanban_record {
+        min-width: 280px;
+    }
+
+    .o_edu_room_card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_room_code {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        min-width: 44px;
+        height: 44px;
+        padding: 0 6px;
+        border-radius: $border-radius-lg;
+        background: rgba($primary, 0.1);
+        color: $primary;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .o_edu_room_name {
+        font-weight: 600;
+    }
+
+    .o_edu_room_facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    .o_edu_room_usage {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            display: grid;
+            grid-template-columns: 4em minmax(0, 1fr) auto;
+            gap: 8px;
+            font-size: 0.8125rem;
+        }
+    }
+}

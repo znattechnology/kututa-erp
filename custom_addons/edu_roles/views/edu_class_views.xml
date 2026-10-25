@@ -67,4 +67,70 @@
     <record id="edu_core.action_edu_class" model="ir.actions.act_window">
         <field name="view_mode">kanban,list,form</field>
     </record>
+
+    <!-- As salas em cartões: o código, o tipo, a lotação, o edifício e o equipamento, o uso semanal pelos horários
+         deste ano, as turmas que lá têm aulas em cada turno (com o aviso quando a turma é maior do que a sala) e os
+         turnos em que estão livres. -->
+    <record id="edu_room_kanban" model="ir.ui.view">
+        <field name="name">edu.room.kanban</field>
+        <field name="model">edu.room</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_room_kanban">
+                <field name="code"/>
+                <field name="room_type"/>
+                <field name="building_id"/>
+                <field name="floor"/>
+                <field name="has_projector"/>
+                <field name="has_ac"/>
+                <field name="edu_usage"/>
+                <field name="edu_week_used"/>
+                <field name="edu_week_total"/>
+                <field name="edu_week_width"/>
+                <field name="edu_free_shifts"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_room_card">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="o_edu_room_code" t-out="record.code.raw_value or '—'"/>
+                                <div class="flex-grow-1 min-w-0">
+                                    <field name="name" class="o_edu_room_name"/>
+                                    <div class="small text-muted"><field name="room_type"/>, <field name="capacity"/> lugares</div>
+                                </div>
+                            </div>
+                            <div class="o_edu_room_facts">
+                                <span t-if="record.building_id.raw_value"><i class="oi me-1" data-icon="location_on" aria-hidden="true"/><field name="building_id"/><t t-if="record.floor.raw_value">, piso <field name="floor"/></t></span>
+                                <span t-if="record.has_projector.raw_value"><i class="oi me-1" data-icon="videocam" aria-hidden="true"/>Projector</span>
+                                <span t-if="record.has_ac.raw_value"><i class="oi me-1" data-icon="ac_unit" aria-hidden="true"/>Ar condicionado</span>
+                            </div>
+                            <div t-if="record.edu_week_total.raw_value">
+                                <div class="d-flex justify-content-between small">
+                                    <span class="text-muted">Uso semanal</span>
+                                    <span><t t-out="record.edu_week_used.raw_value"/> de <t t-out="record.edu_week_total.raw_value"/> tempos</span>
+                                </div>
+                                <span class="o_edu_meter"><span t-att-style="'width: ' + record.edu_week_width.raw_value + '%'"/></span>
+                            </div>
+                            <ul t-if="record.edu_usage.raw_value and record.edu_usage.raw_value.length" class="o_edu_room_usage">
+                                <li t-foreach="record.edu_usage.raw_value" t-as="use" t-key="use.id"
+                                    t-att-title="use.label + ': ' + use.lessons + ' aulas por semana, ' + use.students + ' alunos'">
+                                    <span class="text-muted" t-out="use.shift"/>
+                                    <span class="fw-semibold text-truncate" t-out="use.label"/>
+                                    <span t-att-class="use.over ? 'text-danger fw-semibold' : 'text-muted'">
+                                        <t t-out="use.lessons"/> aulas<t t-if="use.over">, <t t-out="use.students"/> alunos</t>
+                                    </span>
+                                </li>
+                            </ul>
+                            <p t-else="" class="mb-0 small text-muted">Sem aulas no horário este ano.</p>
+                            <div t-if="record.edu_free_shifts.raw_value" class="small text-success">
+                                <i class="oi me-1" data-icon="check_circle" aria-hidden="true"/>Livre: <t t-out="record.edu_free_shifts.raw_value"/>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_core.action_edu_room" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
 </odoo>
