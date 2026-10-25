@@ -148,8 +148,10 @@
                             icon="person_search" display="always"/>
                     <button name="action_print_assignments" type="object" string="Imprimir" icon="print" display="always"/>
                 </header>
+                <field name="company_id"/>
                 <field name="teacher_id"/>
                 <field name="class_id"/>
+                <field name="subject_id"/>
                 <field name="trimester_id"/>
                 <field name="weekly_hours"/>
                 <field name="teacher_load_label"/>
@@ -168,7 +170,7 @@
                             <div class="d-flex align-items-center gap-2">
                                 <field name="teacher_id" widget="many2one_avatar_employee" options="{'no_create': True}"/>
                                 <span t-if="record.teacher_id.raw_value" class="small text-truncate" t-out="record.teacher_id.value"/>
-                                <span t-else="" class="small text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Por atribuir</span>
+                                <span t-else="" class="small text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Por atribuir: escolha no botão ao lado</span>
                             </div>
                             <div t-if="record.teacher_id.raw_value" class="o_edu_assign_notes">
                                 <span t-att-class="{'text-danger fw-semibold': record.teacher_load_over.raw_value}">

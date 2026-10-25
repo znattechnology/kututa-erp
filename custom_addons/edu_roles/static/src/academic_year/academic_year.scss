@@ -687,3 +687,52 @@
         }
     }
 }
+
+// Os directores de turma em cartões: as turmas sem director com a margem do aviso.
+.o_edu_director_kanban {
+    .o_kanban_record {
+        min-width: 280px;
+    }
+
+    .o_edu_director_card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_director_missing {
+        box-shadow: inset 4px 0 0 $warning;
+        padding-left: 12px;
+    }
+
+    .o_edu_director_class {
+        font-weight: 600;
+    }
+}
+
+// Sem director (ou sem professor), o botão de escolher do Odoo fica sempre à vista, num círculo tracejado (o Odoo
+// só o mostra ao passar o rato).
+.o_edu_director_card,
+.o_edu_assign_card {
+    .o_field_widget.o_field_empty {
+        display: inline-flex !important;
+    }
+
+    .o_quick_assign {
+        display: inline-grid !important;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border: 2px dashed $warning;
+        border-radius: 50%;
+        color: mix($warning, $body-color, 60%) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+
+        &:hover {
+            border-style: solid;
+            background: rgba($warning, 0.12);
+        }
+    }
+}
