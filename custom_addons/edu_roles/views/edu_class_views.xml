@@ -197,7 +197,7 @@
         </field>
     </record>
     <record id="edu_timetable.action_edu_teaching_assignment" model="ir.actions.act_window">
-        <field name="view_mode">kanban,list</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="context">{'search_default_current_year': 1}</field>
     </record>
 </odoo>
