@@ -3,7 +3,7 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { feedWhen, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
+import { feedGroups, feedWhen, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
 
 const list = (items) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}` : items[0] || "");
 const count = (n, one, many) => (n === 1 ? one : `${n} ${many}`);
@@ -107,13 +107,60 @@ export class GuardianHome extends GuardianPage(GuardianBase) {
         return { text: who, debt };
     }
 
-    attendanceText(c) {
-        const a = c.attendance;
-        const missed = a.total - a.present;
-        if (!missed) {
-            return a.total === 1 ? "esteve na única aula com chamada" : `esteve nas ${a.total} aulas com chamada`;
+    /** A média de cada trimestre em colunas de 0 ao máximo da escala (só os trimestres com notas têm coluna). */
+    trendCols(c) {
+        return c.trend.map((t) => ({ ...t, height: t.value === null ? 0 : Math.max(2, (t.value / c.scale_max) * 100) }));
+    }
+
+    hasTrend(c) {
+        return c.trend.some((t) => t.value !== null);
+    }
+
+    passBottom(c) {
+        return (c.pass_grade / c.scale_max) * 100;
+    }
+
+    /** As aulas com chamada, em partes: presenças, faltas justificadas e injustificadas. */
+    lessonParts(c) {
+        const l = c.lessons;
+        const total = l.present + l.excused + l.absent;
+        const pct = (n) => (total ? (n / total) * 100 : 0);
+        return [
+            { key: "present", label: "Presenças", value: l.present, width: pct(l.present), css: "o_edu_stack_pos" },
+            { key: "excused", label: "Justificadas", value: l.excused, width: pct(l.excused), css: "o_edu_stack_missing" },
+            { key: "absent", label: "Injustificadas", value: l.absent, width: pct(l.absent), css: "o_edu_stack_neg" },
+        ];
+    }
+
+    meterWidth(m) {
+        return Math.min(100, (m.counted / m.limit) * 100);
+    }
+
+    meterClass(m) {
+        return { at_risk: "o_edu_meter_warn", failed: "o_edu_meter_bad" }[m.status] || "";
+    }
+
+    /** «Pagas 2 de 3, uma em atraso.» — o que a fila dos meses mostra, em palavras. */
+    monthsText(c) {
+        const issued = c.months.filter((m) => m.state !== "none");
+        if (!issued.length) {
+            return "Ainda sem propinas facturadas neste ano lectivo.";
         }
-        return `faltou a ${missed} de ${a.total} ${a.total === 1 ? "aula" : "aulas"} com chamada`;
+        const n = (state) => c.months.filter((m) => m.state === state).length;
+        const paid = n("paid");
+        const parts = [`${paid === 1 ? "Paga" : "Pagas"} ${paid} de ${issued.length}`];
+        if (n("overdue")) {
+            parts.push(count(n("overdue"), "uma em atraso", "em atraso"));
+        }
+        if (n("due")) {
+            parts.push(count(n("due"), "uma por pagar", "por pagar"));
+        }
+        return `${parts.join(", ")}.`;
+    }
+
+    monthTitle(m) {
+        const state = { paid: "paga", due: "por pagar", overdue: "em atraso", exempt: "isenta", none: "ainda sem factura" }[m.state];
+        return `Propina de ${m.name}: ${state}${m.due ? ", faltam " + m.due : ""}`;
     }
 
     /** O que pede atenção, como no secPed: propinas em atraso, faltas no limite e médias negativas. */
@@ -160,6 +207,10 @@ export class GuardianHome extends GuardianPage(GuardianBase) {
 
     when(item) {
         return feedWhen(item.date);
+    }
+
+    get feedGroups() {
+        return feedGroups(this.state.data.feed);
     }
 
     openItem(item) {
@@ -250,6 +301,10 @@ export class GuardianNotifications extends GuardianPage(GuardianBase) {
 
     when(item) {
         return feedWhen(item.date);
+    }
+
+    get feedGroups() {
+        return feedGroups(this.state.data.feed);
     }
 
     openItem(item) {

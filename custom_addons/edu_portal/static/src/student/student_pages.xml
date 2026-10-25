@@ -754,14 +754,7 @@
                         Ainda não tens notificações. Aparecem aqui as notas novas, as faltas, as provas marcadas e as propinas.
                     </p>
                     <t t-else="">
-                        <ul class="o_edu_st_card o_edu_st_feed">
-                            <li t-foreach="d.feed" t-as="item" t-key="item.key">
-                                <button type="button" class="o_edu_st_feed_item" t-on-click="() => this.openItem(item)">
-                                    <span t-out="item.text"/>
-                                    <span class="small text-muted" t-out="this.when(item)"/>
-                                </button>
-                            </li>
-                        </ul>
+                        <t t-call="edu_portal.Part.Feed"/>
                         <p class="mb-0 small text-muted">As notificações das notas não dizem a nota, que pode mudar até o trimestre fechar: abre a página para a ver.</p>
                     </t>
                 </div>
@@ -850,6 +843,30 @@
     </t>
 
     <!-- Partes comuns à área do estudante e à do encarregado, que mostra as mesmas tabelas (como no secPed). -->
+
+    <!-- As novidades por dia (hoje, ontem, esta semana, mais antigas), cada uma com o ícone do tipo e o caminho para a
+         página. Usa ``this.feedGroups``, ``this.openItem`` e ``showChild`` (o nome do educando, no encarregado). -->
+    <t t-name="edu_portal.Part.Feed">
+        <div class="o_edu_st_card o_edu_feed">
+            <section t-foreach="this.feedGroups" t-as="group" t-key="group.key" class="o_edu_feed_group" t-att-aria-label="group.label">
+                <h3 class="o_edu_feed_day" t-out="group.label"/>
+                <ul class="o_edu_feed_list">
+                    <li t-foreach="group.items" t-as="item" t-key="item.key">
+                        <button type="button" class="o_edu_feed_item" t-on-click="() => this.openItem(item)">
+                            <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" t-att-data-icon="item.icon"/></span>
+                            <span class="o_edu_feed_text">
+                                <span t-out="item.text"/>
+                                <span class="small text-muted">
+                                    <t t-if="showChild"><t t-out="item.first_name"/><t t-if="group.key === 'week' or group.key === 'older'">, </t></t>
+                                    <t t-if="group.key === 'week' or group.key === 'older'" t-out="(showChild ? this.when(item).toLowerCase() : this.when(item))"/>
+                                </span>
+                            </span>
+                        </button>
+                    </li>
+                </ul>
+            </section>
+        </div>
+    </t>
 
     <!-- A pauta de um ano: o resultado, a frase do trimestre, a tabela (no telemóvel uma lista) e a legenda das siglas. Usa
          ``g`` (as notas) e os métodos das páginas das notas. -->

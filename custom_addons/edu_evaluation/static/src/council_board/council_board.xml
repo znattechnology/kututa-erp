@@ -25,7 +25,7 @@
                                     <i class="oi me-1" data-icon="description" aria-hidden="true"/>Ver a acta
                                 </button>
                                 <button type="button" class="btn btn-secondary" t-on-click="() => this.print('action_print_attendance')">
-                                    <i class="oi me-1" data-icon="how_to_reg" aria-hidden="true"/>Lista de presença
+                                    <i class="oi me-1" data-icon="person_check" aria-hidden="true"/>Lista de presença
                                 </button>
                             </t>
                         </t>

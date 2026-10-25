@@ -1,5 +1,5 @@
-// Os gráficos dos painéis (professor e aluno): indicadores, barras horizontais, colunas, barras empilhadas e
-// medidores, em HTML. As cores foram validadas (série azul e vermelho crítico, contraste e daltonismo) para as
+// Os gráficos dos painéis (professor, aluno e encarregado): indicadores, barras horizontais, colunas, barras
+// empilhadas, medidores e os meses das propinas, em HTML. As cores foram validadas (série azul e vermelho crítico, contraste e daltonismo) para as
 // superfícies clara e escura; o modo escuro troca os passos em edu_charts.dark.scss.
 .o_edu_kpis,
 .o_edu_hbars,
@@ -7,6 +7,7 @@
 .o_edu_stacks,
 .o_edu_meters,
 .o_edu_meter,
+.o_edu_months,
 .o_edu_chart_legend {
     --edu-chart-series: #2a78d6;
     --edu-chart-series-track: #cde2fb;
@@ -307,4 +308,58 @@
     width: 10px;
     height: 10px;
     border-radius: 2px;
+}
+
+// As propinas do ano, mês a mês: paga (série), por pagar (contorno), em atraso (crítico), isenta (vazio) e ainda sem
+// factura (tracejado). O mês está escrito em cada um, e o estado também na legenda e no título.
+.o_edu_months {
+    display: grid;
+    // Os meses do ano lectivo numa só linha (o número vem do HTML, em --edu-months).
+    grid-template-columns: repeat(var(--edu-months, 11), minmax(0, 1fr));
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.o_edu_month {
+    display: grid;
+    place-items: center;
+    height: 30px;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.o_edu_month_paid {
+    background: var(--edu-chart-series);
+    color: #fff;
+}
+
+.o_edu_month_due {
+    border-color: var(--edu-chart-series);
+    color: var(--edu-chart-series);
+}
+
+.o_edu_month_overdue {
+    background: var(--edu-chart-critical);
+    color: #fff;
+}
+
+.o_edu_month_exempt {
+    background: var(--edu-chart-empty);
+    color: $body-color;
+}
+
+.o_edu_month_none {
+    border: 1px dashed var(--edu-chart-grid);
+    color: $text-muted;
+}
+
+.o_edu_chart_key.o_edu_month_due {
+    border: 1px solid var(--edu-chart-series);
+    background: none;
 }

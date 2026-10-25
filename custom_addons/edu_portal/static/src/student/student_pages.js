@@ -409,6 +409,28 @@ export function feedWhen(isoDate) {
     return days <= 0 ? "Hoje" : days === 1 ? "Ontem" : `Há ${days} dias`;
 }
 
+// O ícone de cada tipo de novidade (a cor fica para o estado: as novidades são todas neutras).
+const FEED_ICONS = { grades: "school", absences: "person_off", exams: "edit_note", fees: "payments", rdec: "child_care" };
+
+/** As novidades agrupadas por dia: hoje, ontem, nos últimos 7 dias e as mais antigas. */
+export function feedGroups(items) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const groups = [
+        { key: "today", label: "Hoje", items: [] },
+        { key: "yesterday", label: "Ontem", items: [] },
+        { key: "week", label: "Esta semana", items: [] },
+        { key: "older", label: "Mais antigas", items: [] },
+    ];
+    for (const item of items) {
+        const [y, m, d] = item.date.split("-").map((part) => parseInt(part, 10));
+        const days = Math.round((today - new Date(y, m - 1, d)) / 86400000);
+        const group = days <= 0 ? groups[0] : days === 1 ? groups[1] : days < 7 ? groups[2] : groups[3];
+        group.items.push({ ...item, icon: FEED_ICONS[item.page] || "info", days });
+    }
+    return groups.filter((g) => g.items.length);
+}
+
 const STUDENT_FEED_ACTIONS = {
     grades: "edu_portal.action_student_grades",
     rdec: "edu_portal.action_student_grades",
@@ -424,6 +446,10 @@ export class StudentNotifications extends StudentPage {
 
     when(item) {
         return feedWhen(item.date);
+    }
+
+    get feedGroups() {
+        return feedGroups(this.state.data.feed);
     }
 
     openItem(item) {

@@ -11,7 +11,7 @@ class EduGradeGrid(models.AbstractModel):
     def _class_links(self, edu_class, directs):
         links = super()._class_links(edu_class, directs)
         if directs and edu_class.academic_year_id.is_current:
-            links.append({'key': 'absences', 'label': self.env._('Justificar faltas'), 'icon': 'how_to_reg'})
+            links.append({'key': 'absences', 'label': self.env._('Justificar faltas'), 'icon': 'person_check'})
         return links
 
     @api.model

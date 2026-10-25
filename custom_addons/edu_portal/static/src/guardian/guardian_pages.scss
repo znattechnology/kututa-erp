@@ -58,4 +58,74 @@
     .o_edu_gd_day {
         min-width: 13em;
     }
+
+    // O painel: o bloco de cada educando, com os três gráficos lado a lado (empilhados no telemóvel).
+    .o_edu_gd_attention {
+        border-left: 4px solid $danger;
+    }
+
+    .o_edu_gd_calm {
+        color: $text-muted;
+    }
+
+    .o_edu_gd_child {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .o_edu_gd_child_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_gd_charts {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        padding-top: 16px;
+        border-top: 1px solid $border-color;
+
+        @include media-breakpoint-down(md) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_gd_chart {
+        min-width: 0;
+    }
+
+    .o_edu_gd_chart_title {
+        margin: 0 0 4px;
+        color: $text-muted;
+        font-size: 0.85rem;
+        font-weight: normal;
+    }
+
+    .o_edu_gd_big {
+        margin-bottom: 8px;
+        font-size: 1.75rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+    }
+
+    .o_edu_gd_big_money {
+        font-size: 1.25rem;
+        overflow-wrap: anywhere;
+    }
+
+    .o_edu_gd_big_of {
+        margin-left: 2px;
+        color: $text-muted;
+        font-size: 0.85rem;
+        font-weight: normal;
+    }
+
+    .o_edu_gd_cols {
+        height: 96px;
+    }
 }

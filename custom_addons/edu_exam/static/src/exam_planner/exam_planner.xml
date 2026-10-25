@@ -18,7 +18,7 @@
                         <button t-if="this.proposalsCount" type="button" class="btn btn-secondary"
                                 t-att-aria-expanded="this.state.showProposals"
                                 t-on-click="() => this.state.showProposals = !this.state.showProposals">
-                            <i class="oi me-1" data-icon="calendar_month" aria-hidden="true"/>Épocas do calendário
+                            <i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/>Épocas do calendário
                             (<t t-out="this.proposalsCount"/> por criar)
                         </button>
                         <button type="button" class="btn btn-secondary" t-on-click="() => this.openPeriodForm()">

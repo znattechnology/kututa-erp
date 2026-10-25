@@ -65,8 +65,8 @@ mobileTabs.add("teacher", {
     tabs: [
         { label: "Painel", icon: "home", action: "edu_roles.action_teacher_home", tag: "edu_roles.teacher_home" },
         { label: "Turmas", icon: "school", action: "edu_evaluation.action_edu_grade_grid", tag: "edu_evaluation.grade_grid" },
-        { label: "Chamada", icon: "how_to_reg", action: "edu_roles.action_teacher_attendance", tag: "edu_roles.attendance" },
-        { label: "Horário", icon: "calendar_month", action: "edu_roles.action_teacher_schedule", tag: "edu_roles.teacher_schedule" },
+        { label: "Chamada", icon: "person_check", action: "edu_roles.action_teacher_attendance", tag: "edu_roles.attendance" },
+        { label: "Horário", icon: "calendar_today", action: "edu_roles.action_teacher_schedule", tag: "edu_roles.teacher_schedule" },
     ],
 });
 

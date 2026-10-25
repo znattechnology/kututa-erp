@@ -157,6 +157,12 @@ class TestGuardianPortal(HttpCase):
         self.assertEqual(summary['name'], 'Ana Educanda')
         self.assertEqual(summary['average']['text'], '13,0')
         self.assertEqual(summary['overdue'], 0)
+        # Os gráficos: a média do 1.º trimestre, as aulas e as propinas de Setembro a Julho (ainda sem facturas).
+        self.assertEqual(summary['trend'][0]['text'], '13,0')
+        self.assertEqual(summary['lessons'], {'present': 0, 'excused': 0, 'absent': 0})
+        self.assertEqual([m['label'] for m in summary['months']][:2], ['Set', 'Out'])
+        self.assertEqual(len(summary['months']), 11)
+        self.assertEqual({m['state'] for m in summary['months']}, {'none'})
         self.assertIn('Notas novas de Língua Portuguesa.', [item['text'] for item in data['feed']])
 
     def test_rdec(self):

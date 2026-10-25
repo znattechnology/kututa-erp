@@ -330,6 +330,67 @@
             cursor: pointer;
         }
     }
+
+    // As novidades por dia, com o ícone do tipo num círculo neutro (a cor fica para o estado).
+    .o_edu_feed {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .o_edu_feed_group + .o_edu_feed_group {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid $border-color;
+    }
+
+    .o_edu_feed_day {
+        margin: 4px 0;
+        color: $text-muted;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .o_edu_feed_list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_feed_item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        width: 100%;
+        padding: 8px 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        text-align: start;
+
+        &:hover .o_edu_feed_text > span:first-child,
+        &:focus-visible .o_edu_feed_text > span:first-child {
+            text-decoration: underline;
+        }
+    }
+
+    .o_edu_feed_icon {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba($primary, 0.1);
+        color: $primary;
+        font-size: 1.1rem;
+    }
+
+    .o_edu_feed_text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
 }
 
 // As provas já feitas, acinzentadas (o Bootstrap põe a cor em cada célula, não na linha).

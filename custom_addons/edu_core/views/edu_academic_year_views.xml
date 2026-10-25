@@ -31,7 +31,7 @@
                         <button name="action_view_classes" type="object" class="oe_stat_button" icon="group">
                             <field name="class_count" widget="statinfo" string="Turmas"/>
                         </button>
-                        <button name="action_view_calendar" type="object" class="oe_stat_button" icon="calendar_month"
+                        <button name="action_view_calendar" type="object" class="oe_stat_button" icon="calendar_today"
                                 string="Calendário"/>
                     </div>
                     <widget name="web_ribbon" title="Em curso" invisible="not is_current"/>
