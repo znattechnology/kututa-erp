@@ -269,8 +269,9 @@ class EduGradeGrid(models.AbstractModel):
 
         students = []
         summary = {'positives': 0, 'negatives': 0, 'without_final': 0, 'total': 0.0}
-        # Durante o ano: as positivas e as negativas de cada trimestre (a classificação do trimestre).
-        by_term = {trimester.id: [0, 0] for trimester in trimesters}
+        # Durante o ano: as positivas e as negativas de cada trimestre (a classificação do trimestre) e a soma, para a
+        # média da turma.
+        by_term = {trimester.id: [0, 0, 0.0] for trimester in trimesters}
         round_fn = grading.rounder(policy.rounding)
         for enrollment in enrollments:
             terms_row = {}
@@ -300,6 +301,7 @@ class EduGradeGrid(models.AbstractModel):
                     # Como a mini-pauta: a classificação arredondada pela regra da escola (9,5 é positiva).
                     positive = round_fn(classification) >= policy.pass_grade
                     by_term[trimester.id][0 if positive else 1] += 1
+                    by_term[trimester.id][2] += round_fn(classification)
                 terms_row[str(trimester.id)] = {
                     'mac': value(term, 'mac', 'has_mac'),
                     'npt': value(term, 'npt', 'has_npt'),
@@ -347,6 +349,7 @@ class EduGradeGrid(models.AbstractModel):
                 }
             )
         graded = summary['positives'] + summary['negatives']
+        enrolled = len(enrollments.filtered(lambda e: e.state in ENROLLED))
         span, terminal = results[:1]._subject_span() if results else ([edu_class.class_number], True)
         last_editable = trimester_rows[-1]['editable'] if trimester_rows else False
         return {
@@ -384,10 +387,26 @@ class EduGradeGrid(models.AbstractModel):
                     (
                         {'name': t.name, 'positives': by_term[t.id][0], 'negatives': by_term[t.id][1]}
                         for t in reversed(trimesters)
-                        if sum(by_term[t.id])
+                        if by_term[t.id][0] + by_term[t.id][1]
                     ),
                     None,
                 ),
+                # Cada trimestre, para o gráfico: as positivas, as negativas, quem está sem classificação e a média.
+                'enrolled': enrolled,
+                'terms': [
+                    {
+                        'id': t.id,
+                        'name': t.name,
+                        'is_current': t.is_current,
+                        'positives': by_term[t.id][0],
+                        'negatives': by_term[t.id][1],
+                        'missing': max(0, enrolled - by_term[t.id][0] - by_term[t.id][1]),
+                        'average': round(by_term[t.id][2] / (by_term[t.id][0] + by_term[t.id][1]), 1)
+                        if by_term[t.id][0] + by_term[t.id][1]
+                        else None,
+                    }
+                    for t in trimesters
+                ],
             },
         }
 

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- O resumo da pauta em gráficos: os números em cima da grelha e os trimestres em barras por baixo. -->
+    <t t-inherit="edu_evaluation.GradeGrid" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_edu_gg_scroll')]" position="before">
+            <t t-set="ov" t-value="this.overview"/>
+            <div t-if="ov and ov.enrolled" class="o_edu_kpis o_edu_gg_kpis" aria-label="Resumo da pauta">
+                <div class="o_edu_kpi">
+                    <span class="o_edu_kpi_label">Média da turma</span>
+                    <span t-if="ov.focus.average !== null" class="o_edu_kpi_value" t-att-class="{'text-danger': !ov.focus.averagePos}" t-out="this.fmtDecimal(ov.focus.average)"/>
+                    <span t-else="" class="o_edu_kpi_value text-muted">—</span>
+                    <span class="o_edu_kpi_detail" t-out="ov.focus.final ? 'Na classificação final' : 'No ' + ov.focus.name"/>
+                </div>
+                <div class="o_edu_kpi">
+                    <span class="o_edu_kpi_label">Com positiva</span>
+                    <span class="o_edu_kpi_value"><t t-out="ov.focus.positives"/><small class="fs-6 fw-normal text-muted"> de <t t-out="ov.enrolled"/></small></span>
+                    <span class="o_edu_kpi_detail">Aprova com <t t-out="this.state.data.policy.pass_grade"/></span>
+                </div>
+                <div class="o_edu_kpi">
+                    <span class="o_edu_kpi_label">Com negativa</span>
+                    <span class="o_edu_kpi_value" t-att-class="{'text-danger': ov.focus.negatives}" t-out="ov.focus.negatives"/>
+                    <span class="o_edu_kpi_detail">
+                        <t t-if="ov.focus.negatives"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Alunos a acompanhar</t>
+                        <t t-else="">Nenhum aluno abaixo de <t t-out="this.state.data.policy.pass_grade"/></t>
+                    </span>
+                </div>
+                <div class="o_edu_kpi">
+                    <span class="o_edu_kpi_label">Sem classificação</span>
+                    <span class="o_edu_kpi_value" t-att-class="{'text-warning': ov.focus.missing}" t-out="ov.focus.missing"/>
+                    <span class="o_edu_kpi_detail" t-out="ov.focus.missing ? 'Faltam notas para a calcular' : 'Todos classificados'"/>
+                </div>
+            </div>
+        </xpath>
+        <!-- O resumo em texto passa a gráfico: cada trimestre e a classificação final. -->
+        <xpath expr="//p[@t-if='data.summary.term']" position="replace">
+            <section t-if="ov and ov.enrolled and ov.rows.some((r) => r.graded)" class="o_edu_gg_overview" aria-labelledby="o_edu_gg_overview_title">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h3 id="o_edu_gg_overview_title" class="o_edu_gg_overview_title">A turma ao longo do ano</h3>
+                    <ul class="o_edu_chart_legend mb-0">
+                        <li><span class="o_edu_chart_key o_edu_stack_pos"/>Positivas</li>
+                        <li><span class="o_edu_chart_key o_edu_stack_neg"/>Negativas</li>
+                        <li><span class="o_edu_chart_key o_edu_stack_missing"/>Sem classificação</li>
+                    </ul>
+                </div>
+                <ul class="o_edu_stacks o_edu_gg_stacks">
+                    <li t-foreach="ov.rows" t-as="row" t-key="row.key" t-att-class="{'o_edu_gg_stack_final': row.final}"
+                        t-att-title="row.name + ': ' + row.positives + ' positivas, ' + row.negatives + ' negativas, ' + row.missing + ' sem classificação'">
+                        <span class="o_edu_stack_head">
+                            <span t-att-class="{'fw-semibold': row.final}"><t t-out="row.name"/><span t-if="row.is_current" class="badge text-bg-light ms-1">em curso</span></span>
+                            <span class="text-nowrap">
+                                <t t-if="row.average !== null">média <span class="fw-semibold" t-att-class="{'text-danger': !row.averagePos}" t-out="this.fmtDecimal(row.average)"/></t>
+                                <span t-else="" class="text-muted">sem notas</span>
+                            </span>
+                        </span>
+                        <span class="o_edu_stack">
+                            <span t-if="row.positives" class="o_edu_stack_pos" t-att-style="'flex-grow: ' + row.positives"/>
+                            <span t-if="row.negatives" class="o_edu_stack_neg" t-att-style="'flex-grow: ' + row.negatives"/>
+                            <span t-if="row.missing" class="o_edu_stack_missing" t-att-style="'flex-grow: ' + row.missing"/>
+                        </span>
+                        <span class="small text-muted">
+                            <t t-out="row.positives"/> com positiva, <t t-out="row.negatives"/> com negativa<t t-if="row.missing">, <t t-out="row.missing"/> sem classificação</t>
+                        </span>
+                    </li>
+                </ul>
+            </section>
+        </xpath>
+        <xpath expr="//p[contains(@t-att-class, 'data.summary.term')]" position="replace"/>
+    </t>
+</templates>

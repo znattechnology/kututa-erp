@@ -1,0 +1,46 @@
+// «Turmas e notas»: o resumo da pauta em cima da grelha (os números, sem o realce dos que abrem uma página) e os
+// trimestres em barras por baixo.
+.o_edu_grade_grid {
+    .o_edu_gg_kpis {
+        margin-bottom: 12px;
+
+        .o_edu_kpi:hover {
+            border-color: $border-color;
+        }
+    }
+
+    .o_edu_gg_overview {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 16px 20px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_gg_overview_title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_gg_stacks {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px 24px;
+
+        > li {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+    }
+
+    .o_edu_gg_stack_final {
+        padding-left: 12px;
+        border-left: 3px solid $o-action;
+    }
+}
