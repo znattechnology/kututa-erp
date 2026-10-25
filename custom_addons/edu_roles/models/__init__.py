@@ -11,6 +11,7 @@ from . import (
     edu_secretaria_home,
     edu_shift,
     edu_teacher_home,
+    edu_transfer,
     ir_http,
     ir_ui_menu,
     res_users,

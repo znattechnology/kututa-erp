@@ -859,3 +859,43 @@
         -webkit-line-clamp: 2;
     }
 }
+
+.o_edu_transfer_kanban {
+    .o_kanban_group {
+        min-width: 300px;
+    }
+
+    .o_edu_transfer_card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 2px;
+    }
+
+    .o_edu_transfer_name,
+    .o_edu_transfer_note {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-height: 1.25;
+    }
+
+    .o_edu_transfer_route {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 2px 8px;
+    }
+
+    .o_edu_transfer_foot {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 12px;
+        color: $text-muted;
+        font-size: 0.8125rem;
+
+        .o_field_widget {
+            display: inline;
+        }
+    }
+}

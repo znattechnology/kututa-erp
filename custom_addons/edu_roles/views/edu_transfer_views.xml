@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- As transferências num quadro por estado (pendente, aprovada, concluída): o aluno, o tipo, de onde vem e para
+         onde vai (turma ou escola), o próximo passo e a data de efeito. À esquerda, o ano lectivo e o tipo. A lista e
+         o formulário ficam como estavam. -->
+    <record id="edu_transfer_kanban" model="ir.ui.view">
+        <field name="name">edu.transfer.kanban</field>
+        <field name="model">edu.transfer</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_transfer_kanban" default_group_by="state" default_order="effective_date desc, id desc"
+                    records_draggable="0" quick_create="0" group_create="0" group_delete="0" group_edit="0">
+                <field name="state"/>
+                <field name="transfer_type"/>
+                <field name="edu_student_name"/>
+                <field name="from_class_id"/>
+                <field name="to_class_id"/>
+                <field name="external_school"/>
+                <field name="origin_school"/>
+                <field name="vacancy_confirmed"/>
+                <field name="origin_documents"/>
+                <field name="next_step"/>
+                <field name="effective_date"/>
+                <field name="reviewed_by_id"/>
+                <field name="decision_note"/>
+                <field name="company_id"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_transfer_card">
+                            <div class="d-flex align-items-center gap-2">
+                                <t t-if="record.student_id.raw_value">
+                                    <field name="student_id" widget="many2one_avatar" readonly="1"/>
+                                </t>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-semibold o_edu_transfer_name" t-out="record.edu_student_name.raw_value"/>
+                                    <div class="small text-muted">
+                                        <t t-if="record.transfer_type.raw_value === 'external'"><i class="oi me-1" data-icon="logout" aria-hidden="true"/></t>
+                                        <t t-elif="record.transfer_type.raw_value === 'incoming'"><i class="oi me-1" data-icon="login" aria-hidden="true"/></t>
+                                        <t t-else=""><i class="oi me-1" data-icon="swap_horiz" aria-hidden="true"/></t>
+                                        <field name="transfer_type"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_edu_transfer_route small">
+                                <span class="text-muted">De</span>
+                                <span t-if="record.transfer_type.raw_value === 'incoming'" class="text-truncate" t-out="record.origin_school.raw_value"/>
+                                <span t-else="" class="text-truncate"><field name="from_class_id"/></span>
+                                <span class="text-muted">Para</span>
+                                <span t-if="record.transfer_type.raw_value === 'external'" class="text-truncate fw-semibold" t-out="record.external_school.raw_value"/>
+                                <span t-else="" class="text-truncate fw-semibold"><field name="to_class_id"/></span>
+                            </div>
+                            <t t-set="is_open" t-value="['pending', 'approved'].includes(record.state.raw_value)"/>
+                            <div t-if="is_open and record.transfer_type.raw_value === 'external'" class="small">
+                                <span t-if="record.vacancy_confirmed.raw_value" class="badge text-bg-success">Vaga confirmada</span>
+                                <span t-else="" class="badge text-bg-light">Sem parecer de vaga</span>
+                            </div>
+                            <div t-if="is_open and record.transfer_type.raw_value === 'incoming'" class="small">
+                                <span t-if="record.origin_documents.raw_value" class="badge text-bg-success">Processo recebido</span>
+                                <span t-else="" class="badge text-bg-light">Processo por receber</span>
+                            </div>
+                            <div t-if="record.next_step.raw_value" t-attf-class="small {{ record.state.raw_value === 'approved' ? 'text-warning' : 'text-muted' }}">
+                                <i class="oi me-1" data-icon="schedule" aria-hidden="true"/><t t-out="record.next_step.raw_value"/>
+                            </div>
+                            <div t-if="record.state.raw_value === 'rejected' and record.decision_note.raw_value" class="small text-muted o_edu_transfer_note" t-out="record.decision_note.raw_value"/>
+                            <div class="o_edu_transfer_foot">
+                                <span t-if="record.effective_date.raw_value"><i class="oi me-1" data-icon="calendar_today" aria-hidden="true"/><field name="effective_date"/></span>
+                                <span t-if="record.reviewed_by_id.raw_value"><i class="oi me-1" data-icon="person" aria-hidden="true"/><field name="reviewed_by_id"/></span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_transfer_search_board" model="ir.ui.view">
+        <field name="name">edu.transfer.search.board</field>
+        <field name="model">edu.transfer</field>
+        <field name="inherit_id" ref="edu_enrollment.edu_transfer_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <searchpanel view_types="kanban,list">
+                    <field name="academic_year_id" select="one" icon="calendar_today" enable_counters="1"/>
+                    <field name="transfer_type" select="one" icon="swap_horiz" enable_counters="1"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_enrollment.action_edu_transfer" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ainda não há transferências</p>
+            <p>Use «Novo» para mudar um aluno de turma ou de curso (na mesma classe), para o transferir para outra
+            escola (com o parecer de vaga da escola de destino) ou para receber um aluno de outra escola. A secretaria
+            pede, a direcção aprova e a secretaria conclui.</p>
+        </field>
+    </record>
+</odoo>
