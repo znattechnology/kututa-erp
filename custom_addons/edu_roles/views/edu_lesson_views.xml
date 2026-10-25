@@ -6,7 +6,7 @@
         <field name="name">edu.lesson.kanban.secretaria</field>
         <field name="model">edu.lesson</field>
         <field name="arch" type="xml">
-            <kanban class="o_edu_lesson_kanban" create="false" default_order="date desc, hour_from">
+            <kanban class="o_edu_lesson_kanban" create="false" delete="false" default_order="date desc, hour_from">
                 <field name="state"/>
                 <field name="summary"/>
                 <field name="lesson_number"/>
@@ -65,14 +65,64 @@
         </field>
     </record>
 
+    <!-- Na secretaria, as aulas são só para consulta: o sumário e a chamada são do professor (área do professor). -->
+    <record id="view_edu_lesson_list_readonly" model="ir.ui.view">
+        <field name="name">edu.lesson.list.readonly</field>
+        <field name="model">edu.lesson</field>
+        <field name="inherit_id" ref="edu_attendance.edu_lesson_list"/>
+        <field name="mode">primary</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list position="attributes">
+                <attribute name="create">0</attribute>
+                <attribute name="delete">0</attribute>
+            </list>
+        </field>
+    </record>
+    <record id="view_edu_lesson_form_readonly" model="ir.ui.view">
+        <field name="name">edu.lesson.form.readonly</field>
+        <field name="model">edu.lesson</field>
+        <field name="inherit_id" ref="edu_attendance.edu_lesson_form"/>
+        <field name="mode">primary</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <form position="attributes">
+                <attribute name="create">0</attribute>
+                <attribute name="edit">0</attribute>
+                <attribute name="delete">0</attribute>
+            </form>
+            <xpath expr="//header/button[@name='action_open_roll_call']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_done']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_cancel']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_reset']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-info mb-0 rounded-0" role="status">
+                    Só para consulta: o sumário e a chamada são do professor. As faltas justificam-se em «Presenças».
+                </div>
+            </xpath>
+        </field>
+    </record>
+
     <record id="edu_attendance.action_edu_lesson" model="ir.actions.act_window">
         <field name="view_mode">kanban,list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_edu_lesson_kanban')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_edu_lesson_list_readonly')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_edu_lesson_form_readonly')})]"/>
         <field name="context">{'search_default_week': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Não há aulas nesta escolha</p>
-            <p>As aulas geram-se a partir do horário («Gerar aulas»). Em cada aula o professor abre a chamada, marca as
-            faltas, escreve o sumário e dá a aula por dada. Aqui a secretaria acompanha: as aulas por fechar, as dadas
-            sem sumário e as faltas. Tire o filtro «Esta semana» para ver as outras.</p>
+            <p>Só para consulta: as aulas geram-se a partir do horário («Gerar aulas») e é o professor, na sua área, que
+            faz a chamada, escreve o sumário e dá a aula por dada. Aqui acompanham-se as aulas por fechar, as dadas sem
+            sumário e as faltas. Tire o filtro «Esta semana» para ver as outras.</p>
         </field>
     </record>
 </odoo>
