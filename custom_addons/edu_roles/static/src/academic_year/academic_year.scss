@@ -82,3 +82,97 @@
         display: none;
     }
 }
+
+// Os turnos em cartões: a régua do dia (das 6h às 23h) com a faixa do turno e os tempos lectivos lá dentro.
+.o_edu_shift_kanban {
+    .o_kanban_record {
+        min-width: 380px;
+    }
+
+    .o_edu_shift_card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_shift_icon {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba($primary, 0.1);
+        color: $primary;
+        font-size: 1.3rem;
+    }
+
+    .o_edu_shift_name {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_shift_hours {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .o_edu_shift_day {
+        position: relative;
+        height: 18px;
+        border-radius: 4px;
+        background: $gray-100;
+    }
+
+    .o_edu_shift_band {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        border-radius: 4px;
+        background: rgba($o-action, 0.15);
+    }
+
+    .o_edu_shift_slot {
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        border-right: 2px solid $o-view-background-color;
+        border-radius: 2px;
+        background: $o-action;
+    }
+
+    .o_edu_shift_break {
+        background: $gray-400;
+    }
+
+    .o_edu_shift_ruler {
+        position: relative;
+        height: 12px;
+        margin-top: -6px;
+        color: $text-muted;
+        font-size: 0.7rem;
+
+        > span {
+            position: absolute;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        > span:first-child {
+            transform: none;
+        }
+
+        > span:last-child {
+            transform: translateX(-100%);
+        }
+    }
+
+    .o_edu_shift_counts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        color: $text-muted;
+        font-size: 0.875rem;
+    }
+}

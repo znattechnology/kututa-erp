@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Os turnos em cartões: o período, o horário e a duração, a régua do dia com o turno e os seus tempos lectivos,
+         e as turmas e os alunos deste ano. A lista editável fica; o formulário mostra a grelha de tempos. -->
+    <record id="edu_shift_kanban" model="ir.ui.view">
+        <field name="name">edu.shift.kanban</field>
+        <field name="model">edu.shift</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_shift_kanban" default_order="hour_from">
+                <field name="shift_type"/>
+                <field name="edu_band"/>
+                <field name="edu_slot_count"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_shift_card">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="o_edu_shift_icon" aria-hidden="true">
+                                    <i class="oi" t-att-data-icon="{morning: 'light_mode', afternoon: 'wb_twilight', evening: 'dark_mode', full_day: 'schedule'}[record.shift_type.raw_value] or 'schedule'"/>
+                                </span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <field name="name" class="o_edu_shift_name"/>
+                                    <div t-if="record.name.raw_value !== record.shift_type.value" class="small text-muted"><field name="shift_type"/></div>
+                                </div>
+                                <div class="text-end">
+                                    <field name="edu_hours" class="o_edu_shift_hours"/>
+                                    <field name="edu_duration" class="d-block small text-muted"/>
+                                </div>
+                            </div>
+                            <div class="o_edu_shift_day" t-att-title="'Das ' + record.edu_hours.value">
+                                <span class="o_edu_shift_band"
+                                      t-att-style="'left: ' + record.edu_band.raw_value.left + '%; width: ' + record.edu_band.raw_value.width + '%'">
+                                    <span t-foreach="record.edu_band.raw_value.slots" t-as="slot" t-key="slot.id" class="o_edu_shift_slot"
+                                          t-att-class="{'o_edu_shift_break': slot.break}" t-att-title="slot.title"
+                                          t-att-style="'left: ' + slot.left + '%; width: ' + slot.width + '%'"/>
+                                </span>
+                            </div>
+                            <div class="o_edu_shift_ruler" aria-hidden="true">
+                                <span style="left: 0%">06h</span><span style="left: 35.29%">12h</span><span style="left: 70.59%">18h</span><span style="left: 100%">23h</span>
+                            </div>
+                            <div class="o_edu_shift_counts">
+                                <span t-if="record.edu_slot_count.raw_value"><i class="oi me-1" data-icon="grid_view" aria-hidden="true"/><field name="edu_slot_count"/> tempos lectivos</span>
+                                <span t-else="" class="text-warning"><i class="oi me-1" data-icon="warning" aria-hidden="true"/>Sem grelha de tempos</span>
+                                <span><i class="oi me-1" data-icon="groups" aria-hidden="true"/><field name="edu_class_count"/> turmas</span>
+                                <span><i class="oi me-1" data-icon="school" aria-hidden="true"/><field name="edu_student_count"/> alunos</span>
+                            </div>
+                            <div t-if="!record.edu_slot_count.raw_value">
+                                <button name="action_generate_slots" type="object" class="btn btn-sm btn-secondary">
+                                    <i class="oi me-1" data-icon="grid_view" aria-hidden="true"/>Criar a grelha de tempos
+                                </button>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_shift_form" model="ir.ui.view">
+        <field name="name">edu.shift.form</field>
+        <field name="model">edu.shift</field>
+        <field name="arch" type="xml">
+            <form string="Turno">
+                <header>
+                    <button name="action_generate_slots" type="object" string="Criar a grelha de tempos" class="btn-primary"
+                            invisible="time_slot_ids"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name" placeholder="Manhã"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="shift_type"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                            <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
+                        </group>
+                    </group>
+                    <field name="time_slot_ids" context="{'default_shift_id': id, 'default_company_id': company_id}">
+                        <list editable="bottom" decoration-muted="is_break">
+                            <field name="name"/>
+                            <field name="hour_from" widget="float_time" options="{'numeric': True}"/>
+                            <field name="hour_to" widget="float_time" options="{'numeric': True}"/>
+                            <field name="is_break"/>
+                            <field name="company_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="edu_core.action_edu_shift" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>
