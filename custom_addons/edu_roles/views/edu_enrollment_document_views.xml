@@ -48,7 +48,26 @@
         </field>
     </record>
 
+    <record id="edu_enrollment_document_type_search" model="ir.ui.view">
+        <field name="name">edu.enrollment.document.type.search</field>
+        <field name="model">edu.enrollment.document.type</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="level_ids"/>
+                <filter name="for_school" string="Dos níveis desta escola" domain="[('edu_for_school', '=', True)]"/>
+                <filter name="other_levels" string="De outros níveis" domain="[('edu_for_school', '=', False)]"/>
+                <separator/>
+                <filter name="archived" string="Arquivados" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Só os documentos dos níveis que a escola ensina (numa escola do técnico, os do técnico e os de todos os
+         níveis); o filtro tira-se para ver os outros. -->
     <record id="edu_enrollment.action_edu_enrollment_document_type" model="ir.actions.act_window">
         <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="edu_enrollment_document_type_search"/>
+        <field name="context">{'default_company_id': allowed_company_ids[0], 'search_default_for_school': 1}</field>
     </record>
 </odoo>
