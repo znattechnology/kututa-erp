@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Os anos lectivos em cartões: a fase, o tempo decorrido, os trimestres e as contagens. A lista e o formulário
+         ficam como estavam (o «Novo» e a edição abrem o formulário). -->
+    <record id="edu_academic_year_kanban" model="ir.ui.view">
+        <field name="name">edu.academic.year.kanban</field>
+        <field name="model">edu.academic.year</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_year_kanban" default_order="date_start desc">
+                <field name="is_current"/>
+                <field name="edu_phase"/>
+                <field name="edu_progress"/>
+                <field name="edu_days_left"/>
+                <field name="edu_trimesters"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_year_card" t-att-class="{'o_edu_year_current': record.is_current.raw_value}">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <field name="name" class="o_edu_year_name"/>
+                                    <field name="edu_span" class="d-block small text-muted"/>
+                                </div>
+                                <span t-if="record.is_current.raw_value" class="badge text-bg-success">Em curso</span>
+                                <span t-elif="record.edu_phase.raw_value === 'upcoming'" class="badge text-bg-info">Por começar</span>
+                                <span t-else="" class="badge text-bg-light">Terminado</span>
+                            </div>
+
+                            <div t-if="record.edu_phase.raw_value === 'running'" class="o_edu_year_progress">
+                                <div class="d-flex justify-content-between small">
+                                    <span class="text-muted">Tempo decorrido</span>
+                                    <span><t t-out="record.edu_progress.raw_value"/>%, faltam <t t-out="record.edu_days_left.raw_value"/> dias</span>
+                                </div>
+                                <span class="o_edu_meter"><span t-att-style="'width: ' + record.edu_progress.raw_value + '%'"/></span>
+                            </div>
+
+                            <ol t-if="record.edu_trimesters.raw_value and record.edu_trimesters.raw_value.length" class="o_edu_year_terms">
+                                <li t-foreach="record.edu_trimesters.raw_value" t-as="t" t-key="t.id"
+                                    t-att-class="{'o_edu_year_term_current': t.current, 'o_edu_year_term_closed': t.closed}">
+                                    <span class="fw-semibold" t-out="t.name"/>
+                                    <span class="small text-muted" t-out="t.span"/>
+                                    <span class="small">
+                                        <t t-if="t.current">Em curso</t>
+                                        <t t-elif="t.closed"><i class="oi me-1" data-icon="lock" aria-hidden="true"/>Fechado</t>
+                                        <t t-else="">Aberto</t>
+                                    </span>
+                                </li>
+                            </ol>
+                            <p t-else="" class="mb-0 small text-warning">Sem trimestres: abra o ano e crie-os num clique.</p>
+
+                            <div class="o_edu_year_counts">
+                                <span><i class="oi me-1" data-icon="groups" aria-hidden="true"/><field name="class_count"/> turmas</span>
+                                <span><i class="oi me-1" data-icon="school" aria-hidden="true"/><field name="edu_student_count"/> alunos</span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_core.action_edu_academic_year" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>

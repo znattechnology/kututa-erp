@@ -1,0 +1,60 @@
+// Os anos lectivos em cartões: o ano em curso com a margem da cor de acção, o tempo decorrido em medidor e os três
+// trimestres lado a lado.
+.o_edu_year_kanban {
+    .o_kanban_record {
+        min-width: 340px;
+    }
+
+    .o_edu_year_card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 4px 2px;
+    }
+
+    .o_edu_year_current {
+        box-shadow: inset 4px 0 0 $o-action;
+        padding-left: 12px;
+    }
+
+    .o_edu_year_name {
+        font-size: 1.15rem;
+        font-weight: 600;
+    }
+
+    .o_edu_year_terms {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            padding: 6px 8px;
+            border: 1px solid $border-color;
+            border-radius: $border-radius;
+            font-size: 0.8125rem;
+        }
+    }
+
+    .o_edu_year_term_current {
+        border-color: $o-action !important;
+        background: rgba($o-action, 0.06);
+    }
+
+    .o_edu_year_term_closed {
+        color: $text-muted;
+    }
+
+    .o_edu_year_counts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        color: $text-muted;
+        font-size: 0.875rem;
+    }
+}
