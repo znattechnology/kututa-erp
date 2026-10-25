@@ -391,6 +391,11 @@
         gap: 2px;
         min-width: 0;
     }
+
+    // A média por trimestre ao lado da pauta: o trimestre escolhido em destaque, os outros mais claros.
+    .o_edu_st_cols_focus .o_edu_col:not(.o_edu_col_active) {
+        opacity: 0.45;
+    }
 }
 
 // As provas já feitas, acinzentadas (o Bootstrap põe a cor em cada célula, não na linha).

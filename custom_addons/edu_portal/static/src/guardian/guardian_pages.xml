@@ -350,7 +350,10 @@
                             <button type="button" class="btn btn-link p-0 align-baseline" t-on-click="() => this.openFor('edu_portal.action_guardian_rdec')">Ver o relatório de <t t-out="d.child.first_name"/></button>.
                         </section>
                         <section t-elif="!g.active" class="o_edu_st_card text-muted">A escola ainda não tem trimestres neste ano lectivo.</section>
-                        <t t-else="" t-call="edu_portal.Part.GradesBoard"/>
+                        <t t-else="">
+                            <t t-call="edu_portal.Part.GradesOverview"/>
+                            <t t-call="edu_portal.Part.GradesBoard"/>
+                        </t>
                     </t>
                 </div>
             </Layout>

@@ -49,18 +49,6 @@ class StudentPage extends Component {
     gradeText(grade) {
         return grade ? grade.text : "—";
     }
-}
-
-export class StudentHome extends StudentPage {
-    static template = "edu_portal.StudentHome";
-    static page = "home";
-
-    get greeting() {
-        const hour = new Date().getHours();
-        const hello = hour < 12 ? "Bom dia" : hour < 19 ? "Boa tarde" : "Boa noite";
-        return `${hello}, ${this.state.data.first_name}`;
-    }
-
     /** As notas do trimestre por disciplina, em barras de 0 ao máximo da escala (as sem nota ficam sem barra). */
     get gradeBars() {
         const g = this.state.data.grades;
@@ -93,6 +81,66 @@ export class StudentHome extends StudentPage {
 
     get hasTrend() {
         return this.trend.some((t) => t.value !== null);
+    }
+
+    /** «Subiu de 14,5 no 1.º trimestre» (a comparação com o trimestre anterior, quando é possível). */
+    trendText(previous) {
+        if (!previous) {
+            return "";
+        }
+        const verb = previous.trend.startsWith("subiu") ? "Subiu de" : previous.trend.startsWith("desceu") ? "Desceu de" : "Igual ao";
+        return `${verb} ${previous.average} no ${previous.name}`;
+    }
+
+    /** O resumo do trimestre escolhido, por cima da pauta: a média (e se subiu ou desceu), as positivas, as negativas
+     * e a média do ano. */
+    get gradeTiles() {
+        const g = this.state.data.grades;
+        const sp = g.summary_parts || {};
+        const cells = g.subjects.map((s) => s.by_trimester[g.active.id].ct);
+        const graded = cells.filter(Boolean);
+        const negatives = graded.filter((ct) => !ct.pos).length;
+        const trimester = g.active.name.replace("Trimestre", "trimestre");
+        return [
+            {
+                key: "average",
+                label: "Média do " + trimester,
+                value: sp.empty ? "—" : sp.average,
+                detail: sp.empty ? "Ainda sem notas" : this.trendText(sp.previous) || `Positiva a partir de ${g.pass_text}`,
+                bad: !sp.empty && !sp.average_pos,
+            },
+            {
+                key: "positives",
+                label: "Positivas",
+                value: graded.length ? String(graded.length - negatives) : "—",
+                detail: graded.length ? `de ${count(graded.length, "uma disciplina com nota", "disciplinas com nota")}` : "Ainda sem notas",
+            },
+            {
+                key: "negatives",
+                label: "Negativas",
+                value: graded.length ? String(negatives) : "—",
+                detail: negatives ? list(g.subjects.filter((s) => s.by_trimester[g.active.id].ct && !s.by_trimester[g.active.id].ct.pos).map((s) => s.name)) : graded.length ? "Nenhuma" : "Ainda sem notas",
+                bad: negatives > 0,
+            },
+            {
+                key: "year",
+                label: "Média do ano",
+                value: g.year_average ? g.year_average.text : "—",
+                detail: g.year_average ? (g.past ? "Ano lectivo fechado" : "Até agora") : "Ainda sem notas",
+                bad: g.year_average && !g.year_average.pos,
+            },
+        ];
+    }
+}
+
+export class StudentHome extends StudentPage {
+    static template = "edu_portal.StudentHome";
+    static page = "home";
+
+    get greeting() {
+        const hour = new Date().getHours();
+        const hello = hour < 12 ? "Bom dia" : hour < 19 ? "Boa tarde" : "Boa noite";
+        return `${hello}, ${this.state.data.first_name}`;
     }
 
     /** As faltas injustificadas face ao limite de cada disciplina (só as que têm limite no plano). */

@@ -287,6 +287,7 @@
                     </section>
                     <section t-elif="!g.active" class="o_edu_st_card text-muted">A escola ainda não tem trimestres neste ano lectivo.</section>
                     <t t-else="">
+                        <t t-call="edu_portal.Part.GradesOverview"/>
                         <t t-call="edu_portal.Part.GradesBoard"/>
                     </t>
                 </div>
@@ -864,6 +865,57 @@
                         </button>
                     </li>
                 </ul>
+            </section>
+        </div>
+    </t>
+
+    <!-- O resumo do trimestre por cima da pauta (o aluno e o encarregado): quatro indicadores e dois gráficos, as notas
+         do trimestre por disciplina e a média de cada trimestre. Usa ``g`` e os métodos das páginas das notas. -->
+    <t t-name="edu_portal.Part.GradesOverview">
+        <div class="o_edu_kpis">
+            <div t-foreach="this.gradeTiles" t-as="t" t-key="t.key" class="o_edu_kpi">
+                <span class="o_edu_kpi_label" t-out="t.label"/>
+                <span class="o_edu_kpi_value" t-att-class="{'text-danger': t.bad}" t-out="t.value"/>
+                <span class="o_edu_kpi_detail" t-att-class="{'text-danger': t.bad}" t-out="t.detail"/>
+            </div>
+        </div>
+        <div t-if="this.gradeBars.some((b) => b.grade)" class="o_edu_st_grid">
+            <section class="o_edu_st_card" aria-labelledby="o_edu_st_ov_bars">
+                <h2 id="o_edu_st_ov_bars" class="o_edu_st_h2">Notas do <t t-out="g.active.name.replace('Trimestre', 'trimestre')"/></h2>
+                <div class="o_edu_hbars" role="list">
+                    <div t-foreach="this.gradeBars.filter((b) => b.grade)" t-as="bar" t-key="bar.id" class="o_edu_hbar_row" role="listitem"
+                         t-att-title="bar.name + ': ' + (bar.grade ? bar.grade.text + ' valores' + (bar.grade.pos ? '' : ', negativa') : 'sem nota')">
+                        <span class="o_edu_hbar_name" t-out="bar.name"/>
+                        <span class="o_edu_hbar_track">
+                            <span class="o_edu_hbar_pass" t-att-style="'left: ' + this.passLeft + '%'"/>
+                            <span t-if="bar.grade" class="o_edu_hbar" t-att-class="{'o_edu_chart_neg': !bar.grade.pos}" t-att-style="'width: ' + bar.width + '%'"/>
+                        </span>
+                        <span class="o_edu_hbar_value">
+                            <t t-if="bar.grade"><t t-out="bar.grade.text"/><span t-if="!bar.grade.pos" class="o_edu_hbar_flag">negativa</span></t>
+                            <span t-else="" class="text-muted small">sem nota</span>
+                        </span>
+                    </div>
+                </div>
+                <t t-set="ungraded" t-value="this.gradeBars.filter((b) => !b.grade)"/>
+                <p t-if="ungraded.length" class="small mb-0 mt-3">
+                    <span class="text-muted">Sem nota (<t t-out="ungraded.length"/>):</span> <t t-out="this.list(ungraded.map((b) => b.name))"/>.
+                </p>
+                <p class="small text-muted mb-0 mt-2">A linha marca a positiva (<t t-out="g.pass_text"/> valores). Escala de 0 a <t t-out="g.scale_max"/>.</p>
+            </section>
+            <section class="o_edu_st_card" aria-labelledby="o_edu_st_ov_trend">
+                <h2 id="o_edu_st_ov_trend" class="o_edu_st_h2">Média por trimestre</h2>
+                <div class="o_edu_cols o_edu_st_cols_focus" role="list">
+                    <span class="o_edu_cols_pass" t-att-style="'bottom: ' + this.passLeft + '%'"/>
+                    <div t-foreach="this.trend" t-as="t" t-key="t.id" class="o_edu_col_slot" role="listitem"
+                         t-att-title="t.name + ': ' + (t.value === null ? 'sem notas' : 'média ' + t.text)">
+                        <span t-if="t.value !== null" class="o_edu_col_value" t-out="t.text"/>
+                        <span t-if="t.value !== null" class="o_edu_col" t-att-class="{'o_edu_chart_neg': !t.pos, 'o_edu_col_active': t.id === g.active.id}" t-att-style="'height: ' + t.height + '%'"/>
+                        <span t-else="" class="o_edu_col_empty small text-muted">—</span>
+                    </div>
+                </div>
+                <div class="o_edu_cols_labels">
+                    <span t-foreach="this.trend" t-as="t" t-key="t.id" t-att-class="{'fw-semibold': t.id === g.active.id}" t-out="t.name"/>
+                </div>
             </section>
         </div>
     </t>
