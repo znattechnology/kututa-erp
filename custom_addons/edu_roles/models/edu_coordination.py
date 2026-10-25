@@ -129,3 +129,47 @@ class EduCurriculum(models.Model):
             curriculum.edu_class_count = Class.search_count(
                 [('curriculum_id', '=', curriculum.id), ('academic_year_id.is_current', '=', True)]
             )
+
+
+class EduSubject(models.Model):
+    """A disciplina nos planos e no ano em curso, para os cartões da secretaria: as classes e os tempos semanais
+    nos planos, os cursos que a têm, os professores atribuídos e as turmas deste ano (com as que estão sem
+    professor)."""
+
+    _inherit = 'edu.subject'
+
+    edu_classes_label = fields.Char(string='Classes', compute='_compute_edu_card')
+    edu_hours_label = fields.Char(string='Tempos semanais', compute='_compute_edu_card')
+    edu_course_count = fields.Integer(string='Cursos', compute='_compute_edu_card')
+    edu_teacher_count = fields.Integer(string='Professores este ano', compute='_compute_edu_card')
+    edu_class_count = fields.Integer(string='Turmas este ano', compute='_compute_edu_card')
+    edu_missing_count = fields.Integer(string='Turmas sem professor', compute='_compute_edu_card')
+    edu_component_css = fields.Char(compute='_compute_edu_card')
+
+    def _compute_edu_card(self):
+        Line = self.env['edu.curriculum.line'].sudo()
+        Class = self.env['edu.class'].sudo()
+        Assignment = self.env['edu.teaching.assignment'].sudo()
+        lines = Line.search([('subject_id', 'in', self.ids), ('curriculum_id.active', '=', True)])
+        current = Class.search(
+            [('academic_year_id.is_current', '=', True), ('company_id', 'in', self.env.companies.ids)]
+        )
+        assignments = Assignment.search([('subject_id', 'in', self.ids), ('class_id', 'in', current.ids)])
+        for subject in self:
+            mine = lines.filtered(lambda line, s=subject: line.subject_id == s)
+            numbers = sorted(set(mine.year_id.mapped('class_number')))
+            hours = sorted({h for h in mine.mapped('weekly_hours') if h})
+            subject.edu_classes_label = ', '.join(f'{n}ª' if n else 'Inic.' for n in numbers)
+            subject.edu_hours_label = (
+                '' if not hours else f'{hours[0]}' if len(hours) == 1 else f'{hours[0]} a {hours[-1]}'
+            )
+            subject.edu_course_count = len(mine.curriculum_id.course_id)
+            classes = current.filtered(lambda c, years=mine.year_id: c.curriculum_year_id in years)
+            given = assignments.filtered(lambda a, s=subject: a.subject_id == s)
+            subject.edu_teacher_count = len(given.teacher_id)
+            subject.edu_class_count = len(classes)
+            # O estágio acompanha-o o tutor (Estágios), não um professor da disciplina: não conta como em falta.
+            missing = classes - given.filtered('teacher_id').class_id
+            subject.edu_missing_count = 0 if subject.component == 'internship' else len(missing)
+            index = COMPONENT_ORDER.index(subject.component) + 1 if subject.component in COMPONENT_ORDER else 0
+            subject.edu_component_css = f'o_edu_subj_{index}'

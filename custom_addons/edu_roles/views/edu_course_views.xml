@@ -124,4 +124,57 @@
     <record id="edu_core.action_edu_curriculum" model="ir.actions.act_window">
         <field name="view_mode">kanban,list,form</field>
     </record>
+
+    <!-- As disciplinas em cartões, uma coluna por componente de formação (com a cor da componente): o código, as
+         classes e os tempos semanais nos planos, os cursos que a têm, e os professores e as turmas deste ano (com
+         o aviso das turmas sem professor). A lista e o formulário ficam como estavam. -->
+    <record id="edu_subject_kanban" model="ir.ui.view">
+        <field name="name">edu.subject.kanban</field>
+        <field name="model">edu.subject</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_subject_kanban" default_order="name" records_draggable="0" quick_create="0"
+                    group_create="0" group_delete="0" group_edit="0">
+                <field name="code"/>
+                <field name="is_national_exam"/>
+                <field name="edu_classes_label"/>
+                <field name="edu_hours_label"/>
+                <field name="edu_course_count"/>
+                <field name="edu_teacher_count"/>
+                <field name="edu_class_count"/>
+                <field name="edu_missing_count"/>
+                <field name="edu_component_css"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_subject_card" t-att-class="record.edu_component_css.raw_value">
+                            <div class="d-flex align-items-start gap-2">
+                                <span class="o_edu_subject_code" t-out="record.code.raw_value or '—'"/>
+                                <div class="flex-grow-1 min-w-0">
+                                    <field name="name" class="o_edu_subject_name"/>
+                                    <div class="small text-muted">
+                                        <t t-if="record.edu_classes_label.raw_value"><t t-out="record.edu_classes_label.raw_value"/> classe</t>
+                                        <t t-else="">Fora dos planos</t>
+                                        <t t-if="record.edu_hours_label.raw_value">, <t t-out="record.edu_hours_label.raw_value"/> tempos</t>
+                                    </div>
+                                </div>
+                                <span t-if="record.is_national_exam.raw_value" class="badge text-bg-light">Exame nacional</span>
+                            </div>
+                            <div class="o_edu_subject_counts">
+                                <span><i class="oi me-1" data-icon="school" aria-hidden="true"/><t t-out="record.edu_course_count.raw_value === 1 ? '1 curso' : record.edu_course_count.raw_value + ' cursos'"/></span>
+                                <span><i class="oi me-1" data-icon="groups" aria-hidden="true"/><t t-out="record.edu_class_count.raw_value === 1 ? '1 turma' : record.edu_class_count.raw_value + ' turmas'"/></span>
+                                <span><i class="oi me-1" data-icon="person" aria-hidden="true"/><t t-out="record.edu_teacher_count.raw_value === 1 ? '1 professor' : record.edu_teacher_count.raw_value + ' professores'"/></span>
+                            </div>
+                            <div t-if="record.edu_missing_count.raw_value" class="small text-warning">
+                                <i class="oi me-1" data-icon="warning" aria-hidden="true"/><t t-out="record.edu_missing_count.raw_value === 1 ? '1 turma sem professor' : record.edu_missing_count.raw_value + ' turmas sem professor'"/>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_core.action_edu_subject" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'group_by': 'component'}</field>
+    </record>
 </odoo>
