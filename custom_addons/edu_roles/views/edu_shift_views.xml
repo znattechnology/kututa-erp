@@ -93,4 +93,46 @@
     <record id="edu_core.action_edu_shift" model="ir.actions.act_window">
         <field name="view_mode">kanban,list,form</field>
     </record>
+
+    <!-- Os tempos lectivos em cartões, uma coluna por turno: as horas, a duração, a posição no turno e as aulas por
+         semana neste tempo. Os intervalos a cinzento. A lista editável fica. -->
+    <record id="edu_time_slot_kanban" model="ir.ui.view">
+        <field name="name">edu.time.slot.kanban</field>
+        <field name="model">edu.time.slot</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_slot_kanban" default_order="hour_from" records_draggable="0" quick_create="0"
+                    group_create="0" group_delete="0" group_edit="0">
+                <field name="is_break"/>
+                <field name="edu_band"/>
+                <field name="edu_lesson_count"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_slot_card" t-att-class="{'o_edu_slot_break': record.is_break.raw_value}">
+                            <div class="d-flex justify-content-between align-items-baseline gap-2">
+                                <field name="edu_hours" class="o_edu_slot_hours"/>
+                                <field name="edu_duration" class="small text-muted"/>
+                            </div>
+                            <div class="small text-muted">
+                                <t t-if="record.is_break.raw_value"><i class="oi me-1" data-icon="coffee" aria-hidden="true"/>Intervalo</t>
+                                <t t-elif="record.name.raw_value !== record.edu_hours.raw_value"><field name="name"/></t>
+                                <t t-else="">Tempo lectivo</t>
+                            </div>
+                            <div class="o_edu_slot_track" aria-hidden="true">
+                                <span t-att-style="'left: ' + record.edu_band.raw_value.left + '%; width: ' + record.edu_band.raw_value.width + '%'"/>
+                            </div>
+                            <div t-if="!record.is_break.raw_value" class="small">
+                                <t t-if="record.edu_lesson_count.raw_value"><i class="oi me-1" data-icon="groups" aria-hidden="true"/><field name="edu_lesson_count"/> aulas por semana</t>
+                                <span t-else="" class="text-muted">Sem aulas no horário</span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="edu_timetable.action_edu_time_slot" model="ir.actions.act_window">
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'group_by': 'shift_id'}</field>
+    </record>
 </odoo>

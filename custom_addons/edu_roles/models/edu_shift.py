@@ -63,3 +63,41 @@ class EduShift(models.Model):
             shift.edu_student_count = (
                 Enrollment.search_count([('class_id', 'in', classes.ids), ('state', 'in', ENROLLED)]) if classes else 0
             )
+
+
+class EduTimeSlot(models.Model):
+    """Os números do tempo lectivo para os cartões da secretaria: as horas, a duração, a posição dentro do turno e
+    quantas aulas por semana o horário do ano em curso tem neste tempo."""
+
+    _inherit = 'edu.time.slot'
+
+    edu_hours = fields.Char(string='Horas', compute='_compute_edu_band')
+    edu_duration = fields.Char(string='Duração', compute='_compute_edu_band')
+    edu_band = fields.Json(string='No turno', compute='_compute_edu_band')
+    edu_lesson_count = fields.Integer(string='Aulas por semana', compute='_compute_edu_lesson_count')
+
+    @api.depends('hour_from', 'hour_to', 'shift_id.hour_from', 'shift_id.hour_to')
+    def _compute_edu_band(self):
+        for slot in self:
+            shift = slot.shift_id
+            slot.edu_hours = f'{_hhmm(slot.hour_from)}–{_hhmm(slot.hour_to)}'
+            slot.edu_duration = f'{round((slot.hour_to - slot.hour_from) * 60)} min'
+            span = (shift.hour_to - shift.hour_from) or 1
+            slot.edu_band = {
+                'left': round(100 * (slot.hour_from - shift.hour_from) / span, 2),
+                'width': round(100 * (slot.hour_to - slot.hour_from) / span, 2),
+            }
+
+    def _compute_edu_lesson_count(self):
+        groups = (
+            self.env['edu.schedule']
+            .sudo()
+            ._read_group(
+                [('time_slot_id', 'in', self.ids), ('class_id.academic_year_id.is_current', '=', True)],
+                ['time_slot_id'],
+                ['__count'],
+            )
+        )
+        counts = {slot.id: count for slot, count in groups}
+        for slot in self:
+            slot.edu_lesson_count = counts.get(slot.id, 0)
