@@ -277,9 +277,19 @@ class EduScheduleReplacement(models.Model):
         string='Substituto(a)',
         required=True,
         check_company=True,
-        domain="[('edu_is_teacher', '=', True)]",
+        domain="[('edu_is_teacher', '=', True), ('id', 'in', free_teacher_ids)]",
     )
     reason = fields.Char(string='Motivo')
+    # Para escolher o substituto: só os professores livres a essa hora (sem aula e sem outra substituição).
+    # No perfil público (a secretaria não lê a ficha dos funcionários); os ids são os mesmos de hr.employee.
+    free_teacher_ids = fields.Many2many(
+        'hr.employee.public', string='Professores livres', compute='_compute_free_teacher_ids'
+    )
+    # O quadro das substituições mostra a aula sem a abrir.
+    subject_id = fields.Many2one(related='schedule_id.subject_id', string='Disciplina')
+    hour_from = fields.Float(related='schedule_id.hour_from', string='Das', store=True)  # ordena o quadro
+    time_label = fields.Char(string='Hora', compute='_compute_labels')
+    class_label = fields.Char(string='Turma (curta)', compute='_compute_labels')
 
     _schedule_date_uniq = models.Constraint('UNIQUE(schedule_id, date)', 'Esta aula já tem substituto nesta data.')
 
@@ -293,6 +303,55 @@ class EduScheduleReplacement(models.Model):
         for replacement in self:
             replacement.filter_class_id = replacement.schedule_id.class_id
             replacement.filter_teacher_id = replacement.schedule_id.teacher_id
+
+    @api.depends('schedule_id')
+    def _compute_labels(self):
+        for replacement in self:
+            schedule = replacement.schedule_id
+            replacement.time_label = (
+                f'{format_hour(schedule.hour_from)} – {format_hour(schedule.hour_to)}' if schedule else False
+            )
+            replacement.class_label = schedule.class_id._editor_label() if schedule.class_id else False
+
+    @api.depends('schedule_id', 'date')
+    def _compute_free_teacher_ids(self):
+        Public = self.env['hr.employee.public']
+        for replacement in self:
+            schedule = replacement.schedule_id.sudo()
+            if not schedule or not replacement.date:
+                replacement.free_teacher_ids = Public
+                continue
+            teachers = (
+                self.env['hr.employee']
+                .sudo()
+                .search([('edu_is_teacher', '=', True), ('company_id', '=', schedule.company_id.id)])
+            )
+            free = teachers - schedule.teacher_id - replacement.sudo()._busy_teachers()
+            replacement.free_teacher_ids = Public.browse(free.ids)
+
+    def _busy_teachers(self):
+        """Os professores com aula ou outra substituição à hora desta aula, nesta data."""
+        self.ensure_one()
+        schedule, day = self.schedule_id, self.date
+        lessons = self.env['edu.schedule'].search(
+            [
+                ('weekday', '=', schedule.weekday),
+                ('hour_from', '<', schedule.hour_to),
+                ('hour_to', '>', schedule.hour_from),
+                ('company_id', '=', schedule.company_id.id),
+                ('id', '!=', schedule.id),
+            ]
+        )
+        busy = self.env['hr.employee'].union(*[lesson._teacher_on(day) for lesson in lessons if lesson._occurs_on(day)])
+        others = self.search(
+            [
+                ('id', '!=', self._origin.id or 0),
+                ('date', '=', day),
+                ('schedule_id.hour_from', '<', schedule.hour_to),
+                ('schedule_id.hour_to', '>', schedule.hour_from),
+            ]
+        )
+        return busy | others.replacement_teacher_id
 
     @api.depends('schedule_id', 'date')
     def _compute_display_name(self):

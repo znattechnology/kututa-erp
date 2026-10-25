@@ -156,6 +156,39 @@ class TestEduTimetable(TransactionCase):
         )
         self.assertEqual(replacement.original_teacher_id, self.teacher)
         self.assertEqual(lesson._teacher_on(monday), self.teacher2)
+        # Para escolher o substituto: só os livres a essa hora. A Rita já substitui às 7:30 de segunda; o Pedro é o
+        # professor da turma; quem tem aula noutra turma à mesma hora também fica de fora.
+        teacher3 = self.env['hr.employee'].create({'name': 'Sara Livre', 'edu_is_teacher': True})
+        busy = self.env['hr.employee'].create({'name': 'Tomé Ocupado', 'edu_is_teacher': True})
+        self.env['edu.schedule'].create(
+            {
+                'class_id': self.class_b.id,
+                'subject_id': self.mat.id,
+                'teacher_id': busy.id,
+                'weekday': '0',
+                'hour_from': 7.5,
+                'hour_to': 8.25,
+            }
+        )
+        other = self.env['edu.schedule'].create(
+            {
+                'class_id': self.class_b.id,
+                'subject_id': self.lp.id,
+                'teacher_id': teacher3.id,
+                'weekday': '0',
+                'hour_from': 8.25,
+                'hour_to': 9.0,
+            }
+        )
+        draft = self.env['edu.schedule.replacement'].new({'schedule_id': lesson.id, 'date': monday})
+        free = set(draft.free_teacher_ids._origin.ids)
+        self.assertIn(teacher3.id, free)
+        self.assertFalse({self.teacher.id, self.teacher2.id, busy.id} & free)
+        # A própria substituição não tira o seu substituto da lista (ao editar).
+        self.assertIn(self.teacher2.id, replacement.free_teacher_ids.ids)
+        self.assertNotIn(teacher3.id, self.env['edu.schedule.replacement'].new(
+            {'schedule_id': other.id, 'date': monday}
+        ).free_teacher_ids._origin.ids)  # fmt: skip
         with self.assertRaises(ValidationError):
             self.env['edu.schedule.replacement'].create(
                 {'schedule_id': lesson.id, 'date': date(2026, 9, 14), 'replacement_teacher_id': self.teacher.id}

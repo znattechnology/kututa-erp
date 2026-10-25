@@ -244,3 +244,23 @@ $o-edu-se-head: #969696;
         }
     }
 }
+
+// As substituições em cartões, um dia por coluna: quem falta riscado e quem dá a aula em destaque.
+.o_edu_repl_kanban {
+    .o_kanban_group {
+        min-width: 280px;
+    }
+
+    .o_edu_repl_card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 2px;
+    }
+
+    .o_edu_repl_who {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0 8px;
+    }
+}

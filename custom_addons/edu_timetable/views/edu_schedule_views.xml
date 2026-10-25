@@ -109,6 +109,38 @@
         </field>
     </record>
 
+    <!-- As substituições num quadro por dia: a hora e a disciplina, a turma, quem falta e quem substitui. -->
+    <record id="edu_schedule_replacement_kanban" model="ir.ui.view">
+        <field name="name">edu.schedule.replacement.kanban</field>
+        <field name="model">edu.schedule.replacement</field>
+        <field name="arch" type="xml">
+            <kanban class="o_edu_repl_kanban" default_group_by="date:day" default_order="date, hour_from"
+                    records_draggable="0" quick_create="0" group_create="0" group_delete="0" group_edit="0">
+                <field name="time_label"/>
+                <field name="class_label"/>
+                <field name="reason"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_edu_repl_card">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold text-nowrap" t-out="record.time_label.raw_value"/>
+                                <span class="small text-muted text-truncate" t-out="record.class_label.raw_value"/>
+                            </div>
+                            <div class="fw-semibold text-truncate"><field name="subject_id"/></div>
+                            <div class="o_edu_repl_who small">
+                                <span class="text-muted">Falta</span>
+                                <span class="text-truncate text-decoration-line-through text-muted"><field name="original_teacher_id"/></span>
+                                <span class="text-muted">Dá a aula</span>
+                                <span class="text-truncate fw-semibold"><field name="replacement_teacher_id"/></span>
+                            </div>
+                            <div t-if="record.reason.raw_value" class="small text-muted text-truncate" t-out="record.reason.raw_value"/>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
     <record id="edu_schedule_replacement_form" model="ir.ui.view">
         <field name="name">edu.schedule.replacement.form</field>
         <field name="model">edu.schedule.replacement</field>
@@ -126,14 +158,17 @@
                                    context="{'edu_schedule_show_class': True}"/>
                         </group>
                         <group string="Substituto(a)">
-                            <field name="replacement_teacher_id" options="{'no_create': True}"/>
+                            <field name="free_teacher_ids" invisible="1"/>
+                            <field name="replacement_teacher_id" options="{'no_create': True}"
+                                   placeholder="Um professor livre a essa hora" readonly="not schedule_id"/>
                             <field name="reason"/>
                             <field name="company_id" invisible="1"/>
                         </group>
                     </group>
                     <div class="text-muted">
                         Escolha a data e a turma ou o professor que falta: em «Aula» aparecem só os tempos desse dia.
-                        A aula prevista passa para o substituto, que faz a chamada e escreve o sumário.
+                        Em «Substituto(a)» aparecem só os professores livres a essa hora (sem aula e sem outra
+                        substituição). A aula prevista passa para o substituto, que faz a chamada e escreve o sumário.
                     </div>
                 </sheet>
             </form>
@@ -163,12 +198,14 @@
     <record id="action_edu_schedule_replacement" model="ir.actions.act_window">
         <field name="name">Substituições</field>
         <field name="res_model">edu.schedule.replacement</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="search_view_id" ref="edu_schedule_replacement_search"/>
+        <field name="context">{'search_default_upcoming': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Registe quem substitui um professor que falta</p>
-            <p>Escolha a data, a turma ou o professor que falta, a aula e o substituto. O sistema recusa substitutos
-            que já tenham aula ou outra substituição a essa hora.</p>
+            <p class="o_view_nocontent_smiling_face">Não há substituições de hoje em diante</p>
+            <p>Use «Novo» quando um professor falta: escolha a data, a turma ou o professor, a aula e um substituto
+            livre a essa hora. O substituto faz a chamada e escreve o sumário. Para ver as passadas, tire o filtro
+            «De hoje em diante».</p>
         </field>
     </record>
 
