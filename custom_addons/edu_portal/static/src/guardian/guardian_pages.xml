@@ -684,7 +684,7 @@
         </div>
     </t>
 
-    <!-- A ajuda, como a do secPed: o que a área faz pelo encarregado, por temas, com o caminho para cada página. -->
+    <!-- A ajuda, como a do secPed: o que a área faz pelo encarregado, com a procura e os temas. -->
     <t t-name="edu_portal.GuardianHelp">
         <div class="o_action o_edu_student o_edu_guardian">
             <Layout display="this.display">
@@ -693,87 +693,7 @@
                         <h1 class="o_edu_st_title">Ajuda</h1>
                         <p class="mb-0 text-muted">Respostas às dúvidas mais comuns sobre a área do encarregado.</p>
                     </header>
-                    <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h1">
-                        <h2 id="o_edu_gd_h1" class="o_edu_st_h2 mb-0">Os teus educandos</h2>
-                        <div class="o_edu_st_card o_edu_st_faq">
-                            <details>
-                                <summary>Tenho mais do que um educando. Como escolho de qual vejo?</summary>
-                                <p>Nas notas, nas faltas, nas provas e nas propinas há separadores com o nome de cada educando por cima. O painel mostra todos ao mesmo tempo.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_home')">Abrir o painel</button>
-                            </details>
-                            <details>
-                                <summary>Falta um educando, ou aparece um que não é meu.</summary>
-                                <p class="mb-0">Quem liga os educandos à tua conta é a secretaria da escola. Fala com ela para acrescentar ou retirar um educando, ou para te dar acesso ao portal dele.</p>
-                            </details>
-                            <details>
-                                <summary>Quem são os professores e o director de turma?</summary>
-                                <p>Em Meus educandos, cada ficha mostra a turma deste ano, o director de turma e o professor de cada disciplina.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_children')">Ver os educandos</button>
-                            </details>
-                        </div>
-                    </section>
-                    <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h2">
-                        <h2 id="o_edu_gd_h2" class="o_edu_st_h2 mb-0">Notas e faltas</h2>
-                        <div class="o_edu_st_card o_edu_st_faq">
-                            <details>
-                                <summary>Quando aparecem as notas?</summary>
-                                <p>Assim que o professor as lança. Nas notificações aparece «Notas novas», com o nome do educando e a disciplina (sem a nota, que pode mudar até o trimestre fechar).</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_grades')">Ver as notas</button>
-                            </details>
-                            <details>
-                                <summary>Porque é que as notas do meu educando estão bloqueadas?</summary>
-                                <p>Algumas escolas escondem as notas enquanto houver propinas vencidas por pagar. Voltam a ver-se assim que as propinas em atraso forem pagas. Nas propinas vês exactamente o que está em atraso.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_fees')">Ver as propinas</button>
-                            </details>
-                            <details>
-                                <summary>O meu educando está na Iniciação. Onde vejo a avaliação?</summary>
-                                <p>Na Iniciação não há notas: o educador escreve um relatório por trimestre (o RDEC), com o nível em cada área de desenvolvimento e uma apreciação global. Está em RDEC (Iniciação), que só aparece se um educando estiver na Iniciação.</p>
-                            </details>
-                            <details>
-                                <summary>Como se contam as faltas?</summary>
-                                <p>Só contam as aulas dadas em que o professor fez a chamada. Cada disciplina tem um limite de faltas injustificadas, que depende dos tempos semanais. No painel aparece um aviso quando o teu educando fica perto do limite ou o atinge.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_absences')">Ver as faltas</button>
-                            </details>
-                            <details>
-                                <summary>Como justifico uma falta?</summary>
-                                <p>As faltas justificam-se junto do director de turma, com o documento que as justifica. Podes escrever-lhe nas mensagens.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('mail.action_discuss')">Abrir as mensagens</button>
-                            </details>
-                        </div>
-                    </section>
-                    <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h3">
-                        <h2 id="o_edu_gd_h3" class="o_edu_st_h2 mb-0">Propinas</h2>
-                        <div class="o_edu_st_card o_edu_st_faq">
-                            <details>
-                                <summary>Como pago as propinas?</summary>
-                                <p>Na tesouraria da escola. Quando o pagamento é confirmado, a factura passa para «Pagas» na página das propinas.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_fees')">Ver as propinas</button>
-                            </details>
-                            <details>
-                                <summary>Porque é que o valor de uma propina aumentou?</summary>
-                                <p class="mb-0">Se a escola cobra multa por atraso, ela é somada à propina depois do período de tolerância. Nas propinas a multa aparece à parte, factura a factura.</p>
-                            </details>
-                        </div>
-                    </section>
-                    <section class="o_edu_st_section" aria-labelledby="o_edu_gd_h4">
-                        <h2 id="o_edu_gd_h4" class="o_edu_st_h2 mb-0">Mensagens e a tua conta</h2>
-                        <div class="o_edu_st_card o_edu_st_faq">
-                            <details>
-                                <summary>A quem posso escrever?</summary>
-                                <p>Aos professores e ao director de turma de cada educando, e à secretaria. Em Mensagens, começa uma conversa nova e escolhe a pessoa.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('mail.action_discuss')">Abrir as mensagens</button>
-                            </details>
-                            <details>
-                                <summary>Esqueci-me da palavra-passe.</summary>
-                                <p class="mb-0">Pede à secretaria uma palavra-passe nova. Depois de entrares, podes mudá-la em Meu perfil.</p>
-                            </details>
-                            <details>
-                                <summary>Os meus dados estão errados.</summary>
-                                <p>Vê-os em Meu perfil. Para os corrigir (o NIF, que vai nas facturas, o telefone, a morada), fala com a secretaria.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_guardian_profile')">Ver o perfil</button>
-                            </details>
-                        </div>
-                    </section>
+                    <t t-call="edu_portal.Part.Help"/>
                 </div>
             </Layout>
         </div>

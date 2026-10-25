@@ -3,7 +3,7 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { FeedFilters, feedGroups, feedWhen, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
+import { FeedFilters, feedGroups, feedWhen, HelpPage, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
 
 const list = (items) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}` : items[0] || "");
 const count = (n, one, many) => (n === 1 ? one : `${n} ${many}`);
@@ -422,12 +422,56 @@ export class GuardianProfile extends GuardianPage(GuardianBase) {
     }
 }
 
-/** A ajuda, como no secPed: perguntas por tema, com o caminho para a página que responde. */
-export class GuardianHelp extends GuardianBase {
+/** A ajuda do encarregado, como a do secPed: o que a área faz por ele. */
+export class GuardianHelp extends HelpPage(GuardianBase) {
     static template = "edu_portal.GuardianHelp";
 
-    async load() {
-        this.state.data = {};
+    get helpTopics() {
+        return [
+            {
+                key: "children",
+                label: "Os teus educandos",
+                icon: "groups",
+                questions: [
+                    { q: "Tenho mais do que um educando. Como escolho de qual vejo?", a: "Nas notas, nas faltas, nas provas e nas propinas há separadores com o nome de cada educando por cima. O painel mostra todos ao mesmo tempo.", action: "edu_portal.action_guardian_home", actionLabel: "Abrir o painel" },
+                    { q: "Falta um educando, ou aparece um que não é meu.", a: "Quem liga os educandos à tua conta é a secretaria da escola. Fala com ela para acrescentar ou retirar um educando, ou para te dar acesso ao portal dele." },
+                    { q: "Quem são os professores e o director de turma?", a: "Em Meus educandos, cada ficha mostra a turma deste ano, o director de turma e o professor de cada disciplina, com o botão para lhes escrever.", action: "edu_portal.action_guardian_children", actionLabel: "Ver os educandos" },
+                    { q: "Onde vejo as provas e os feriados?", a: "No Calendário estão as provas de cada educando, os feriados, as pausas e as reuniões da escola. Em Provas está o calendário de provas da turma.", action: "edu_portal.action_guardian_calendar", actionLabel: "Abrir o calendário" },
+                ],
+            },
+            {
+                key: "grades",
+                label: "Notas e faltas",
+                icon: "school",
+                questions: [
+                    { q: "Quando aparecem as notas?", a: "Assim que o professor as lança. Nas notificações aparece «Notas novas», com o nome do educando e a disciplina (sem a nota, que pode mudar até o trimestre fechar).", action: "edu_portal.action_guardian_grades", actionLabel: "Ver as notas" },
+                    { q: "Porque é que as notas do meu educando estão bloqueadas?", a: "Algumas escolas escondem as notas enquanto houver propinas vencidas por pagar, depois dos dias de tolerância. Voltam a ver-se assim que as propinas em atraso forem pagas. Nas propinas vês exactamente o que está em atraso.", action: "edu_portal.action_guardian_fees", actionLabel: "Ver as propinas" },
+                    { q: "O meu educando está na Iniciação. Onde vejo a avaliação?", a: "Na Iniciação não há notas: o educador escreve um relatório por trimestre (o RDEC), com o nível em cada área de desenvolvimento e uma apreciação global. Está em RDEC (Iniciação), que só aparece se um educando estiver na Iniciação." },
+                    { q: "Como se contam as faltas?", a: "Só contam as aulas dadas em que o professor fez a chamada. Cada disciplina tem um limite de faltas injustificadas, que depende dos tempos semanais. No painel aparece um aviso quando o teu educando fica perto do limite ou o atinge.", action: "edu_portal.action_guardian_absences", actionLabel: "Ver as faltas" },
+                    { q: "Como justifico uma falta?", a: "As faltas justificam-se junto do director de turma, com o documento que as justifica. Podes escrever-lhe nas mensagens.", action: "mail.action_discuss", actionLabel: "Abrir as mensagens" },
+                ],
+            },
+            {
+                key: "fees",
+                label: "Propinas",
+                icon: "payments",
+                questions: [
+                    { q: "Como pago as propinas?", a: "Na tesouraria da escola. Quando o pagamento é confirmado, a factura passa para «Pagas» na página das propinas.", action: "edu_portal.action_guardian_fees", actionLabel: "Ver as propinas" },
+                    { q: "Quando é que uma propina fica em atraso?", a: "No dia seguinte ao vencimento. A escola dá alguns dias de tolerância antes de aplicar restrições (o aviso e, em algumas escolas, o bloqueio das notas); a página das propinas diz quantos." },
+                    { q: "Porque é que o valor de uma propina aumentou?", a: "Se a escola cobra multa por atraso, ela é somada à propina. Nas propinas a multa aparece à parte, factura a factura." },
+                ],
+            },
+            {
+                key: "account",
+                label: "Mensagens e conta",
+                icon: "forum",
+                questions: [
+                    { q: "A quem posso escrever?", a: "Aos professores e ao director de turma de cada educando, e à secretaria. Em Mensagens, começa uma conversa nova e escolhe a pessoa. Os professores que ainda não têm conta no sistema não recebem mensagens: para esses, escreve à secretaria.", action: "mail.action_discuss", actionLabel: "Abrir as mensagens" },
+                    { q: "Esqueci-me da palavra-passe.", a: "Pede à secretaria uma palavra-passe nova. Depois de entrares, podes mudá-la em Meu perfil." },
+                    { q: "Os meus dados estão errados.", a: "Vê-os em Meu perfil. Para os corrigir (o NIF, que vai nas facturas, o telefone, a morada), fala com a secretaria.", action: "edu_portal.action_guardian_profile", actionLabel: "Ver o perfil" },
+                ],
+            },
+        ];
     }
 }
 

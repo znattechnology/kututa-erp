@@ -684,12 +684,90 @@ export class StudentNotifications extends FeedFilters(StudentPage) {
     }
 }
 
-/** A ajuda, como no secPed: perguntas por tema, com o caminho para a página que responde. */
-export class StudentHelp extends StudentPage {
+/** Sem acentos e em minúsculas, para a procura da ajuda («palavra-passe» encontra «Palavra-passe»). */
+const plain = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/**
+ * A ajuda, como a do secPed (o aluno e o encarregado): os temas no topo, a procura nas perguntas e nas respostas, as
+ * perguntas a abrir uma a uma, cada uma com o caminho para a página que responde, e no fim a secretaria nas
+ * Mensagens. A página dá ``helpTopics``: [{key, label, icon, questions: [{q, a, action?, actionLabel?}]}].
+ */
+export const HelpPage = (Base) =>
+    class extends Base {
+        setup() {
+            super.setup();
+            this.state.search = "";
+        }
+
+        async load() {
+            this.state.data = {};
+        }
+
+        onSearch(ev) {
+            this.state.search = ev.target.value;
+        }
+
+        get filteredTopics() {
+            // A raiz de cada palavra (sem as duas últimas letras, nas de 5 ou mais): «pagar» encontra «pago» e «pagamento».
+            const words = plain(this.state.search)
+                .split(/\s+/)
+                .filter(Boolean)
+                .map((w) => (w.length >= 5 ? w.slice(0, -2) : w));
+            return this.helpTopics
+                .map((topic) => ({
+                    ...topic,
+                    questions: topic.questions.filter((item) => {
+                        const text = plain(`${item.q} ${item.a}`);
+                        return words.every((w) => text.includes(w));
+                    }),
+                }))
+                .filter((topic) => topic.questions.length);
+        }
+
+        scrollTo(key) {
+            document.getElementById(`o_edu_help_${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
+/** A ajuda do aluno. */
+export class StudentHelp extends HelpPage(StudentPage) {
     static template = "edu_portal.StudentHelp";
 
-    async load() {
-        this.state.data = {};
+    get helpTopics() {
+        return [
+            {
+                key: "grades",
+                label: "Notas e faltas",
+                icon: "school",
+                questions: [
+                    { q: "Quando aparecem as notas?", a: "Assim que o professor as lança. Nas notificações aparece «Notas novas» da disciplina (sem a nota, que pode mudar até o trimestre fechar). O mínimo para a positiva está escrito por baixo da pauta.", action: "edu_portal.action_student_grades", actionLabel: "Ver as notas" },
+                    { q: "O que querem dizer NPP, NPT, CT, MAC e MT?", a: "No ensino técnico, NPP é a nota do professor e NPT a da prova do trimestre; a classificação do trimestre (CT) junta as duas. No ensino geral, MAC é a média das avaliações contínuas e MT a média do trimestre. A legenda completa está por baixo da pauta.", action: "edu_portal.action_student_grades", actionLabel: "Ver as notas" },
+                    { q: "Como se conta a minha assiduidade?", a: "Só contam as aulas dadas em que o professor fez a chamada. Chegar atrasado conta como presença e como atraso. Cada disciplina tem um limite de faltas injustificadas, que depende dos tempos semanais; no painel e nas faltas vês quando estás perto dele.", action: "edu_portal.action_student_absences", actionLabel: "Ver as faltas" },
+                    { q: "Onde vejo o horário, as provas e os anos anteriores?", a: "O horário da turma está em Horário, as provas marcadas em Provas e o resultado de cada ano em Histórico. Se a escola ainda não publicou o horário, a página diz isso.", action: "edu_portal.action_student_history", actionLabel: "Ver o histórico" },
+                ],
+            },
+            {
+                key: "fees",
+                label: "Propinas",
+                icon: "payments",
+                questions: [
+                    { q: "Quem paga as propinas?", a: "O teu encarregado de educação, na tesouraria da escola. Aqui vês as facturas e o que está por pagar; quando um pagamento é confirmado, a factura passa para «Pagas».", action: "edu_portal.action_student_fees", actionLabel: "Ver as propinas" },
+                    { q: "Porque é que o valor de uma propina aumentou?", a: "Se a escola cobra multa por atraso, ela é somada à propina depois do vencimento. Na página das propinas a multa aparece numa coluna própria, factura a factura." },
+                    { q: "O que acontece se houver propinas em atraso?", a: "Depende da escola: durante os dias de tolerância vês só um aviso; depois, algumas páginas, como as notas e o histórico, podem ficar fechadas até as propinas vencidas serem pagas. A tua matrícula continua activa e continuas a ter aulas." },
+                ],
+            },
+            {
+                key: "account",
+                label: "Mensagens e conta",
+                icon: "forum",
+                questions: [
+                    { q: "A quem posso escrever?", a: "Aos professores da tua turma, ao director de turma e à secretaria. Em Mensagens, começa uma conversa nova e escolhe a pessoa.", action: "mail.action_discuss", actionLabel: "Abrir as mensagens" },
+                    { q: "Como peço uma declaração ou um certificado?", a: "Na secretaria da escola. Antes, vê em Meu perfil se os teus dados estão completos: são os que vão nos documentos.", action: "edu_portal.action_student_profile", actionLabel: "Ver o perfil" },
+                    { q: "Os meus dados estão errados ou em falta. O que faço?", a: "Vê-os em Meu perfil. Para os corrigir ou completar, fala com a secretaria.", action: "edu_portal.action_student_profile", actionLabel: "Ver o perfil" },
+                    { q: "Esqueci-me da palavra-passe.", a: "Pede à secretaria uma palavra-passe nova. Depois de entrares, podes mudá-la em Meu perfil, em Segurança." },
+                ],
+            },
+        ];
     }
 }
 

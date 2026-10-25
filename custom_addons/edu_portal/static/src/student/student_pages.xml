@@ -768,72 +768,7 @@
                         <h1 class="o_edu_st_title">Ajuda</h1>
                         <p class="mb-0 text-muted">Respostas às dúvidas mais comuns sobre a área do estudante.</p>
                     </header>
-                    <section class="o_edu_st_section" aria-labelledby="o_edu_st_h1">
-                        <h2 id="o_edu_st_h1" class="o_edu_st_h2 mb-0">Notas e faltas</h2>
-                        <div class="o_edu_st_card o_edu_st_faq">
-                            <details>
-                                <summary>Quando aparecem as notas?</summary>
-                                <p>Assim que o professor as lança. Nas notificações aparece «Notas novas» da disciplina (sem a nota, que pode mudar até o trimestre fechar). O mínimo para a positiva está escrito por baixo da pauta.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_grades')">Ver as notas</button>
-                            </details>
-                            <details>
-                                <summary>O que querem dizer NPP, NPT, CT, MAC e MT?</summary>
-                                <p>No ensino técnico, NPP é a nota do professor e NPT a da prova do trimestre; a classificação do trimestre (CT) junta as duas. No ensino geral, MAC é a média das avaliações contínuas e MT a média do trimestre. A legenda completa está por baixo da pauta.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_grades')">Ver as notas</button>
-                            </details>
-                            <details>
-                                <summary>Como se conta a minha assiduidade?</summary>
-                                <p>Só contam as aulas dadas em que o professor fez a chamada. Chegar atrasado conta como presença e como atraso. Cada disciplina tem um limite de faltas injustificadas, que depende dos tempos semanais; no painel e nas faltas vês quando estás perto dele.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_absences')">Ver as faltas</button>
-                            </details>
-                            <details>
-                                <summary>Onde vejo o horário, as provas e os anos anteriores?</summary>
-                                <p>O horário da turma está em Horário, as provas marcadas em Provas e o resultado de cada ano em Histórico. Se a escola ainda não publicou o horário, a página diz isso.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_history')">Ver o histórico</button>
-                            </details>
-                        </div>
-                    </section>
-                    <section class="o_edu_st_section" aria-labelledby="o_edu_st_h2">
-                        <h2 id="o_edu_st_h2" class="o_edu_st_h2 mb-0">Propinas</h2>
-                        <div class="o_edu_st_card o_edu_st_faq">
-                            <details>
-                                <summary>Quem paga as propinas?</summary>
-                                <p>O teu encarregado de educação, na tesouraria da escola. Aqui vês as facturas e o que está por pagar; quando um pagamento é confirmado, a factura passa para «Pagas».</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_fees')">Ver as propinas</button>
-                            </details>
-                            <details>
-                                <summary>Porque é que o valor de uma propina aumentou?</summary>
-                                <p class="mb-0">Se a escola cobra multa por atraso, ela é somada à propina depois do período de tolerância. Na página das propinas a multa aparece numa coluna própria, factura a factura.</p>
-                            </details>
-                            <details>
-                                <summary>O que acontece se houver propinas em atraso?</summary>
-                                <p class="mb-0">Depende da escola: ou vês só um aviso, ou algumas páginas, como as notas e o histórico, ficam fechadas até as propinas vencidas serem pagas. A tua matrícula continua activa e continuas a ter aulas.</p>
-                            </details>
-                        </div>
-                    </section>
-                    <section class="o_edu_st_section" aria-labelledby="o_edu_st_h3">
-                        <h2 id="o_edu_st_h3" class="o_edu_st_h2 mb-0">Mensagens e a tua conta</h2>
-                        <div class="o_edu_st_card o_edu_st_faq">
-                            <details>
-                                <summary>A quem posso escrever?</summary>
-                                <p>Aos professores da tua turma, ao director de turma e à secretaria. Em Mensagens, começa uma conversa nova e escolhe a pessoa.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('mail.action_discuss')">Abrir as mensagens</button>
-                            </details>
-                            <details>
-                                <summary>Como peço uma declaração ou um certificado?</summary>
-                                <p class="mb-0">Na secretaria da escola. Antes, vê em Meu perfil se os teus dados estão completos: são os que vão nos documentos.</p>
-                            </details>
-                            <details>
-                                <summary>Os meus dados estão errados ou em falta. O que faço?</summary>
-                                <p>Vê-os em Meu perfil. Para os corrigir ou completar, fala com a secretaria.</p>
-                                <button type="button" class="btn btn-link p-0" t-on-click="() => this.open('edu_portal.action_student_profile')">Ver o perfil</button>
-                            </details>
-                            <details>
-                                <summary>Esqueci-me da palavra-passe.</summary>
-                                <p class="mb-0">Pede à secretaria uma palavra-passe nova. Depois de entrares, podes mudá-la em Meu perfil, em Segurança.</p>
-                            </details>
-                        </div>
-                    </section>
+                    <t t-call="edu_portal.Part.Help"/>
                 </div>
             </Layout>
         </div>
@@ -1066,6 +1001,41 @@
                 <t t-out="f.label"/> <span class="o_edu_st_chip_count" t-out="f.count"/>
             </button>
         </div>
+    </t>
+
+    <!-- A ajuda (o aluno e o encarregado): a procura, os temas, as perguntas a abrir e a secretaria no fim. -->
+    <t t-name="edu_portal.Part.Help">
+        <div class="o_edu_st_help_search">
+            <i class="oi" data-icon="search" aria-hidden="true"/>
+            <input type="search" class="form-control" placeholder="Procurar na ajuda (ex.: pagar, notas bloqueadas, palavra-passe)"
+                   aria-label="Procurar na ajuda" t-att-value="this.state.search" t-on-input="(ev) => this.onSearch(ev)"/>
+        </div>
+        <div t-if="!this.state.search" class="o_edu_st_help_topics">
+            <button t-foreach="this.helpTopics" t-as="topic" t-key="topic.key" type="button" class="o_edu_st_help_topic" t-on-click="() => this.scrollTo(topic.key)">
+                <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" t-att-data-icon="topic.icon"/></span>
+                <span><span class="d-block fw-semibold" t-out="topic.label"/><span class="small text-muted"><t t-out="topic.questions.length"/> perguntas</span></span>
+            </button>
+        </div>
+        <t t-set="topics" t-value="this.filteredTopics"/>
+        <p t-if="!topics.length" class="o_edu_st_card mb-0 text-muted">Nenhuma pergunta com «<t t-out="this.state.search"/>». Experimenta outra palavra, ou escreve à secretaria.</p>
+        <section t-foreach="topics" t-as="topic" t-key="topic.key" t-att-id="'o_edu_help_' + topic.key" class="o_edu_st_section" t-att-aria-label="topic.label">
+            <h2 class="o_edu_st_h2 mb-0" t-out="topic.label"/>
+            <div class="o_edu_st_card o_edu_st_faq">
+                <details t-foreach="topic.questions" t-as="item" t-key="item_index" t-att-open="this.state.search ? true : undefined">
+                    <summary t-out="item.q"/>
+                    <p t-out="item.a"/>
+                    <button t-if="item.action" type="button" class="btn btn-link p-0" t-on-click="() => this.open(item.action)" t-out="item.actionLabel"/>
+                </details>
+            </div>
+        </section>
+        <section class="o_edu_st_card o_edu_st_help_cta" aria-labelledby="o_edu_st_help_cta">
+            <span class="o_edu_feed_icon" aria-hidden="true"><i class="oi" data-icon="forum"/></span>
+            <div class="flex-grow-1">
+                <h2 id="o_edu_st_help_cta" class="o_edu_st_h2 mb-0">Ainda com dúvidas?</h2>
+                <p class="mb-0 small text-muted">Escreve à secretaria nas Mensagens: responde lá.</p>
+            </div>
+            <button type="button" class="btn btn-primary" t-on-click="() => this.open('mail.action_discuss')">Escrever à secretaria</button>
+        </section>
     </t>
 
     <!-- A pauta de um ano: o resultado, a frase do trimestre, a tabela (no telemóvel uma lista) e a legenda das siglas. Usa
