@@ -16,6 +16,7 @@ from odoo.addons.edu_evaluation.tools.grading import (
     exam_class_mt3,
     frequency_classification,
     general_mt,
+    grade_text,
     has_global_exam,
     national_final,
     normalise,
@@ -23,6 +24,7 @@ from odoo.addons.edu_evaluation.tools.grading import (
     rounder,
     special_exam_result,
     technical_ca,
+    technical_chain,
     technical_ct,
     technical_subject_approved,
     weighted_mean,
@@ -56,14 +58,22 @@ class TestGrading(BaseCase):
     def test_technical_cumulative(self):
         # classificacao-frequencia.helper.spec
         self.assertEqual(cumulative([10, 14, 18]), [10, 12, 15])
+        # Técnico: a CF é o CT3 da cadeia, sem arredondamentos intermédios (só a CA e a CFD se arredondam).
         self.assertEqual(frequency_classification([10, 14, 18], TECHNICAL), 15)
         self.assertEqual(frequency_classification([8, 8, 14], TECHNICAL), 11)
         self.assertEqual(frequency_classification([14, 14, 8], TECHNICAL), 11)
+        self.assertEqual(frequency_classification([11, 14, 16], TECHNICAL), 14.25)
         # Um trimestre sem classificação conta 0; os que ainda não tiveram notas ficam de fora.
         self.assertEqual(cumulative([12, None, 16]), [12, 6, 11])
         self.assertEqual(cumulative([None, None, 13]), [0, 0, 7])
         self.assertEqual(cumulative([12, None, None]), [12, 12, 12])
-        self.assertEqual(frequency_classification([9, None, 14], TECHNICAL), 10)
+        # Técnico: a partir da primeira nota calcula-se até ao 3.º trimestre, com os que faltam a contar 0.
+        self.assertEqual(frequency_classification([9, None, 14], TECHNICAL), 9.25)
+        self.assertEqual(frequency_classification([12, None, None], TECHNICAL), 3)
+        self.assertEqual(technical_chain([7, None, None]), [7, 3.5, 1.75])
+        self.assertEqual(technical_chain([None, 12, None]), [0, 6, 3])
+        self.assertEqual(technical_chain([None, None, None]), [None, None, None])
+        self.assertEqual([grade_text(v) for v in (7, 3.5, 1.75, 9.125, None)], ['7', '3,5', '1,75', '9,13', ''])
         self.assertEqual(frequency_classification([12, None, 15], GENERAL), 9)
         self.assertEqual(frequency_classification([12, None, None], GENERAL), 12)
         self.assertIsNone(frequency_classification([None, None, None], TECHNICAL))

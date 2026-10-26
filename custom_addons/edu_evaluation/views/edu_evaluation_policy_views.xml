@@ -37,7 +37,6 @@
                             <field name="national_exam_weight" invisible="regime == 'technical'"/>
                             <field name="national_exam_weight_12" invisible="regime == 'technical'"/>
                             <field name="cf_weight" invisible="regime != 'technical'"/>
-                            <field name="technical_ca_precise" invisible="regime != 'technical'"/>
                             <field name="course_formula" invisible="regime != 'technical'"/>
                         </group>
                         <group string="Transição">

@@ -212,8 +212,8 @@ class TestEduEvaluation(TransactionCase):
         result = self._year_subject(enrollments[0], 'LP')
         self.assertEqual((result.pg, result.annual), (16, 15))  # 0,6 × 15 + 0,4 × 16 = 15,4
         bento_result = self._year_subject(enrollments[1], 'LP')
-        # CT 8, 9, 8: 8 → (8 + 9)/2 = 8,5 ≈ 9 → (9 + 8)/2 = 8,5 ≈ 9; CA = 0,6 × 9 + 0,4 × 9 = 9.
-        self.assertEqual((bento_result.cf, bento_result.annual), (9, 9))
+        # CT 8, 9, 8, sem arredondar: 8 → 8,5 → 8,25; CA = 0,6 × 8,25 + 0,4 × 9 = 8,55 → 9 (só a CA se arredonda).
+        self.assertEqual((bento_result.cf, bento_result.annual), (8.25, 9))
         # Caso limite: o professor bonifica +1 (9 → 10).
         self.assertTrue(bento_result.borderline)
         bento_result.action_grant_one()
@@ -265,6 +265,21 @@ class TestEduEvaluation(TransactionCase):
         self._assess(self.class10, 'LP', self.t3, 'continuous', {ana: 15})
         self.assertEqual(self._term(ana_enrollment, 'LP', self.t3).mt, 15)
 
+    def test_technical_chain_from_first_grade(self):
+        """Lançada a primeira nota do ano, calcula-se até ao 3.º trimestre (os que ainda não têm nota contam 0) e só
+        a CA e a CFD se arredondam: só a NPP de 14 no 1.º dá CT1 = 7, CT2 = 3,5, CT3 = CF = 1,75 e CA = 2."""
+        ana = self.students[0]
+        enrollment = self._enroll(self.class10, ana, ['LP'])
+        self._assess(self.class10, 'LP', self.t1, 'continuous', {ana: 14})
+        result = self._year_subject(enrollment, 'LP')
+        self.assertEqual(result._trimester_classifications(), [7, 3.5, 1.75])
+        self.assertEqual((result.cf, result.annual, result.complete), (1.75, 2, False))
+        # A NPT de 13 no 1.º: CT1 = 13,5 sem arredondar → 6,75 → 3,375 (a CF guarda duas casas).
+        self._assess(self.class10, 'LP', self.t1, 'trimester_test', {ana: 13})
+        self.assertEqual(self._term(enrollment, 'LP', self.t1).mt, 13.5)
+        self.assertEqual(result._trimester_classifications(), [13.5, 6.75, 3.375])
+        self.assertEqual((result.cf, result.annual), (3.38, 3))
+
     def test_technical_last_trimester_npp_only(self):
         """No técnico, o último trimestre só tem a NPP (CF = (CT2 + NPP3)/2, como nas cadernetas e no resumo do regime);
         a prova do fim do ano é a prova global."""
@@ -273,10 +288,10 @@ class TestEduEvaluation(TransactionCase):
         self._full_year(
             self.class10, 'LP', {self.t1: {ana: (10, 12)}, self.t2: {ana: (14, 14)}, self.t3: {ana: (16, 9)}}
         )
-        # CT1 = 11; CT2 = (11 + 14)/2 = 12,5 ≈ 13; CT3 = CF = (13 + 16)/2 = 14,5 ≈ 15; a PG é 9.
+        # CT1 = 11; CT2 = (11 + 14)/2 = 12,5; CT3 = CF = (12,5 + 16)/2 = 14,25, sem arredondar; a PG é 9.
         self.assertEqual(self._term(enrollment, 'LP', self.t3).mt, 16)
         result = self._year_subject(enrollment, 'LP')
-        self.assertEqual((result.cf, result.pg, result.annual), (15, 9, 13))  # 0,6 × 15 + 0,4 × 9 = 12,6
+        self.assertEqual((result.cf, result.pg, result.annual), (14.25, 9, 12))  # 0,6 × 14,25 + 0,4 × 9 = 12,15
         with self.assertRaises(ValidationError):
             self._assess(self.class10, 'LP', self.t3, 'trimester_test', {ana: 12})
 
@@ -294,9 +309,9 @@ class TestEduEvaluation(TransactionCase):
             self.class10, code, {self.t1: {ana: (10, 10)}, self.t2: {ana: (11, 11)}, self.t3: {ana: (10, 0)}}
         )
         result = self._year_subject(enrollment, code)
-        # CF: 10 → 10,5 ≈ 11 → 10,5 ≈ 11; sem arredondar seria 10,25 (CA 10, diferente da CF).
-        self.assertEqual((result.cf, result.annual), (11, 11))
-        self.assertEqual(result._trimester_classifications(), [10, 11, 11])
+        # CF sem arredondamentos intermédios: 10 → 10,5 → 10,25; a CA (= CF, sem PG) arredonda-se: 10.
+        self.assertEqual((result.cf, result.annual), (10.25, 10))
+        self.assertEqual(result._trimester_classifications(), [10, 10.5, 10.25])
         policy.technical_ca_precise = False
         # Classe de exame do geral: sem MT1, MT3 = (0 + MT2 + MAC3)/3.
         nine = self._enroll(self.class9, bento, ['MAT'])
@@ -329,8 +344,9 @@ class TestEduEvaluation(TransactionCase):
         )
         self._assess(self.class10, 'LP', self.t3, 'global_exam', {ana: 10, bento: 16, carla: 12})
         ana_result, bento_result, carla_result = (self._year_subject(e, 'LP') for e in enrollments)
-        # O 2.º sem classificação conta 0: CT2 = (10 + 0)/2 = 5; CF = (5 + 14)/2 = 9,5 ≈ 10; CA = 0,6 × 10 + 0,4 × 10.
-        self.assertEqual((ana_result.cf, ana_result.annual, ana_result.complete), (10, 10, True))
+        # O 2.º sem classificação conta 0: CT2 = (10 + 0)/2 = 5; CF = (5 + 14)/2 = 9,5; CA = 0,6 × 9,5 + 0,4 × 10 = 9,7
+        # → 10.
+        self.assertEqual((ana_result.cf, ana_result.annual, ana_result.complete), (9.5, 10, True))
         self.assertTrue(ana_result.passed)
         # Só o 3.º: 0 → 0 → 8; CA = 0,6 × 8 + 0,4 × 16 = 11,2 ≈ 11, mas sem aproveitamento (dois trimestres sem
         # classificação).
@@ -368,9 +384,10 @@ class TestEduEvaluation(TransactionCase):
         result = self._year_subject(enrollment, 'LP')
         # 0,6 × 11 + 0,4 × 12,4 = 11,56 → 12 (com a PG arredondada antes: 0,6 × 11 + 0,4 × 12 = 11,4 → 11).
         self.assertEqual((result.mt2, result.pg, result.annual, result.complete), (10.75, 12.4, 12, True))
+        # Sem o arredondamento único (escolas antigas) a regra é a mesma: no técnico só a CA e a CFD se arredondam.
         policy.technical_ca_precise = False
         result._recompute()
-        self.assertEqual(result.annual, 11)
+        self.assertEqual(result.annual, 12)
 
     def test_technical_transition_rules(self):
         """Despacho 60/08, art. 30.º: as negativas das disciplinas terminais da classe anterior contam para o máximo

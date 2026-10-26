@@ -375,6 +375,8 @@ class EduStudentPortal(models.AbstractModel):
                 }
             span_terminal = result._subject_span() if result else ([edu_class.class_number], True)
             complete = bool(result and result.complete)
+            # No técnico a CA calcula-se a partir da primeira nota do ano (como na grelha); a decisão espera pelo fecho.
+            started = complete or bool(result and result.trimesters_graded and policy.regime == grading.TECHNICAL)
             rows.append(
                 {
                     'id': subject.id,
@@ -384,8 +386,8 @@ class EduStudentPortal(models.AbstractModel):
                     'cf': result.cf if result and result.trimesters_graded else None,
                     'pg': result.pg if result and result.has_pg else None,
                     'national': result.national if result and result.has_national else None,
-                    'annual': result.annual if complete else None,
-                    'final': result.final if complete else None,
+                    'annual': result.annual if started else None,
+                    'final': result.final if started else None,
                     'cfd': result.cfd if complete and result.terminal_subject and len(span_terminal[0]) > 1 else None,
                     # A que conta na decisão do ano (a CFD no ano terminal de uma disciplina plurianual) e se aprova.
                     'transition': result.transition_grade if complete else None,
@@ -412,14 +414,16 @@ class EduStudentPortal(models.AbstractModel):
                 'show_national': any(r['national'] is not None for r in rows),
             }
         )
-        # O trimestre aberto: o pedido, ou o último que já tem alguma nota.
-        with_grades = [
-            t['id']
-            for t in data['trimesters']
-            if any(
-                r['by_trimester'][t['id']]['ct'] is not None or r['by_trimester'][t['id']]['components'] for r in rows
-            )
-        ]
+
+        # O trimestre aberto: o pedido, ou o último que já tem alguma nota lançada. No técnico o CT existe nos três a
+        # partir da primeira nota do ano (os trimestres ainda sem nota contam 0); conta o que tem notas lançadas.
+        def graded_in(row, trimester_id):
+            cell = row['by_trimester'][trimester_id]
+            if technical:
+                return cell['mac'] is not None or cell['npt'] is not None or bool(cell['components'])
+            return cell['ct'] is not None or bool(cell['components'])
+
+        with_grades = [t['id'] for t in data['trimesters'] if any(graded_in(r, t['id']) for r in rows)]
         ids = [t['id'] for t in data['trimesters']]
         # Sem notas, o trimestre corrente (ou o primeiro).
         current = trimesters.filtered('is_current')[:1].id or (ids[0] if ids else None)
@@ -463,7 +467,8 @@ class EduStudentPortal(models.AbstractModel):
         data['trend'] = []
         every = []
         for trimester in data['trimesters']:
-            values = [r['by_trimester'][trimester['id']]['ct'] for r in rows]
+            # Só os trimestres com notas lançadas (no técnico, o CT dos seguintes já se calcula com 0).
+            values = [r['by_trimester'][trimester['id']]['ct'] for r in rows] if trimester['id'] in with_grades else []
             values = [v for v in values if v is not None]
             every += values
             mean = sum(values) / len(values) if values else None
@@ -491,6 +496,9 @@ class EduStudentPortal(models.AbstractModel):
         def cell(v):
             if v is None:
                 return None
+            if technical:
+                # Técnico: as notas com as casas decimais que tiverem (só a CA e a CFD se arredondam).
+                return {'text': grading.grade_text(v), 'pos': v >= policy.pass_grade, 'value': round(v, 2)}
             return {'text': grade_text(v), 'pos': round_fn(v) >= policy.pass_grade, 'value': round(v, 2)}
 
         for row in rows:

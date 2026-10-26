@@ -137,13 +137,37 @@ def cumulative(cts, round_fn=round_units):
     return running
 
 
+def technical_chain(mts):
+    """Os CT do técnico, sem arredondar: CT1 = MT1, CT2 = (CT1 + MT2)/2, CT3 = CF = (CT2 + MT3)/2. Assim que um
+    trimestre tem nota, calcula-se até ao fim do ano, com os trimestres ainda sem nota a contar 0 (só o 1.º com 7 dá
+    7; 3,5; 1,75). Só a CA e a CFD se arredondam. Sem nenhuma nota no ano, sem classificação."""
+    if all(mt is None for mt in mts):
+        return [None] * len(mts)
+    chain = []
+    for mt in mts:
+        value = mt or 0
+        chain.append(value if not chain else (chain[-1] + value) / 2)
+    return chain
+
+
+def grade_text(value):
+    """Uma nota com as casas decimais que tiver, até duas (7 · 3,5 · 1,75), com vírgula."""
+    if value is None:
+        return ''
+    text = f'{Decimal(str(value)).quantize(Decimal("0.01"), ROUND_HALF_UP):f}'
+    return text.rstrip('0').rstrip('.').replace('.', ',') if '.' in text else text
+
+
 def frequency_classification(cts, regime, round_fn=round_units, imported=None):
-    """CF do ano: a importada (pauta assinada) vence; no técnico é cumulativa, no geral é a média."""
+    """CF do ano: a importada (pauta assinada) vence; no técnico é o CT3 da cadeia, sem arredondar
+    (technical_chain); no geral é a média."""
+    if regime == TECHNICAL:
+        if imported is not None:
+            return imported
+        chain = technical_chain(cts)
+        return chain[-1] if chain else None
     if imported is not None:
         return round_fn(imported)
-    if regime == TECHNICAL:
-        running = cumulative(cts, round_fn)
-        return running[-1] if running else None
     return general_final(missing_as_zero(cts), round_fn)
 
 

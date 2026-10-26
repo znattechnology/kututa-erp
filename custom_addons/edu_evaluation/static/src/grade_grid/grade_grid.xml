@@ -13,7 +13,7 @@
                    t-on-keydown="(ev) => this.onKeydown(ev)"
                    t-on-focus="(ev) => ev.target.select()"/>
             <span t-elif="absent" class="text-danger fw-bold" title="Faltou à prova">F</span>
-            <span t-else="" t-att-class="this.gradeClass(shown, false)" t-out="this.fmtDecimal(shown)"/>
+            <span t-else="" t-att-class="this.gradeClass(shown, false)" t-out="this.fmtNote(shown)"/>
         </td>
     </t>
 
@@ -173,7 +173,7 @@
                                                     <t t-call="edu_evaluation.GradeGrid.Cell"/>
                                                 </t>
                                                 <td t-else="" class="text-center o_edu_gg_sep">
-                                                    <span t-att-class="this.gradeClass(term.mac, false)" t-out="this.fmtDecimal(term.mac)"/>
+                                                    <span t-att-class="this.gradeClass(term.mac, false)" t-out="this.fmtNote(term.mac)"/>
                                                 </td>
                                                 <!-- NPT -->
                                                 <td t-if="!t.has_npt" class="text-center text-muted" t-att-title="data.technical ? 'Sem prova trimestral: no último trimestre só a NPP; a prova do fim do ano é a prova global' : 'Sem prova trimestral: há exame no fim do ano'">—</td>
@@ -190,7 +190,7 @@
                                                 <t t-set="avg" t-value="this.termClassification(st, t)"/>
                                                 <td class="text-center fw-bold" t-att-class="{'o_edu_gg_preview': avg.preview}"
                                                     t-att-title="avg.preview ? 'Média com as notas por guardar' : ''">
-                                                    <span t-att-class="this.gradeClass(avg.value)" t-out="term.imported and !avg.preview ? this.fmtDecimal(avg.value) : this.fmtInt(avg.value)"
+                                                    <span t-att-class="this.gradeClass(avg.value, !data.technical)" t-out="data.technical ? this.fmtNote(avg.value) : (term.imported and !avg.preview ? this.fmtDecimal(avg.value) : this.fmtInt(avg.value))"
                                                           t-att-title="term.imported ? 'Importada do secPed' : ''"/>
                                                 </td>
                                                 <td class="text-center text-muted" t-out="term.fj or ''"/>
@@ -210,7 +210,7 @@
                                                 </t>
                                                 <td t-else="" class="text-center" t-att-class="{'o_edu_gg_sep': yc_first, 'fw-bold': yc.strong}">
                                                     <span t-att-class="this.gradeClass(st[yc.key], yc.integer)"
-                                                          t-out="yc.integer ? this.fmtInt(st[yc.key]) : this.fmtDecimal(st[yc.key])"/>
+                                                          t-out="yc.integer ? this.fmtInt(st[yc.key]) : this.fmtNote(st[yc.key])"/>
                                                 </td>
                                             </t>
                                         </tr>

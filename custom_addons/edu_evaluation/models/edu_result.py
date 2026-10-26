@@ -125,7 +125,8 @@ class EduTermResult(models.Model):
             last = trimester == enrollment.academic_year_id.trimester_ids.sorted('number')[-1:]
             if last:
                 npt = None
-            mt = grading.technical_ct(mac, npt, round_fn, with_test=not last)
+            # No técnico só a CA e a CFD se arredondam: o trimestre fica com as casas decimais.
+            mt = grading.technical_ct(mac, npt, lambda value: value, with_test=not last)
         else:
             last = enrollment.academic_year_id.trimester_ids.sorted('number')[-1:]
             if policy._is_exam_class(enrollment.class_number) and trimester == last:
@@ -306,17 +307,16 @@ class EduSubjectResult(models.Model):
             # Uma PG já lançada conta sempre (as notas fechadas não mudam se a marca do plano mudar depois).
             vals['has_global_exam'] = policy.regime == TECHNICAL and bool(line.has_global_exam or pg)
             national = final_grades.filtered(lambda g: g.assessment_type == 'national_exam')[:1]
-            # Com o arredondamento único (técnico), a PG entra na CA sem ser arredondada antes.
-            precise_pg = policy.regime == TECHNICAL and policy.technical_ca_precise
-            pg_value = (pg.score if precise_pg else round_fn(pg.score)) if pg else None
+            # No técnico a PG entra na CA como foi lançada: só a CA e a CFD se arredondam.
+            pg_value = (pg.score if policy.regime == TECHNICAL else round_fn(pg.score)) if pg else None
             national_value = national.score if national else None
             if policy.regime == TECHNICAL:
-                precise = grading.frequency_classification(mts, TECHNICAL, (lambda v: v), imported)
-                cf = grading.frequency_classification(mts, TECHNICAL, round_fn, imported)
-                # O arredondamento único (escolas migradas) só entra com a PG: sem ela, CA = CF (a mesma da pauta).
-                with_pg = vals['has_global_exam'] and pg_value is not None
-                base_cf = precise if policy.technical_ca_precise and with_pg else cf
-                annual = grading.technical_ca(base_cf, pg_value, vals['has_global_exam'], round_fn, policy.cf_weight)
+                # CF = CT3 da cadeia, sem arredondar (calcula-se até ao 3.º trimestre assim que há uma nota); a CA
+                # arredonda-se às unidades.
+                cf = grading.frequency_classification(mts, TECHNICAL, imported=imported)
+                annual = grading.technical_ca(
+                    cf, pg_value, vals['has_global_exam'], grading.round_units, policy.cf_weight
+                )
             national_subject = policy.regime != TECHNICAL and result._is_national_exam(line)
             if policy.regime != TECHNICAL:
                 cf = grading.frequency_classification(mts, 'general', round_fn, imported)
@@ -359,7 +359,8 @@ class EduSubjectResult(models.Model):
             previous = self.browse()
             if len(span) > 1:
                 previous = result._previous_years(span)
-                cfd = grading.multi_year_final([*previous.mapped('final'), final], round_fn) if terminal else None
+                cfd_round = grading.round_units if policy.regime == TECHNICAL else round_fn
+                cfd = grading.multi_year_final([*previous.mapped('final'), final], cfd_round) if terminal else None
             transition = final
             passed = complete and final is not None and final >= policy.pass_grade
             if len(span) > 1 and terminal and result.has_special_exam:
@@ -401,8 +402,9 @@ class EduSubjectResult(models.Model):
             result.write(vals)
 
     def _trimester_classifications(self):
-        """A classificação de cada trimestre, como na grelha e na pauta: no técnico o CT, que engloba os anteriores
-        (um trimestre sem classificação antes de outro conta 0); no geral a MT. Sem classificação no trimestre: None."""
+        """A classificação de cada trimestre, como na grelha e na pauta: no técnico o CT, que engloba os anteriores e se
+        calcula até ao 3.º trimestre a partir da primeira nota do ano, sem arredondar (os trimestres ainda sem nota
+        contam 0); no geral a MT, ou None no trimestre sem classificação."""
         self.ensure_one()
         trimesters = self.enrollment_id.academic_year_id.trimester_ids.sorted('number')
         terms = (
@@ -421,8 +423,8 @@ class EduSubjectResult(models.Model):
         policy = self._policy()
         if policy.regime != TECHNICAL:
             return mts
-        running = grading.cumulative(mts, grading.rounder(policy.rounding))
-        return [ct if mt is not None else None for ct, mt in zip(running, mts, strict=True)]
+        # Os CT de todos os trimestres, a partir da primeira nota do ano (os que ainda não têm nota contam 0).
+        return grading.technical_chain(mts)
 
     def _is_national_exam(self, line):
         """Disciplina com exame nacional nesta classe: classe de exame e marca na linha do plano (ou na disciplina)."""

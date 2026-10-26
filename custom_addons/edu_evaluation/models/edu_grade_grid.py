@@ -301,9 +301,11 @@ class EduGradeGrid(models.AbstractModel):
         round_fn = grading.rounder(policy.rounding)
         for enrollment in enrollments:
             terms_row = {}
-            running = None  # CT do técnico: engloba os trimestres anteriores
-            skipped = 0  # trimestres sem classificação antes deste: contam 0 (grading.missing_as_zero)
-            for trimester in trimesters:
+            # CT do técnico: engloba os anteriores e calcula-se até ao 3.º trimestre a partir da primeira nota, sem
+            # arredondar (grading.technical_chain).
+            mts = [value(term_by_key.get((enrollment.id, t.id)), 'mt', 'has_mt') for t in trimesters]
+            chain = grading.technical_chain(mts) if technical else mts
+            for index, trimester in enumerate(trimesters):
                 term = term_by_key.get((enrollment.id, trimester.id))
                 test = assessments.filtered(
                     lambda a, t=trimester: a.trimester_id == t and a.assessment_type == 'trimester_test'
@@ -315,23 +317,18 @@ class EduGradeGrid(models.AbstractModel):
                 npt_grade = grade_by_key.get((enrollment.id, test.id)) if test else None
                 npp_grade = grade_by_key.get((enrollment.id, npp.id)) if npp else None
                 excused, absent = absences.get((enrollment.id, trimester.id), (0, 0))
-                mt = value(term, 'mt', 'has_mt')
-                if mt is None:
-                    skipped += 1
-                elif technical:
-                    for part in [0] * skipped + [mt]:
-                        running = round_fn(part) if running is None else round_fn((running + part) / 2)
-                    skipped = 0
-                classification = (running if technical else mt) if mt is not None else None
+                classification = chain[index]
                 if classification is not None and enrollment.state in ENROLLED:
-                    # Como a mini-pauta: a classificação arredondada pela regra da escola (9,5 é positiva).
-                    positive = round_fn(classification) >= policy.pass_grade
+                    # No técnico o CT não se arredonda (só a CA e a CFD); no geral, a MT pela regra da escola.
+                    shown = classification if technical else round_fn(classification)
+                    positive = shown >= policy.pass_grade
                     by_term[trimester.id][0 if positive else 1] += 1
-                    by_term[trimester.id][2] += round_fn(classification)
+                    by_term[trimester.id][2] += shown
                 terms_row[str(trimester.id)] = {
                     'mac': value(term, 'mac', 'has_mac'),
                     'npt': value(term, 'npt', 'has_npt'),
                     'mt': value(term, 'mt', 'has_mt'),
+                    'ct': classification,
                     'imported': bool(term and term.imported),
                     'npt_grade': npt_grade.score if npt_grade and npt_grade.graded else None,
                     'npt_absent': bool(npt_grade and npt_grade.absent),
@@ -342,6 +339,9 @@ class EduGradeGrid(models.AbstractModel):
                 }
             result = result_by_enrollment.get(enrollment.id)
             final = result.final if result and result.complete else None
+            # No técnico a CA mostra-se logo a partir da primeira nota (calcula-se até ao fim do ano); as contas da
+            # turma (positivas, negativas, média) só com a disciplina fechada.
+            shown_final = result.final if technical and result and result.trimesters_graded else final
             if enrollment.state in ENROLLED:
                 if final is None:
                     summary['without_final'] += 1
@@ -369,7 +369,7 @@ class EduGradeGrid(models.AbstractModel):
                     'en': en_grade.score if en_grade and en_grade.graded else None,
                     'en_absent': bool(en_grade and en_grade.absent),
                     'annual': result.annual if result and result.complete else None,
-                    'final': final,
+                    'final': shown_final,
                     'cfd': result.cfd if result and result.complete and result.terminal_subject else None,
                     'complete': bool(result and result.complete),
                 }

@@ -37,6 +37,14 @@ function fmtDecimal(value) {
     return value === null || value === undefined ? "" : (Math.round(value * 10) / 10).toFixed(1).replace(".", ",");
 }
 
+/** Técnico: a nota com as casas decimais que tiver, até duas (7 · 3,5 · 1,75), como grading.grade_text. */
+function fmtGrade(value) {
+    if (value === null || value === undefined) {
+        return "";
+    }
+    return String(Math.floor(value * 100 + 0.5 + 1e-9) / 100).replace(".", ",");
+}
+
 function fmtInt(value) {
     return value === null || value === undefined ? "" : String(roundUnits(value));
 }
@@ -394,13 +402,12 @@ export class GradeGrid extends Component {
         const npt = this.current(student, trimester, "npt", term.npt);
         if (data.technical) {
             // CT = (NPP + NPT)/2, com a nota que ainda falta a contar 0 (grading.technical_ct); no último trimestre não
-            // há prova trimestral e a classificação é a NPP.
+            // há prova trimestral e a classificação é a NPP. Sem arredondar: só a CA e a CFD se arredondam.
             const npp = this.current(student, trimester, "npp", term.mac);
             if (npp === null && npt === null) {
                 return { value: null, preview: true };
             }
-            const value = trimester.has_npt ? ((npp ?? 0) + (npt ?? 0)) / 2 : npp;
-            return { value: value === null ? null : this.round(value), preview: true };
+            return { value: trimester.has_npt ? ((npp ?? 0) + (npt ?? 0)) / 2 : npp, preview: true };
         }
         if (term.mac === null || npt === null) {
             return { value: null, preview: true };
@@ -410,23 +417,23 @@ export class GradeGrid extends Component {
     }
 
     /**
-     * A classificação do trimestre na grelha. No técnico é o CT do Despacho 60/08 (art. 17.º, n.º 5, e o resumo do
-     * regime): CT1 = (NPP + NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + NPP do 3.º)/2 — cada trimestre
-     * engloba os anteriores, como a CF; um trimestre anterior sem classificação conta 0. No geral, a MT.
+     * A classificação do trimestre na grelha. No técnico é o CT do Despacho 60/08 (art. 17.º, n.º 5): CT1 = MT1,
+     * CT2 = (CT1 + MT2)/2, CT3 = (CT2 + NPP do 3.º)/2, sem arredondar; assim que um trimestre tem nota, calcula-se até
+     * ao 3.º, com os trimestres ainda sem nota a contar 0 (grading.technical_chain). No geral, a MT.
      */
     termClassification(student, trimester) {
-        const own = this.termAverage(student, trimester);
-        if (!this.state.data.technical || own.value === null || own.value === undefined) {
-            return own;
+        if (!this.state.data.technical) {
+            return this.termAverage(student, trimester);
+        }
+        const averages = this.state.data.trimesters.map((t) => this.termAverage(student, t));
+        const preview = averages.some((avg) => avg.preview);
+        if (averages.every((avg) => avg.value === null || avg.value === undefined)) {
+            return { value: null, preview };
         }
         let running = null;
-        let preview = false;
-        for (const t of this.state.data.trimesters) {
-            const avg = t.id === trimester.id ? own : this.termAverage(student, t);
-            preview = preview || avg.preview;
-            // Um trimestre anterior sem classificação conta 0 (como grading.missing_as_zero no servidor).
-            const part = avg.value === null || avg.value === undefined ? 0 : avg.value;
-            running = running === null ? this.round(part) : this.round((running + part) / 2);
+        for (const [index, t] of this.state.data.trimesters.entries()) {
+            const part = averages[index].value ?? 0;
+            running = running === null ? part : (running + part) / 2;
             if (t.id === trimester.id) {
                 break;
             }
@@ -448,6 +455,11 @@ export class GradeGrid extends Component {
 
     fmtInt(value) {
         return fmtInt(value);
+    }
+
+    /** Uma nota: no técnico com as casas decimais que tiver (só a CA e a CFD se arredondam); no geral, uma casa. */
+    fmtNote(value) {
+        return this.state.data.technical ? fmtGrade(value) : fmtDecimal(value);
     }
 
     cellError(student, trimesterId, column) {
@@ -539,7 +551,7 @@ export class GradeGrid extends Component {
         const data = this.state.data;
         const columns = [];
         if (data.technical) {
-            columns.push({ key: "cf", label: "CF", title: "Classificação de frequência: engloba os três trimestres", integer: true });
+            columns.push({ key: "cf", label: "CF", title: "Classificação de frequência: engloba os três trimestres (sem arredondar)" });
             if (data.subject.has_pg) {
                 columns.push({ key: "pg", label: "PG", title: "Prova global", editable: true });
             }
@@ -564,7 +576,7 @@ export class GradeGrid extends Component {
 
     get legend() {
         return this.state.data.technical
-            ? "NPP é a nota do professor e NPT a prova trimestral. CT1 é a média das duas; CT2 e CT3 juntam o trimestre aos anteriores (CT2 = (CT1 + média do 2.º trimestre)/2), como manda o Despacho 60/08. No 3.º trimestre só há a NPP: CT3 = CF = (CT2 + NPP)/2, e a prova do fim do ano é a prova global."
+            ? "NPP é a nota do professor e NPT a prova trimestral. CT1 é a média das duas; CT2 e CT3 juntam o trimestre aos anteriores (CT2 = (CT1 + média do 2.º trimestre)/2), como manda o Despacho 60/08. No 3.º trimestre só há a NPP: CT3 = CF = (CT2 + NPP)/2, e a prova do fim do ano é a prova global. Uma nota ainda por lançar conta 0, e a partir da primeira nota calcula-se até ao fim do ano. Só a CA e a CFD se arredondam."
             : "MAC é a média das avaliações contínuas, NPT a prova do trimestre e MT1, MT2 e MT3 a média de cada trimestre.";
     }
 

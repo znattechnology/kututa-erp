@@ -1,7 +1,7 @@
 import unicodedata
 
 from odoo import api, fields, models
-from odoo.addons.edu_evaluation.tools.grading import cumulative, round_units, rounder
+from odoo.addons.edu_evaluation.tools.grading import grade_text, round_units, technical_chain
 
 from ..models.report_helpers import Helpers
 
@@ -151,16 +151,17 @@ class EduPautaPrint(models.TransientModel):
 
     def _technical_cts(self, trimester):
         """O CT do técnico no trimestre, por (matrícula, disciplina): engloba os trimestres anteriores (Despacho 60/08,
-        art. 17.º, n.º 5, e o resumo do regime): CT1 = média do 1.º, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + média
-        do 3.º)/2. Sem nota no trimestre, sem CT."""
-        round_fn = rounder(self._policy().rounding)
+        art. 17.º, n.º 5): CT1 = média do 1.º, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + média do 3.º)/2, sem
+        arredondar. A partir da primeira nota do ano calcula-se até ao 3.º, com os trimestres ainda sem nota a contar 0
+        (grading.technical_chain)."""
         trimesters = self.class_id.academic_year_id.trimester_ids.filtered(lambda t: t.number <= trimester.number)
         maps = [self._terms(t) for t in trimesters.sorted('number')]
         cts = {}
-        for key, term in (maps[-1] if maps else {}).items():
-            if term.has_mt:
-                values = [m[key].mt if key in m and m[key].has_mt else None for m in maps]
-                cts[key] = cumulative(values, round_fn)[-1]
+        for key in {key for found in maps for key in found}:
+            values = [m[key].mt if key in m and m[key].has_mt else None for m in maps]
+            ct = technical_chain(values)[-1] if values else None
+            if ct is not None:
+                cts[key] = ct
         return cts
 
     def _cell_mark(self, enrollment, subject):
@@ -222,8 +223,13 @@ class EduPautaPrint(models.TransientModel):
         def grade(value, decimals=1, show=True):
             if not show or value is None:
                 return ('', None)
-            text = f'{value:.1f}'.replace('.', ',') if decimals else str(round_units(value))
-            shown = value if decimals else round_units(value)
+            if not decimals:
+                text, shown = str(round_units(value)), round_units(value)
+            elif technical:
+                # Técnico: as notas com as casas decimais que tiverem; só a CA e a CFD se arredondam.
+                text, shown = grade_text(value), value
+            else:
+                text, shown = f'{value:.1f}'.replace('.', ','), value
             return (text, 'pos' if shown >= pass_grade else 'neg')
 
         def count(value):
@@ -247,13 +253,17 @@ class EduPautaPrint(models.TransientModel):
                     cells[subject.id] = [code, code, code, count(excused), count(absent)] + [code] * len(tail)
                     continue
                 term = terms.get(key)
+                if technical:
+                    # CT: engloba os anteriores e existe a partir da primeira nota do ano, mesmo sem nota neste.
+                    classification = grade(cts.get(key))
+                elif term:
+                    classification = grade(round_units(term.mt), show=term.has_mt)
+                else:
+                    classification = ('', None)
                 values = [
                     grade(term.mac, show=bool(term and term.has_mac)) if term else ('', None),
                     grade(term.npt, show=bool(term and term.has_npt)) if term else ('', None),
-                    # CT (técnico, engloba os trimestres anteriores) ou MT (geral): um inteiro.
-                    grade(cts.get(key) if technical else round_units(term.mt), show=bool(term and term.has_mt))
-                    if term
-                    else ('', None),
+                    classification,
                     count(excused),
                     count(absent),
                 ]
@@ -261,10 +271,12 @@ class EduPautaPrint(models.TransientModel):
                 if final:
                     complete = bool(result and result.complete)
                     if technical:
+                        # CF e CA calculadas a partir da primeira nota do ano; a CF sem arredondar, a CA arredondada.
+                        started = bool(result and result.trimesters_graded)
                         values += [
-                            grade(result.cf, 0, complete) if result else ('', None),
-                            grade(result.pg, 0, bool(result and result.has_pg)) if result else ('', None),
-                            grade(result.final, 0, complete) if result else ('', None),
+                            grade(result.cf, show=started) if result else ('', None),
+                            grade(result.pg, show=bool(result and result.has_pg)) if result else ('', None),
+                            grade(result.final, 0, started) if result else ('', None),
                             # CFD no ano terminal da disciplina (a que conta nas negativas e no certificado).
                             grade(result.cfd, 0, complete and result.terminal_subject) if result else ('', None),
                         ]
@@ -397,24 +409,34 @@ class EduPautaPrint(models.TransientModel):
                         value = result.cf if result and result.trimesters_graded else None
                 else:
                     term = terms.get(key)
-                    value = (cts.get(key) if technical else term.mt) if term and term.has_mt else None
+                    if technical:
+                        value = cts.get(key)
+                    else:
+                        value = term.mt if term and term.has_mt else None
                 excused, absent = absences.get(key, (0, 0))
-                shown = round_units(value) if value is not None else None
+                # Técnico: o CT e a CF com as casas decimais que tiverem (só a CA e a CFD se arredondam).
+                shown = value if technical else (round_units(value) if value is not None else None)
                 cells[subject.id] = (
-                    '—' if shown is None else str(shown),
+                    '—' if shown is None else (grade_text(shown) if technical else str(shown)),
                     shown is not None and shown < policy.pass_grade,
                     str(excused) if excused else '·',
                     str(absent) if absent else '·',
                 )
                 if value is not None:
                     values.append(value)
-            average = round_units(sum(values) / len(values)) if values else None
+            average = sum(values) / len(values) if values else None
+            if average is None:
+                average_text = '—'
+            elif technical:
+                average_text = grade_text(average)  # técnico: com as casas decimais (só a CA e a CFD se arredondam)
+            else:
+                average_text = str(round_units(average))
             rows.append(
                 {
                     'number': '' if only is not None else enrollment.order_number or '',
                     'name': enrollment.student_id.name,
                     'cells': cells,
-                    'average': '—' if average is None else str(average),
+                    'average': average_text,
                 }
             )
         count = max(len(subjects), 1)

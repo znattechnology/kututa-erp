@@ -366,7 +366,9 @@ class TestEduMigrationSecped(TransactionCase):
         lp = self._result('2025-0001', 'LP')
         self.assertEqual((lp.mt1, lp.mt2, lp.mt3), (14.33, 14.29, 12.9))
         self.assertEqual(lp.imported_cf, 12.8958)
-        self.assertEqual((lp.cf, lp.pg, lp.annual, lp.final), (13, 15.5, 14, 14))
+        # A CF importada fica com as casas decimais (no técnico só a CA e a CFD se arredondam): 0,6 × 12,8958 + 0,4 ×
+        # 15,5 = 13,94 → 14.
+        self.assertEqual((lp.cf, lp.pg, lp.annual, lp.final), (12.9, 15.5, 14, 14))
         self.assertEqual(self._result('2025-0001', 'EF').final, 12)
         bento = self._result('2025-0002', 'LP')
         self.assertEqual((bento.annual, bento.council_points, bento.final), (9, 1, 10))

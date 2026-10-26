@@ -90,8 +90,8 @@ class EduEvaluationPolicy(models.Model):
     cf_weight = fields.Float(string='Peso da CF na CA (técnico)', default=0.6, digits=(3, 2))
     technical_ca_precise = fields.Boolean(
         string='CA com a CF e a PG sem arredondamentos intermédios',
-        help='Como o secPed-Express: a CF e a PG entram na CA com todas as casas decimais e arredonda-se uma vez. '
-        'Desmarcado: a CF e a PG arredondadas (classificação atribuída pelo conselho de turma).',
+        help='Sem efeito: no técnico só a CA e a CFD se arredondam (o trimestre, o CT, a CF e a PG entram com as '
+        'casas decimais). Fica pela importação do secPed.',
     )
     conditional_classes = fields.Char(string='Classes com transição condicional', help='Por exemplo: 7,8')
     conditional_max = fields.Integer(string='Negativas toleradas na transição', default=2)
