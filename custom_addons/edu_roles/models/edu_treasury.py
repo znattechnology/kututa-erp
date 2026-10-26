@@ -24,6 +24,8 @@ CATEGORY_LABELS = {
 TOP_DEBTORS = 8
 RECENT_PAYMENTS = 8
 DEBT_LIST_LIMIT = 300
+# As formas de pagamento ao balcão, como no secPed, e o diário de cada uma.
+PAY_JOURNALS = {'cash': 'cash', 'pos': 'bank', 'deposit': 'bank'}
 
 
 def with_views(action):
@@ -532,6 +534,13 @@ class EduTreasury(models.AbstractModel):
         """As acções da ficha: receber (as facturas escolhidas primeiro), cobrar um serviço e imprimir um documento."""
         self._check_access()
         student = self.env['edu.student'].browse(student_id)
+        if key == 'pay':
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'edu_roles.treasury_pay',
+                'name': self.env._('Registar um pagamento'),
+                'context': {'student_id': student.id, 'invoice_ids': invoice_ids or []},
+            }
         if key == 'receive':
             return {
                 'type': 'ir.actions.act_window',
@@ -560,6 +569,119 @@ class EduTreasury(models.AbstractModel):
                 self.env['account.payment'].browse(res_id)
             )
         raise UserError(self.env._('Acção desconhecida.'))
+
+    # Registar um pagamento: as facturas por pagar e os serviços da escola, num só acto
+
+    def _pay_journal(self, method):
+        kind = PAY_JOURNALS.get(method)
+        if not kind:
+            raise UserError(self.env._('Forma de pagamento desconhecida.'))
+        return self.env['account.journal'].search(
+            [('type', '=', kind), ('company_id', '=', self.env.company.id)], limit=1
+        )
+
+    def _student(self, student_id):
+        student = self.env['edu.student'].browse(student_id).exists()
+        if not student or student.company_id != self.env.company:
+            raise UserError(self.env._('Aluno não encontrado.'))
+        return student
+
+    @api.model
+    def payment_data(self, student_id):
+        """«Registar um pagamento», como no secPed: as facturas por pagar (das mais antigas para as mais recentes), os
+        serviços da escola que se cobram e pagam no mesmo acto, as formas de pagamento e as regras da caixa."""
+        self._check_access()
+        student = self._student(student_id)
+        today = self._today()
+        company = self.env.company
+        invoices = student._edu_open_invoices().filtered(lambda m: m.company_id == company)
+        catalog = self.catalog(student_id)
+        return {
+            'student': catalog['student'],
+            'invoices': [
+                {
+                    'id': m.id,
+                    'number': m.name,
+                    'label': self._label(m),
+                    'due': m.invoice_date_due.strftime('%d/%m/%Y') if m.invoice_date_due else '',
+                    'due_key': fields.Date.to_string(m.invoice_date_due or today),
+                    'late': bool(m.invoice_date_due and m.invoice_date_due < today),
+                    'residual': m.amount_residual,
+                }
+                for m in invoices.sorted(lambda m: (m.invoice_date_due or today, m.id))
+            ],
+            'services': [item for group in catalog['groups'] for item in group['items']],
+            'methods': [
+                {'key': key, 'label': label, 'available': bool(self._pay_journal(key))}
+                for key, label in [
+                    ('cash', self.env._('Numerário')),
+                    ('pos', self.env._('TPA (cartão)')),
+                    ('deposit', self.env._('Depósito no banco')),
+                ]
+            ],
+            'cash_open': bool(self.env['edu.cash.session']._current()),
+            'cash_approval': company.edu_cash_approval,
+            'cash_threshold': company.edu_cash_approval_threshold,
+            'currency': catalog['currency'],
+        }
+
+    def _label(self, move):
+        line = move.invoice_line_ids.filtered(lambda line: line.display_type == 'product')[:1]
+        name = line.name or move.name or ''
+        return name[:1].upper() + name[1:]
+
+    @api.model
+    def register_payment(self, student_id, values):
+        """Regista o pagamento ao balcão: os serviços escolhidos saem numa factura (com a chave: repetir não cobra outra
+        vez) e paga-se tudo no mesmo recibo. Em numerário acima do limite da escola, fica à espera de outra pessoa o
+        aprovar. Tudo ou nada: se o pagamento falhar, a factura dos serviços também não fica. ``values``: allocations
+        ([{id, amount}]), service_ids, method, reference, notes e key."""
+        self._check_access()
+        student = self._student(student_id)
+        allocations = values.get('allocations') or []
+        service_ids = values.get('service_ids') or []
+        method = values.get('method')
+        reference = values.get('reference') or ''
+        notes = values.get('notes') or ''
+        key = values.get('key') or False
+        company = self.env.company
+        journal = self._pay_journal(method)
+        if not journal:
+            raise UserError(self.env._('A escola não tem um diário para esta forma de pagamento.'))
+        Move = self.env['account.move']
+        rows = [(Move.browse(row['id']).exists(), float(row['amount'] or 0)) for row in allocations]
+        rows = [(move, amount) for move, amount in rows if move and amount > 0]
+        sale = Move
+        if service_ids:
+            sale = student._edu_charge_services([(service_id, 1) for service_id in service_ids], key=key)
+            if sale.amount_residual > 0.005:
+                rows.append((sale, sale.amount_residual))
+        if not rows:
+            raise UserError(self.env._('Escolha pelo menos uma factura ou um serviço.'))
+        total = sum(amount for _move, amount in rows)
+        memo = ' · '.join(part for part in [(reference or '').strip(), (notes or '').strip()] if part)
+        if method == 'cash' and company.edu_cash_approval and total > company.edu_cash_approval_threshold:
+            self.env['edu.fee.payment.request'].create(
+                {
+                    'student_id': student.id,
+                    'company_id': company.id,
+                    'submitted_by_id': self.env.uid,
+                    'method': 'cash',
+                    'amount': total,
+                    'date': self._today(),
+                    'reference': memo or False,
+                    'journal_id': journal.id,
+                    'invoice_ids': [fields.Command.set([move.id for move, _amount in rows])],
+                }
+            )
+            return {'status': 'pending', 'total': self._money(total)}
+        payments = student._edu_pay_invoices(rows, journal, memo=memo or None)
+        return {
+            'status': 'done',
+            'total': self._money(total),
+            'receipts': [p.l10n_ao_edi_document_no or p.name for p in payments],
+            'payment_ids': payments.ids,
+        }
 
     # Cobrar: o balcão dos serviços e produtos
 

@@ -202,6 +202,38 @@ class TestEduRoles(TransactionCase):
         self.assertEqual(Treasury.charge(student.id, items, False, 'visita-1')['id'], sale['id'])
         self.assertEqual(self.env['account.move'].browse(sale['id']).amount_total, 26_800)
         self.assertEqual(len(Treasury.student_data(student.id)['open']), 1)
+        # Registar um pagamento: parte da factura do balcão e um serviço novo, num só recibo.
+        self.assertEqual(Treasury.student_action(student.id, 'pay', [sale['id']])['tag'], 'edu_roles.treasury_pay')
+        self.assertFalse(
+            [m for m in Treasury.payment_data(student.id)['methods'] if m['key'] == 'cash' and m['available']]
+        )
+        self.env['account.journal'].create({'name': 'Caixa', 'code': 'CXA', 'type': 'cash'})
+        data = Treasury.payment_data(student.id)
+        self.assertEqual([i['id'] for i in data['invoices']], [sale['id']])
+        self.assertEqual([m['key'] for m in data['methods'] if m['available']][:1], ['cash'])
+        declaration = next(item for item in data['services'] if item['name'] == 'Declaração')
+        self.env.company.edu_cash_approval = False
+        result = Treasury.register_payment(
+            student.id,
+            {
+                'allocations': [{'id': sale['id'], 'amount': 6_800}],
+                'service_ids': [declaration['id']],
+                'method': 'cash',
+                'reference': 'T-1',
+                'key': 'visita-2',
+            },
+        )
+        self.assertEqual(result['status'], 'done')
+        payment = self.env['account.payment'].browse(result['payment_ids'])
+        self.assertEqual((payment.amount, payment.memo), (8_800, 'T-1'))
+        self.assertEqual(self.env['account.move'].browse(sale['id']).amount_residual, 20_000)
+        # Em numerário acima do limite fica à espera de outra pessoa.
+        self.env.company.write({'edu_cash_approval': True, 'edu_cash_approval_threshold': 10_000})
+        pending = Treasury.register_payment(
+            student.id, {'allocations': [{'id': sale['id'], 'amount': 20_000}], 'method': 'cash'}
+        )
+        self.assertEqual(pending['status'], 'pending')
+        self.assertEqual(self.env['account.move'].browse(sale['id']).amount_residual, 20_000)
         with self.assertRaises(AccessError):
             self.env['edu.treasury'].with_user(self.clerk).home_data()
 

@@ -473,3 +473,67 @@ class EduStudent(models.Model):
         )
         move.action_post()
         return move
+
+    def _edu_pay_invoices(self, allocations, journal, day=None, memo=None):
+        """Pagamento ao balcão com o valor escolhido para cada factura (como no secPed): ``allocations`` são pares
+        (factura, valor). Um pagamento por adquirente (o aluno ou o encarregado), com um recibo que lista o que liquidou
+        em cada factura. As facturas pagas por inteiro reconciliam-se primeiro; as pagas em parte ficam com o valor
+        exacto (uma parcial com esse montante, como o Odoo as cria)."""
+        self.ensure_one()
+        currency = self.company_id.currency_id
+        day = day or fields.Date.context_today(self)
+        by_partner = {}
+        for move, value in allocations:
+            amount = currency.round(value)
+            if move.edu_student_id != self or move.state != 'posted' or move.move_type != 'out_invoice':
+                raise UserError(self.env._('A factura %s não é deste aluno.', move.name))
+            if amount <= 0:
+                continue
+            if currency.compare_amounts(amount, move.amount_residual) > 0:
+                raise UserError(
+                    self.env._(
+                        'O valor de %(invoice)s passa o que falta pagar dela (%(due)s).',
+                        invoice=move.name,
+                        due=currency.format(move.amount_residual),
+                    )
+                )
+            by_partner.setdefault(move.partner_id, []).append((move, amount))
+        if not by_partner:
+            raise UserError(self.env._('Escolha pelo menos uma factura ou um serviço.'))
+        Payment = self.env['account.payment']
+        payments = Payment
+        for partner, rows in by_partner.items():
+            payment = Payment.create(
+                {
+                    'payment_type': 'inbound',
+                    'partner_type': 'customer',
+                    'partner_id': partner.id,
+                    'amount': sum(amount for _move, amount in rows),
+                    'date': day,
+                    'journal_id': journal.id,
+                    'memo': memo or self.env._('Propinas de %s', self.name),
+                }
+            )
+            payment.action_post()
+            credit = payment.move_id.line_ids.filtered(lambda line: line.account_id.account_type == 'asset_receivable')
+            rows.sort(key=lambda row: currency.compare_amounts(row[1], row[0].amount_residual) < 0)
+            for move, amount in rows:
+                debit = move.line_ids.filtered(
+                    lambda line: line.account_id.account_type == 'asset_receivable' and not line.reconciled
+                )
+                if currency.compare_amounts(amount, move.amount_residual) == 0:
+                    (credit | debit).reconcile()
+                else:
+                    self.env['account.partial.reconcile'].create(
+                        {
+                            'debit_move_id': debit[:1].id,
+                            'credit_move_id': credit.id,
+                            'amount': amount,
+                            'debit_amount_currency': amount,
+                            'credit_amount_currency': amount,
+                        }
+                    )
+            payments |= payment
+        # O recibo das facturas liquidadas (só com a facturação electrónica ligada; sem ela não faz nada).
+        payments._l10n_ao_edi_issue_receipt()
+        return payments

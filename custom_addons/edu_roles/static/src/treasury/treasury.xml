@@ -264,7 +264,7 @@
                             </p>
                         </div>
                         <div class="d-flex flex-wrap gap-2">
-                            <button type="button" class="btn btn-primary" t-att-disabled="!d.balance.has_open" t-on-click="() => this.receive([])">Receber pagamento</button>
+                            <button type="button" class="btn btn-primary" t-on-click="() => this.receive([])">Registar um pagamento</button>
                             <button type="button" class="btn btn-secondary" t-on-click="() => this.run('charge')">Cobrar serviços e produtos</button>
                         </div>
                     </header>
@@ -398,6 +398,142 @@
                                         <div t-if="g.phone" class="small text-muted" t-out="g.phone"/>
                                     </li>
                                 </ul>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <t t-name="edu_roles.TreasuryPay">
+        <div class="o_action o_edu_treasury">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header class="o_edu_tr_header">
+                        <div>
+                            <h1 class="o_edu_tr_title">Registar um pagamento</h1>
+                            <p class="mb-0 text-muted o_edu_tr_lead">
+                                <t t-out="d.student.name"/>. Pagamento feito ao balcão: fica confirmado e sai o recibo
+                                (em numerário acima do limite da escola, depois de outra pessoa o aprovar).
+                                <span t-if="this.total > 0" class="text-body">Total a receber: <span class="o_edu_tr_num fw-semibold" t-out="this.money(this.total)"/>.</span>
+                            </p>
+                        </div>
+                        <button type="button" class="btn btn-secondary" t-on-click="() => this.back()">Voltar à ficha</button>
+                    </header>
+
+                    <div class="o_edu_tr_grid">
+                        <div class="o_edu_tr_main">
+                            <section class="o_edu_tr_card p-0" aria-labelledby="o_edu_tr_pay_inv">
+                                <div class="o_edu_tr_card_head d-block">
+                                    <h2 id="o_edu_tr_pay_inv" class="o_edu_tr_h2 mb-1">As facturas</h2>
+                                    <p class="small text-muted mb-0">Escolha o que se paga e quanto de cada uma.</p>
+                                </div>
+                                <p t-if="!d.invoices.length" class="px-3 pb-3 mb-0 text-muted">
+                                    Este aluno não tem facturas por pagar. Pode registar só serviços, mais abaixo.
+                                </p>
+                                <t t-else="">
+                                    <ul class="o_edu_tr_list o_edu_tr_items">
+                                        <li t-foreach="d.invoices" t-as="inv" t-key="inv.id" t-att-class="{ 'o_edu_tr_picked': this.isChosen(inv) }">
+                                            <label class="o_edu_tr_item_name">
+                                                <input type="checkbox" class="form-check-input" t-att-checked="this.isChosen(inv)" t-on-change="() => this.toggleInvoice(inv)"/>
+                                                <span class="d-block">
+                                                    <span class="d-block" t-out="inv.label"/>
+                                                    <span class="d-block small text-muted">
+                                                        <t t-out="inv.number"/>, <t t-out="inv.late ? 'venceu' : 'vence'"/> a <t t-out="inv.due"/>, por pagar
+                                                        <span class="o_edu_tr_num" t-att-class="{ 'text-danger': inv.late }" t-out="this.money(inv.residual)"/>
+                                                    </span>
+                                                </span>
+                                            </label>
+                                            <label t-if="this.isChosen(inv)" class="o_edu_tr_amount">
+                                                <span class="visually-hidden">Quanto se paga de <t t-out="inv.label"/></span>
+                                                <input type="number" min="0" step="0.01" class="form-control text-end o_edu_tr_num"
+                                                       t-att-class="{ 'is-invalid': this.exceeds(inv) }" t-att-max="inv.residual"
+                                                       t-att-value="this.state.alloc[inv.id]" t-on-input="(ev) => this.onAmount(inv, ev)"/>
+                                                <span class="small text-muted" t-out="d.currency"/>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                    <div class="px-3 py-2">
+                                        <p class="small text-muted mb-0" t-out="this.invoicesHint"/>
+                                        <p t-if="this.excessive" class="small text-danger mb-0">O valor a vermelho passa o que falta pagar dessa factura.</p>
+                                        <p t-if="this.olderLeft" class="small text-warning mb-0" t-out="this.olderHint"/>
+                                    </div>
+                                </t>
+                            </section>
+
+                            <section class="o_edu_tr_card p-0" aria-labelledby="o_edu_tr_pay_svc">
+                                <div class="o_edu_tr_card_head d-block">
+                                    <h2 id="o_edu_tr_pay_svc" class="o_edu_tr_h2 mb-1">Serviços (opcional)</h2>
+                                    <p class="small text-muted mb-0">Cobrar e pagar no mesmo acto um serviço da escola.</p>
+                                </div>
+                                <p t-if="!d.student.enrolled" class="px-3 pb-3 mb-0 text-muted">O aluno não tem matrícula activa: os serviços só se cobram a quem está matriculado.</p>
+                                <p t-elif="!d.services.length" class="px-3 pb-3 mb-0 text-muted">Não há serviços no catálogo. Criam-se em Planos e taxas.</p>
+                                <t t-else="">
+                                    <ul class="o_edu_tr_list o_edu_tr_items">
+                                        <li t-foreach="d.services" t-as="item" t-key="item.id" t-att-class="{ 'o_edu_tr_picked': this.isService(item) }">
+                                            <label class="o_edu_tr_item_name">
+                                                <input type="checkbox" class="form-check-input" t-att-checked="this.isService(item)" t-on-change="() => this.toggleService(item)"/>
+                                                <span class="d-block">
+                                                    <span class="d-block" t-out="item.name"/>
+                                                    <span class="d-block small text-muted" t-out="item.rate ? 'com IVA de ' + item.rate + '%' : 'isento de IVA'"/>
+                                                </span>
+                                            </label>
+                                            <span class="o_edu_tr_num" t-out="item.price"/>
+                                        </li>
+                                    </ul>
+                                    <p t-if="this.cardBlocked" class="small text-danger px-3 py-2 mb-0">O cartão de estudante cobra-se sozinho: registe-o num pagamento à parte.</p>
+                                </t>
+                            </section>
+
+                            <section class="o_edu_tr_card" aria-labelledby="o_edu_tr_pay_how">
+                                <h2 id="o_edu_tr_pay_how" class="o_edu_tr_h2">Como foi pago</h2>
+                                <div class="o_edu_tr_form">
+                                    <label class="o_edu_tr_field">
+                                        <span>Forma de pagamento</span>
+                                        <select class="form-select" t-on-change="(ev) => this.onMethod(ev)">
+                                            <option t-foreach="d.methods" t-as="m" t-key="m.key" t-att-value="m.key"
+                                                    t-att-selected="m.key === this.state.method" t-att-disabled="!m.available">
+                                                <t t-out="m.label"/><t t-if="!m.available"> (a escola não tem o diário)</t>
+                                            </option>
+                                        </select>
+                                    </label>
+                                    <label class="o_edu_tr_field">
+                                        <span>N.º da operação (opcional)</span>
+                                        <input type="text" class="form-control" placeholder="Do talão do TPA ou do depósito"
+                                               t-att-value="this.state.reference" t-on-input="(ev) => this.onReference(ev)"/>
+                                    </label>
+                                    <label class="o_edu_tr_field o_edu_tr_wide">
+                                        <span>Notas (opcional)</span>
+                                        <textarea class="form-control" rows="2" t-att-value="this.state.notes" t-on-input="(ev) => this.onNotes(ev)"/>
+                                    </label>
+                                </div>
+                                <p t-if="this.state.method === 'cash' and !d.cash_open" class="small text-warning mt-3 mb-0">
+                                    A sua caixa está fechada: abra-a em Aprovações e caixa, para o numerário entrar no fecho do turno.
+                                </p>
+                                <p t-if="this.needsApproval" class="small text-warning mt-2 mb-0">
+                                    Numerário acima de <t t-out="this.money(d.cash_threshold)"/>: o pagamento fica à espera de outra pessoa o aprovar, e só depois sai o recibo.
+                                </p>
+                            </section>
+
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-primary" t-att-disabled="!this.canSubmit" t-on-click="() => this.submit()" t-out="this.submitLabel"/>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.back()">Cancelar</button>
+                            </div>
+                        </div>
+
+                        <aside class="o_edu_tr_side">
+                            <section class="o_edu_tr_card" aria-labelledby="o_edu_tr_pay_help">
+                                <h2 id="o_edu_tr_pay_help" class="o_edu_tr_h2 d-flex align-items-center gap-2">
+                                    <i class="oi" data-icon="payments" aria-hidden="true"/> Pagamento ao balcão
+                                </h2>
+                                <ul class="small ps-3 mb-2">
+                                    <li>Fica confirmado de imediato, sem passar pela validação. Em numerário acima do limite da escola, outra pessoa tem de o aprovar.</li>
+                                    <li>Pode pagar propinas e serviços no mesmo acto.</li>
+                                    <li>Sai um recibo fiscal com tudo o que se pagou.</li>
+                                </ul>
+                                <p class="small text-muted mb-0">O recibo fica na ficha do aluno, para imprimir.</p>
                             </section>
                         </aside>
                     </div>

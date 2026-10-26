@@ -7,6 +7,33 @@ import { standardActionServiceProps } from "@web/webclient/actions/action_plugin
 const PAGE = 50;
 const plural = (n, one, many) => (n === 1 ? one : `${n.toLocaleString("pt-PT")} ${many}`);
 
+// Como o servidor (2.500,00 Kz): o pt-PT do navegador não agrupa os milhares de quatro algarismos.
+function formatMoney(amount, currency) {
+    const [units, cents] = (Math.round(amount * 100) / 100).toFixed(2).split(".");
+    return `${units.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${cents} ${currency}`;
+}
+
+// Uma linha como a factura a calcula: o preço sem IVA vezes a quantidade e o IVA arredondado por excesso (AGT).
+function saleLine(item, quantity) {
+    const net = Math.round(item.net * quantity * 100) / 100;
+    const tax = Math.ceil(Math.round(net * item.rate * 1e4) / 1e4 - 1e-9) / 100;
+    return { net, tax, gross: net + tax };
+}
+
+// Uma chave por visita e por escolha: repetir depois de um erro devolve a factura já emitida; mudar a escolha é outra
+// venda.
+function visitKey() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function saleKey(visit, signature) {
+    let hash = 5381;
+    for (let index = 0; index < signature.length; index++) {
+        hash = ((hash << 5) + hash + signature.charCodeAt(index)) | 0;
+    }
+    return `${visit}-${(hash >>> 0).toString(36)}`;
+}
+
 /**
  * O painel da tesouraria, como o das Finanças do secPed: em frases, o que já venceu e quanto se cobrou e o que está em
  * atraso (vencido há mais do que a tolerância da escola) e de quantos alunos; o que pede atenção (comprovativos por
@@ -265,7 +292,7 @@ export class TreasuryStudent extends Component {
     }
 
     receive(ids) {
-        return this.run("receive", ids);
+        return this.run("pay", ids);
     }
 
     // Anular uma factura: com a justificação; fica pedida a outro utilizador quando a escola o exige.
@@ -487,8 +514,7 @@ export class TreasuryCharge extends Component {
         this.notification = useService("notification");
         const context = this.props.action.context || {};
         this.studentId = context.student_id || context.active_id;
-        // Uma chave por visita: repetir depois de um erro devolve a factura já emitida em vez de cobrar duas vezes.
-        this.visit = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        this.visit = visitKey();
         this.state = proxy({ data: null, qty: {}, dueDate: "", busy: false, done: null });
         onWillStart(() => this.load());
         onMounted(() => this.props.updateActionState?.({ active_id: this.studentId }));
@@ -521,11 +547,8 @@ export class TreasuryCharge extends Component {
         return this.hasCard && (this.selected.length > 1 || this.selected.some((item) => this.state.qty[item.id] > 1));
     }
 
-    // Como a factura: o preço sem IVA vezes a quantidade e o IVA de cada linha arredondado por excesso (AGT).
     line(item) {
-        const net = Math.round(item.net * this.quantity(item) * 100) / 100;
-        const tax = Math.ceil(Math.round(net * item.rate * 1e4) / 1e4 - 1e-9) / 100;
-        return { net, tax, gross: net + tax };
+        return saleLine(item, this.quantity(item));
     }
 
     get totals() {
@@ -540,9 +563,7 @@ export class TreasuryCharge extends Component {
     }
 
     money(amount) {
-        // Como o servidor (2.500,00 Kz): o pt-PT do navegador não agrupa os milhares de quatro algarismos.
-        const [units, cents] = (Math.round(amount * 100) / 100).toFixed(2).split(".");
-        return `${units.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${cents} ${this.state.data.currency}`;
+        return formatMoney(amount, this.state.data.currency);
     }
 
     quantity(item) {
@@ -572,17 +593,12 @@ export class TreasuryCharge extends Component {
     }
 
     key() {
-        // A chave muda com o que se cobra: mudar a escolha depois de um erro é outra venda, não a repetição da primeira.
         const signature = this.selected
             .map((item) => `${item.id}x${this.state.qty[item.id]}`)
             .sort()
             .join(",")
             .concat(this.state.dueDate || "");
-        let hash = 5381;
-        for (let index = 0; index < signature.length; index++) {
-            hash = ((hash << 5) + hash + signature.charCodeAt(index)) | 0;
-        }
-        return `${this.visit}-${(hash >>> 0).toString(36)}`;
+        return saleKey(this.visit, signature);
     }
 
     async charge() {
@@ -607,11 +623,12 @@ export class TreasuryCharge extends Component {
     async receive() {
         const action = await this.orm.call("edu.treasury", "student_action", [
             this.studentId,
-            "receive",
+            "pay",
             [this.state.done.id],
             false,
         ]);
-        return this.action.doAction(action, { onClose: () => this.back() });
+        // Toma o lugar do balcão no trilho: depois de registar, volta-se à ficha.
+        return this.action.doAction(action, { stackPosition: "replaceCurrentAction" });
     }
 
     printInvoice() {
@@ -621,7 +638,7 @@ export class TreasuryCharge extends Component {
     }
 
     again() {
-        this.visit = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        this.visit = visitKey();
         this.state.qty = {};
         this.state.done = null;
     }
@@ -631,7 +648,240 @@ export class TreasuryCharge extends Component {
     }
 }
 
+/**
+ * Registar um pagamento, como no secPed: em cima as facturas por pagar (das mais antigas para as mais recentes; de cada
+ * uma paga-se tudo ou parte), por baixo os serviços da escola (batas, cartão, declarações…), que se cobram e pagam no
+ * mesmo acto, e no fim como foi pago. Sai um recibo com tudo. Em numerário acima do limite da escola, o pagamento fica à
+ * espera de outra pessoa o aprovar. É tudo ou nada: se o pagamento falhar, a factura dos serviços também não fica.
+ */
+export class TreasuryPay extends Component {
+    static template = "edu_roles.TreasuryPay";
+    static components = { Layout };
+
+    props = useProps(standardActionServiceProps);
+
+    setup() {
+        this.orm = useService("orm");
+        this.action = useService("action");
+        this.notification = useService("notification");
+        const context = this.props.action.context || {};
+        this.studentId = context.student_id || context.active_id;
+        this.preselected = context.invoice_ids || [];
+        this.visit = visitKey();
+        this.state = proxy({
+            data: null,
+            alloc: {},
+            services: {},
+            method: "cash",
+            reference: "",
+            notes: "",
+            busy: false,
+        });
+        onWillStart(() => this.load());
+        onMounted(() => this.props.updateActionState?.({ active_id: this.studentId }));
+    }
+
+    get display() {
+        return { controlPanel: {} };
+    }
+
+    async load() {
+        const data = await this.orm.call("edu.treasury", "payment_data", [this.studentId]);
+        this.env.config.setDisplayName?.(`Registar um pagamento de ${data.student.name}`);
+        // Vindo do «Receber» de uma factura (ou das escolhidas na ficha), elas vêm já escolhidas, por inteiro.
+        const alloc = {};
+        for (const invoice of data.invoices) {
+            if (this.preselected.includes(invoice.id)) {
+                alloc[invoice.id] = invoice.residual.toFixed(2);
+            }
+        }
+        const available = data.methods.find((method) => method.available);
+        this.state.method = available ? available.key : "cash";
+        this.state.alloc = alloc;
+        this.state.data = data;
+    }
+
+    money(amount) {
+        return formatMoney(amount, this.state.data.currency);
+    }
+
+    // As facturas
+
+    isChosen(invoice) {
+        return invoice.id in this.state.alloc;
+    }
+
+    toggleInvoice(invoice) {
+        const alloc = { ...this.state.alloc };
+        if (invoice.id in alloc) {
+            delete alloc[invoice.id];
+        } else {
+            alloc[invoice.id] = invoice.residual.toFixed(2);
+        }
+        this.state.alloc = alloc;
+    }
+
+    onAmount(invoice, ev) {
+        this.state.alloc = { ...this.state.alloc, [invoice.id]: ev.target.value };
+    }
+
+    amountOf(invoice) {
+        return Number(this.state.alloc[invoice.id]) || 0;
+    }
+
+    exceeds(invoice) {
+        return this.isChosen(invoice) && this.amountOf(invoice) > invoice.residual + 0.009;
+    }
+
+    get excessive() {
+        return this.chosenInvoices.some((invoice) => this.exceeds(invoice));
+    }
+
+    get chosenInvoices() {
+        return this.state.data.invoices.filter((invoice) => this.isChosen(invoice));
+    }
+
+    get invoicesTotal() {
+        return this.chosenInvoices.reduce((total, invoice) => total + this.amountOf(invoice), 0);
+    }
+
+    get olderLeft() {
+        // Aviso (não impede): saldam-se meses recentes e ficam por pagar outros mais antigos.
+        const paid = this.chosenInvoices.filter((invoice) => this.amountOf(invoice) > 0);
+        if (!paid.length) {
+            return 0;
+        }
+        const oldest = paid.map((invoice) => invoice.due_key).sort()[0];
+        return this.state.data.invoices.filter(
+            (invoice) => invoice.due_key < oldest && !(this.amountOf(invoice) > 0)
+        ).length;
+    }
+
+    get invoicesHint() {
+        const count = this.chosenInvoices.length;
+        if (!count) {
+            return "Escolha as facturas a saldar. Pode pagar só parte de uma.";
+        }
+        return `${plural(count, "Uma factura escolhida", "facturas escolhidas")}, ${this.money(this.invoicesTotal)}.`;
+    }
+
+    get olderHint() {
+        const count = this.olderLeft;
+        return `Está a saldar meses mais recentes e a deixar ${plural(
+            count,
+            "uma factura mais antiga",
+            "facturas mais antigas"
+        )} por pagar. O habitual é pagar primeiro a dívida mais antiga.`;
+    }
+
+    // Os serviços
+
+    isService(item) {
+        return Boolean(this.state.services[item.id]);
+    }
+
+    toggleService(item) {
+        this.state.services = { ...this.state.services, [item.id]: !this.state.services[item.id] };
+    }
+
+    get chosenServices() {
+        return this.state.data.services.filter((item) => this.isService(item));
+    }
+
+    get servicesTotal() {
+        return this.chosenServices.reduce((total, item) => total + saleLine(item, 1).gross, 0);
+    }
+
+    get cardBlocked() {
+        // O cartão cobra-se sozinho: cada factura paga do cartão dá um cartão.
+        return this.chosenServices.length > 1 && this.chosenServices.some((item) => item.card);
+    }
+
+    // Como foi pago
+
+    onMethod(ev) {
+        this.state.method = ev.target.value;
+    }
+
+    onReference(ev) {
+        this.state.reference = ev.target.value;
+    }
+
+    onNotes(ev) {
+        this.state.notes = ev.target.value;
+    }
+
+    get total() {
+        return Math.round((this.invoicesTotal + this.servicesTotal) * 100) / 100;
+    }
+
+    get needsApproval() {
+        const data = this.state.data;
+        return this.state.method === "cash" && data.cash_approval && this.total > data.cash_threshold;
+    }
+
+    get submitLabel() {
+        return this.total > 0 ? `Registar ${this.money(this.total)}` : "Registar o pagamento";
+    }
+
+    get canSubmit() {
+        const method = this.state.data.methods.find((m) => m.key === this.state.method);
+        return (
+            this.total > 0 &&
+            method?.available &&
+            !this.cardBlocked &&
+            !this.excessive &&
+            !this.state.busy
+        );
+    }
+
+    async submit() {
+        if (!this.canSubmit) {
+            return;
+        }
+        this.state.busy = true;
+        try {
+            const services = this.chosenServices.map((item) => item.id).sort();
+            const result = await this.orm.call("edu.treasury", "register_payment", [
+                this.studentId,
+                {
+                    allocations: this.chosenInvoices.map((invoice) => ({
+                        id: invoice.id,
+                        amount: this.amountOf(invoice),
+                    })),
+                    service_ids: services,
+                    method: this.state.method,
+                    reference: this.state.reference,
+                    notes: this.state.notes,
+                    key: saleKey(this.visit, services.join(",")),
+                },
+            ]);
+            if (result.status === "pending") {
+                this.notification.add(
+                    `O pagamento de ${result.total} ficou registado, mas em numerário acima do limite da escola fica à ` +
+                        "espera de outra pessoa o aprovar, em Aprovações e caixa. Até lá as facturas continuam por " +
+                        "pagar: não o registe outra vez.",
+                    { type: "warning", sticky: true, title: "À espera de aprovação" }
+                );
+            } else {
+                this.notification.add(
+                    `Pagamento de ${result.total} registado. O recibo está na ficha do aluno.`,
+                    { type: "success" }
+                );
+            }
+            return this.back();
+        } finally {
+            this.state.busy = false;
+        }
+    }
+
+    back() {
+        return this.action.restore();
+    }
+}
+
 registry.category("actions").add("edu_roles.treasury_home", TreasuryHome);
+registry.category("actions").add("edu_roles.treasury_pay", TreasuryPay);
 registry.category("actions").add("edu_roles.treasury_charge", TreasuryCharge);
 registry.category("actions").add("edu_roles.treasury_controls", TreasuryControls);
 registry.category("actions").add("edu_roles.treasury_differences", TreasuryDifferences);

@@ -296,6 +296,25 @@ class TestEduFees(AccountTestInvoicingCommon):
         self.assertEqual(by_due[-1].amount_residual, 30_000)
         self.assertEqual(self.student.edu_open_amount, 30_000)
 
+    def test_payment_chosen_amounts(self):
+        """Como no secPed: escolhe-se quanto se paga de cada factura (mesmo que não seja a mais antiga) e sai um só
+        pagamento; passar o que falta pagar de uma factura é recusado."""
+        enrollment = self._enroll(date(2026, 9, 1))
+        enrollment_fee, september, october = self._generate(enrollment, date(2026, 10, 15)).sorted(
+            lambda m: (m.invoice_date_due, m.id)
+        )
+        cash = self.company_data['default_journal_cash']
+        with self.assertRaisesRegex(UserError, 'passa o que falta pagar'):
+            self.student._edu_pay_invoices([(september, 50_001)], cash)
+        payments = self.student._edu_pay_invoices(
+            [(october, 50_000), (september, 10_000), (enrollment_fee, 5_000)], cash, memo='Talão 7'
+        )
+        self.assertEqual((len(payments), payments.amount, payments.memo), (1, 65_000, 'Talão 7'))
+        self.assertEqual(
+            [(m.payment_state, m.amount_residual) for m in (enrollment_fee, september, october)],
+            [('partial', 15_000), ('partial', 40_000), ('paid', 0)],
+        )
+
     def test_portal_payment_request(self):
         """O pagamento enviado pelo portal: validar paga primeiro as facturas escolhidas; rejeitar pede o motivo."""
         enrollment = self._enroll(date(2026, 9, 1))
