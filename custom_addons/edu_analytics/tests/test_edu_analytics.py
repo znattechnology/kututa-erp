@@ -94,3 +94,21 @@ class TestEduAnalytics(TransactionCase):
             self.env['edu.analytics'].with_user(teacher).options()
         secretary = new_test_user(self.env, 'sec.analise', groups='edu_core.group_edu_user')
         self.assertTrue(self.env['edu.analytics'].with_user(secretary).options()['years'])
+
+    def test_decisions_exits_capacity(self):
+        Analytics = self.env['edu.analytics']
+        data = Analytics.dashboard(self.filters)
+        decisions = data['decisions']
+        self.assertEqual([y['year_id'] for y in decisions['years']], [self.first.id])
+        self.assertEqual(decisions['years'][0]['negatives'][0], 2)
+        # Saídas: a Carla desistiu e o Bruno, que reprovou, não renovou no ano seguinte.
+        first = data['exits']['years'][0]
+        self.assertEqual(first['counts'], {'dropped': 1, 'transferred': 0, 'not_renewed': 1})
+        self.assertEqual(first['not_renewed_retained'], 1)
+        action = Analytics.students(self.filters, 'exit', {'year_id': self.first.id, 'key': 'not_renewed'})
+        self.assertEqual(action['domain'][0][2], self.students['Bruno'].ids)
+        # Turmas: a do primeiro ano com dois alunos (sem a que desistiu) em 30 vagas.
+        capacity = data['capacity']
+        self.assertEqual(
+            [(y['classes'], y['students'], y['capacity']) for y in capacity['years']], [(1, 2, 30), (1, 1, 30)]
+        )

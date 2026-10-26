@@ -45,6 +45,8 @@ export class AnalyticsDashboard extends Component {
                 shift_id: false,
                 cohort_year_id: false,
                 class_year_id: false,
+                detail_year_id: false,
+                capacity_year_id: false,
             },
             tab: "summary",
             data: null,
@@ -376,6 +378,129 @@ export class AnalyticsDashboard extends Component {
         return classes
             ? classes.rows.map((r) => ({ ...r, width: r.average === null ? 0 : (100 * r.average) / 20 }))
             : [];
+    }
+
+    /** Escolhe o ano de um quadro (as disciplinas em atraso, as turmas) e volta a carregar. */
+    onYearOf(key, ev) {
+        this.state.filters[key] = parseInt(ev.target.value, 10) || false;
+        this.load();
+    }
+
+    // Decisões e disciplinas em atraso
+
+    get decisions() {
+        return this.state.data && this.state.data.decisions;
+    }
+
+    /** As negativas da decisão: uma barra por ano (100% dos avaliados). */
+    get negativeRows() {
+        const d = this.decisions;
+        const labels = this.state.options.negatives;
+        return d
+            ? d.years.map((y) => ({
+                  ...y,
+                  parts: labels
+                      .filter((l) => y.negatives[l.index])
+                      .map((l) => ({ ...l, count: y.negatives[l.index], width: (100 * y.negatives[l.index]) / y.decided })),
+              }))
+            : [];
+    }
+
+    get arrearsBars() {
+        const d = this.decisions;
+        const max = d ? Math.max(1, ...d.arrears.map((a) => a.count)) : 1;
+        return d ? d.arrears.map((a) => ({ ...a, width: (100 * a.count) / max })) : [];
+    }
+
+    get lastDecisions() {
+        const d = this.decisions;
+        return d ? d.years[d.years.length - 1] : null;
+    }
+
+    get pendingExams() {
+        const d = this.decisions;
+        return d ? d.exams.reduce((n, e) => n + e.pending, 0) : 0;
+    }
+
+    // Saídas
+
+    get exits() {
+        return this.state.data && this.state.data.exits;
+    }
+
+    /** As saídas de cada ano: uma barra com a parte de cada tipo de saída nas matrículas do ano, à escala do ano com
+     * mais saídas (para se verem as diferenças). */
+    get exitRows() {
+        const e = this.exits;
+        if (!e) {
+            return [];
+        }
+        const max = Math.max(1, ...e.years.map((y) => y.rate || 0));
+        return e.years.map((y) => ({
+            ...y,
+            parts: this.state.options.exits
+                .filter((k) => y.counts[k.key])
+                .map((k) => ({
+                    ...k,
+                    count: y.counts[k.key],
+                    width: (100 * ((100 * y.counts[k.key]) / Math.max(1, y.enrolled))) / max,
+                })),
+        }));
+    }
+
+    get lastExits() {
+        const e = this.exits;
+        const closed = e ? e.years.filter((y) => y.counts.not_renewed !== null) : [];
+        return closed[closed.length - 1] || null;
+    }
+
+    get reasonBars() {
+        const e = this.exits;
+        const max = e ? Math.max(1, ...e.reasons.map((r) => r.count)) : 1;
+        return e ? e.reasons.map((r) => ({ ...r, width: (100 * r.count) / max })) : [];
+    }
+
+    get monthColumns() {
+        const e = this.exits;
+        if (!e) {
+            return [];
+        }
+        const max = Math.max(1, ...e.months.map((m) => m.count));
+        const names = Object.fromEntries(this.state.options.months.map((m) => [m.id, m.name]));
+        return e.months.map((m) => ({ ...m, name: names[m.month], height: (100 * m.count) / max }));
+    }
+
+    get hasMonths() {
+        return this.monthColumns.some((m) => m.count);
+    }
+
+    // Turmas e capacidade
+
+    get capacity() {
+        return this.state.data && this.state.data.capacity;
+    }
+
+    get lastCapacity() {
+        const c = this.capacity;
+        return c ? c.years.find((y) => y.year_id === c.year_id) : null;
+    }
+
+    meterClass(occupancy) {
+        if (occupancy === null || occupancy === undefined) {
+            return "";
+        }
+        if (occupancy > 100) {
+            return "o_edu_meter_bad";
+        }
+        return occupancy < 50 ? "o_edu_meter_warn" : "";
+    }
+
+    meterWidth(occupancy) {
+        return `width: ${Math.min(100, occupancy || 0)}%`;
+    }
+
+    sizeLabel(index) {
+        return this.state.options.sizes[index].label;
     }
 }
 

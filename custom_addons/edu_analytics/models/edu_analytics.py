@@ -22,6 +22,16 @@ BANDS = [(0, 10, 'Menos de 10'), (10, 14, '10 a 13'), (14, 17, '14 a 16'), (17, 
 TYPES = [('new', 'Novas'), ('renewal', 'Confirmações'), ('repeat', 'Repetentes'), ('transfer_in', 'Transferidos')]
 SUBJECT_ROWS = 12
 SUBJECT_MIN = 15
+# As negativas da decisão do ano por grupos (no técnico contam também as disciplinas em atraso das classes anteriores).
+NEGATIVES = [(0, 0, 'Nenhuma'), (1, 1, '1'), (2, 2, '2'), (3, 4, '3 ou 4'), (5, 999, '5 ou mais')]
+# Quem sai da escola no fim ou a meio do ano.
+EXITS = [('dropped', 'Desistiu'), ('transferred', 'Transferido'), ('not_renewed', 'Não renovou')]
+# Os meses do ano lectivo, de Setembro a Agosto.
+MONTHS = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8]
+MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+# As turmas pelo número de alunos, para comparar o tamanho com o resultado.
+SIZES = [(0, 29, 'Até 29 alunos'), (30, 39, '30 a 39'), (40, 44, '40 a 44'), (45, 999, '45 ou mais')]
+ARREARS_ROWS = 10
 
 
 def _rate(part, total):
@@ -30,6 +40,10 @@ def _rate(part, total):
 
 def _mean(values):
     return round(sum(values) / len(values), 2) if values else None
+
+
+def _bucket(value, buckets):
+    return next(index for index, (low, high, _label) in enumerate(buckets) if low <= value <= high)
 
 
 def _band(value):
@@ -73,6 +87,10 @@ class EduAnalytics(models.AbstractModel):
             'cohort_keys': [{'key': k, 'label': label} for k, label in COHORT],
             'bands': [{'index': i, 'label': label} for i, (_l, _h, label) in enumerate(BANDS)],
             'types': [{'key': k, 'label': label} for k, label in TYPES],
+            'negatives': [{'index': i, 'label': label} for i, (_l, _h, label) in enumerate(NEGATIVES)],
+            'exits': [{'key': k, 'label': label} for k, label in EXITS],
+            'sizes': [{'index': i, 'label': label} for i, (_l, _h, label) in enumerate(SIZES)],
+            'months': [{'id': m, 'name': MONTH_NAMES[m - 1]} for m in MONTHS],
         }
 
     def _domain(self, filters, with_years=True):
@@ -115,16 +133,27 @@ class EduAnalytics(models.AbstractModel):
             average = None
             if result and status in DECIDED and result.average:
                 average = result.average * 20 / scale(result.level_id or e.class_id.level_id)
+            decided = bool(result) and status in DECIDED
             rows.append(
                 {
                     'id': e.id,
                     'student': e.student_id.id,
                     'year': e.academic_year_id.id,
                     'class': e.class_id.id,
+                    'class_number': e.class_number,
                     'course': e.course_id.id,
                     'type': e.enrollment_type,
                     'outcome': outcome,
                     'average': average,
+                    'negatives': result.negative_count if decided else None,
+                    'arrears': result.negative_subject_ids.ids if decided and outcome == 'conditional' else [],
+                    'manual': decided and bool(result.manual),
+                    'decision_reason': result.reason if decided and result.manual else False,
+                    'result': result.id if result else False,
+                    'reason': e.drop_reason_code if e.state == 'dropped' else False,
+                    'requested': e.drop_requested_by if e.state == 'dropped' else False,
+                    'justified': e.drop_justified if e.state == 'dropped' else False,
+                    'month': e.drop_date.month if e.state in ('dropped', 'transferred') and e.drop_date else False,
                 }
             )
         return rows
@@ -144,6 +173,9 @@ class EduAnalytics(models.AbstractModel):
             'highlights': self._highlights(summary, rows, years),
             'cohort': self._cohort(filters),
             'performance': self._performance(filters, rows, years, enrollments),
+            'decisions': self._decisions(filters, rows, years),
+            'exits': self._exits(rows, years),
+            'capacity': self._capacity(filters, rows, years),
         }
 
     def _summary(self, rows, years, enrollments):
@@ -508,6 +540,275 @@ class EduAnalytics(models.AbstractModel):
             'rows': out,
         }
 
+    # Decisões e disciplinas em atraso
+
+    def _decisions(self, filters, rows, years):
+        """As negativas da decisão de cada ano, as disciplinas que mais ficam em atraso, as decisões tomadas à mão
+        (pela direcção ou vindas das pautas assinadas) e os exames especiais."""
+        closed = [y for y in years if any(r['year'] == y.id and r['negatives'] is not None for r in rows)]
+        if not closed:
+            return None
+        per_year = []
+        for year in closed:
+            mine = [r for r in rows if r['year'] == year.id and r['negatives'] is not None]
+            buckets = Counter(_bucket(r['negatives'], NEGATIVES) for r in mine)
+            manual = [r for r in mine if r['manual']]
+            per_year.append(
+                {
+                    'year_id': year.id,
+                    'year': year.name,
+                    'decided': len(mine),
+                    'negatives': [buckets[i] for i in range(len(NEGATIVES))],
+                    'manual': len(manual),
+                    'manual_outcomes': {k: sum(1 for r in manual if r['outcome'] == k) for k in DECIDED},
+                    'passed_with_many': sum(
+                        1 for r in mine if r['outcome'] in ('promoted', 'graduated') and r['negatives'] >= 3
+                    ),
+                }
+            )
+        year = next((y for y in closed if y.id == filters.get('detail_year_id')), closed[-1])
+        conditional = [r for r in rows if r['year'] == year.id and r['outcome'] == 'conditional']
+        arrears = Counter(subject for r in conditional for subject in r['arrears'])
+        subjects = self.env['edu.subject'].browse([s for s, _n in arrears.most_common(ARREARS_ROWS)])
+        names = {s.id: s.name for s in subjects}
+        manual = [r for r in rows if r['year'] == year.id and r['manual']]
+        return {
+            'years': per_year,
+            'manual_reasons': [
+                {'reason': reason or self.env._('Sem fundamento registado'), 'count': n}
+                for reason, n in Counter(r['decision_reason'] for r in manual).most_common(3)
+            ],
+            'detail_year_id': year.id,
+            'detail_year': year.name,
+            'detail_years': [{'id': y.id, 'name': y.name} for y in closed],
+            'conditional': len(conditional),
+            'arrears': [
+                {'subject_id': s, 'subject': names[s], 'count': n, 'share': _rate(n, len(conditional))}
+                for s, n in arrears.most_common(ARREARS_ROWS)
+            ],
+            'exams': self._exams(rows, closed),
+        }
+
+    def _exams(self, rows, years):
+        """Os exames especiais (recurso, disciplina em atraso, melhoria) pedidos pela decisão de cada ano."""
+        results = [r['result'] for r in rows if r['result']]
+        if not results:
+            return []
+        Requirement = self.env['edu.exam.requirement']
+        kinds = dict(Requirement._fields['kind']._description_selection(self.env))
+        groups = Requirement._read_group(
+            [('year_result_id', 'in', results)],
+            ['year_result_id', 'kind', 'state', 'passed'],
+            ['__count'],
+        )
+        cells = defaultdict(lambda: {'pending': 0, 'done': 0, 'passed': 0})
+        year_of = {r['result']: r['year'] for r in rows if r['result']}
+        for result, kind, state, passed, count in groups:
+            cell = cells[(year_of[result.id], kind)]
+            cell[state] += count
+            if state == 'done' and passed:
+                cell['passed'] += count
+        return [
+            {
+                'year_id': y.id,
+                'year': y.name,
+                'kind': kind,
+                'label': kinds[kind].split(' (')[0],
+                **cells[(y.id, kind)],
+            }
+            for y in years
+            for kind in kinds
+            if (y.id, kind) in cells
+        ]
+
+    # Saídas
+
+    def _not_renewed(self, rows, years):
+        """As matrículas de quem acabou o ano e não voltou a matricular-se no ano seguinte (quando já existe): sem
+        contar quem concluiu o curso nem quem transitou da última classe do plano."""
+        all_years = self.env['edu.academic.year'].search([('date_start', '!=', False)], order='date_start')
+        following = {a.id: b.id for a, b in zip(all_years, all_years[1:], strict=False)}
+        self.env.cr.execute(
+            'SELECT DISTINCT student_id, academic_year_id FROM edu_enrollment WHERE company_id = %s AND state != %s',
+            [self.env.company.id, 'draft'],
+        )
+        enrolled = set(self.env.cr.fetchall())
+        classes = self.env['edu.class'].browse({r['class'] for r in rows})
+        last_class = {}
+        for edu_class in classes:
+            numbers = edu_class.curriculum_id.year_ids.mapped('class_number')
+            last_class[edu_class.id] = bool(numbers) and edu_class.class_number == max(numbers)
+        out = defaultdict(set)
+        for r in rows:
+            nxt = following.get(r['year'])
+            if not nxt or r['outcome'] not in ('promoted', 'conditional', 'retained'):
+                continue
+            if r['outcome'] != 'retained' and last_class.get(r['class']):
+                continue
+            if (r['student'], nxt) not in enrolled:
+                out[r['year']].add(r['id'])
+        return out, following
+
+    def _exits(self, rows, years):
+        not_renewed, following = self._not_renewed(rows, years)
+        per_year = []
+        for year in years:
+            mine = [r for r in rows if r['year'] == year.id]
+            outcomes = Counter(r['outcome'] for r in mine)
+            gone = len(not_renewed[year.id]) if following.get(year.id) and not year.is_current else None
+            per_year.append(
+                {
+                    'year_id': year.id,
+                    'year': year.name,
+                    'current': year.is_current,
+                    'enrolled': len(mine),
+                    'counts': {
+                        'dropped': outcomes['dropped'],
+                        'transferred': outcomes['transferred'],
+                        'not_renewed': gone,
+                    },
+                    'not_renewed_retained': sum(
+                        1 for r in mine if r['id'] in not_renewed[year.id] and r['outcome'] == 'retained'
+                    ),
+                    'rate': _rate(outcomes['dropped'] + outcomes['transferred'] + (gone or 0), len(mine)),
+                }
+            )
+        numbers = sorted({r['class_number'] for r in rows})
+        by_class = []
+        for number in numbers:
+            cells = []
+            for year in years:
+                mine = [r for r in rows if r['year'] == year.id and r['class_number'] == number]
+                gone = sum(1 for r in mine if r['id'] in not_renewed[year.id])
+                cells.append(
+                    {
+                        'year_id': year.id,
+                        'enrolled': len(mine),
+                        'out': sum(1 for r in mine if r['outcome'] in ('dropped', 'transferred')) + gone,
+                    }
+                )
+            by_class.append({'class_number': number, 'name': f'{number}ª' if number else 'Iniciação', 'cells': cells})
+        dropped = [r for r in rows if r['outcome'] == 'dropped']
+        Enrollment = self.env['edu.enrollment']
+        reasons = dict(Enrollment._fields['drop_reason_code']._description_selection(self.env))
+        requesters = dict(Enrollment._fields['drop_requested_by']._description_selection(self.env))
+        reason_counts = Counter(r['reason'] or 'none' for r in dropped)
+        moved = [r for r in rows if r['month']]
+        months = Counter(r['month'] for r in moved)
+        top = max(months.values()) if months else 0
+        return {
+            'years': per_year,
+            'by_class': by_class,
+            'dropped': len(dropped),
+            'reasons': [
+                {'key': k, 'label': reasons.get(k, self.env._('Sem motivo registado')), 'count': n}
+                for k, n in reason_counts.most_common()
+            ],
+            'requesters': [
+                {'label': requesters.get(k, self.env._('Não registado')), 'count': n}
+                for k, n in Counter(r['requested'] or 'none' for r in dropped).most_common()
+            ],
+            'justified': sum(1 for r in dropped if r['justified']),
+            'months': [{'month': m, 'count': months[m]} for m in MONTHS],
+            # Quase todas no mesmo mês: datas postas pela migração, não as da saída.
+            'one_month': len(moved) >= 10 and top >= 0.9 * len(moved),
+        }
+
+    # Turmas e capacidade
+
+    def _capacity(self, filters, rows, years):
+        domain = [('company_id', '=', self.env.company.id), ('academic_year_id', 'in', years.ids)]
+        if filters.get('course_id'):
+            domain.append(('course_id', '=', filters['course_id']))
+        if filters.get('class_number') not in (None, False, ''):
+            domain.append(('class_number', '=', filters['class_number']))
+        if filters.get('shift_id'):
+            domain.append(('shift_id', '=', filters['shift_id']))
+        classes = self.env['edu.class'].search(domain)
+        if not classes:
+            return None
+        by_class = defaultdict(list)
+        for r in rows:
+            by_class[r['class']].append(r)
+
+        def stats(edu_class):
+            mine = by_class.get(edu_class.id, [])
+            students = sum(1 for r in mine if r['outcome'] not in ('dropped', 'transferred'))
+            outcomes = Counter(r['outcome'] for r in mine)
+            decided = sum(outcomes[k] for k in DECIDED)
+            return {
+                'class_id': edu_class.id,
+                'name': edu_class._editor_label(),
+                'shift': edu_class.shift_id.name or '',
+                'students': students,
+                'capacity': edu_class.capacity,
+                'occupancy': _rate(students, edu_class.capacity),
+                'transition': _rate(sum(outcomes[k] for k in PASSED), decided),
+                'passed': sum(outcomes[k] for k in PASSED),
+                'decided': decided,
+                'average': _mean([r['average'] for r in mine if r['average'] is not None]),
+                'averages': [r['average'] for r in mine if r['average'] is not None],
+            }
+
+        per_class = {c.id: stats(c) for c in classes}
+        per_year = []
+        for year in years:
+            mine = [per_class[c.id] for c in classes if c.academic_year_id == year]
+            shifts = defaultdict(lambda: [0, 0, 0])
+            for c in mine:
+                cell = shifts[c['shift'] or self.env._('Sem turno')]
+                cell[0] += 1
+                cell[1] += c['students']
+                cell[2] += c['capacity']
+            students, capacity = sum(c['students'] for c in mine), sum(c['capacity'] for c in mine)
+            per_year.append(
+                {
+                    'year_id': year.id,
+                    'year': year.name,
+                    'classes': len(mine),
+                    'students': students,
+                    'capacity': capacity,
+                    'occupancy': _rate(students, capacity),
+                    'over': sum(1 for c in mine if c['capacity'] and c['students'] > c['capacity']),
+                    'low': sum(1 for c in mine if c['capacity'] and c['students'] < c['capacity'] / 2),
+                    'shifts': [
+                        {'name': name, 'classes': n, 'students': st, 'occupancy': _rate(st, cap)}
+                        for name, (n, st, cap) in sorted(shifts.items())
+                    ],
+                }
+            )
+        year = next((y for y in years if y.id == filters.get('capacity_year_id')), years[-1])
+        listed = sorted(
+            (per_class[c.id] for c in classes if c.academic_year_id == year),
+            key=lambda c: (-(c['occupancy'] or 0), c['name']),
+        )
+        sizes = defaultdict(lambda: {'classes': 0, 'passed': 0, 'decided': 0, 'averages': []})
+        for c in per_class.values():
+            if c['decided']:
+                cell = sizes[_bucket(c['students'], SIZES)]
+                cell['classes'] += 1
+                cell['passed'] += c['passed']
+                cell['decided'] += c['decided']
+                cell['averages'] += c['averages']
+        for c in per_class.values():
+            c.pop('averages')
+        return {
+            'years': per_year,
+            'year_id': year.id,
+            'year': year.name,
+            'classes': listed,
+            'sizes': [
+                {
+                    'index': i,
+                    'classes': sizes[i]['classes'],
+                    'transition': _rate(sizes[i]['passed'], sizes[i]['decided']),
+                    'average': _mean(sizes[i]['averages']),
+                }
+                for i in range(len(SIZES))
+                if sizes[i]['classes']
+            ],
+        }
+
     # Os alunos de cada número
 
     @api.model
@@ -544,7 +845,46 @@ class EduAnalytics(models.AbstractModel):
                 enrollments = enrollments.filtered(lambda e: e.class_id.id == params['class_id'])
                 title = self.env._('Turma %s', enrollments.class_id[:1]._editor_label() if enrollments else '')
             rows = self._rows(enrollments)
-            if kind == 'outcome':
+            if kind == 'exit' and params.get('key') == 'not_renewed':
+                not_renewed, _following = self._not_renewed(rows, enrollments.academic_year_id)
+                wanted = set().union(*not_renewed.values()) if not_renewed else set()
+                rows = [r for r in rows if r['id'] in wanted]
+                title = f'{year.name} · {dict(EXITS)["not_renewed"]}'
+            elif kind == 'exit':
+                rows = [r for r in rows if r['outcome'] == params['key']]
+                title = f'{year.name} · {dict(EXITS)[params["key"]]}'
+            elif kind == 'negatives':
+                rows = [
+                    r
+                    for r in rows
+                    if r['negatives'] is not None and _bucket(r['negatives'], NEGATIVES) == params['index']
+                ]
+                title = self.env._('%(year)s · negativas: %(n)s', year=year.name, n=NEGATIVES[params['index']][2])
+            elif kind == 'arrears':
+                subject = self.env['edu.subject'].browse(params['subject_id'])
+                rows = [r for r in rows if r['outcome'] == 'conditional' and subject.id in r['arrears']]
+                title = self.env._('%(year)s · em atraso a %(subject)s', year=year.name, subject=subject.name)
+            elif kind == 'manual':
+                rows = [r for r in rows if r['manual'] and params.get('key') in (None, r['outcome'])]
+                title = self.env._('%s · decisões tomadas à mão', year.name)
+            elif kind == 'exam':
+                requirements = self.env['edu.exam.requirement'].search(
+                    [
+                        ('year_result_id', 'in', [r['result'] for r in rows if r['result']]),
+                        ('kind', '=', params['kind']),
+                        ('state', '=', params['state']),
+                    ]
+                )
+                wanted = set(requirements.student_id.ids)
+                rows = [r for r in rows if r['student'] in wanted]
+                title = self.env._('%s · exames especiais', year.name)
+            elif kind == 'reason':
+                rows = [r for r in rows if r['outcome'] == 'dropped' and (r['reason'] or 'none') == params['key']]
+                title = self.env._('Desistências por motivo')
+            elif kind == 'month':
+                rows = [r for r in rows if r['month'] == params['month']]
+                title = self.env._('Saídas em %s', MONTH_NAMES[params['month'] - 1])
+            elif kind == 'outcome':
                 rows = [r for r in rows if r['outcome'] == params['key']]
                 title = f'{year.name} · {dict(OUTCOMES)[params["key"]]}'
             elif kind == 'type':
