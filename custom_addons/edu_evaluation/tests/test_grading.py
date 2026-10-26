@@ -73,7 +73,12 @@ class TestGrading(BaseCase):
         self.assertEqual(frequency_classification([15, 15, 15], TECHNICAL, imported=0), 0)
         self.assertEqual(technical_ct(8, 12), 10)
         self.assertEqual(technical_ct(14, 12), 13)
-        self.assertEqual(technical_ct(None, 12), 12)
+        # A nota que ainda falta conta 0: (0 + 12)/2 e (14 + 0)/2. Sem nenhuma, sem classificação.
+        self.assertEqual(technical_ct(None, 12), 6)
+        self.assertEqual(technical_ct(14, None), 7)
+        self.assertIsNone(technical_ct(None, None))
+        # Último trimestre (sem prova trimestral): a classificação é a NPP.
+        self.assertEqual(technical_ct(14, None, with_test=False), 14)
 
     def test_global_exam(self):
         # prova-global.helper.spec

@@ -33,11 +33,6 @@ function rounder(mode) {
     return mode === "decimal2" ? (value) => Math.floor(value * 100 + 0.5 + 1e-9) / 100 : roundUnits;
 }
 
-function mean(values) {
-    const present = values.filter((v) => v !== null && v !== undefined);
-    return present.length ? present.reduce((a, b) => a + b, 0) / present.length : null;
-}
-
 function fmtDecimal(value) {
     return value === null || value === undefined ? "" : (Math.round(value * 10) / 10).toFixed(1).replace(".", ",");
 }
@@ -398,8 +393,13 @@ export class GradeGrid extends Component {
         }
         const npt = this.current(student, trimester, "npt", term.npt);
         if (data.technical) {
+            // CT = (NPP + NPT)/2, com a nota que ainda falta a contar 0 (grading.technical_ct); no último trimestre não
+            // há prova trimestral e a classificação é a NPP.
             const npp = this.current(student, trimester, "npp", term.mac);
-            const value = mean([npp, npt]);
+            if (npp === null && npt === null) {
+                return { value: null, preview: true };
+            }
+            const value = trimester.has_npt ? ((npp ?? 0) + (npt ?? 0)) / 2 : npp;
             return { value: value === null ? null : this.round(value), preview: true };
         }
         if (term.mac === null || npt === null) {

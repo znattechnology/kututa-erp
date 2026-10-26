@@ -247,6 +247,24 @@ class TestEduEvaluation(TransactionCase):
         practical.weekly_hours = 5
         self.assertFalse(practical.has_global_exam)
 
+    def test_technical_ct_missing_part_counts_zero(self):
+        """CT = (NPP + NPT)/2 mesmo com uma das notas ainda por lançar: a que falta conta 0 (só a NPP de 14 dá 7; só a
+        NPT de 12 dá 6). Com as duas, a média; no último trimestre (sem prova trimestral), a NPP."""
+        ana, bento = self.students[:2]
+        ana_enrollment, bento_enrollment = self._enroll(self.class10, (ana, bento), ['LP'])
+        self._assess(self.class10, 'LP', self.t1, 'continuous', {ana: 14})
+        self.assertEqual(self._term(ana_enrollment, 'LP', self.t1).mt, 7)
+        self._assess(self.class10, 'LP', self.t1, 'trimester_test', {bento: 12})
+        self.assertEqual(self._term(bento_enrollment, 'LP', self.t1).mt, 6)
+        test = self.env['edu.assessment'].search(
+            [('class_id', '=', self.class10.id), ('subject_id.code', '=', 'LP'), ('trimester_id', '=', self.t1.id),
+             ('assessment_type', '=', 'trimester_test')]
+        )  # fmt: skip
+        test.grade_ids.filtered(lambda g: g.student_id == ana).score = 10
+        self.assertEqual(self._term(ana_enrollment, 'LP', self.t1).mt, 12)
+        self._assess(self.class10, 'LP', self.t3, 'continuous', {ana: 15})
+        self.assertEqual(self._term(ana_enrollment, 'LP', self.t3).mt, 15)
+
     def test_technical_last_trimester_npp_only(self):
         """No técnico, o último trimestre só tem a NPP (CF = (CT2 + NPP3)/2, como nas cadernetas e no resumo do regime);
         a prova do fim do ano é a prova global."""

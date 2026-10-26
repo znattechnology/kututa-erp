@@ -122,9 +122,10 @@ class EduTermResult(models.Model):
         if policy.regime == TECHNICAL:
             # No último trimestre só há a NPP: a prova do fim do ano é a prova global (CF = (CT2 + NPP3)/2, como nas
             # cadernetas das escolas e no resumo do regime: «CF = (P1 + CT2)/2»).
-            if trimester == enrollment.academic_year_id.trimester_ids.sorted('number')[-1:]:
+            last = trimester == enrollment.academic_year_id.trimester_ids.sorted('number')[-1:]
+            if last:
                 npt = None
-            mt = grading.technical_ct(mac, npt, round_fn)
+            mt = grading.technical_ct(mac, npt, round_fn, with_test=not last)
         else:
             last = enrollment.academic_year_id.trimester_ids.sorted('number')[-1:]
             if policy._is_exam_class(enrollment.class_number) and trimester == last:

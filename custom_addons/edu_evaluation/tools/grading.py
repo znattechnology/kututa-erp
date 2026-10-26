@@ -105,10 +105,15 @@ def national_final(mt3, national, weight, round_fn=round_units):
 # ----------------------------------------------------------------------------
 # Técnico-profissional (Despacho 60/08)
 # ----------------------------------------------------------------------------
-def technical_ct(npp, npt, round_fn=round_units):
-    """Classificação do trimestre: média das partes existentes (NPP, NPT)."""
-    value = mean([npp, npt])
-    return round_fn(value) if value is not None else None
+def technical_ct(npp, npt, round_fn=round_units, with_test=True):
+    """Classificação do trimestre no técnico: (NPP + NPT) / 2, com a nota que ainda falta a contar 0 (só a NPP de 14
+    dá 7). Sem nenhuma das duas não há classificação. No último trimestre não há prova trimestral (``with_test``
+    falso): a classificação é a NPP."""
+    if npp is None and npt is None:
+        return None
+    if not with_test:
+        return round_fn(npp) if npp is not None else None
+    return round_fn(((npp or 0) + (npt or 0)) / 2)
 
 
 def missing_as_zero(values):

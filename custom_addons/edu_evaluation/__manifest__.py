@@ -1,6 +1,6 @@
 {
     'name': 'Secretaria Express - Avaliação',
-    'version': '20.0.1.2.0',
+    'version': '20.0.1.3.0',
     'summary': 'Notas, mini-pautas e pautas, motores do ensino geral (Dec. 424/25) e técnico (Despacho 60/08), '
     'conselho de turma, exames especiais, reapreciação e decisão de transição',
     'description': """
