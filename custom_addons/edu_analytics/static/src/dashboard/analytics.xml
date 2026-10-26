@@ -172,7 +172,7 @@
                                 <th class="text-end">Ocupação</th>
                                 <th class="text-end">Transitaram</th>
                                 <th class="text-end">Com atraso</th>
-                                <th class="text-end">Não transitaram</th>
+                                <th class="text-end">Reprovaram</th>
                                 <th class="text-end">Desistiram</th>
                                 <th class="text-end">Transferidos</th>
                                 <th class="text-end">Média final</th>
@@ -196,7 +196,7 @@
                     </table>
                 </div>
                 <p class="o_edu_an_note mt-2 mb-0">
-                    As taxas de transição e de retenção contam sobre os alunos avaliados; a desistência, sobre as matrículas do ano.
+                    As taxas de transição e de reprovação contam sobre os alunos avaliados; a desistência, sobre as matrículas do ano.
                 </p>
             </section>
         </div>
@@ -243,7 +243,7 @@
                     <span class="o_edu_kpi_detail"><t t-out="this.fmt(c.kpis.left)"/> desistiram, foram transferidos ou não renovaram</span>
                 </div>
                 <div class="o_edu_kpi">
-                    <span class="o_edu_kpi_label">Ficaram retidos pelo menos uma vez</span>
+                    <span class="o_edu_kpi_label">Reprovaram pelo menos uma vez</span>
                     <span class="o_edu_kpi_value" t-out="this.share(c.kpis.ever_retained, c.size)"/>
                     <span class="o_edu_kpi_detail"><t t-out="this.fmt(c.kpis.ever_retained)"/> alunos<t t-if="c.kpis.graduated">; <t t-out="this.fmt(c.kpis.graduated)"/> concluíram o curso</t></span>
                 </div>
@@ -478,7 +478,7 @@
                             <span class="o_edu_hbar_value"><t t-out="this.fmt(r.average, 1)"/></span>
                             <span class="o_edu_an_class_detail">
                                 <t t-out="this.pct(r.transition)"/> transitaram
-                                <span class="text-muted">· <t t-out="this.fmt(r.students)"/> alunos<t t-if="r.retained">, <t t-out="r.retained === 1 ? '1 retido' : r.retained + ' retidos'"/></t></span>
+                                <span class="text-muted">· <t t-out="this.fmt(r.students)"/> alunos<t t-if="r.retained">, <t t-out="r.retained === 1 ? '1 reprovado' : r.retained + ' reprovados'"/></t></span>
                             </span>
                         </button>
                     </li>

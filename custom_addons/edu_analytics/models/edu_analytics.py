@@ -8,7 +8,7 @@ OUTCOMES = [
     ('promoted', 'Transitou'),
     ('graduated', 'Concluiu o curso'),
     ('conditional', 'Transitou com disciplinas em atraso'),
-    ('retained', 'Não transitou'),
+    ('retained', 'Reprovou'),
     ('dropped', 'Desistiu'),
     ('transferred', 'Transferido'),
     ('ongoing', 'Em curso'),
@@ -205,7 +205,7 @@ class EduAnalytics(models.AbstractModel):
             last, before = closed[-1], closed[-2]
             for key, label, worse_up in (
                 ('transition', self.env._('A taxa de transição'), False),
-                ('retention', self.env._('A retenção'), True),
+                ('retention', self.env._('A reprovação'), True),
                 ('dropout', self.env._('A desistência'), True),
             ):
                 if last[key] is None or before[key] is None:

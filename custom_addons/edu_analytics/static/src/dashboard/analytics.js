@@ -176,7 +176,7 @@ export class AnalyticsDashboard extends Component {
             },
             {
                 key: "retention",
-                label: "Não transitaram",
+                label: "Taxa de reprovação",
                 value: lastClosed ? pct(lastClosed.retention) : "—",
                 year: lastClosed && lastClosed.year,
                 detail: lastClosed ? `${fmt(lastClosed.outcomes.retained)} de ${fmt(lastClosed.decided)} avaliados` : "",
