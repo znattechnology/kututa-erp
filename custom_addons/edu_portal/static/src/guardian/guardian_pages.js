@@ -3,7 +3,7 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { Layout } from "@web/search/layout";
 import { standardActionServiceProps } from "@web/webclient/actions/action_plugin";
-import { FeedFilters, feedGroups, feedWhen, HelpPage, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
+import { FeeMonths, FeedFilters, feedGroups, feedWhen, HelpPage, StudentAbsences, StudentExams, StudentFees, StudentGrades } from "@edu_portal/student/student_pages";
 
 const list = (items) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}` : items[0] || "");
 const count = (n, one, many) => (n === 1 ? one : `${n} ${many}`);
@@ -73,7 +73,7 @@ const FEED_ACTIONS = {
     rdec: "edu_portal.action_guardian_rdec",
 };
 
-export class GuardianHome extends GuardianPage(GuardianBase) {
+export class GuardianHome extends GuardianPage(FeeMonths(GuardianBase)) {
     static template = "edu_portal.GuardianHome";
     static page = "home";
 
@@ -373,7 +373,12 @@ export class GuardianFees extends GuardianPage(StudentFees) {
 
     selectChild(child) {
         this.state.tab = null;
+        this.state.paying = false;
         return super.selectChild(child);
+    }
+
+    submitPayment(values) {
+        return this.orm.call("edu.guardian.portal", "submit_payment", [this.state.data.child_id, values]);
     }
 }
 
@@ -456,7 +461,7 @@ export class GuardianHelp extends HelpPage(GuardianBase) {
                 label: "Propinas",
                 icon: "payments",
                 questions: [
-                    { q: "Como pago as propinas?", a: "Na tesouraria da escola. Quando o pagamento é confirmado, a factura passa para «Pagas» na página das propinas.", action: "edu_portal.action_guardian_fees", actionLabel: "Ver as propinas" },
+                    { q: "Como pago as propinas?", a: "Na tesouraria da escola, ou por transferência ou depósito: nas propinas, carrega em «Pagar por transferência ou depósito», escolhe as facturas e envia o comprovativo. A tesouraria confere-o e, quando confirma, a factura passa para «Pagas». Se o comprovativo não for aceite, vês o motivo nos pagamentos enviados.", action: "edu_portal.action_guardian_fees", actionLabel: "Ver as propinas" },
                     { q: "Quando é que uma propina fica em atraso?", a: "No dia seguinte ao vencimento. A escola dá alguns dias de tolerância antes de aplicar restrições (o aviso e, em algumas escolas, o bloqueio das notas); a página das propinas diz quantos." },
                     { q: "Porque é que o valor de uma propina aumentou?", a: "Se a escola cobra multa por atraso, ela é somada à propina. Nas propinas a multa aparece à parte, factura a factura." },
                 ],

@@ -504,10 +504,12 @@
                         <p t-if="!f.rows.length" class="mb-0">Ainda não tens facturas de propinas.</p>
 
                         <t t-call="edu_portal.Part.FeesOverview"/>
+                        <t t-call="edu_portal.Part.FeesPay"/>
                         <t t-call="edu_portal.Part.FeesTable"/>
+                        <t t-call="edu_portal.Part.FeesRequests"/>
 
                         <p class="mb-0 small text-muted">
-                            Quem paga as propinas é o teu encarregado de educação, na tesouraria da escola. Quando um pagamento é confirmado, a factura passa para «Pagas».
+                            Paga-se na tesouraria da escola, ou por transferência ou depósito com o comprovativo enviado aqui. Quando a tesouraria confirma o pagamento, a factura passa para «Pagas».
                         </p>
                     </t>
                 </div>
@@ -1443,6 +1445,94 @@
 
     <!-- As facturas em separadores (por pagar, pagas, isentas ou anuladas): a tabela (no telemóvel uma lista). Usa ``f``
          (as propinas) e os métodos da página das propinas. -->
+    <!-- Pagar por transferência ou depósito: as facturas (sem escolha, as mais antigas), o valor, a data, a referência e
+         o comprovativo, para a tesouraria validar. -->
+    <t t-name="edu_portal.Part.FeesPay">
+        <div t-if="f.due.length and !this.state.paying" class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-primary" t-on-click="() => this.startPay()">
+                <i class="oi me-1" data-icon="payments" aria-hidden="true"/>Pagar por transferência ou depósito
+            </button>
+            <span class="small text-muted">Envia o comprovativo e a tesouraria confirma o pagamento.</span>
+        </div>
+        <section t-if="this.state.paying" class="o_edu_st_card o_edu_st_pay" aria-labelledby="o_edu_st_pay_title">
+            <t t-set="pay" t-value="this.state.pay"/>
+            <h2 id="o_edu_st_pay_title" class="o_edu_st_h2">Pagar por transferência ou depósito</h2>
+            <div t-if="f.bank.length" class="o_edu_st_pay_bank">
+                <div class="small text-muted mb-1">Dados bancários da escola</div>
+                <div t-foreach="f.bank" t-as="b" t-key="b_index">
+                    <span class="fw-semibold" t-out="b.bank or 'Conta'"/>: <span class="o_edu_st_num" t-out="b.account"/>
+                    <span t-if="b.holder" class="text-muted"> (<t t-out="b.holder"/>)</span>
+                </div>
+            </div>
+            <p t-else="" class="small text-muted">Peça na tesouraria os dados bancários da escola.</p>
+
+            <fieldset class="mt-3">
+                <legend class="fs-6 fw-semibold mb-2">O que estás a pagar</legend>
+                <div class="o_edu_st_pay_list">
+                    <label t-foreach="f.due" t-as="r" t-key="r.id" class="o_edu_st_pay_item">
+                        <input type="checkbox" class="form-check-input" t-att-checked="this.isPaySelected(r)"
+                               t-on-change="() => this.togglePayInvoice(r)"/>
+                        <span class="flex-grow-1"><t t-out="r.name"/><span t-if="r.late_days" class="small text-danger"> · em atraso</span></span>
+                        <span class="o_edu_st_num" t-out="r.due"/>
+                    </label>
+                </div>
+                <div class="small text-muted mt-1">Sem escolher, o pagamento vai para as facturas mais antigas.</div>
+            </fieldset>
+
+            <div class="o_edu_st_pay_fields mt-3">
+                <label class="o_edu_st_pay_field">
+                    <span>Valor pago (Kz)</span>
+                    <input type="number" min="0" step="0.01" class="form-control" t-att-value="pay.amount" t-on-input="(ev) => this.onPayField('amount', ev)"/>
+                </label>
+                <label class="o_edu_st_pay_field">
+                    <span>Forma de pagamento</span>
+                    <select class="form-select" t-on-change="(ev) => this.onPayField('method', ev)">
+                        <option value="transfer" t-att-selected="pay.method === 'transfer'">Transferência bancária</option>
+                        <option value="deposit" t-att-selected="pay.method === 'deposit'">Depósito bancário</option>
+                    </select>
+                </label>
+                <label class="o_edu_st_pay_field">
+                    <span>Data do pagamento</span>
+                    <input type="date" class="form-control" t-att-value="pay.date" t-on-change="(ev) => this.onPayField('date', ev)"/>
+                </label>
+                <label class="o_edu_st_pay_field">
+                    <span>Referência (opcional)</span>
+                    <input type="text" maxlength="64" class="form-control" placeholder="N.º da transferência ou do talão"
+                           t-att-value="pay.reference" t-on-input="(ev) => this.onPayField('reference', ev)"/>
+                </label>
+                <label class="o_edu_st_pay_field o_edu_st_pay_wide">
+                    <span>Comprovativo (PDF ou fotografia, até 5 MB)</span>
+                    <input type="file" class="form-control" accept="application/pdf,image/jpeg,image/png" t-on-change="(ev) => this.onProof(ev)"/>
+                </label>
+            </div>
+            <div t-if="pay.error" class="alert alert-warning small py-2 mt-3 mb-0" role="alert" t-out="pay.error"/>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="button" class="btn btn-primary" t-att-disabled="!this.canSendPay" t-on-click="() => this.sendPay()">
+                    <t t-out="this.state.sending ? 'A enviar…' : 'Enviar para a tesouraria'"/>
+                </button>
+                <button type="button" class="btn btn-secondary" t-on-click="() => this.cancelPay()">Cancelar</button>
+            </div>
+        </section>
+    </t>
+
+    <!-- Os pagamentos enviados pelo portal, com o estado e o motivo de uma rejeição. -->
+    <t t-name="edu_portal.Part.FeesRequests">
+        <section t-if="f.requests.length" class="o_edu_st_card" aria-labelledby="o_edu_st_req_title">
+            <h2 id="o_edu_st_req_title" class="o_edu_st_h2">Pagamentos enviados</h2>
+            <ul class="list-unstyled mb-0 o_edu_st_req_list">
+                <li t-foreach="f.requests" t-as="q" t-key="q.id">
+                    <div class="d-flex flex-wrap align-items-baseline gap-2">
+                        <span class="fw-semibold o_edu_st_num" t-out="q.amount"/>
+                        <span class="text-muted small"><t t-out="q.method"/>, pago a <t t-out="q.date"/><t t-if="q.reference"> · <t t-out="q.reference"/></t></span>
+                        <span class="ms-auto badge" t-att-class="q.css === 'good' ? 'text-bg-success' : (q.css === 'bad' ? 'text-bg-danger' : 'text-bg-warning')" t-out="q.state"/>
+                    </div>
+                    <div t-if="q.reason" class="small text-danger mt-1">Motivo: <t t-out="q.reason"/></div>
+                    <div t-elif="q.pending" class="small text-muted mt-1">Enviado a <t t-out="q.sent"/>; a tesouraria ainda não confirmou.</div>
+                </li>
+            </ul>
+        </section>
+    </t>
+
     <t t-name="edu_portal.Part.FeesTable">
         <div t-if="f.rows.length" class="btn-group align-self-start" role="group" aria-label="Facturas">
             <button type="button" class="btn" t-att-aria-pressed="this.tab === 'due' ? 'true' : 'false'"

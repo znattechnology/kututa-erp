@@ -1,7 +1,7 @@
 from datetime import date
 
 from odoo import Command
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import HttpCase, tagged
 
 
@@ -298,3 +298,14 @@ class TestGuardianPortal(HttpCase):
         # E o mesmo com o aluno: um professor com o perfil «Aluno» não perde os canais do pessoal.
         self.teacher_user.group_ids = [Command.link(self.env.ref('edu_portal.group_edu_student').id)]
         self.assertTrue(self.env['discuss.channel'].with_user(self.teacher_user).search([('id', '=', general.id)]))
+
+    def test_submit_payment_only_for_own_children(self):
+        """O encarregado envia pagamentos dos seus educandos com acesso ao portal, não de outros alunos."""
+        Portal = self.env['edu.guardian.portal'].with_user(self.gil_user)
+        png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+        values = {'method': 'deposit', 'amount': 1_000, 'date': str(date.today()), 'proof': png}
+        with self.assertRaises(UserError):
+            Portal.submit_payment(self.bento.id, values)
+        Portal.submit_payment(self.ana.id, values)
+        request = self.env['edu.fee.payment.request'].search([('student_id', '=', self.ana.id)])
+        self.assertEqual(request.submitted_by_id, self.gil_user)

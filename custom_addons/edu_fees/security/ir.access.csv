@@ -16,6 +16,7 @@ access_edu_late_fee_rule_user,access_edu_late_fee_rule_user,edu.late.fee.rule,ed
 access_edu_late_fee_rule_manager,access_edu_late_fee_rule_manager,edu.late.fee.rule,edu_core.group_edu_manager,crud,
 access_edu_fee_payment_finance,access_edu_fee_payment_finance,edu.fee.payment,edu_fees.group_edu_finance,crud,
 access_edu_fee_service_finance,access_edu_fee_service_finance,edu.fee.service,edu_fees.group_edu_finance,crud,
+access_edu_fee_payment_request_finance,access_edu_fee_payment_request_finance,edu.fee.payment.request,edu_fees.group_edu_finance,crud,
 access_edu_fee_generate_finance,access_edu_fee_generate_finance,edu.fee.generate,edu_fees.group_edu_finance,crud,
 edu_fee_plan_comp_rule,edu.fee.plan multi-empresa,edu.fee.plan,,crud,"[('company_id', 'in', company_ids)]"
 edu_fee_plan_line_comp_rule,edu.fee.plan.line multi-empresa,edu.fee.plan.line,,crud,"[('company_id', 'in', company_ids)]"
@@ -26,3 +27,4 @@ access_edu_student_card_finance,access_edu_student_card_finance,edu.student.card
 access_edu_student_card_manager,access_edu_student_card_manager,edu.student.card,edu_core.group_edu_manager,crud,
 access_edu_student_card_revoke_user,access_edu_student_card_revoke_user,edu.student.card.revoke,edu_core.group_edu_user,crud,
 edu_student_card_comp_rule,edu.student.card multi-empresa,edu.student.card,,crud,"[('company_id', 'in', company_ids)]"
+edu_fee_payment_request_comp_rule,edu.fee.payment.request multi-empresa,edu.fee.payment.request,,crud,"[('company_id', 'in', company_ids)]"

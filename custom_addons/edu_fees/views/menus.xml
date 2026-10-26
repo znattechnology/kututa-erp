@@ -2,6 +2,7 @@
 <odoo>
     <menuitem id="menu_edu_fees" name="Propinas" parent="edu_core.menu_edu_root" sequence="36" groups="edu_fees.group_edu_finance">
         <menuitem id="menu_edu_invoices" action="action_edu_invoices" sequence="10"/>
+        <menuitem id="menu_edu_payment_requests" action="action_edu_fee_payment_request" sequence="15"/>
         <menuitem id="menu_edu_debtors" action="action_edu_debtors" sequence="20"/>
         <menuitem id="menu_edu_scholarship" action="action_edu_scholarship" sequence="30"/>
     </menuitem>

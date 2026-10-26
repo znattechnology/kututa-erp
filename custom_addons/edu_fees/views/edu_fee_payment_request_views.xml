@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Pagamentos enviados pelo portal: a tesouraria confere o comprovativo e valida (regista o pagamento, imputa-o
+         às facturas e emite o recibo) ou rejeita com o motivo, que quem pagou lê no portal. -->
+    <record id="edu_fee_payment_request_list" model="ir.ui.view">
+        <field name="name">edu.fee.payment.request.list</field>
+        <field name="model">edu.fee.payment.request</field>
+        <field name="arch" type="xml">
+            <list string="Pagamentos enviados pelo portal" create="false" decoration-muted="state != 'pending'">
+                <field name="create_date" string="Enviado em" widget="date"/>
+                <field name="student_id"/>
+                <field name="submitted_by_id" optional="show"/>
+                <field name="method"/>
+                <field name="date"/>
+                <field name="reference" optional="show"/>
+                <field name="amount" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge" decoration-warning="state == 'pending'"
+                       decoration-success="state == 'confirmed'" decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+    <record id="edu_fee_payment_request_form" model="ir.ui.view">
+        <field name="name">edu.fee.payment.request.form</field>
+        <field name="model">edu.fee.payment.request</field>
+        <field name="arch" type="xml">
+            <form string="Pagamento enviado pelo portal" create="false">
+                <header>
+                    <button name="action_confirm" type="object" string="Validar" class="btn-primary" invisible="state != 'pending'"
+                            confirm="Registar o pagamento, imputá-lo às facturas e emitir o recibo?"/>
+                    <button name="action_reject" type="object" string="Rejeitar" invisible="state != 'pending'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="student_id" readonly="1"/></h1></div>
+                    <group>
+                        <group string="O que foi enviado">
+                            <field name="amount"/>
+                            <field name="method"/>
+                            <field name="date"/>
+                            <field name="reference"/>
+                            <field name="proof" filename="proof_name"/>
+                            <field name="proof_name" invisible="1"/>
+                            <field name="submitted_by_id"/>
+                            <field name="create_date" string="Enviado em"/>
+                        </group>
+                        <group string="Tesouraria">
+                            <field name="open_amount"/>
+                            <field name="journal_id" options="{'no_create': True}" readonly="state != 'pending'"/>
+                            <field name="reject_reason" readonly="state != 'pending'"
+                                   placeholder="Para rejeitar: o motivo (por exemplo, o comprovativo não é legível)"/>
+                            <field name="verified_by_id" invisible="state == 'pending'"/>
+                            <field name="verified_date" invisible="state == 'pending'"/>
+                            <field name="payment_ids" widget="many2many_tags" invisible="not payment_ids"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="invoice_ids" readonly="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="invoice_date_due"/>
+                            <field name="invoice_line_ids" widget="many2many_tags" optional="hide"/>
+                            <field name="amount_total"/>
+                            <field name="amount_residual"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                    <div class="text-muted">
+                        Sem facturas indicadas, o pagamento vai para as mais antigas. O que sobrar fica como crédito para as
+                        próximas facturas.
+                    </div>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="edu_fee_payment_request_search" model="ir.ui.view">
+        <field name="name">edu.fee.payment.request.search</field>
+        <field name="model">edu.fee.payment.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="student_id"/>
+                <field name="reference"/>
+                <filter name="pending" string="Por validar" domain="[('state', '=', 'pending')]"/>
+                <filter name="confirmed" string="Validados" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="rejected" string="Rejeitados" domain="[('state', '=', 'rejected')]"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_edu_fee_payment_request" model="ir.actions.act_window">
+        <field name="name">Pagamentos por validar</field>
+        <field name="res_model">edu.fee.payment.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Não há pagamentos por validar</p>
+            <p>Os pagamentos que os encarregados e os alunos enviam pelo portal, com o comprovativo, aparecem aqui.</p>
+        </field>
+    </record>
+</odoo>

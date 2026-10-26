@@ -45,6 +45,14 @@ class EduGuardianPortal(models.AbstractModel):
         return children.filtered(lambda s: s.id == student_id)[:1] or children[:1]
 
     @api.model
+    def submit_payment(self, student_id, values):
+        """O encarregado envia um pagamento das propinas de um educando seu (para a tesouraria validar)."""
+        student = self._children().filtered(lambda s: s.id == student_id)
+        if not student:
+            raise UserError(self.env._('Este aluno não é seu educando.'))
+        return self.env['edu.student.portal']._submit_payment(student, values)
+
+    @api.model
     def page_data(self, page, options=None):
         """Os dados de uma página da área do encarregado (as acções cliente ``edu_portal.guardian_*``): ``home``,
         ``notifications`` e ``profile`` falam de todos os educandos; ``children``, ``grades``, ``rdec``, ``absences``,

@@ -8,12 +8,59 @@ import { standardActionServiceProps } from "@web/webclient/actions/action_plugin
 
 const list = (items) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}` : items[0] || "");
 const count = (n, one, many) => (n === 1 ? one : `${n} ${many}`);
+// O comprovativo de um pagamento: PDF ou fotografia, até 5 MB (o servidor confirma).
+const PROOF_MAX = 5 * 1024 * 1024;
+
+function isoToday() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function emptyPayment() {
+    return { invoiceIds: [], amount: "", method: "transfer", date: isoToday(), reference: "", proof: "", proofName: "", error: "" };
+}
+
+/**
+ * A fila das propinas do ano, mês a mês, e a frase que a resume: nas páginas do aluno e no painel do encarregado
+ * (que não herda das páginas do aluno).
+ */
+export const FeeMonths = (Base) =>
+    class extends Base {
+        /** «Pagas 2 de 3, uma em atraso.» — o que a fila dos meses mostra, em palavras. */
+        monthsText(c) {
+            const issued = c.months.filter((m) => m.state !== "none");
+            if (!issued.length) {
+                return "Ainda sem propinas facturadas neste ano lectivo.";
+            }
+            const n = (state) => c.months.filter((m) => m.state === state).length;
+            const paid = n("paid");
+            const parts = [`${paid === 1 ? "Paga" : "Pagas"} ${paid} de ${issued.length}`];
+            if (n("overdue")) {
+                parts.push(count(n("overdue"), "uma em atraso", "em atraso"));
+            }
+            if (n("due")) {
+                parts.push(count(n("due"), "uma por pagar", "por pagar"));
+            }
+            return `${parts.join(", ")}.`;
+        }
+
+        /** Há propinas facturadas neste ano (sem nenhuma, «Em dia» e uma fila vazia não diziam nada). */
+        hasInvoices(c) {
+            return c.months.some((m) => m.state !== "none");
+        }
+
+        monthTitle(m) {
+            const state = { paid: "paga", due: "por pagar", overdue: "em atraso", exempt: "isenta", none: "ainda sem factura" }[m.state];
+            return `Propina de ${m.name}: ${state}${m.due ? ", faltam " + m.due : ""}`;
+        }
+    };
 
 /**
  * A Área do Estudante, como a do secPed-Express e com o aspecto das páginas do professor: cada página pede os seus
  * dados a ``edu.student.portal.page_data`` (sempre os do aluno do utilizador) e mostra-os em cartões.
  */
-class StudentPage extends Component {
+class StudentPage extends FeeMonths(Component) {
     static components = { Layout };
     static page = "";
 
@@ -168,34 +215,6 @@ class StudentPage extends Component {
             ].filter((p) => p.value),
             height: ((m.absent + m.excused + m.late) / max) * 100,
         }));
-    }
-
-    /** «Pagas 2 de 3, uma em atraso.» — o que a fila dos meses mostra, em palavras. */
-    monthsText(c) {
-        const issued = c.months.filter((m) => m.state !== "none");
-        if (!issued.length) {
-            return "Ainda sem propinas facturadas neste ano lectivo.";
-        }
-        const n = (state) => c.months.filter((m) => m.state === state).length;
-        const paid = n("paid");
-        const parts = [`${paid === 1 ? "Paga" : "Pagas"} ${paid} de ${issued.length}`];
-        if (n("overdue")) {
-            parts.push(count(n("overdue"), "uma em atraso", "em atraso"));
-        }
-        if (n("due")) {
-            parts.push(count(n("due"), "uma por pagar", "por pagar"));
-        }
-        return `${parts.join(", ")}.`;
-    }
-
-    /** Há propinas facturadas neste ano (sem nenhuma, «Em dia» e uma fila vazia não diziam nada). */
-    hasInvoices(c) {
-        return c.months.some((m) => m.state !== "none");
-    }
-
-    monthTitle(m) {
-        const state = { paid: "paga", due: "por pagar", overdue: "em atraso", exempt: "isenta", none: "ainda sem factura" }[m.state];
-        return `Propina de ${m.name}: ${state}${m.due ? ", faltam " + m.due : ""}`;
     }
 
     /** Os números das propinas, por cima das facturas (o aluno e o encarregado). */
@@ -600,11 +619,98 @@ export class StudentFees extends StudentPage {
 
     setup() {
         super.setup();
+        this.notification = useService("notification");
         this.state.tab = null;
+        this.state.paying = false;
+        this.state.sending = false;
+        this.state.pay = emptyPayment();
     }
 
     setTab(tab) {
         this.state.tab = tab;
+    }
+
+    // Pagar por transferência ou depósito: o comprovativo vai para a tesouraria validar.
+
+    startPay() {
+        this.state.pay = emptyPayment();
+        this.state.paying = true;
+    }
+
+    cancelPay() {
+        this.state.paying = false;
+    }
+
+    isPaySelected(row) {
+        return this.state.pay.invoiceIds.includes(row.id);
+    }
+
+    /** Escolher as facturas preenche o valor com o que falta pagar delas. */
+    togglePayInvoice(row) {
+        const pay = this.state.pay;
+        pay.invoiceIds = this.isPaySelected(row) ? pay.invoiceIds.filter((id) => id !== row.id) : [...pay.invoiceIds, row.id];
+        const total = this.state.data.fees.due.filter((r) => pay.invoiceIds.includes(r.id)).reduce((n, r) => n + r.due_value, 0);
+        pay.amount = total ? String(Math.round(total * 100) / 100) : "";
+    }
+
+    onPayField(key, ev) {
+        this.state.pay[key] = ev.target.value;
+    }
+
+    onProof(ev) {
+        const file = ev.target.files && ev.target.files[0];
+        const pay = this.state.pay;
+        pay.proof = "";
+        pay.proofName = "";
+        pay.error = "";
+        if (!file) {
+            return;
+        }
+        if (file.size > PROOF_MAX) {
+            pay.error = "O comprovativo tem mais de 5 MB: tire uma fotografia mais pequena ou envie o PDF.";
+            ev.target.value = "";
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            pay.proof = String(reader.result).split(",")[1] || "";
+            pay.proofName = file.name;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    get canSendPay() {
+        const pay = this.state.pay;
+        return Boolean(parseFloat(pay.amount) > 0 && pay.date && pay.proof && !this.state.sending);
+    }
+
+    /** O aluno envia pelo seu portal; o encarregado pelo dele, para o educando escolhido (GuardianFees). */
+    submitPayment(values) {
+        return this.orm.call("edu.student.portal", "submit_payment", [values]);
+    }
+
+    async sendPay() {
+        if (!this.canSendPay) {
+            return;
+        }
+        const pay = this.state.pay;
+        this.state.sending = true;
+        try {
+            await this.submitPayment({
+                invoice_ids: pay.invoiceIds,
+                amount: parseFloat(pay.amount),
+                method: pay.method,
+                date: pay.date,
+                reference: pay.reference,
+                proof: pay.proof,
+                proof_name: pay.proofName,
+            });
+            this.state.paying = false;
+            this.notification.add("Pagamento enviado. A tesouraria vai conferir o comprovativo.", { type: "success" });
+            await this.load();
+        } finally {
+            this.state.sending = false;
+        }
     }
 
     /** O separador escolhido; por omissão o das facturas por pagar, ou o das pagas quando não há nada por pagar. */

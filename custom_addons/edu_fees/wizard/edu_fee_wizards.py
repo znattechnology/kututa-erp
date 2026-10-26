@@ -11,8 +11,9 @@ _logger = logging.getLogger(__name__)
 
 
 class EduFeePayment(models.TransientModel):
-    """Pagamento ao balcão: imputado às facturas em aberto do aluno, da mais antiga para a mais recente; o excedente
-    fica como crédito do adquirente para as próximas facturas. Cada pagamento dá o recibo (RC) pela AGT."""
+    """Pagamento ao balcão: imputado às facturas em aberto do aluno (as escolhidas primeiro, depois da mais antiga para
+    a mais recente); o excedente fica como crédito do adquirente para as próximas facturas. Cada pagamento dá o recibo
+    pela AGT (art. 6.º do DP 71/25)."""
 
     _name = 'edu.fee.payment'
     _description = 'Pagamento de propinas'
@@ -34,11 +35,19 @@ class EduFeePayment(models.TransientModel):
     reference = fields.Char(string='Referência', help='N.º do talão do TPA, da transferência ou do depósito.')
     open_amount = fields.Monetary(related='student_id.edu_open_amount', string='Em aberto')
     invoice_ids = fields.Many2many('account.move', string='Facturas em aberto', compute='_compute_invoice_ids')
+    # As facturas que quem pagou escolheu (o pagamento pelo portal): pagam-se primeiro.
+    selected_invoice_ids = fields.Many2many(
+        'account.move', 'edu_fee_payment_selected_rel', string='Facturas escolhidas'
+    )
 
-    @api.depends('student_id')
+    @api.depends('student_id', 'selected_invoice_ids')
     def _compute_invoice_ids(self):
         for wizard in self:
-            wizard.invoice_ids = wizard.student_id._edu_open_invoices().sorted(lambda m: (m.invoice_date_due, m.id))
+            open_invoices = wizard.student_id._edu_open_invoices()
+            chosen = open_invoices & wizard.selected_invoice_ids
+            wizard.invoice_ids = chosen.sorted(lambda m: (m.invoice_date_due, m.id)) | (open_invoices - chosen).sorted(
+                lambda m: (m.invoice_date_due, m.id)
+            )
 
     def action_confirm(self):
         self.ensure_one()
@@ -67,11 +76,13 @@ class EduFeePayment(models.TransientModel):
                 }
             )
             payment.action_post()
-            self._reconcile_oldest_first(payment, mine)
+            self._reconcile_in_order(payment, mine)
             payments |= payment
             remaining = self.currency_id.round(remaining - value)
         if not payments:
             raise UserError(self.env._('Não há nada a receber.'))
+        # O recibo das facturas liquidadas (só com a facturação electrónica ligada; sem ela não faz nada).
+        payments._l10n_ao_edi_issue_receipt()
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'account.payment',
@@ -79,12 +90,12 @@ class EduFeePayment(models.TransientModel):
             'domain': [('id', 'in', payments.ids)],
         }
 
-    def _reconcile_oldest_first(self, payment, invoices):
-        """Reconcilia o pagamento com as facturas, uma a uma, da mais antiga para a mais recente."""
+    def _reconcile_in_order(self, payment, invoices):
+        """Reconcilia o pagamento com as facturas, uma a uma, pela ordem dada (as escolhidas, depois as antigas)."""
         payment_lines = payment.move_id.line_ids.filtered(
             lambda line: line.account_id.account_type == 'asset_receivable' and not line.reconciled
         )
-        for invoice in invoices.sorted(lambda m: (m.invoice_date_due, m.id)):
+        for invoice in invoices:
             if not payment_lines.filtered(lambda line: not line.reconciled):
                 break
             invoice_lines = invoice.line_ids.filtered(

@@ -1,3 +1,5 @@
+import base64
+import binascii
 from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -7,8 +9,10 @@ from odoo import api, fields, models
 from odoo.addons.edu_attendance.models.absence_rules import TECHNICAL, absence_limit, absence_status
 from odoo.addons.edu_evaluation.tools import grading
 from odoo.addons.edu_exam.models.edu_exam import SPECIAL
+from odoo.addons.edu_fees.models.edu_fee_payment_request import METHODS
 from odoo.exceptions import UserError
 from odoo.tools import format_amount
+from odoo.tools.mimetypes import guess_mimetype
 
 WEEKDAYS = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo']
 MONTHS = [
@@ -47,6 +51,16 @@ SCALE_BANDS = [(0, 9.99, 'Insuficiente'), (10, 13.99, 'Suficiente'), (14, 16.99,
 ABSENCE_STATUS = {
     TECHNICAL: {'ok': 'Dentro do limite', 'at_risk': 'No limite', 'failed': 'Limite ultrapassado'},
     'general': {'ok': 'Dentro do limite', 'at_risk': 'A uma falta do limite', 'failed': 'Limite atingido'},
+}
+
+
+# O comprovativo de um pagamento enviado pelo portal: PDF ou fotografia, até 5 MB.
+PROOF_TYPES = ('application/pdf', 'image/jpeg', 'image/png')
+PROOF_MAX = 5 * 1024 * 1024
+REQUEST_STATES = {
+    'pending': ('Por validar', 'warn'),
+    'confirmed': ('Validado', 'good'),
+    'rejected': ('Rejeitado', 'bad'),
 }
 
 
@@ -1041,6 +1055,11 @@ class EduStudentPortal(models.AbstractModel):
             'grace_days': grace,
             'total_paid': money(sum(r['paid_value'] for r in rows)),
             'by_category': self._fees_by_category(rows, money),
+            'requests': self._payment_requests(student, money),
+            'bank': [
+                {'bank': bank.bank_name or '', 'account': bank.account_number, 'holder': bank.holder_name or ''}
+                for bank in student.company_id.partner_id.bank_ids
+            ],
             # O próximo vencimento: a primeira factura por pagar ainda dentro do prazo.
             'next_due': next(
                 (
@@ -1051,6 +1070,95 @@ class EduStudentPortal(models.AbstractModel):
                 None,
             ),
         }
+
+    @api.model
+    def _payment_requests(self, student, money):
+        """Os pagamentos enviados pelo portal para este aluno, do mais recente para o mais antigo."""
+        requests = self.env['edu.fee.payment.request'].sudo().search([('student_id', '=', student.id)], limit=20)
+        methods = dict(METHODS)
+        return [
+            {
+                'id': r.id,
+                'sent': long_date(r.create_date.date()),
+                'date': long_date(r.date),
+                'amount': money(r.amount),
+                'method': methods[r.method],
+                'reference': r.reference or '',
+                'state': REQUEST_STATES[r.state][0],
+                'css': REQUEST_STATES[r.state][1],
+                'reason': r.reject_reason if r.state == 'rejected' else '',
+                'pending': r.state == 'pending',
+            }
+            for r in requests
+        ]
+
+    @api.model
+    def _submit_payment(self, student, values):
+        """Regista um pagamento enviado pelo portal (transferência ou depósito, com o comprovativo), para a tesouraria
+        validar. As facturas indicadas têm de ser do aluno e estar por pagar; com elas vão as suas multas."""
+        values = values or {}
+        if values.get('method') not in dict(METHODS):
+            raise UserError(self.env._('Escolha a forma de pagamento: transferência ou depósito.'))
+        try:
+            amount = round(float(values.get('amount') or 0), 2)
+        except (TypeError, ValueError):
+            amount = 0.0
+        if amount <= 0:
+            raise UserError(self.env._('Indique o valor pago.'))
+        day = fields.Date.to_date(values.get('date')) if values.get('date') else False
+        today = self._now(student).date()
+        if not day or day > today:
+            raise UserError(self.env._('Indique a data do pagamento (não pode ser depois de hoje).'))
+        try:
+            raw = base64.b64decode(values.get('proof') or '', validate=True)
+        except (binascii.Error, ValueError):
+            raw = b''
+        if not raw:
+            raise UserError(self.env._('Junte o comprovativo do pagamento (PDF ou fotografia).'))
+        if len(raw) > PROOF_MAX:
+            raise UserError(
+                self.env._('O comprovativo tem mais de 5 MB: tire uma fotografia mais pequena ou envie o PDF.')
+            )
+        if guess_mimetype(raw) not in PROOF_TYPES:
+            raise UserError(self.env._('O comprovativo tem de ser um PDF ou uma fotografia (JPG ou PNG).'))
+        reference = (values.get('reference') or '').strip()[:64]
+        Request = self.env['edu.fee.payment.request'].sudo()
+        if reference and Request.search_count(
+            [
+                ('student_id', '=', student.id),
+                ('reference', '=', reference),
+                ('amount', '=', amount),
+                ('state', '!=', 'rejected'),
+            ]
+        ):
+            raise UserError(self.env._('Este pagamento já foi enviado: está nos pagamentos enviados, abaixo.'))
+        open_invoices = student._edu_open_invoices()
+        wanted = {int(i) for i in values.get('invoice_ids') or [] if str(i).isdigit()}
+        chosen = open_invoices.filtered(lambda m: m.id in wanted)
+        chosen |= open_invoices.filtered(lambda m: m.edu_late_fee_origin_id in chosen)
+        Request.create(
+            {
+                'student_id': student.id,
+                'company_id': student.company_id.id,
+                'submitted_by_id': self.env.uid,
+                'method': values['method'],
+                'amount': amount,
+                'date': day,
+                'reference': reference,
+                'proof': base64.b64encode(raw).decode(),
+                'proof_name': (values.get('proof_name') or 'comprovativo')[:120],
+                'invoice_ids': [fields.Command.set(chosen.ids)],
+            }
+        )
+        return True
+
+    @api.model
+    def submit_payment(self, values):
+        """O aluno envia um pagamento das suas propinas (para a tesouraria validar)."""
+        student = self._student()
+        if not student:
+            raise UserError(self.env._('Esta conta não está ligada a nenhum aluno.'))
+        return self._submit_payment(student, values)
 
     @api.model
     def _feed(self, students):
@@ -1150,6 +1258,20 @@ class EduStudentPortal(models.AbstractModel):
                 paid_on = max(receivable.matched_credit_ids.mapped('max_date'), default=False)
                 if paid_on and paid_on >= since:
                     add(f'p{move.id}', paid_on, student, f'Pagamento confirmado: {label}.', 'fees')
+        requests = (
+            self.env['edu.fee.payment.request']
+            .sudo()
+            .search([('student_id', 'in', students.ids), ('state', '=', 'rejected'), ('verified_date', '>=', since)])
+        )
+        for request in requests:
+            amount = format_amount(self.env, request.amount, request.currency_id)
+            add(
+                f'q{request.id}',
+                request.verified_date.date(),
+                request.student_id,
+                f'Pagamento de {amount} não aceite pela tesouraria: {request.reject_reason}',
+                'fees',
+            )
         rdecs = (
             self.env['edu.rdec']
             .sudo()

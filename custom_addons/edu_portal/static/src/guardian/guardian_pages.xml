@@ -558,9 +558,11 @@
                         <t t-set="f" t-value="d.fees"/>
                         <p t-if="!f.rows.length" class="mb-0"><t t-out="d.child.first_name"/> ainda não tem facturas.</p>
                         <t t-call="edu_portal.Part.FeesOverview"/>
+                        <t t-call="edu_portal.Part.FeesPay"/>
                         <t t-call="edu_portal.Part.FeesTable"/>
+                        <t t-call="edu_portal.Part.FeesRequests"/>
                         <p class="mb-0 small text-muted">
-                            As propinas pagam-se na tesouraria da escola. Quando o pagamento é confirmado, a factura passa para «Pagas».
+                            As propinas pagam-se na tesouraria da escola, ou por transferência ou depósito com o comprovativo enviado aqui. Quando a tesouraria confirma o pagamento, a factura passa para «Pagas».
                         </p>
                     </t>
                 </div>

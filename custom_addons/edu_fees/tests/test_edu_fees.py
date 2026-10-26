@@ -296,6 +296,41 @@ class TestEduFees(AccountTestInvoicingCommon):
         self.assertEqual(by_due[-1].amount_residual, 30_000)
         self.assertEqual(self.student.edu_open_amount, 30_000)
 
+    def test_portal_payment_request(self):
+        """O pagamento enviado pelo portal: validar paga primeiro as facturas escolhidas; rejeitar pede o motivo."""
+        enrollment = self._enroll(date(2026, 9, 1))
+        invoices = self._generate(enrollment, date(2026, 10, 15)).sorted(lambda m: (m.invoice_date_due, m.id))
+        october = invoices[-1]
+        bank = self.company_data['default_journal_bank']
+        Request = self.env['edu.fee.payment.request']
+        request = Request.create(
+            {
+                'student_id': self.student.id,
+                'method': 'transfer',
+                'amount': 50_000,
+                'date': date(2026, 10, 10),
+                'reference': 'TRF-001',
+                'invoice_ids': [Command.set(october.ids)],
+                'journal_id': bank.id,
+            }
+        )
+        request.action_confirm()
+        self.assertEqual(request.state, 'confirmed')
+        self.assertEqual(request.payment_ids.journal_id, bank)
+        # Outubro (a escolhida) paga; a matrícula e Setembro, mais antigas, continuam por pagar.
+        self.assertEqual(october.payment_state, 'paid')
+        self.assertEqual(set(invoices[:-1].mapped('payment_state')), {'not_paid'})
+        with self.assertRaises(UserError):
+            request.action_confirm()
+        other = Request.create(
+            {'student_id': self.student.id, 'method': 'deposit', 'amount': 1_000, 'date': date(2026, 10, 10)}
+        )
+        with self.assertRaises(UserError):
+            other.action_reject()
+        other.reject_reason = 'O comprovativo não se lê.'
+        other.action_reject()
+        self.assertEqual(other.state, 'rejected')
+
     def test_gating_and_irregular(self):
         enrollment = self._enroll(date(2026, 9, 1))
         self._generate(enrollment, date(2026, 9, 10))

@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from odoo import Command
 from odoo.addons.edu_fees.models.edu_standing import EduStudent
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import HttpCase, tagged
 
 
@@ -395,3 +395,28 @@ class TestStudentPortal(HttpCase):
         self.assertEqual(chat.channel_type, 'chat')
         message = chat.message_post(body='Professor, tenho uma dúvida.', message_type='comment')
         self.assertTrue(self.env['mail.message'].with_user(self.ana_user).search([('id', '=', message.id)]))
+
+    def test_submit_payment(self):
+        """O aluno envia um pagamento com o comprovativo; a tesouraria vê-o por validar e o aluno nas propinas."""
+        Portal = self.env['edu.student.portal'].with_user(self.ana_user)
+        png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+        values = {'method': 'transfer', 'amount': 22_936, 'date': str(date.today()), 'reference': 'TRF-9', 'proof': png}
+        with self.assertRaises(UserError):
+            Portal.submit_payment({**values, 'proof': 'bm90IGEgcGRm'})  # «not a pdf»
+        with self.assertRaises(UserError):
+            Portal.submit_payment({**values, 'date': str(date.today() + timedelta(days=1))})
+        Portal.submit_payment(values)
+        request = self.env['edu.fee.payment.request'].search([('student_id', '=', self.ana.id)])
+        self.assertEqual((request.state, request.amount, request.submitted_by_id), ('pending', 22_936, self.ana_user))
+        with self.assertRaises(UserError):
+            Portal.submit_payment(values)  # o mesmo pagamento duas vezes
+        self.env['res.partner.bank'].create(
+            {
+                'partner_id': self.ana.company_id.partner_id.id,
+                'account_number': 'AO06 0040 0000 1234',
+                'bank_name': 'BAI',
+            }
+        )
+        fees = Portal.page_data('fees')['fees']
+        self.assertEqual([r['state'] for r in fees['requests']], ['Por validar'])
+        self.assertEqual(fees['bank'], [{'bank': 'BAI', 'account': 'AO06 0040 0000 1234', 'holder': 'My Company'}])

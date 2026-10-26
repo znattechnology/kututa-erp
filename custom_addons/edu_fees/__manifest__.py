@@ -32,6 +32,7 @@ Secretaria Express: a tesouraria da escola sobre a facturação do Odoo.
         'views/edu_fee_plan_views.xml',
         'views/edu_scholarship_views.xml',
         'views/edu_fees_views.xml',
+        'views/edu_fee_payment_request_views.xml',
         'views/res_company_views.xml',
         'views/menus.xml',
         'report/edu_student_card_report.xml',
