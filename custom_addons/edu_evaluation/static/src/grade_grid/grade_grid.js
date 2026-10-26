@@ -551,10 +551,8 @@ export class GradeGrid extends Component {
         const data = this.state.data;
         const columns = [];
         if (data.technical) {
+            // A PG lança-se no 3.º trimestre, no lugar da P2 (pauta do técnico).
             columns.push({ key: "cf", label: "CF", title: "Classificação de frequência: engloba os três trimestres (sem arredondar)" });
-            if (data.subject.has_pg) {
-                columns.push({ key: "pg", label: "PG", title: "Prova global", editable: true });
-            }
             // As siglas do Despacho 60/08 (art. 17.º e a pauta do anexo): CF, PG, CA e, no ano terminal, CFD.
             columns.push({ key: "final", label: "CA", title: "Classificação anual (60% CF + 40% PG nas disciplinas com prova global), com a bonificação do conselho de turma", integer: true, strong: true });
             if (data.subject.terminal) {
@@ -576,16 +574,20 @@ export class GradeGrid extends Component {
 
     get legend() {
         return this.state.data.technical
-            ? "NPP é a nota do professor e NPT a prova trimestral. CT1 é a média das duas; CT2 e CT3 juntam o trimestre aos anteriores (CT2 = (CT1 + média do 2.º trimestre)/2), como manda o Despacho 60/08. No 3.º trimestre só há a NPP: CT3 = CF = (CT2 + NPP)/2, e a prova do fim do ano é a prova global. Uma nota ainda por lançar conta 0, e a partir da primeira nota calcula-se até ao fim do ano. Só a CA e a CFD se arredondam."
+            ? "P1 é a nota do professor e P2 a prova trimestral. CT1 é a média das duas; CT2 e CT3 juntam o trimestre aos anteriores (CT2 = (CT1 + média do 2.º trimestre)/2), como manda o Despacho 60/08. No 3.º trimestre não há P2: há a P1 e, nas disciplinas com 3 ou mais tempos semanais, a prova global (PG); CT3 = CF = (CT2 + P1)/2 e CA = 60% CF + 40% PG. Uma nota ainda por lançar conta 0, e a partir da primeira nota calcula-se até ao fim do ano. Só a CA e a CFD se arredondam."
             : "MAC é a média das avaliações contínuas, NPT a prova do trimestre e MT1, MT2 e MT3 a média de cada trimestre.";
     }
 
     /** As colunas do trimestre: a média leva o número (CT1, CT2, CT3 no técnico; MT1… no geral). */
     headers(trimester) {
         const n = trimester.number;
-        return this.state.data.technical
-            ? ["NPP", "NPT", `CT${n}`, "FJ", "FI"]
-            : ["MAC", "NPT", `MT${n}`, "FJ", "FI"];
+        const data = this.state.data;
+        if (data.technical) {
+            // No 3.º trimestre a P2 dá lugar à prova global (só nas disciplinas que a têm).
+            const second = trimester.has_npt ? "P2" : data.subject.has_pg ? "PG" : "—";
+            return ["P1", second, `CT${n}`, "FJ", "FI"];
+        }
+        return ["MAC", "NPT", `MT${n}`, "FJ", "FI"];
     }
 }
 

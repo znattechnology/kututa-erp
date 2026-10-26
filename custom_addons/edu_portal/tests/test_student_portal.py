@@ -91,7 +91,9 @@ class TestStudentPortal(HttpCase):
         self.assertFalse(grades['trimesters'][-1]['has_npt'])
         self.assertIn('a média é 13,0, com positiva a uma disciplina', grades['summary'])
         self.assertFalse(grades['show_situation'], 'a situação só aparece no último trimestre')
-        self.assertFalse(grades['show_pg'], 'PG e CA só depois de lançada a prova global')
+        # A PG tem coluna (no 3.º trimestre, no lugar da P2) nas disciplinas com prova global, mesmo antes de lançada.
+        row_pg = next(r for r in grades['subjects'] if r['id'] == self.lp.id)
+        self.assertEqual(grades['show_pg'], row_pg['has_pg_exam'])
 
     def test_grades_of_past_years(self):
         """As notas dos anos anteriores (as migradas do secPed): escolhe-se o ano; uma matrícula de outro aluno não."""

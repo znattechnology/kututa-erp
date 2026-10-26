@@ -385,6 +385,8 @@ class EduStudentPortal(models.AbstractModel):
                     'by_trimester': by_trimester,
                     'cf': result.cf if result and result.trimesters_graded else None,
                     'pg': result.pg if result and result.has_pg else None,
+                    # A disciplina tem prova global (3 ou mais tempos semanais): no 3.º trimestre, a PG no lugar da P2.
+                    'has_pg_exam': bool(result and result.has_global_exam),
                     'national': result.national if result and result.has_national else None,
                     'annual': result.annual if started else None,
                     'final': result.final if started else None,
@@ -410,7 +412,7 @@ class EduStudentPortal(models.AbstractModel):
                     }
                     for t in trimesters
                 ],
-                'show_pg': any(r['pg'] is not None for r in rows),
+                'show_pg': any(r['pg'] is not None or (technical and r['has_pg_exam']) for r in rows),
                 'show_national': any(r['national'] is not None for r in rows),
             }
         )

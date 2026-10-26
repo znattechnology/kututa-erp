@@ -169,19 +169,30 @@
                                                     <t t-set="column" t-value="'npp'"/>
                                                     <t t-set="sep" t-value="true"/>
                                                     <t t-set="editable" t-value="true"/>
-                                                    <t t-set="label" t-value="'NPP do ' + t.name"/>
+                                                    <t t-set="label" t-value="(data.technical ? 'P1 do ' : 'MAC do ') + t.name"/>
                                                     <t t-call="edu_evaluation.GradeGrid.Cell"/>
                                                 </t>
                                                 <td t-else="" class="text-center o_edu_gg_sep">
                                                     <span t-att-class="this.gradeClass(term.mac, false)" t-out="this.fmtNote(term.mac)"/>
                                                 </td>
-                                                <!-- NPT -->
-                                                <td t-if="!t.has_npt" class="text-center text-muted" t-att-title="data.technical ? 'Sem prova trimestral: no último trimestre só a NPP; a prova do fim do ano é a prova global' : 'Sem prova trimestral: há exame no fim do ano'">—</td>
+                                                <!-- NPT / P2; no 3.º trimestre do técnico, a PG (disciplinas com 3 ou mais tempos) -->
+                                                <t t-if="!t.has_npt and data.technical and data.subject.has_pg">
+                                                    <t t-set="tid" t-value="0"/>
+                                                    <t t-set="column" t-value="'pg'"/>
+                                                    <t t-set="sep" t-value="false"/>
+                                                    <t t-set="editable" t-value="this.canEdit(st, {}, 'pg')"/>
+                                                    <t t-set="label" t-value="'Prova global'"/>
+                                                    <t t-set="absent" t-value="st.pg_absent"/>
+                                                    <t t-set="shown" t-value="st.pg"/>
+                                                    <t t-call="edu_evaluation.GradeGrid.Cell"/>
+                                                    <t t-set="tid" t-value="t.id"/>
+                                                </t>
+                                                <td t-elif="!t.has_npt" class="text-center text-muted" t-att-title="data.technical ? 'No 3.º trimestre só a P1: a disciplina não tem prova global (menos de 3 tempos semanais)' : 'Sem prova trimestral: há exame no fim do ano'">—</td>
                                                 <t t-else="">
                                                     <t t-set="column" t-value="'npt'"/>
                                                     <t t-set="sep" t-value="false"/>
                                                     <t t-set="editable" t-value="this.canEdit(st, t, 'npt')"/>
-                                                    <t t-set="label" t-value="'NPT do ' + t.name"/>
+                                                    <t t-set="label" t-value="(data.technical ? 'P2 do ' : 'NPT do ') + t.name"/>
                                                     <t t-set="absent" t-value="term.npt_absent"/>
                                                     <t t-set="shown" t-value="term.npt"/>
                                                     <t t-call="edu_evaluation.GradeGrid.Cell"/>

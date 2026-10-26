@@ -1258,11 +1258,11 @@
                             <th t-foreach="this.finalsOnly ? [] : this.components" t-as="i" t-key="i" class="text-center" title="Avaliação contínua">Av<t t-out="i + 1"/></th>
                             <th t-if="!this.finalsOnly" class="text-center" t-att-title="tec ? 'Nota do professor' : 'Média das avaliações contínuas'" t-out="this.macLabel"/>
                             <th t-if="a.has_npt and !this.finalsOnly" class="text-center" title="Prova trimestral" t-out="this.examLabel"/>
+                            <th t-elif="tec and g.show_pg and !this.finalsOnly" class="text-center" title="Prova global (3.º trimestre, disciplinas com 3 ou mais tempos semanais)">PG</th>
                             <th t-if="!this.finalsOnly" class="text-center" t-att-title="tec ? 'Classificação do trimestre (engloba os anteriores)' : 'Média do trimestre'"><t t-if="tec">CT</t><t t-else="">MT</t><t t-out="a.number"/></th>
                             <t t-if="tec">
                                 <th class="text-center o_edu_st_sep" title="Classificação de frequência do ano">CF</th>
-                                <th t-if="g.show_pg" class="text-center" title="Prova global">PG</th>
-                                <th t-if="g.show_pg" class="text-center" title="Classificação anual = 60% CF + 40% PG">CA</th>
+                                <th class="text-center" title="Classificação anual = 60% CF + 40% PG (sem prova global, a CF)">CA</th>
                             </t>
                             <t t-else="">
                                 <th class="text-center o_edu_st_sep" title="Classificação anual (média dos trimestres)">CA</th>
@@ -1285,11 +1285,11 @@
                             </td>
                             <td t-if="!this.finalsOnly" class="text-center"><span t-att-class="this.gradeClass(cell.mac)" t-out="this.gradeText(cell.mac)"/></td>
                             <td t-if="a.has_npt and !this.finalsOnly" class="text-center"><span t-att-class="this.gradeClass(cell.npt)" t-out="this.gradeText(cell.npt)"/></td>
+                            <td t-elif="tec and g.show_pg and !this.finalsOnly" class="text-center"><span t-att-class="this.gradeClass(s.pg)" t-out="s.has_pg_exam ? this.gradeText(s.pg) : '—'"/></td>
                             <td t-if="!this.finalsOnly" class="text-center"><span t-att-class="this.gradeClass(cell.ct, true)" t-out="this.gradeText(cell.ct)"/></td>
                             <t t-if="tec">
                                 <td class="text-center o_edu_st_sep"><span t-att-class="this.gradeClass(s.cf)" t-out="this.gradeText(s.cf)"/></td>
-                                <td t-if="g.show_pg" class="text-center"><span t-att-class="this.gradeClass(s.pg)" t-out="this.gradeText(s.pg)"/></td>
-                                <td t-if="g.show_pg" class="text-center"><span t-att-class="this.gradeClass(s.final)" t-out="this.gradeText(s.final)"/></td>
+                                <td class="text-center"><span t-att-class="this.gradeClass(s.final)" t-out="this.gradeText(s.final)"/></td>
                             </t>
                             <t t-else="">
                                 <td class="text-center o_edu_st_sep"><span t-att-class="this.gradeClass(s.annual)" t-out="this.gradeText(s.annual)"/></td>
@@ -1314,7 +1314,7 @@
                         <div t-out="s.name"/>
                         <div class="small text-muted">
                             <t t-if="this.finalsOnly">CA <t t-out="this.gradeText(s.annual)"/><t t-if="s.national">, EN <t t-out="s.national.text"/></t></t>
-                            <t t-else=""><t t-out="this.macLabel"/> <t t-out="this.gradeText(cell.mac)"/></t><t t-if="a.has_npt and !this.finalsOnly">, <t t-out="this.examLabel"/> <t t-out="this.gradeText(cell.npt)"/></t><t t-if="s.cfd">, CFD <t t-out="s.cfd.text"/></t><t t-if="s.situation">, <span t-att-class="s.situation.pos ? 'text-primary' : 'text-danger'" t-out="s.situation.label.toLowerCase()"/></t>
+                            <t t-else=""><t t-out="this.macLabel"/> <t t-out="this.gradeText(cell.mac)"/></t><t t-if="a.has_npt and !this.finalsOnly">, <t t-out="this.examLabel"/> <t t-out="this.gradeText(cell.npt)"/></t><t t-elif="tec and s.has_pg_exam and !this.finalsOnly">, PG <t t-out="this.gradeText(s.pg)"/></t><t t-if="s.cfd">, CFD <t t-out="s.cfd.text"/></t><t t-if="s.situation">, <span t-att-class="s.situation.pos ? 'text-primary' : 'text-danger'" t-out="s.situation.label.toLowerCase()"/></t>
                         </div>
                     </div>
                     <span class="fs-5" t-att-class="this.gradeClass(this.finalsOnly ? s.final : cell.ct, true)" t-out="this.gradeText(this.finalsOnly ? s.final : cell.ct)"/>
@@ -1333,7 +1333,7 @@
             <div t-if="a.has_npt and !this.finalsOnly"><dt t-out="this.examLabel"/><dd>prova trimestral</dd></div>
             <div t-if="!this.finalsOnly">
                 <dt><t t-if="tec">CT</t><t t-else="">MT</t><t t-out="a.number"/></dt>
-                <dd t-if="tec">classificação do <t t-out="sp.trimester or 'trimestre'"/><t t-if="a.has_npt">: (NPP + NPT) ÷ 2, juntando os trimestres anteriores</t><t t-else="">: no último trimestre só há a NPP, e o CT do trimestre é a CF</t></dd>
+                <dd t-if="tec">classificação do <t t-out="sp.trimester or 'trimestre'"/><t t-if="a.has_npt">: (P1 + P2) ÷ 2, juntando os trimestres anteriores</t><t t-else="">: no último trimestre há a P1 (e a PG nas disciplinas com 3 ou mais tempos), e o CT do trimestre é a CF</t></dd>
                 <dd t-else="">média do <t t-out="sp.trimester or 'trimestre'"/></dd>
             </div>
             <t t-if="tec">

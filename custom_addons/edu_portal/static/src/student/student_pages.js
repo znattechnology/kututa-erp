@@ -454,11 +454,11 @@ export class StudentGrades extends StudentPage {
     }
 
     get macLabel() {
-        return this.state.data.grades.technical ? "NPP" : "MAC";
+        return this.state.data.grades.technical ? "P1" : "MAC";
     }
 
     get examLabel() {
-        return this.state.data.grades.technical ? "NPT" : "Prova";
+        return this.state.data.grades.technical ? "P2" : "Prova";
     }
 
     get components() {
@@ -1134,7 +1134,7 @@ export class StudentHelp extends HelpPage(StudentPage) {
                 icon: "school",
                 questions: [
                     { q: "Quando aparecem as notas?", a: "Assim que o professor as lança. Nas notificações aparece «Notas novas» da disciplina (sem a nota, que pode mudar até o trimestre fechar). O mínimo para a positiva está escrito por baixo da pauta.", action: "edu_portal.action_student_grades", actionLabel: "Ver as notas" },
-                    { q: "O que querem dizer NPP, NPT, CT, MAC e MT?", a: "No ensino técnico, NPP é a nota do professor e NPT a da prova do trimestre; a classificação do trimestre (CT) junta as duas. No ensino geral, MAC é a média das avaliações contínuas e MT a média do trimestre. A legenda completa está por baixo da pauta.", action: "edu_portal.action_student_grades", actionLabel: "Ver as notas" },
+                    { q: "O que querem dizer P1, P2, PG, CT, MAC e MT?", a: "No ensino técnico, P1 é a nota do professor e P2 a da prova do trimestre; a classificação do trimestre (CT) junta as duas. No 3.º trimestre, no lugar da P2 está a prova global (PG), nas disciplinas com 3 ou mais tempos semanais. No ensino geral, MAC é a média das avaliações contínuas e MT a média do trimestre. A legenda completa está por baixo da pauta.", action: "edu_portal.action_student_grades", actionLabel: "Ver as notas" },
                     { q: "Posso ver as notas de anos anteriores?", a: "Sim. Nas notas, escolhe o ano lectivo por cima da pauta. Em Histórico tens o resumo de cada ano: a turma, a média final e a decisão.", action: "edu_portal.action_student_history", actionLabel: "Ver o histórico" },
                     { q: "Porque é que não consigo ver as notas?", a: "Se houver propinas vencidas e a escola fechar as notas aos devedores, a página diz isso e mostra o caminho para as propinas. Abre de novo quando o pagamento for confirmado.", action: "edu_portal.action_student_fees", actionLabel: "Ver as propinas" },
                 ],

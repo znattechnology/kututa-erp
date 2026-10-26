@@ -260,12 +260,15 @@ class TestEduDocuments(TransactionCase):
         self.assertIn('MAPA DE APROVEITAMENTO DO IIIº TRIMESTRE', html)
         self.assertIn('REPÚBLICA DE ANGOLA', html)
         self.assertIn('Visto', html)
-        for label in ('>NPP<', '>NPT<', '>CT<', '>FJ<', '>FI<', '>CF<', '>PG<', '>CA<', '>CFD<', 'Neg.', 'Resultado'):
+        # Técnico: P1 e P2; no 3.º trimestre a PG no lugar da P2 (e «—» nas disciplinas sem prova global).
+        for label in ('>P1<', '>PG<', '>CT<', '>FJ<', '>FI<', '>CF<', '>CA<', '>CFD<', 'Neg.', 'Resultado'):
             self.assertIn(label, html)
+        self.assertNotIn('>P2<', html)
+        self.assertNotIn('>NPP<', html)
         # Todas as disciplinas do plano aparecem, mesmo as que o aluno não tem (sem notas).
         self.assertEqual(wizard._subjects(), wizard._subjects() | self.edu_class.subject_line_ids.subject_id)
         self.assertIn('ep-neg', html)
-        self.assertIn('NPP - Nota do Professor', html)
+        self.assertIn('P1 - Nota do Professor', html)
         self.assertIn('aprovação mínima 10 valores', html)
         self.assertIn('Professor', html)
         # Visualização: uma só tabela com scroll horizontal; PDF: dividida por folhas A3, como no secPed.

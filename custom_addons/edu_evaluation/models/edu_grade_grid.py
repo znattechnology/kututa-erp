@@ -13,7 +13,7 @@ COLUMN_TYPES = {
     'pg': 'global_exam',
     'en': 'national_exam',
 }
-COLUMN_NAMES = {'npt': 'NPT', 'npp': 'NPP', 'pg': 'Prova global', 'en': 'Exame nacional'}
+COLUMN_NAMES = {'npt': 'NPT', 'npp': 'P1', 'pg': 'Prova global', 'en': 'Exame nacional'}
 
 
 class _RollbackGrid(Exception):
@@ -521,9 +521,7 @@ class EduGradeGrid(models.AbstractModel):
         if column in ('npt', 'npp'):
             domain.append(('trimester_id', '=', trimester.id))
         if column == 'npp' and Assessment.sudo().search_count(domain) > 1:
-            raise UserError(
-                self.env._('Este trimestre tem várias avaliações contínuas antigas: a NPP é a média delas.')
-            )
+            raise UserError(self.env._('Este trimestre tem várias avaliações contínuas antigas: a P1 é a média delas.'))
         assessment = Assessment.sudo().search(domain, limit=1)
         if assessment:
             return assessment.with_env(self.env)
@@ -535,7 +533,7 @@ class EduGradeGrid(models.AbstractModel):
             Assessment.sudo()
             .create(
                 {
-                    'name': name if column != 'npp' else 'NPP',
+                    'name': name,
                     'class_id': edu_class.id,
                     'subject_id': subject.id,
                     'trimester_id': trimester.id,

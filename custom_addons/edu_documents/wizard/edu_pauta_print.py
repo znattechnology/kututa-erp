@@ -15,11 +15,11 @@ ABSENCE_WIDTH = 12
 FINAL_WIDTH = 19
 TAIL_WIDTH = 120
 LEGEND_TECHNICAL = (
-    'NPP - Nota do Professor; NPT - Nota da Prova Trimestral; CT - Classificação do Trimestre, que engloba os '
-    'anteriores: CT1 = (NPP+NPT)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + NPP do 3.º)/2 (no 3.º trimestre '
-    'não há prova trimestral); '
+    'P1 - Nota do Professor; P2 - Nota da Prova Trimestral; CT - Classificação do Trimestre, que engloba os '
+    'anteriores: CT1 = (P1+P2)/2, CT2 = (CT1 + média do 2.º)/2, CT3 = (CT2 + P1 do 3.º)/2; '
+    'PG - Prova Global, no 3.º trimestre no lugar da P2 (disciplinas com 3 ou mais tempos semanais); '
     'CF - Classificação de Frequência (o CT3, atribuída pelo Conselho de Turma); '
-    'PG - Prova Global; CA - Classificação Anual: CA = 60%CF + 40%PG; CFD - Classificação Final da Disciplina '
+    'CA - Classificação Anual: CA = 60%CF + 40%PG; CFD - Classificação Final da Disciplina '
     '(no ano terminal: média das CA dos anos em que é leccionada)'
 )
 LEGEND_GENERAL = (
@@ -205,14 +205,15 @@ class EduPautaPrint(models.TransientModel):
         national = (
             final and not technical and policy._is_exam_class(self.class_id.class_number) and bool(national_subjects)
         )
-        base = ['NPP', 'NPT', 'CT', 'FJ', 'FI'] if technical else ['MAC', 'NPT', 'MT', 'FJ', 'FI']
+        # Técnico: P1 e P2; no 3.º trimestre a P2 dá lugar à prova global (nas disciplinas com 3 ou mais tempos).
+        if technical:
+            base = ['P1', 'PG' if final else 'P2', 'CT', 'FJ', 'FI']
+        else:
+            base = ['MAC', 'NPT', 'MT', 'FJ', 'FI']
         tail = []
         if final:
-            tail = (
-                ['CF', 'PG', 'CA', 'CFD']
-                if technical
-                else (['MFD', 'CFD', 'EN', 'MFED'] if national else ['MFD', 'CFD'])
-            )
+            tail = ['CF', 'CA', 'CFD'] if technical else (['MFD', 'CFD', 'EN', 'MFED'] if national else ['MFD', 'CFD'])
+        with_pg = {line.subject_id.id for line in self.class_id.sudo().subject_line_ids if line.has_global_exam}
         labels = base + tail
         pass_grade = policy.pass_grade
         terms = self._terms(trimester)
@@ -260,14 +261,22 @@ class EduPautaPrint(models.TransientModel):
                     classification = grade(round_units(term.mt), show=term.has_mt)
                 else:
                     classification = ('', None)
+                result = results.get(key)
+                if technical and final:
+                    # 3.º trimestre do técnico: a PG no lugar da P2; «—» nas disciplinas sem prova global.
+                    if subject.id in with_pg or (result and result.has_global_exam):
+                        second = grade(result.pg, show=result.has_pg) if result else ('', None)
+                    else:
+                        second = ('—', None)
+                else:
+                    second = grade(term.npt, show=bool(term and term.has_npt)) if term else ('', None)
                 values = [
                     grade(term.mac, show=bool(term and term.has_mac)) if term else ('', None),
-                    grade(term.npt, show=bool(term and term.has_npt)) if term else ('', None),
+                    second,
                     classification,
                     count(excused),
                     count(absent),
                 ]
-                result = results.get(key)
                 if final:
                     complete = bool(result and result.complete)
                     if technical:
@@ -275,7 +284,6 @@ class EduPautaPrint(models.TransientModel):
                         started = bool(result and result.trimesters_graded)
                         values += [
                             grade(result.cf, show=started) if result else ('', None),
-                            grade(result.pg, show=bool(result and result.has_pg)) if result else ('', None),
                             grade(result.final, 0, started) if result else ('', None),
                             # CFD no ano terminal da disciplina (a que conta nas negativas e no certificado).
                             grade(result.cfd, 0, complete and result.terminal_subject) if result else ('', None),
