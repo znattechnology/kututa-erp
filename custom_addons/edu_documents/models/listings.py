@@ -1,6 +1,7 @@
 from datetime import date
 
 from odoo import api, models
+from odoo.exceptions import UserError
 
 EM = '  '
 
@@ -9,10 +10,24 @@ def _label(record, field):
     return dict(record._fields[field]._description_selection(record.env)).get(record[field], '') or ''
 
 
+def listed(records, default):
+    """O que «Imprimir» leva: as linhas escolhidas ou, sem escolha, o que a lista mostra com os filtros (o botão do
+    cabeçalho envia-os em ``active_domain``); fora da lista, ``default()``."""
+    if records:
+        return records
+    context = records.env.context
+    if context.get('active_model') == records._name and context.get('active_domain') is not None:
+        records = records.search(context['active_domain'])
+        if not records:
+            raise UserError(records.env._('A lista está vazia: não há nada para imprimir.'))
+        return records
+    return default()
+
+
 class EduListingMixin(models.AbstractModel):
     """«Visualizar e imprimir» das listas das matrículas: o mesmo documento (cabeçalho e assinaturas da pauta, tabela
     por grupos) para candidaturas, matrículas, anulações, transferências, confirmação e alunos. Cada modelo diz o
-    título, as colunas e os grupos em ``_listing_data``; sem linhas escolhidas, imprime-se o ano em curso."""
+    título, as colunas e os grupos em ``_listing_data``; sem linhas escolhidas, imprime-se o que a lista mostra."""
 
     _name = 'edu.listing.mixin'
     _description = 'Lista imprimível'
@@ -23,7 +38,7 @@ class EduListingMixin(models.AbstractModel):
         return self.search([('academic_year_id.is_current', '=', True)])
 
     def action_print_listing(self):
-        records = self or self._listing_default()
+        records = listed(self, self._listing_default)
         return self.env.ref(self._listing_report).preview_action(records)
 
     def _listing_year(self):

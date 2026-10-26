@@ -330,6 +330,12 @@ class TestEduDocuments(TransactionCase):
             self.assertIn(text, html)
         # Listas das matrículas, com o cabeçalho e as assinaturas da pauta.
         self.assertEqual(self.enrollment.action_print_listing()['report_type'], 'qweb-html')
+        # Sem linhas escolhidas, imprime o que a lista mostra com os filtros.
+        Enrollment = self.env['edu.enrollment'].with_context(active_model='edu.enrollment')
+        action = Enrollment.with_context(active_domain=[('id', '=', self.enrollment.id)]).action_print_listing()
+        self.assertEqual(action['context']['active_ids'], self.enrollment.ids)
+        with self.assertRaises(UserError):
+            Enrollment.with_context(active_domain=[('id', '=', 0)]).action_print_listing()
         html = self._render('edu_documents.action_report_listing_enrollment', self.enrollment)
         for text in ('LISTA DE MATRÍCULAS', self.student.name, 'REPÚBLICA DE ANGOLA'):
             self.assertIn(text, html)

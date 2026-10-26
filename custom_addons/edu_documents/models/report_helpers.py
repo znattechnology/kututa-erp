@@ -3,6 +3,7 @@ from odoo.addons.edu_evaluation.tools import grading
 from odoo.exceptions import UserError
 
 from ..tools import extenso
+from .listings import listed
 
 COMPONENT_ORDER = {'socio_cultural': 0, 'scientific': 1, 'technical': 2, 'internship': 3}
 COMPONENT_LABELS = {
@@ -291,8 +292,8 @@ class EduClass(models.Model):
         }
 
     def action_print_directors(self):
-        """As turmas escolhidas ou, sem escolha, as do ano lectivo em curso."""
-        records = self or self.search([('academic_year_id.is_current', '=', True)])
+        """As turmas escolhidas ou, sem escolha, as que a lista mostra (fora dela, as do ano lectivo em curso)."""
+        records = listed(self, lambda: self.search([('academic_year_id.is_current', '=', True)]))
         return self.env.ref('edu_documents.action_report_class_directors').preview_action(records)
 
     def _directors_context(self):
@@ -358,8 +359,10 @@ class HrEmployeePublic(models.Model):
     _inherit = 'hr.employee.public'
 
     def _edu_teachers(self):
-        """Os professores escolhidos na lista ou, sem escolha, todos os da escola."""
-        return self or self.search([('edu_is_teacher', '=', True), ('company_id', '=', self.env.company.id)])
+        """Os professores escolhidos ou, sem escolha, os que a lista mostra (fora dela, todos os da escola)."""
+        return listed(
+            self, lambda: self.search([('edu_is_teacher', '=', True), ('company_id', '=', self.env.company.id)])
+        )
 
     def action_print_teachers(self):
         return self.env.ref('edu_documents.action_report_teachers').preview_action(self._edu_teachers())
@@ -391,8 +394,8 @@ class EduTeachingAssignment(models.Model):
     _inherit = 'edu.teaching.assignment'
 
     def action_print_assignments(self):
-        """As colocações escolhidas ou, sem escolha, as do ano lectivo em curso."""
-        records = self or self.search([('academic_year_id.is_current', '=', True)])
+        """As colocações escolhidas ou, sem escolha, as que a lista mostra (fora dela, as do ano lectivo em curso)."""
+        records = listed(self, lambda: self.search([('academic_year_id.is_current', '=', True)]))
         return self.env.ref('edu_documents.action_report_assignments').preview_action(records)
 
     def _assignment_groups(self):
