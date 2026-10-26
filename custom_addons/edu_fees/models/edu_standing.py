@@ -209,8 +209,13 @@ class EduEnrollment(models.Model):
     def action_confirm(self):
         result = super().action_confirm()
         if not self.env.context.get('edu_fees_skip_generation'):
-            # As cobranças do mês (matrícula e propina) nascem com a matrícula.
-            self.env['edu.fee.plan'].sudo()._generate_for_enrollments(self.filtered(lambda e: e.state in ENROLLED))
+            # As cobranças do mês (matrícula e propina) nascem com a matrícula, se a escola já factura com a AGT.
+            Plan = self.env['edu.fee.plan'].sudo()
+            for company in self.company_id:
+                if not Plan._edu_billing_issue(company):
+                    Plan._generate_for_enrollments(
+                        self.filtered(lambda e, c=company: e.company_id == c and e.state in ENROLLED)
+                    )
         return result
 
 

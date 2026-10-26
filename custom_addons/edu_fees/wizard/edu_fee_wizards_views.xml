@@ -76,4 +76,48 @@
             </form>
         </field>
     </record>
+    <record id="edu_fee_generate_form" model="ir.ui.view">
+        <field name="name">edu.fee.generate.form</field>
+        <field name="model">edu.fee.generate</field>
+        <field name="arch" type="xml">
+            <form string="Gerar as propinas">
+                <div class="alert alert-warning" role="alert" invisible="not issue">
+                    <field name="issue" readonly="1"/>
+                </div>
+                <group>
+                    <group>
+                        <field name="plan_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                        <field name="date"/>
+                        <field name="company_id" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    <group>
+                        <field name="student_count"/>
+                        <field name="invoice_count"/>
+                        <field name="amount_total"/>
+                    </group>
+                </group>
+                <field name="summary" nolabel="1" invisible="not summary"/>
+                <div class="text-muted" invisible="summary">Não há propinas em falta: está tudo facturado até este mês.</div>
+                <div class="text-muted mt-2">
+                    As facturas saem já emitidas e certificadas (AGT), com a data de hoje, e não se apagam: um erro só
+                    se corrige com nota de crédito. Os meses antes do «Cobrar a partir de» do plano nunca se facturam.
+                </div>
+                <footer>
+                    <button name="action_generate" type="object" string="Emitir as facturas" class="btn-primary"
+                            invisible="issue or not invoice_count"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_edu_fee_generate" model="ir.actions.act_window">
+        <field name="name">Gerar as propinas</field>
+        <field name="res_model">edu.fee.generate</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_edu_fee_plan"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[(4, ref('edu_fees.group_edu_finance'))]"/>
+    </record>
 </odoo>

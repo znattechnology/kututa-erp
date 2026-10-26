@@ -1,8 +1,9 @@
 from datetime import date
+from unittest.mock import patch
 
 from odoo import Command
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
-from odoo.addons.edu_fees.models.edu_fee_plan import due_dates
+from odoo.addons.edu_fees.models.edu_fee_plan import EduFeePlan, due_dates
 from odoo.exceptions import UserError
 from odoo.tests import tagged
 
@@ -138,6 +139,56 @@ class TestEduFees(AccountTestInvoicingCommon):
         renewal = self._enroll(date(2026, 9, 1), self.env['edu.student'].create({'name': 'Domingos'}))
         renewal.enrollment_type = 'renewal'
         self.assertEqual(self._generate(renewal, date(2026, 10, 1)).mapped('edu_category'), ['confirmation'])
+
+    def test_billing_start(self):
+        """«Cobrar a partir de» Novembro: quem está matriculado desde Setembro não paga Setembro nem Outubro."""
+        self.plan.date_from = date(2026, 11, 1)
+        enrollment = self._enroll(date(2026, 9, 1))
+        tuition = self._generate(enrollment, date(2026, 11, 15)).filtered(lambda m: m.edu_category == 'tuition')
+        self.assertEqual(tuition.mapped('edu_due_period'), [date(2026, 11, 8)])
+
+    def test_billing_requires_agt(self):
+        """Sem a facturação electrónica ligada não se gera nada: nem ao confirmar a matrícula, nem na tarefa diária,
+        nem com «Gerar agora»."""
+        Plan = self.env['edu.fee.plan']
+        self.assertIn('não está ligada', Plan._edu_billing_issue(self.company))
+        self.company.l10n_ao_edi_enabled = True
+        self.assertIn('Configuração AGT incompleta', Plan._edu_billing_issue(self.company))
+        self.company.l10n_ao_edi_enabled = False
+        enrollment = self.env['edu.enrollment'].create(
+            {'student_id': self.student.id, 'class_id': self.edu_class.id, 'date': date(2026, 9, 1)}
+        )
+        enrollment.action_confirm()
+        self.assertFalse(self.student.edu_invoice_ids)
+        Plan._cron_generate()
+        self.assertFalse(self.student.edu_invoice_ids)
+        wizard = self.env['edu.fee.generate'].create({'plan_ids': self.plan.ids, 'date': date(2026, 11, 15)})
+        self.assertTrue(wizard.issue)
+        with self.assertRaises(UserError):
+            wizard.action_generate()
+
+    def test_generate_now(self):
+        """«Gerar agora»: o resumo (alunos, facturas, total por mês) e depois as facturas, sem repetir."""
+        self.plan.date_from = date(2026, 11, 1)
+        self._enroll(date(2026, 9, 1))
+        self._enroll(date(2026, 9, 1), self.env['edu.student'].create({'name': 'Bento'}))
+        with patch.object(EduFeePlan, '_edu_billing_issue', return_value=False):
+            wizard = self.env['edu.fee.generate'].create({'plan_ids': self.plan.ids, 'date': date(2026, 11, 15)})
+            # Dois alunos: a matrícula e a propina de Novembro de cada um.
+            self.assertEqual((wizard.student_count, wizard.invoice_count), (2, 4))
+            self.assertEqual(wizard.amount_total, 2 * (20_000 + 50_000))
+            self.assertIn('Novembro 2026', wizard.summary)
+            action = wizard.action_generate()
+            self.assertEqual(len(action['domain'][0][2]), 4)
+            again = self.env['edu.fee.generate'].create({'plan_ids': self.plan.ids, 'date': date(2026, 11, 15)})
+            self.assertEqual(again.invoice_count, 0)
+            with self.assertRaises(UserError):
+                again.action_generate()
+
+    def test_education_operation_type(self):
+        """As taxas do ensino vão para a AGT como serviços de educação (SE)."""
+        self.assertEqual(self.env.ref('edu_fees.product_tuition').l10n_ao_operation_type, 'SE')
+        self.assertFalse(self.env.ref('edu_fees.product_card').l10n_ao_operation_type)
 
     def test_plan_resolution(self):
         enrollment = self._enroll(date(2026, 9, 1))

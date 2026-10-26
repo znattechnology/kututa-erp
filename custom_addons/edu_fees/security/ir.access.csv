@@ -16,6 +16,7 @@ access_edu_late_fee_rule_user,access_edu_late_fee_rule_user,edu.late.fee.rule,ed
 access_edu_late_fee_rule_manager,access_edu_late_fee_rule_manager,edu.late.fee.rule,edu_core.group_edu_manager,crud,
 access_edu_fee_payment_finance,access_edu_fee_payment_finance,edu.fee.payment,edu_fees.group_edu_finance,crud,
 access_edu_fee_service_finance,access_edu_fee_service_finance,edu.fee.service,edu_fees.group_edu_finance,crud,
+access_edu_fee_generate_finance,access_edu_fee_generate_finance,edu.fee.generate,edu_fees.group_edu_finance,crud,
 edu_fee_plan_comp_rule,edu.fee.plan multi-empresa,edu.fee.plan,,crud,"[('company_id', 'in', company_ids)]"
 edu_fee_plan_line_comp_rule,edu.fee.plan.line multi-empresa,edu.fee.plan.line,,crud,"[('company_id', 'in', company_ids)]"
 edu_scholarship_comp_rule,edu.scholarship multi-empresa,edu.scholarship,,crud,"[('company_id', 'in', company_ids)]"

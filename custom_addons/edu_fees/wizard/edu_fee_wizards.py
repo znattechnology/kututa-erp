@@ -1,5 +1,13 @@
+import logging
+from collections import defaultdict
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import split_every
+
+from ..models.edu_fee_plan import BATCH, ENROLLED, MONTHS
+
+_logger = logging.getLogger(__name__)
 
 
 class EduFeePayment(models.TransientModel):
@@ -148,3 +156,111 @@ class EduStudentCardRevoke(models.TransientModel):
             raise UserError(self.env._('O aluno não tem cartão activo.'))
         self.student_id.edu_card_id.sudo()._revoke(self.reason)
         return {'type': 'ir.actions.act_window_close'}
+
+
+class EduFeeGenerate(models.TransientModel):
+    """«Gerar agora»: as propinas em falta dos planos escolhidos até ao mês corrente, com o resumo antes de confirmar
+    (alunos, facturas e total por mês). É o mesmo que a tarefa diária faz; não se gera nada enquanto a escola não
+    puder emitir facturas certificadas pela AGT."""
+
+    _name = 'edu.fee.generate'
+    _description = 'Gerar as propinas'
+
+    def _default_plans(self):
+        plans = self.env['edu.fee.plan'].browse(self.env.context.get('active_ids') or [])
+        if self.env.context.get('active_model') == 'edu.fee.plan' and plans:
+            return plans
+        return self.env['edu.fee.plan'].search([('academic_year_id.is_current', '=', True)])
+
+    plan_ids = fields.Many2many(
+        'edu.fee.plan', string='Planos', required=True, default=lambda self: self._default_plans()
+    )
+    company_id = fields.Many2one('res.company', default=lambda self: self.env.company)
+    currency_id = fields.Many2one(related='company_id.currency_id')
+    date = fields.Date(string='Até ao mês de', default=fields.Date.context_today, readonly=True)
+    issue = fields.Char(compute='_compute_preview')
+    student_count = fields.Integer(string='Alunos', compute='_compute_preview')
+    invoice_count = fields.Integer(string='Facturas', compute='_compute_preview')
+    amount_total = fields.Monetary(string='Total', compute='_compute_preview')
+    summary = fields.Html(compute='_compute_preview', sanitize=False)
+
+    def _pending(self):
+        """As cobranças em falta: [(plano, matrícula, linha, mês, chave, vencimento)]."""
+        self.ensure_one()
+        Plan = self.env['edu.fee.plan'].sudo()
+        enrollments = (
+            self.env['edu.enrollment']
+            .sudo()
+            .search(
+                [
+                    ('company_id', '=', self.company_id.id),
+                    ('state', 'in', ENROLLED),
+                    ('academic_year_id', 'in', self.plan_ids.academic_year_id.ids),
+                ]
+            )
+        )
+        pending = []
+        for enrollment in enrollments:
+            plan = Plan._for_enrollment(enrollment)
+            if plan and plan in self.plan_ids:
+                pending += [(plan, enrollment, *item) for item in plan._pending(enrollment, self.date)]
+        return pending
+
+    @api.depends('plan_ids', 'date')
+    def _compute_preview(self):
+        Plan = self.env['edu.fee.plan']
+        for wizard in self:
+            wizard.issue = Plan._edu_billing_issue(wizard.company_id, wizard.date) or False
+            pending = wizard._pending() if wizard.plan_ids else []
+            months = defaultdict(lambda: [0, 0.0])
+            for _plan, enrollment, line, due, _key, _due_date in pending:
+                cell = months[(due.year, due.month)]
+                cell[0] += 1
+                cell[1] += line._payable(enrollment, due)[0]
+            wizard.student_count = len({item[1] for item in pending})
+            wizard.invoice_count = len(pending)
+            wizard.amount_total = sum(cell[1] for cell in months.values())
+            money = wizard.currency_id.format if wizard.currency_id else str
+            rows = ''.join(
+                f'<tr><td>{MONTHS[month - 1]} {year}</td><td class="text-end">{count}</td>'
+                f'<td class="text-end">{money(total)}</td></tr>'
+                for (year, month), (count, total) in sorted(months.items())
+            )
+            wizard.summary = (
+                '<table class="table table-sm mb-0"><thead><tr><th>Mês</th><th class="text-end">Facturas</th>'
+                f'<th class="text-end">Total</th></tr></thead><tbody>{rows}</tbody></table>'
+                if rows
+                else False
+            )
+
+    def action_generate(self):
+        self.ensure_one()
+        if self.issue:
+            raise UserError(self.issue)
+        by_plan = defaultdict(lambda: self.env['edu.enrollment'])
+        for plan, enrollment, *_rest in self._pending():
+            by_plan[plan] |= enrollment
+        created = self.env['account.move']
+        failed = 0
+        for plan, enrollments in by_plan.items():
+            for ids in split_every(BATCH, enrollments.ids):
+                for enrollment in enrollments.browse(ids):
+                    try:
+                        with self.env.cr.savepoint():
+                            created |= plan.with_company(self.company_id)._generate(enrollment, self.date)
+                    except Exception:
+                        failed += 1
+                        _logger.exception('Propinas: erro na geração da matrícula %s', enrollment.id)
+        if not created:
+            raise UserError(self.env._('Não há propinas em falta: está tudo facturado até %s.', self.date))
+        message = self.env._('%s facturas emitidas.', len(created))
+        if failed:
+            message += ' ' + self.env._('%s matrículas deram erro (ver o registo do servidor).', failed)
+        return {
+            'type': 'ir.actions.act_window',
+            'name': message,
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', created.ids)],
+            'context': {'create': False},
+        }

@@ -7,6 +7,7 @@
         <field name="sale_ok" eval="True"/>
         <field name="purchase_ok" eval="False"/>
         <field name="taxes_id" eval="[(5, 0, 0)]"/>
+        <field name="l10n_ao_operation_type">SE</field>
     </record>
     <record id="product_enrollment" model="product.product">
         <field name="name">Matrícula</field>
@@ -15,6 +16,7 @@
         <field name="sale_ok" eval="True"/>
         <field name="purchase_ok" eval="False"/>
         <field name="taxes_id" eval="[(5, 0, 0)]"/>
+        <field name="l10n_ao_operation_type">SE</field>
     </record>
     <record id="product_confirmation" model="product.product">
         <field name="name">Confirmação de matrícula</field>
@@ -23,6 +25,7 @@
         <field name="sale_ok" eval="True"/>
         <field name="purchase_ok" eval="False"/>
         <field name="taxes_id" eval="[(5, 0, 0)]"/>
+        <field name="l10n_ao_operation_type">SE</field>
     </record>
     <record id="product_application" model="product.product">
         <field name="name">Inscrição / candidatura</field>
@@ -31,6 +34,7 @@
         <field name="sale_ok" eval="True"/>
         <field name="purchase_ok" eval="False"/>
         <field name="taxes_id" eval="[(5, 0, 0)]"/>
+        <field name="l10n_ao_operation_type">SE</field>
     </record>
     <record id="product_transfer" model="product.product">
         <field name="name">Transferência</field>
@@ -39,6 +43,7 @@
         <field name="sale_ok" eval="True"/>
         <field name="purchase_ok" eval="False"/>
         <field name="taxes_id" eval="[(5, 0, 0)]"/>
+        <field name="l10n_ao_operation_type">SE</field>
     </record>
     <record id="product_exam" model="product.product">
         <field name="name">Exame</field>
@@ -47,6 +52,7 @@
         <field name="sale_ok" eval="True"/>
         <field name="purchase_ok" eval="False"/>
         <field name="taxes_id" eval="[(5, 0, 0)]"/>
+        <field name="l10n_ao_operation_type">SE</field>
     </record>
     <record id="product_service" model="product.product">
         <field name="name">Serviço escolar</field>

@@ -1,6 +1,6 @@
 {
     'name': 'Secretaria Express - Propinas',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'Planos de propinas, facturas certificadas pela AGT, bolsas, multas, pagamentos e bloqueio de devedores',
     'description': """
 Secretaria Express: a tesouraria da escola sobre a facturação do Odoo.

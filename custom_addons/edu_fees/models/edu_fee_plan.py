@@ -3,7 +3,8 @@ import logging
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
+from odoo.tools import split_every
 
 _logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ MONTHS = [
     'Dezembro',
 ]  # fmt: skip
 ENROLLED = ('active', 'irregular')
+# A tarefa diária grava ao fim de cada lote de matrículas: uma falha não desfaz o que já foi facturado.
+BATCH = 50
 
 
 def month_start(day):
@@ -92,7 +95,10 @@ class EduFeePlan(models.Model):
     class_id = fields.Many2one(
         'edu.class', string='Turma', check_company=True, domain="[('academic_year_id', '=', academic_year_id)]"
     )
-    date_from = fields.Date(string='Cobrar de', help='Vazio: o início do ano lectivo.')
+    date_from = fields.Date(
+        string='Cobrar a partir de',
+        help='O primeiro mês cobrado. Vazio: o início do ano lectivo. Os meses anteriores nunca se facturam.',
+    )
     date_to = fields.Date(string='Cobrar até', help='Vazio: o fim do ano lectivo.')
     line_ids = fields.One2many('edu.fee.plan.line', 'plan_id', string='Taxas')
     active = fields.Boolean(default=True)
@@ -134,6 +140,27 @@ class EduFeePlan(models.Model):
     # Geração das cobranças
     # ------------------------------------------------------------------
     @api.model
+    def _edu_billing_issue(self, company, day=None):
+        """Porque é que a escola ainda não pode emitir as propinas (ou False): numa escola angolana, a factura só
+        sai certificada (AGT). Uma factura emitida sem a facturação electrónica ligada nunca chega à AGT e não se
+        desfaz, por isso não se gera nenhuma até estar tudo pronto."""
+        if company.account_fiscal_country_id.code != 'AO':
+            return False
+        day = day or fields.Date.context_today(self)
+        if not company.l10n_ao_edi_enabled:
+            return self.env._(
+                'A facturação electrónica (AGT) de %s não está ligada: as propinas só se geram depois de a ligar.',
+                company.name,
+            )
+        try:
+            company._l10n_ao_edi_check_configuration()
+        except UserError as error:
+            return error.args[0]
+        if not self.env['l10n_ao_edi.series']._l10n_ao_edi_find(company, 'FT', day.year):
+            return self.env._('Falta a série AGT activa das facturas (FT) de %s.', day.year)
+        return False
+
+    @api.model
     def _generate_for_enrollments(self, enrollments, today=None):
         """Cria as facturas em falta até ao mês corrente. Devolve as facturas criadas."""
         today = today or fields.Date.context_today(self)
@@ -147,6 +174,14 @@ class EduFeePlan(models.Model):
         return created
 
     def _generate(self, enrollment, today):
+        """Cria as facturas em falta da matrícula até ao mês de ``today``."""
+        created = self.env['account.move']
+        for line, due, key, due_date in self._pending(enrollment, today):
+            created |= line._create_invoice(enrollment, due, key, due_date=due_date)
+        return created
+
+    def _pending(self, enrollment, today):
+        """As cobranças em falta da matrícula até ao mês de ``today``: (linha, mês, chave, vencimento)."""
         self.ensure_one()
         company = enrollment.company_id
         start, end = self._window()
@@ -161,7 +196,7 @@ class EduFeePlan(models.Model):
         existing = set(moves.mapped('edu_generation_key')) | {
             f'{m.edu_category}-{m.edu_due_period.strftime("%Y%m")}-{enrollment.id}' for m in moves if m.edu_due_period
         }
-        created = self.env['account.move']
+        pending = []
         seen = {}
         for line in self.line_ids.filtered(lambda line: line.mandatory and line.category not in ON_REQUEST):
             # Duas taxas da mesma categoria no plano distinguem-se pela ordem.
@@ -181,23 +216,32 @@ class EduFeePlan(models.Model):
                 if key in existing:
                     continue
                 # Quem se matricula depois do vencimento não nasce devedor: vence no dia da matrícula.
-                created |= line._create_invoice(enrollment, due, key, due_date=max(due, enrollment.date or due))
+                pending.append((line, due, key, max(due, enrollment.date or due)))
                 existing.add(key)
-        return created
+        return pending
 
     @api.model
     def _cron_generate(self):
         Enrollment = self.env['edu.enrollment']
+        Cron = self.env['ir.cron']
         for company in self.env['res.company'].search([('edu_is_school', '=', True)]):
+            issue = self._edu_billing_issue(company)
+            if issue:
+                _logger.warning('Propinas de %s não geradas: %s', company.name, issue)
+                continue
             enrollments = Enrollment.search(
                 [('company_id', '=', company.id), ('state', 'in', ENROLLED), ('academic_year_id.is_current', '=', True)]
             )
-            for enrollment in enrollments:
-                try:
-                    with self.env.cr.savepoint():
-                        self.with_company(company)._generate_for_enrollments(enrollment)
-                except Exception:
-                    _logger.exception('Propinas: erro na geração da matrícula %s', enrollment.id)
+            Cron._commit_progress(remaining=len(enrollments))
+            for ids in split_every(BATCH, enrollments.ids):
+                for enrollment in Enrollment.browse(ids):
+                    try:
+                        with self.env.cr.savepoint():
+                            self.with_company(company)._generate_for_enrollments(enrollment)
+                    except Exception:
+                        _logger.exception('Propinas: erro na geração da matrícula %s', enrollment.id)
+                if not Cron._commit_progress(len(ids)):
+                    return  # sem tempo: a tarefa volta a correr e continua onde ficou
 
 
 class EduFeePlanLine(models.Model):
@@ -269,19 +313,24 @@ class EduFeePlanLine(models.Model):
             return f'{self.name} — {MONTHS[due.month - 1]} {due.year}'
         return self.name
 
-    def _create_invoice(self, enrollment, due, key, quantity=1.0, due_date=None):
-        """Factura da taxa para o aluno (com a bolsa, se a houver), publicada logo: o l10n_ao_edi certifica-a."""
+    def _payable(self, enrollment, due):
+        """O valor a pagar da taxa no mês (com a bolsa, só na propina): (valor, desconto, nota da bolsa)."""
         self.ensure_one()
-        student = enrollment.student_id
         discount = 0.0
         note = False
         if self.category == 'tuition':
             scholarship, discount = self.env['edu.scholarship']._relief(
-                student, enrollment.academic_year_id, due, self.amount
+                enrollment.student_id, enrollment.academic_year_id, due, self.amount
             )
             if scholarship:
                 note = self.env._('%(type)s · desconto %(amount)s', type=scholarship.type_label, amount=discount)
-        payable = max(self.amount - discount, 0.0)
+        return max(self.amount - discount, 0.0), discount, note
+
+    def _create_invoice(self, enrollment, due, key, quantity=1.0, due_date=None):
+        """Factura da taxa para o aluno (com a bolsa, se a houver), publicada logo: o l10n_ao_edi certifica-a."""
+        self.ensure_one()
+        student = enrollment.student_id
+        payable, discount, note = self._payable(enrollment, due)
         journal = enrollment.company_id.edu_fees_journal_id or self.env['account.journal'].search(
             [('type', '=', 'sale'), ('company_id', '=', enrollment.company_id.id)], limit=1
         )

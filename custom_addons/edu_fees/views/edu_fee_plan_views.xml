@@ -20,6 +20,11 @@
         <field name="model">edu.fee.plan</field>
         <field name="arch" type="xml">
             <form string="Plano de propinas">
+                <header>
+                    <button name="%(action_edu_fee_generate)d" type="action" string="Gerar agora" class="btn-primary"
+                            context="{'active_model': 'edu.fee.plan', 'active_ids': [id]}" invisible="not id"
+                            groups="edu_fees.group_edu_finance"/>
+                </header>
                 <sheet>
                     <widget name="web_ribbon" title="Arquivado" bg_color="text-bg-danger" invisible="active"/>
                     <div class="oe_title"><h1><field name="name" placeholder="Propinas 2026/2027 — Técnico de Enfermagem"/></h1></div>
@@ -55,7 +60,8 @@
                     </field>
                     <div class="text-muted">
                         O plano da turma prevalece sobre o da classe, este sobre o do curso e este sobre o geral. As taxas
-                        obrigatórias (matrícula, propina, exames) facturam-se mês a mês até ao mês corrente; os serviços, o
+                        obrigatórias (matrícula, propina, exames) facturam-se sozinhas, mês a mês, até ao mês corrente, a partir de «Cobrar a
+                        partir de»; os serviços, o
                         cartão e os outros cobram-se a pedido. Ensino isento de IVA (M21); cartão e bens com IVA a 14%.
                     </div>
                 </sheet>
