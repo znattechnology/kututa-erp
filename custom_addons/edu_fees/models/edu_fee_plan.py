@@ -114,12 +114,20 @@ class EduFeePlan(models.Model):
     @api.model
     def _for_enrollment(self, enrollment):
         """Plano aplicável: o da turma, senão o da classe, senão o do curso, senão o geral (o mais recente)."""
+        for tier in self._tiers(enrollment):
+            if tier:
+                return tier[:1]
+        return self.browse()
+
+    @api.model
+    def _tiers(self, enrollment):
+        """Os planos do ano que se aplicam à matrícula, do mais específico ao geral: turma, classe, curso, escola."""
         plans = self.search(
             [('academic_year_id', '=', enrollment.academic_year_id.id), ('company_id', '=', enrollment.company_id.id)],
             order='create_date desc, id desc',
         )
-        tiers = [
-            plans.filtered(lambda p: p.class_id == enrollment.class_id),
+        return [
+            plans.filtered(lambda p: p.class_id and p.class_id == enrollment.class_id),
             plans.filtered(
                 lambda p: (
                     not p.class_id
@@ -131,10 +139,6 @@ class EduFeePlan(models.Model):
             plans.filtered(lambda p: not p.class_id and not p.class_number and p.course_id == enrollment.course_id),
             plans.filtered(lambda p: not p.class_id and not p.class_number and not p.course_id),
         ]
-        for tier in tiers:
-            if tier:
-                return tier[:1]
-        return self.browse()
 
     # ------------------------------------------------------------------
     # Geração das cobranças
@@ -149,7 +153,7 @@ class EduFeePlan(models.Model):
         day = day or fields.Date.context_today(self)
         if not company.l10n_ao_edi_enabled:
             return self.env._(
-                'A facturação electrónica (AGT) de %s não está ligada: as propinas só se geram depois de a ligar.',
+                'A facturação electrónica (AGT) de %s não está ligada: as facturas só se emitem depois de a ligar.',
                 company.name,
             )
         try:
@@ -381,3 +385,91 @@ class EduStudent(models.Model):
         if guardian and guardian.partner_id.vat:
             return guardian.partner_id
         return self.partner_id
+
+    def _edu_service_catalog(self):
+        """O que se cobra a pedido ao aluno (batas, declarações, certificados, o cartão…): as taxas a pedido dos planos
+        do ano que se aplicam à matrícula. O mesmo nome em dois planos conta uma vez, com o valor do mais específico."""
+        self.ensure_one()
+        Line = self.env['edu.fee.plan.line']
+        enrollment = self.current_enrollment_id
+        if not enrollment:
+            return Line
+        catalog = Line
+        names = set()
+        for tier in self.env['edu.fee.plan']._tiers(enrollment):
+            for line in tier.line_ids:
+                if line.category not in ON_REQUEST and line.mandatory:
+                    continue
+                name = line.name.strip().lower()
+                if name not in names:
+                    names.add(name)
+                    catalog |= line
+        return catalog
+
+    def _edu_charge_services(self, items, due_date=None, key=None):
+        """Venda ao balcão, como no secPed: vários serviços e produtos do catálogo numa só factura. ``items`` são pares
+        (taxa, quantidade). Repetir com a mesma chave devolve a factura já emitida (um erro de rede não cobra duas
+        vezes). O cartão cobra-se sozinho: cada factura paga do cartão dá um cartão."""
+        self.ensure_one()
+        enrollment = self.current_enrollment_id
+        if not enrollment:
+            raise UserError(self.env._('O aluno não tem matrícula activa.'))
+        Move = self.env['account.move']
+        if key:
+            key = f'SALE-{self.id}-{key}'
+            existing = Move.search([('edu_generation_key', '=', key)], limit=1)
+            if existing:
+                return existing
+        catalog = self._edu_service_catalog()
+        lines = []
+        for line_id, quantity in items:
+            line = catalog.filtered(lambda line, line_id=line_id: line.id == line_id)
+            if not line:
+                raise UserError(self.env._('Esse serviço não está no catálogo do aluno.'))
+            if int(quantity) < 1:
+                raise UserError(self.env._('A quantidade tem de ser pelo menos 1.'))
+            lines.append((line, int(quantity)))
+        if not lines:
+            raise UserError(self.env._('Escolha pelo menos um serviço ou produto.'))
+        fees = self.env['edu.fee.plan.line'].browse([line.id for line, _quantity in lines])
+        if 'card' in fees.mapped('category') and (len(lines) > 1 or lines[0][1] > 1):
+            raise UserError(
+                self.env._('O cartão de estudante cobra-se sozinho: retire os outros itens e cobre-o à parte.')
+            )
+        issue = self.env['edu.fee.plan']._edu_billing_issue(enrollment.company_id)
+        if issue:
+            raise UserError(issue)
+        today = fields.Date.context_today(self)
+        journal = enrollment.company_id.edu_fees_journal_id or self.env['account.journal'].search(
+            [('type', '=', 'sale'), ('company_id', '=', enrollment.company_id.id)], limit=1
+        )
+        categories = set(fees.mapped('category'))
+        move = Move.with_company(enrollment.company_id).create(
+            {
+                'move_type': 'out_invoice',
+                'partner_id': self._edu_billing_partner().id,
+                'journal_id': journal.id,
+                'invoice_date': today,
+                'invoice_date_due': max(due_date or today, today),
+                'edu_student_id': self.id,
+                'edu_enrollment_id': enrollment.id,
+                'edu_fee_line_id': fees.id if len(fees) == 1 else False,
+                'edu_category': categories.pop() if len(categories) == 1 else 'service',
+                'edu_due_period': today,
+                'edu_generation_key': key or False,
+                'invoice_line_ids': [
+                    fields.Command.create(
+                        {
+                            'product_id': line.product_id.id,
+                            'name': line.name,
+                            'quantity': quantity,
+                            'price_unit': line._price_unit(line.amount),
+                            'tax_ids': [fields.Command.set(line.tax_id.ids)],
+                        }
+                    )
+                    for line, quantity in lines
+                ],
+            }
+        )
+        move.action_post()
+        return move

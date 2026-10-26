@@ -329,6 +329,62 @@
         display: block;
     }
 
+    // Cobrar: o catálogo do aluno em grupos, com a quantidade de cada item e o total fixo em baixo.
+    .o_edu_tr_narrow {
+        max-width: 960px;
+    }
+
+    .o_edu_tr_items > li {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 16px;
+        padding: 10px 20px;
+
+        &.o_edu_tr_picked {
+            background: rgba($o-action, 0.06);
+        }
+    }
+
+    .o_edu_tr_item_name {
+        display: flex;
+        flex: 1 1 280px;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        min-width: 0;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .o_edu_tr_stepper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        > span {
+            min-width: 2ch;
+            text-align: center;
+        }
+    }
+
+    .o_edu_tr_line_total {
+        width: 120px;
+        text-align: right;
+    }
+
+    .o_edu_tr_checkout {
+        position: sticky;
+        bottom: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        border-color: rgba($o-action, 0.35);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
     .o_edu_tr_void {
         margin: 0 20px 16px;
         padding: 12px 16px;

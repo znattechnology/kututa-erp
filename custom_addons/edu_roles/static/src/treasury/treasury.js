@@ -244,6 +244,8 @@ export class TreasuryStudent extends Component {
 
     async load() {
         this.state.data = await this.orm.call("edu.treasury", "student_data", [this.studentId]);
+        // Recarregada pelo endereço, a acção chega sem nome: o trilho mostra o nome do aluno.
+        this.env.config.setDisplayName?.(this.state.data.student.name);
         this.state.selected = this.state.selected.filter((id) => this.state.data.open.some((m) => m.id === id));
     }
 
@@ -468,7 +470,169 @@ export class TreasuryRules extends Component {
     }
 }
 
+/**
+ * Cobrar, como o balcão do secPed: escolhem-se vários serviços e produtos do catálogo do aluno (batas, declarações,
+ * certificados, uniformes…), com a quantidade de cada um, e sai uma só factura. O cartão de estudante cobra-se sozinho
+ * (cada factura paga do cartão dá um cartão). Depois de emitida, a factura recebe-se logo ou fica por pagar na ficha.
+ */
+export class TreasuryCharge extends Component {
+    static template = "edu_roles.TreasuryCharge";
+    static components = { Layout };
+
+    props = useProps(standardActionServiceProps);
+
+    setup() {
+        this.orm = useService("orm");
+        this.action = useService("action");
+        this.notification = useService("notification");
+        const context = this.props.action.context || {};
+        this.studentId = context.student_id || context.active_id;
+        // Uma chave por visita: repetir depois de um erro devolve a factura já emitida em vez de cobrar duas vezes.
+        this.visit = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        this.state = proxy({ data: null, qty: {}, dueDate: "", busy: false, done: null });
+        onWillStart(() => this.load());
+        onMounted(() => this.props.updateActionState?.({ active_id: this.studentId }));
+    }
+
+    get display() {
+        return { controlPanel: {} };
+    }
+
+    async load() {
+        this.state.data = await this.orm.call("edu.treasury", "catalog", [this.studentId]);
+        this.env.config.setDisplayName?.(`Cobrar a ${this.state.data.student.name}`);
+        this.state.dueDate = this.state.data.today;
+    }
+
+    get items() {
+        return this.state.data.groups.flatMap((group) => group.items);
+    }
+
+    get selected() {
+        return this.items.filter((item) => this.state.qty[item.id] > 0);
+    }
+
+    get hasCard() {
+        return this.selected.some((item) => item.card);
+    }
+
+    get blocked() {
+        // O cartão vai sozinho e numa unidade.
+        return this.hasCard && (this.selected.length > 1 || this.selected.some((item) => this.state.qty[item.id] > 1));
+    }
+
+    // Como a factura: o preço sem IVA vezes a quantidade e o IVA de cada linha arredondado por excesso (AGT).
+    line(item) {
+        const net = Math.round(item.net * this.quantity(item) * 100) / 100;
+        const tax = Math.ceil(Math.round(net * item.rate * 1e4) / 1e4 - 1e-9) / 100;
+        return { net, tax, gross: net + tax };
+    }
+
+    get totals() {
+        const totals = { gross: 0, net: 0, tax: 0 };
+        for (const item of this.selected) {
+            const line = this.line(item);
+            totals.net += line.net;
+            totals.tax += line.tax;
+            totals.gross += line.gross;
+        }
+        return totals;
+    }
+
+    money(amount) {
+        // Como o servidor (2.500,00 Kz): o pt-PT do navegador não agrupa os milhares de quatro algarismos.
+        const [units, cents] = (Math.round(amount * 100) / 100).toFixed(2).split(".");
+        return `${units.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${cents} ${this.state.data.currency}`;
+    }
+
+    quantity(item) {
+        return this.state.qty[item.id] || 0;
+    }
+
+    lineTotal(item) {
+        return this.quantity(item) ? this.money(this.line(item).gross) : "—";
+    }
+
+    toggle(item) {
+        const qty = { ...this.state.qty };
+        if (qty[item.id]) {
+            delete qty[item.id];
+        } else {
+            qty[item.id] = 1;
+        }
+        this.state.qty = qty;
+    }
+
+    bump(item, delta) {
+        this.state.qty = { ...this.state.qty, [item.id]: Math.max(1, this.quantity(item) + delta) };
+    }
+
+    onDueDate(ev) {
+        this.state.dueDate = ev.target.value;
+    }
+
+    key() {
+        // A chave muda com o que se cobra: mudar a escolha depois de um erro é outra venda, não a repetição da primeira.
+        const signature = this.selected
+            .map((item) => `${item.id}x${this.state.qty[item.id]}`)
+            .sort()
+            .join(",")
+            .concat(this.state.dueDate || "");
+        let hash = 5381;
+        for (let index = 0; index < signature.length; index++) {
+            hash = ((hash << 5) + hash + signature.charCodeAt(index)) | 0;
+        }
+        return `${this.visit}-${(hash >>> 0).toString(36)}`;
+    }
+
+    async charge() {
+        if (!this.selected.length || this.blocked || this.state.busy) {
+            return;
+        }
+        this.state.busy = true;
+        try {
+            const items = this.selected.map((item) => ({ id: item.id, quantity: this.state.qty[item.id] }));
+            this.state.done = await this.orm.call("edu.treasury", "charge", [
+                this.studentId,
+                items,
+                this.state.dueDate,
+                this.key(),
+            ]);
+            this.notification.add(`Factura ${this.state.done.number} emitida.`, { type: "success" });
+        } finally {
+            this.state.busy = false;
+        }
+    }
+
+    async receive() {
+        const action = await this.orm.call("edu.treasury", "student_action", [
+            this.studentId,
+            "receive",
+            [this.state.done.id],
+            false,
+        ]);
+        return this.action.doAction(action, { onClose: () => this.back() });
+    }
+
+    printInvoice() {
+        return this.orm
+            .call("edu.treasury", "student_action", [this.studentId, "print_move", null, this.state.done.id])
+            .then((action) => this.action.doAction(action));
+    }
+
+    again() {
+        this.visit = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        this.state.qty = {};
+        this.state.done = null;
+    }
+
+    back() {
+        return this.action.restore();
+    }
+}
+
 registry.category("actions").add("edu_roles.treasury_home", TreasuryHome);
+registry.category("actions").add("edu_roles.treasury_charge", TreasuryCharge);
 registry.category("actions").add("edu_roles.treasury_controls", TreasuryControls);
 registry.category("actions").add("edu_roles.treasury_differences", TreasuryDifferences);
 registry.category("actions").add("edu_roles.treasury_rules", TreasuryRules);

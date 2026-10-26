@@ -265,7 +265,7 @@
                         </div>
                         <div class="d-flex flex-wrap gap-2">
                             <button type="button" class="btn btn-primary" t-att-disabled="!d.balance.has_open" t-on-click="() => this.receive([])">Receber pagamento</button>
-                            <button type="button" class="btn btn-secondary" t-on-click="() => this.run('charge')">Cobrar serviço</button>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.run('charge')">Cobrar serviços e produtos</button>
                         </div>
                     </header>
 
@@ -401,6 +401,92 @@
                             </section>
                         </aside>
                     </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <t t-name="edu_roles.TreasuryCharge">
+        <div class="o_action o_edu_treasury">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body o_edu_tr_narrow" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header class="o_edu_tr_header">
+                        <div>
+                            <h1 class="o_edu_tr_title">Cobrar a <t t-out="d.student.name"/></h1>
+                            <p class="mb-0 text-muted">Escolha vários serviços e produtos: sai uma só factura, como num balcão.</p>
+                        </div>
+                        <button type="button" class="btn btn-secondary" t-on-click="() => this.back()">Voltar à ficha</button>
+                    </header>
+
+                    <section t-if="this.state.done" class="o_edu_tr_card" aria-live="polite">
+                        <h2 class="o_edu_tr_h2">Factura <t t-out="this.state.done.number"/> emitida</h2>
+                        <p>Total de <span class="o_edu_tr_num fw-semibold" t-out="this.state.done.total"/>. Pode receber já ou deixá-la por pagar na ficha do aluno.</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-primary" t-on-click="() => this.receive()">Receber agora</button>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.printInvoice()">Imprimir</button>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.again()">Cobrar outra coisa</button>
+                            <button type="button" class="btn btn-link" t-on-click="() => this.back()">Voltar à ficha</button>
+                        </div>
+                    </section>
+
+                    <t t-else="">
+                        <section t-if="!d.student.enrolled" class="o_edu_tr_card">
+                            <p class="mb-0">O aluno não tem matrícula activa: só se cobra a quem está matriculado.</p>
+                        </section>
+                        <section t-elif="!d.groups.length" class="o_edu_tr_card">
+                            <p class="mb-1">Ainda não há serviços nem produtos para este aluno.</p>
+                            <p class="small text-muted mb-0">Acrescentam-se nos planos de propinas, como taxas «Serviço a pedido», «Cartão de estudante» ou «Outro».</p>
+                        </section>
+                        <t t-else="">
+                            <section t-foreach="d.groups" t-as="group" t-key="group.key" class="o_edu_tr_card p-0" t-att-aria-label="group.label">
+                                <div class="o_edu_tr_card_head">
+                                    <h2 class="o_edu_tr_h2 mb-0" t-out="group.label"/>
+                                    <span class="small text-muted"><t t-out="group.items.length"/> <t t-out="group.items.length === 1 ? 'item' : 'itens'"/></span>
+                                </div>
+                                <p t-if="group.key === 'card'" class="small text-muted px-3 mb-2">Cobra-se sozinho: cada factura paga dá um cartão.</p>
+                                <ul class="o_edu_tr_list o_edu_tr_items">
+                                    <li t-foreach="group.items" t-as="item" t-key="item.id" t-att-class="{ 'o_edu_tr_picked': this.quantity(item) }">
+                                        <label class="o_edu_tr_item_name">
+                                            <input type="checkbox" class="form-check-input" t-att-checked="this.quantity(item) > 0" t-on-change="() => this.toggle(item)"/>
+                                            <span t-out="item.name"/>
+                                            <span class="badge border text-muted fw-normal" t-out="item.rate ? 'IVA ' + item.rate + '%' : 'Isento'"/>
+                                            <span class="small text-muted o_edu_tr_num" t-out="item.price"/>
+                                        </label>
+                                        <div t-if="this.quantity(item)" class="o_edu_tr_stepper" role="group" t-att-aria-label="'Quantidade de ' + item.name">
+                                            <button type="button" class="btn btn-sm btn-secondary" aria-label="Menos um" t-att-disabled="this.quantity(item) &lt;= 1" t-on-click="() => this.bump(item, -1)">−</button>
+                                            <span class="o_edu_tr_num" t-out="this.quantity(item)"/>
+                                            <button type="button" class="btn btn-sm btn-secondary" aria-label="Mais um" t-on-click="() => this.bump(item, 1)">+</button>
+                                        </div>
+                                        <span class="o_edu_tr_num o_edu_tr_line_total" t-att-class="{ 'text-muted': !this.quantity(item) }" t-out="this.lineTotal(item)"/>
+                                    </li>
+                                </ul>
+                            </section>
+
+                            <section class="o_edu_tr_card o_edu_tr_checkout" aria-label="Total e cobrança">
+                                <t t-set="totals" t-value="this.totals"/>
+                                <div>
+                                    <p class="small text-muted mb-1">
+                                        Sem IVA <span class="o_edu_tr_num" t-out="this.money(totals.net)"/>, IVA <span class="o_edu_tr_num" t-out="this.money(totals.tax)"/>
+                                    </p>
+                                    <p class="mb-0">
+                                        Total <span class="o_edu_tr_num fs-4 fw-semibold" t-out="this.money(totals.gross)"/>
+                                        <span class="small text-muted"> (<t t-out="this.selected.length"/> <t t-out="this.selected.length === 1 ? 'item' : 'itens'"/>)</span>
+                                    </p>
+                                    <p t-if="this.blocked" class="small text-danger mb-0 mt-1">O cartão de estudante cobra-se sozinho e numa unidade: retire os outros itens.</p>
+                                </div>
+                                <div class="d-flex flex-wrap align-items-end gap-2">
+                                    <label class="o_edu_tr_field">
+                                        <span>Vence a</span>
+                                        <input type="date" class="form-control" t-att-min="d.today" t-att-value="this.state.dueDate" t-on-change="(ev) => this.onDueDate(ev)"/>
+                                    </label>
+                                    <button type="button" class="btn btn-primary" t-att-disabled="!this.selected.length or this.blocked or this.state.busy" t-on-click="() => this.charge()">
+                                        Emitir a factura
+                                    </button>
+                                </div>
+                            </section>
+                        </t>
+                    </t>
                 </div>
             </Layout>
         </div>

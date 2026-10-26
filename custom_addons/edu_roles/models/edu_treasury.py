@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models
 from odoo.addons.edu_fees.models.edu_fee_plan import ENROLLED, MONTHS
 from odoo.exceptions import AccessError, UserError
-from odoo.tools import format_amount
+from odoo.tools import float_round, format_amount
 
 MONTH_SHORT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 CATEGORY_LABELS = {
@@ -547,7 +547,12 @@ class EduTreasury(models.AbstractModel):
                 },
             }
         if key == 'charge':
-            return with_views(student.action_charge_service())
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'edu_roles.treasury_charge',
+                'name': self.env._('Cobrar'),
+                'context': {'student_id': student.id},
+            }
         if key == 'print_move':
             return self.env.ref('account.account_invoices').preview_action(self.env['account.move'].browse(res_id))
         if key == 'print_payment':
@@ -555,6 +560,62 @@ class EduTreasury(models.AbstractModel):
                 self.env['account.payment'].browse(res_id)
             )
         raise UserError(self.env._('Acção desconhecida.'))
+
+    # Cobrar: o balcão dos serviços e produtos
+
+    @api.model
+    def catalog(self, student_id):
+        """O catálogo do aluno para o balcão, em grupos como no secPed (serviços, cartão de estudante e produtos), com o
+        valor a pagar e a taxa do IVA de cada item."""
+        self._check_access()
+        student = self.env['edu.student'].browse(student_id).exists()
+        if not student or student.company_id != self.env.company:
+            raise UserError(self.env._('Aluno não encontrado.'))
+        groups = [
+            ('service', self.env._('Serviços')),
+            ('card', self.env._('Cartão de estudante')),
+            ('other', self.env._('Produtos')),
+        ]
+        items = defaultdict(list)
+        for line in student._edu_service_catalog():
+            rate = line.tax_id.amount if line.tax_id.amount_type == 'percent' else 0.0
+            # O preço sem IVA da factura e o IVA arredondado por excesso (AGT): o balcão soma como a factura.
+            net = line._price_unit(line.amount)
+            items[line.category if line.category in ('card', 'other') else 'service'].append(
+                {
+                    'id': line.id,
+                    'name': line.name,
+                    'net': net,
+                    'price': self._money(net + float_round(net * rate / 100, precision_digits=2, rounding_method='UP')),
+                    'rate': rate,
+                    'card': line.category == 'card',
+                }
+            )
+        return {
+            'student': {
+                'id': student.id,
+                'name': student.name,
+                'class': student.current_class_id._editor_label() if student.current_class_id else '',
+                'enrolled': bool(student.current_enrollment_id),
+            },
+            'groups': [{'key': key, 'label': label, 'items': items[key]} for key, label in groups if items[key]],
+            'currency': self.env.company.currency_id.symbol,
+            'today': fields.Date.to_string(self._today()),
+        }
+
+    @api.model
+    def charge(self, student_id, items, due_date=False, key=False):
+        """Emite a factura do balcão (vários itens numa só) e devolve-a para receber logo."""
+        self._check_access()
+        student = self.env['edu.student'].browse(student_id).exists()
+        if not student or student.company_id != self.env.company:
+            raise UserError(self.env._('Aluno não encontrado.'))
+        move = student._edu_charge_services(
+            [(item['id'], item['quantity']) for item in items],
+            due_date=fields.Date.to_date(due_date) if due_date else None,
+            key=key,
+        )
+        return {'id': move.id, 'number': move.name, 'total': self._money(move.amount_total)}
 
     # Controlo interno: a caixa e as aprovações
 

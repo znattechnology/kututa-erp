@@ -1,8 +1,10 @@
 from datetime import date, timedelta
+from unittest.mock import patch
 
 from lxml import etree
 
 from odoo import Command, fields
+from odoo.addons.edu_fees.models.edu_fee_plan import EduFeePlan
 from odoo.addons.edu_roles.models.edu_attendance_page import absence_limit_of
 from odoo.exceptions import AccessError, UserError
 from odoo.tests import TransactionCase, tagged
@@ -177,6 +179,29 @@ class TestEduRoles(TransactionCase):
         self.assertEqual((data['student']['name'], data['open'], data['documents']), (student.name, [], []))
         action = Treasury.student_action(student.id, 'receive', [])
         self.assertEqual((action['res_model'], action['views']), ('edu.fee.payment', [(False, 'form')]))
+        # Cobrar: o balcão dos serviços e produtos, numa só factura.
+        self.assertEqual(Treasury.student_action(student.id, 'charge')['tag'], 'edu_roles.treasury_charge')
+        self.assertEqual(Treasury.catalog(student.id)['groups'], [])
+        self.env['edu.fee.plan'].create(
+            {
+                'name': 'Serviços',
+                'academic_year_id': enrollment.academic_year_id.id,
+                'line_ids': [
+                    Command.create({'name': 'Batas', 'category': 'other', 'recurrence': 'one_off', 'amount': 11_400}),
+                    Command.create(
+                        {'name': 'Declaração', 'category': 'service', 'recurrence': 'one_off', 'amount': 2_000}
+                    ),
+                ],
+            }
+        )
+        catalog = Treasury.catalog(student.id)
+        self.assertEqual([g['key'] for g in catalog['groups']], ['service', 'other'])
+        items = [{'id': g['items'][0]['id'], 'quantity': 2} for g in catalog['groups']]
+        self.startPatcher(patch.object(EduFeePlan, '_edu_billing_issue', return_value=False))
+        sale = Treasury.charge(student.id, items, False, 'visita-1')
+        self.assertEqual(Treasury.charge(student.id, items, False, 'visita-1')['id'], sale['id'])
+        self.assertEqual(self.env['account.move'].browse(sale['id']).amount_total, 26_800)
+        self.assertEqual(len(Treasury.student_data(student.id)['open']), 1)
         with self.assertRaises(AccessError):
             self.env['edu.treasury'].with_user(self.clerk).home_data()
 

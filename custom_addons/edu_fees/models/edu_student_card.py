@@ -52,7 +52,7 @@ class EduStudentCard(models.Model):
 
 
 class EduStudent(models.Model):
-    _inherit = 'edu.student'
+    _inherit = 'edu.student'  # pylint: disable=consider-merging-classes-inherited
 
     edu_card_ids = fields.One2many('edu.student.card', 'student_id', string='Cartões')
     edu_card_id = fields.Many2one('edu.student.card', string='Cartão activo', compute='_compute_edu_card')
@@ -147,13 +147,12 @@ class EduStudent(models.Model):
         return self.env.ref('edu_documents.action_report_student_card').preview_action(self)
 
     def action_edu_charge_card(self):
-        """A tesouraria cobra a taxa do cartão: o serviço «Cartão de estudante» do plano do aluno."""
+        """A tesouraria cobra a taxa do cartão: o «Cartão de estudante» do catálogo do aluno (o do plano do curso ou o
+        do plano geral dos serviços)."""
         self.ensure_one()
-        enrollment = self.current_enrollment_id
-        plan = enrollment and self.env['edu.fee.plan']._for_enrollment(enrollment)
-        line = plan and plan.line_ids.filtered(lambda line: line.category == 'card')[:1]
+        line = self._edu_service_catalog().filtered(lambda line: line.category == 'card')[:1]
         if not line:
-            raise UserError(self.env._('O plano de propinas do aluno não tem a taxa do cartão de estudante.'))
+            raise UserError(self.env._('Os planos de propinas do aluno não têm a taxa do cartão de estudante.'))
         action = self.action_charge_service()
         action['context'] = {**action['context'], 'default_fee_line_id': line.id}
         return action

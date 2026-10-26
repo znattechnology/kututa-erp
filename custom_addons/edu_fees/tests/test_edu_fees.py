@@ -455,6 +455,53 @@ class TestEduFees(AccountTestInvoicingCommon):
         )
         self.assertEqual((card_move.amount_untaxed, card_move.amount_total), (3_000, 3_420))
 
+    def test_counter_sale(self):
+        """O balcão do secPed: o catálogo junta as taxas a pedido do plano do curso e do plano geral dos serviços (o
+        mesmo nome conta uma vez, com o valor do mais específico); vários itens saem numa só factura; o cartão cobra-se
+        sozinho; repetir com a mesma chave não cobra duas vezes."""
+        self._enroll(date(2026, 9, 1))
+        general = self.env['edu.fee.plan'].create(
+            {
+                'name': 'Serviços e Taxas',
+                'academic_year_id': self.year.id,
+                'line_ids': [
+                    Command.create({'name': 'Batas', 'category': 'service', 'recurrence': 'one_off', 'amount': 21_400}),
+                    Command.create(
+                        {'name': 'Declaração', 'category': 'service', 'recurrence': 'one_off', 'amount': 9_999}
+                    ),
+                ],
+            }
+        )
+        general.line_ids.filtered(lambda line: line.name == 'Batas').tax_id = self.env['account.chart.template'].ref(
+            'ao_iva_sale_14'
+        )
+        self.plan.course_id = self.course
+        catalog = self.student._edu_service_catalog()
+        self.assertEqual(sorted(catalog.mapped('name')), ['Batas', 'Cartão', 'Declaração'])
+        declaration = catalog.filtered(lambda line: line.name == 'Declaração')
+        self.assertEqual(declaration.amount, 2_500)
+        smock = catalog.filtered(lambda line: line.name == 'Batas')
+        with self.assertRaisesRegex(UserError, 'não está ligada'):
+            self.student._edu_charge_services([(smock.id, 1)])
+        self.startPatcher(patch.object(EduFeePlan, '_edu_billing_issue', return_value=False))
+        move = self.student._edu_charge_services([(smock.id, 2), (declaration.id, 1)], key='K1')
+        self.assertEqual(len(move.invoice_line_ids), 2)
+        # 2 × 18 771,93 + IVA arredondado por excesso (5 256,15) + 2 500: o valor com IVA incluído fica ao cêntimo.
+        self.assertEqual((move.amount_total, move.state, move.edu_category), (45_300.01, 'posted', 'service'))
+        self.assertEqual(self.student._edu_charge_services([(smock.id, 2), (declaration.id, 1)], key='K1'), move)
+        card = catalog.filtered(lambda line: line.category == 'card')
+        with self.assertRaisesRegex(UserError, 'sozinho'):
+            self.student._edu_charge_services([(card.id, 1), (declaration.id, 1)])
+        card_move = self.student._edu_charge_services([(card.id, 1)])
+        self.assertEqual((card_move.edu_category, card_move.edu_fee_line_id), ('card', card))
+        self.assertEqual(self.student.edu_card_state, 'awaiting')
+        self.assertEqual(self.student.action_edu_charge_card()['context']['default_fee_line_id'], card.id)
+        foreign = self.env['edu.fee.plan.line'].create(
+            {'plan_id': general.id, 'name': 'Outro', 'category': 'tuition', 'amount': 1}
+        )
+        with self.assertRaisesRegex(UserError, 'catálogo'):
+            self.student._edu_charge_services([(foreign.id, 1)])
+
     def test_student_card(self):
         """Cartão como no secPed: só se emite com a taxa paga e a fotografia; cada pagamento dá um cartão; a 2.ª via
         revoga o anterior; só se imprime o cartão emitido."""
