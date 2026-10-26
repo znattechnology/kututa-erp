@@ -180,6 +180,35 @@ class TestEduRoles(TransactionCase):
         with self.assertRaises(AccessError):
             self.env['edu.treasury'].with_user(self.clerk).home_data()
 
+    def test_treasury_controls(self):
+        """Aprovações e caixa, diferenças e controlos internos: a caixa abre e fecha com a diferença; as regras só a
+        direcção as altera."""
+        Treasury = self.env['edu.treasury'].with_user(self.cashier)
+        self.assertIsNone(Treasury.controls_data()['session'])
+        Treasury.open_cash()
+        self.assertTrue(Treasury.controls_data()['session'])
+        closed = Treasury.close_cash(500, 'Sobra do troco')
+        self.assertFalse(closed['exact'])
+        self.assertFalse(closed['short'])
+        differences = Treasury.differences(30)
+        self.assertEqual((differences['closed'], len(differences['rows'])), (1, 1))
+        with self.assertRaises(UserError):
+            Treasury.close_cash(0)  # já não há caixa aberta
+        rules = Treasury.rules()
+        self.assertFalse(rules['can_edit'])
+        with self.assertRaises(AccessError):
+            Treasury.save_rules({'threshold': 0})
+        saved = (
+            self.env['edu.treasury']
+            .with_user(self.director)
+            .save_rules(
+                {'threshold': 50000, 'cash_approval': True, 'void_approval': False, 'scholarship_approval': True}
+            )
+        )
+        self.assertEqual(
+            (saved['threshold'], saved['void_approval'], saved['changed_by']), (50000, False, self.director.name)
+        )
+
     def test_attendance_page(self):
         """«Presenças», como no secPed: a chamada começa com todos presentes mas só fica registada quando se guarda;
         com o sumário, a aula fica dada. Só o director de turma justifica."""

@@ -435,6 +435,11 @@ class EduTreasury(models.AbstractModel):
             payments |= move._get_reconciled_payments()
         partner = student._edu_billing_partner()
         blocked, message = student._edu_gate('reenrollment')
+        pending_voids = set(
+            self.env['edu.approval.request']
+            .search([('move_id', 'in', open_moves.ids), ('state', '=', 'pending')])
+            .move_id.ids
+        )
         return {
             'student': {
                 'id': student.id,
@@ -466,9 +471,12 @@ class EduTreasury(models.AbstractModel):
                     'total': self._money(m.amount_total),
                     'residual': self._money(m.amount_residual),
                     'partial': m.payment_state == 'partial',
+                    'voidable': m.payment_state == 'not_paid',
+                    'void_pending': m.id in pending_voids,
                 }
                 for m in open_moves
             ],
+            'void_approval': self.env.company.edu_void_approval,
             'documents': [
                 {
                     'id': m.id,
@@ -547,3 +555,240 @@ class EduTreasury(models.AbstractModel):
                 self.env['account.payment'].browse(res_id)
             )
         raise UserError(self.env._('Acção desconhecida.'))
+
+    # Controlo interno: a caixa e as aprovações
+
+    def _age(self, moment):
+        days = (fields.Datetime.now() - moment).days if moment else 0
+        return self.env._('hoje') if days < 1 else self.env._('há %s dia(s)', days)
+
+    @api.model
+    def controls_data(self):
+        """A tua caixa e as aprovações pendentes: anular uma factura, conceder uma bolsa e o numerário acima do limite.
+        Quem pediu não decide o próprio pedido (o servidor recusa e a página não oferece o botão)."""
+        self._check_access()
+        company = self.env.company
+        session = self.env['edu.cash.session']._current()
+        approvals = []
+        for request in self.env['edu.approval.request'].search(
+            [('company_id', '=', company.id), ('state', '=', 'pending')], order='create_date'
+        ):
+            approvals.append(
+                {
+                    'kind': 'void',
+                    'id': request.id,
+                    'title': self.env._('Anular uma factura'),
+                    'what': self.env._(
+                        '%(number)s de %(student)s, %(amount)s',
+                        number=request.move_id.name,
+                        student=request.student_id.name or '',
+                        amount=self._money(request.amount),
+                    ),
+                    'reason': request.reason,
+                    'by': request.requested_by_id.name,
+                    'age': self._age(request.create_date),
+                    'mine': request.requested_by_id == self.env.user,
+                }
+            )
+        for scholarship in self.env['edu.scholarship'].search(
+            [('company_id', '=', company.id), ('state', '=', 'draft')], order='create_date'
+        ):
+            discount = (
+                self.env._('100%')
+                if scholarship.scholarship_type == 'full'
+                else (
+                    f'{scholarship.discount_percent:g}%'
+                    if scholarship.discount_percent
+                    else self._money(scholarship.discount_amount)
+                )
+            )
+            approvals.append(
+                {
+                    'kind': 'scholarship',
+                    'id': scholarship.id,
+                    'title': self.env._('Conceder uma bolsa'),
+                    'what': self.env._(
+                        '%(type)s a %(student)s: %(discount)s de desconto na propina, desde %(start)s',
+                        type=scholarship.type_label,
+                        student=scholarship.student_id.name,
+                        discount=discount,
+                        start=scholarship.date_from.strftime('%d/%m/%Y'),
+                    ),
+                    'reason': scholarship.note or '',
+                    'by': scholarship.requested_by_id.name or '',
+                    'age': self._age(scholarship.create_date),
+                    'mine': company.edu_scholarship_approval and scholarship.requested_by_id == self.env.user,
+                }
+            )
+        for request in self.env['edu.fee.payment.request'].search(
+            [('company_id', '=', company.id), ('state', '=', 'pending'), ('method', '=', 'cash')], order='create_date'
+        ):
+            approvals.append(
+                {
+                    'kind': 'cash',
+                    'id': request.id,
+                    'title': self.env._('Numerário acima do limite'),
+                    'what': self.env._(
+                        '%(amount)s de %(student)s, recebido a %(date)s',
+                        amount=self._money(request.amount),
+                        student=request.student_id.name,
+                        date=request.date.strftime('%d/%m/%Y'),
+                    ),
+                    'reason': request.reference or '',
+                    'by': request.submitted_by_id.name,
+                    'age': self._age(request.create_date),
+                    'mine': request.submitted_by_id == self.env.user,
+                }
+            )
+        return {
+            'session': {'opened': fields.Datetime.context_timestamp(self, session.opened_at).strftime('%d/%m/%Y %H:%M')}
+            if session
+            else None,
+            'approvals': approvals,
+            'threshold': self._money(company.edu_cash_approval_threshold),
+        }
+
+    @api.model
+    def open_cash(self):
+        self._check_access()
+        self.env['edu.cash.session']._open()
+        return True
+
+    @api.model
+    def close_cash(self, declared, notes=''):
+        """Fecha a caixa com o numerário contado (sem ver o esperado) e diz a diferença."""
+        self._check_access()
+        session = self.env['edu.cash.session']._current()
+        if not session:
+            raise UserError(self.env._('A tua caixa não está aberta.'))
+        try:
+            declared = round(float(declared), 2)
+        except (TypeError, ValueError):
+            raise UserError(self.env._('Indique o numerário contado.')) from None
+        session.action_close(declared, notes)
+        return {
+            'expected': self._money(session.expected_amount),
+            'declared': self._money(session.declared_amount),
+            'difference': self._money(session.difference),
+            'exact': session.currency_id.is_zero(session.difference),
+            'short': session.difference < 0,
+        }
+
+    @api.model
+    def decide(self, kind, res_id, approve, notes=''):
+        """Aprovar ou recusar um pedido. Aprovar uma anulação emite a nota de crédito; aprovar o numerário regista o
+        pagamento e emite o recibo; aprovar a bolsa aplica-a às propinas seguintes."""
+        self._check_access()
+        notes = (notes or '').strip()
+        if kind == 'void':
+            self.env['edu.approval.request'].browse(res_id)._decide(approve, notes)
+        elif kind == 'scholarship':
+            scholarship = self.env['edu.scholarship'].browse(res_id)
+            if approve:
+                scholarship.action_approve()
+            else:
+                if not notes:
+                    raise UserError(self.env._('Escreva porque recusa o pedido.'))
+                if scholarship.requested_by_id == self.env.user and scholarship.company_id.edu_scholarship_approval:
+                    raise UserError(self.env._('Quem pede não pode decidir o próprio pedido.'))
+                scholarship.action_cancel()
+                scholarship.message_post(body=self.env._('Bolsa recusada: %s', notes))
+        elif kind == 'cash':
+            request = self.env['edu.fee.payment.request'].browse(res_id)
+            if approve:
+                request.action_confirm()
+            else:
+                if request.submitted_by_id == self.env.user:
+                    raise UserError(self.env._('Quem recebeu o numerário não pode decidir o próprio pagamento.'))
+                request.reject_reason = notes
+                request.action_reject()
+        else:
+            raise UserError(self.env._('Pedido desconhecido.'))
+        return True
+
+    @api.model
+    def differences(self, days=30):
+        """Os fechos de caixa com diferença nos últimos dias, e quantos fechos houve (sem isso, «nenhuma diferença» não
+        distinguia «todas certas» de «ninguém fechou a caixa»). A tesouraria vê as suas; a direcção, todas."""
+        self._check_access()
+        since = fields.Datetime.now() - timedelta(days=days)
+        Session = self.env['edu.cash.session']
+        closed = Session.search(
+            [('company_id', '=', self.env.company.id), ('state', '=', 'closed'), ('closed_at', '>=', since)]
+        )
+        with_difference = closed.filtered(lambda s: not s.currency_id.is_zero(s.difference))
+
+        def when(moment):
+            return fields.Datetime.context_timestamp(self, moment).strftime('%d/%m/%Y %H:%M')
+
+        return {
+            'days': days,
+            'closed': len(closed),
+            'all': self.env.user.has_group('edu_core.group_edu_manager'),
+            'rows': [
+                {
+                    'id': s.id,
+                    'operator': s.operator_id.name,
+                    'opened': when(s.opened_at),
+                    'closed': when(s.closed_at),
+                    'expected': self._money(s.expected_amount),
+                    'declared': self._money(s.declared_amount),
+                    'difference': self._money(s.difference),
+                    'short': s.difference < 0,
+                    'notes': s.notes or '',
+                }
+                for s in with_difference
+            ],
+        }
+
+    # Controlos internos: as regras
+
+    @api.model
+    def rules(self):
+        self._check_access()
+        company = self.env.company
+        return {
+            'threshold': company.edu_cash_approval_threshold,
+            'threshold_text': self._money(company.edu_cash_approval_threshold),
+            'cash_approval': company.edu_cash_approval,
+            'void_approval': company.edu_void_approval,
+            'scholarship_approval': company.edu_scholarship_approval,
+            'can_edit': self.env.user.has_group('edu_core.group_edu_manager'),
+            'changed_by': company.edu_controls_changed_by_id.name or '',
+            'changed_date': fields.Datetime.context_timestamp(self, company.edu_controls_changed_date).strftime(
+                '%d/%m/%Y %H:%M'
+            )
+            if company.edu_controls_changed_date
+            else '',
+        }
+
+    @api.model
+    def save_rules(self, values):
+        """Só a direcção altera as regras (quem opera a caixa não decide o que fica à espera de outra pessoa)."""
+        self._check_access()
+        if not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise AccessError(self.env._('Só a direcção altera os controlos internos.'))
+        try:
+            threshold = max(0.0, round(float(values.get('threshold') or 0), 2))
+        except (TypeError, ValueError):
+            raise UserError(self.env._('O limite do numerário tem de ser um valor.')) from None
+        self.env.company.sudo().write(
+            {
+                'edu_cash_approval_threshold': threshold,
+                'edu_cash_approval': bool(values.get('cash_approval')),
+                'edu_void_approval': bool(values.get('void_approval')),
+                'edu_scholarship_approval': bool(values.get('scholarship_approval')),
+                'edu_controls_changed_by_id': self.env.uid,
+                'edu_controls_changed_date': fields.Datetime.now(),
+            }
+        )
+        return self.rules()
+
+    @api.model
+    def request_void(self, move_id, reason):
+        """«Anular» na ficha do aluno: emite a nota de crédito, ou fica pedida a outro utilizador."""
+        self._check_access()
+        move = self.env['account.move'].browse(move_id)
+        if move.company_id != self.env.company:
+            raise UserError(self.env._('Factura não encontrada.'))
+        return move.action_edu_request_void(reason)

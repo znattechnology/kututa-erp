@@ -279,4 +279,61 @@
             overflow-wrap: anywhere;
         }
     }
+
+    // Controlo interno: a caixa, os pedidos, as regras e o formulário curto de cada um.
+    .o_edu_tr_cashbox {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .o_edu_tr_form {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px 16px;
+    }
+
+    .o_edu_tr_field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-width: 320px;
+        margin: 0;
+
+        > span {
+            color: $text-muted;
+            font-size: 0.85rem;
+        }
+    }
+
+    .o_edu_tr_wide {
+        grid-column: 1 / -1;
+        max-width: none;
+    }
+
+    .o_edu_tr_approvals > li,
+    .o_edu_tr_rules > li {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+        padding: 12px 20px;
+
+        &:first-child {
+            border-top: 0;
+        }
+    }
+
+    .o_edu_tr_rules > li {
+        display: block;
+    }
+
+    .o_edu_tr_void {
+        margin: 0 20px 16px;
+        padding: 12px 16px;
+        border: 1px solid rgba($danger, 0.4);
+        border-radius: $border-radius;
+        background: rgba($danger, 0.04);
+    }
 }

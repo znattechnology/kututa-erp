@@ -1,4 +1,5 @@
 from odoo import fields, models
+from odoo.exceptions import UserError
 
 from .edu_fee_plan import CATEGORIES
 
@@ -20,3 +21,47 @@ class AccountMove(models.Model):
         '(company_id, edu_generation_key) WHERE edu_generation_key IS NOT NULL',
         'Esta cobrança já foi gerada.',
     )
+
+    def action_edu_request_void(self, reason):
+        """Anular a factura (nota de crédito): já, ou pedida a outro utilizador quando a escola o exige."""
+        self.ensure_one()
+        reason = (reason or '').strip()
+        if not reason:
+            raise UserError(self.env._('A justificação é obrigatória.'))
+        self._edu_check_voidable()
+        if not self.company_id.edu_void_approval:
+            self._edu_void(reason)
+            return 'voided'
+        Request = self.env['edu.approval.request']
+        if Request.search_count([('move_id', '=', self.id), ('state', '=', 'pending')]):
+            raise UserError(self.env._('Já existe um pedido pendente para anular esta factura.'))
+        Request.create({'move_id': self.id, 'reason': reason})
+        return 'requested'
+
+    def _edu_check_voidable(self):
+        if self.move_type != 'out_invoice' or self.state != 'posted' or not self.edu_student_id:
+            raise UserError(self.env._('Só se anulam facturas escolares emitidas.'))
+        if self.payment_state != 'not_paid':
+            raise UserError(
+                self.env._(
+                    'A factura %s já tem pagamentos: não se anula (o pagamento teria de ser devolvido).', self.name
+                )
+            )
+
+    def _edu_void(self, reason):
+        """A nota de crédito da factura inteira, com o motivo (a AGT pede-o), reconciliada com a factura."""
+        self.ensure_one()
+        self._edu_check_voidable()
+        refund = self._reverse_moves(
+            [
+                {
+                    'l10n_ao_edi_reason': reason[:250],
+                    'invoice_date': fields.Date.context_today(self),
+                    'edu_student_id': self.edu_student_id.id,
+                    'edu_enrollment_id': self.edu_enrollment_id.id,
+                    'edu_category': self.edu_category,
+                }
+            ],
+            cancel=True,
+        )
+        return refund

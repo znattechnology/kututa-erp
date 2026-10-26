@@ -1,7 +1,13 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
-METHODS = [('transfer', 'Transferência bancária'), ('deposit', 'Depósito bancário')]
+METHODS = [
+    ('transfer', 'Transferência bancária'),
+    ('deposit', 'Depósito bancário'),
+    ('cash', 'Numerário acima do limite'),
+]
+# O que o encarregado (ou o aluno) pode declarar no portal; o numerário só se recebe na tesouraria.
+PORTAL_METHODS = ('transfer', 'deposit')
 
 
 class EduFeePaymentRequest(models.Model):
@@ -11,7 +17,7 @@ class EduFeePaymentRequest(models.Model):
     e quem enviou é avisado."""
 
     _name = 'edu.fee.payment.request'
-    _description = 'Pagamento enviado pelo portal'
+    _description = 'Pagamento por validar'
     _inherit = ['mail.thread']
     _order = 'create_date desc, id desc'
     _check_company_auto = True
@@ -47,7 +53,7 @@ class EduFeePaymentRequest(models.Model):
         'account.journal',
         string='Conta onde entrou',
         check_company=True,
-        domain="[('type', '=', 'bank'), ('company_id', '=', company_id)]",
+        domain="[('type', 'in', ('bank', 'cash')), ('company_id', '=', company_id)]",
         default=lambda self: self.env['account.journal'].search(
             [('type', '=', 'bank'), ('company_id', '=', self.env.company.id)], limit=1
         ),
@@ -70,17 +76,23 @@ class EduFeePaymentRequest(models.Model):
         for request in self:
             if request.state != 'pending':
                 raise UserError(self.env._('Este pagamento já foi tratado.'))
+            if request.method == 'cash' and request.submitted_by_id == self.env.user:
+                raise UserError(self.env._('Quem recebeu o numerário não pode aprovar o próprio pagamento.'))
             if not request.journal_id:
                 raise UserError(self.env._('Escolha a conta onde o pagamento entrou.'))
-            wizard = self.env['edu.fee.payment'].create(
-                {
-                    'student_id': request.student_id.id,
-                    'journal_id': request.journal_id.id,
-                    'amount': request.amount,
-                    'date': request.date,
-                    'reference': request.reference or self.env._('Pagamento pelo portal'),
-                    'selected_invoice_ids': [fields.Command.set(request.invoice_ids.ids)],
-                }
+            wizard = (
+                self.env['edu.fee.payment']
+                .with_context(edu_fee_approved=True)
+                .create(
+                    {
+                        'student_id': request.student_id.id,
+                        'journal_id': request.journal_id.id,
+                        'amount': request.amount,
+                        'date': request.date,
+                        'reference': request.reference or self.env._('Pagamento pelo portal'),
+                        'selected_invoice_ids': [fields.Command.set(request.invoice_ids.ids)],
+                    }
+                )
             )
             action = wizard.action_confirm()
             payments = self.env['account.payment'].search(action['domain'])

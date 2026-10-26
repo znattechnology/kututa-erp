@@ -292,6 +292,21 @@
                                         Receber as escolhidas (<t t-out="this.state.selected.length"/>)
                                     </button>
                                 </div>
+                                <div t-if="this.state.voiding" class="o_edu_tr_void" role="group" aria-label="Anular a factura">
+                                    <div class="fw-semibold">Anular <t t-out="this.state.voiding.label"/></div>
+                                    <p class="small text-muted mb-2">
+                                        Sai uma nota de crédito com o motivo, que vai para a AGT.
+                                        <t t-if="d.void_approval">Fica pedida até outro utilizador a aprovar em Aprovações e caixa.</t>
+                                    </p>
+                                    <textarea class="form-control" rows="2" placeholder="Porque se anula (obrigatório)"
+                                              t-att-value="this.state.voiding.reason" t-on-input="(ev) => this.onVoidReason(ev)"/>
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button type="button" class="btn btn-sm btn-danger" t-att-disabled="!this.state.voiding.reason.trim()" t-on-click="() => this.confirmVoid()">
+                                            <t t-out="d.void_approval ? 'Pedir a anulação' : 'Anular a factura'"/>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.cancelVoid()">Cancelar</button>
+                                    </div>
+                                </div>
                                 <p t-if="!d.open.length" class="text-muted px-3 pb-3 mb-0">Não há nada por pagar.</p>
                                 <div t-else="" class="table-responsive">
                                     <table class="table o_edu_tr_table mb-0">
@@ -327,6 +342,8 @@
                                                 <td class="text-end text-nowrap">
                                                     <button type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.receive([m.id])">Receber</button>
                                                     <button type="button" class="btn btn-sm btn-link" t-on-click="() => this.print({ model: 'account.move', id: m.id })">Imprimir</button>
+                                                    <span t-if="m.void_pending" class="badge text-bg-warning ms-1">Anulação pedida</span>
+                                                    <button t-elif="m.voidable" type="button" class="btn btn-sm btn-link text-danger" t-on-click="() => this.startVoid(m)">Anular</button>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -384,6 +401,209 @@
                             </section>
                         </aside>
                     </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <t t-name="edu_roles.TreasuryControls">
+        <div class="o_action o_edu_treasury">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_tr_title">Aprovações e caixa</h1>
+                        <p class="mb-0 text-muted">O fecho diário da tua caixa e as operações que pedem um segundo par de olhos.</p>
+                    </header>
+
+                    <section aria-labelledby="o_edu_tr_cash" class="d-flex flex-column gap-2">
+                        <h2 id="o_edu_tr_cash" class="o_edu_tr_h2 mb-0">A tua caixa</h2>
+                        <div class="o_edu_tr_card o_edu_tr_cashbox">
+                            <div class="flex-grow-1">
+                                <t t-if="d.session">
+                                    <p class="mb-1">Aberta desde <t t-out="d.session.opened"/>.</p>
+                                    <p class="small text-muted mb-0">No fim do turno, conta o numerário e declara-o. O sistema compara com o que registaste e mostra a diferença logo.</p>
+                                </t>
+                                <t t-else="">
+                                    <p class="mb-1">A tua caixa está fechada.</p>
+                                    <p class="small text-muted mb-0">Abre-a antes de receber numerário. No fim do turno contas o dinheiro e fechas.</p>
+                                </t>
+                            </div>
+                            <button t-if="d.session and !this.state.closing" type="button" class="btn btn-primary" t-on-click="() => this.startClose()">Fechar a caixa</button>
+                            <button t-elif="!d.session" type="button" class="btn btn-primary" t-on-click="() => this.openCash()">Abrir a caixa</button>
+                        </div>
+                        <div t-if="this.state.closing" class="o_edu_tr_card">
+                            <h3 class="o_edu_tr_h2">Fechar a caixa</h3>
+                            <p class="small text-muted">Conta o numerário que tens e escreve o valor. Não vês o registado antes de declarar: é assim que a contagem vale.</p>
+                            <div class="o_edu_tr_form">
+                                <label class="o_edu_tr_field">
+                                    <span>Numerário contado (Kz)</span>
+                                    <input type="number" min="0" step="0.01" class="form-control" t-att-value="this.state.closing.declared"
+                                           t-on-input="(ev) => this.onClosing('declared', ev)"/>
+                                </label>
+                                <label class="o_edu_tr_field o_edu_tr_wide">
+                                    <span>Observações (opcional)</span>
+                                    <input type="text" class="form-control" t-att-value="this.state.closing.notes" t-on-input="(ev) => this.onClosing('notes', ev)"/>
+                                </label>
+                            </div>
+                            <div class="d-flex gap-2 mt-3">
+                                <button type="button" class="btn btn-primary" t-att-disabled="this.state.closing.declared === '' or this.state.busy" t-on-click="() => this.confirmClose()">Fechar e comparar</button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.cancelClose()">Cancelar</button>
+                            </div>
+                        </div>
+                        <div t-if="this.state.closed" class="alert mb-0" t-att-class="this.state.closed.exact ? 'alert-success' : 'alert-warning'" role="status">
+                            <t t-if="this.state.closed.exact">Caixa fechada: o contado (<t t-out="this.state.closed.declared"/>) bate com o registado.</t>
+                            <t t-else="">
+                                Caixa fechada com uma diferença de <strong t-out="this.state.closed.difference"/>
+                                (contado <t t-out="this.state.closed.declared"/>, registado <t t-out="this.state.closed.expected"/>):
+                                <t t-out="this.state.closed.short ? 'falta dinheiro face ao registado' : 'sobra dinheiro, que costuma ser um recebimento por registar'"/>.
+                                A direcção foi avisada.
+                            </t>
+                        </div>
+                        <button type="button" class="btn btn-link px-0 align-self-start" t-on-click="() => this.openDifferences()">Ver as diferenças de caixa dos últimos 30 dias</button>
+                    </section>
+
+                    <section aria-labelledby="o_edu_tr_appr" class="d-flex flex-column gap-2">
+                        <h2 id="o_edu_tr_appr" class="o_edu_tr_h2 mb-0">Aprovações pendentes<t t-if="d.approvals.length"> (<t t-out="d.approvals.length"/>)</t></h2>
+                        <p class="small text-muted mb-0">
+                            Anular uma factura ou dar uma bolsa reduz dívida, e o numerário acima de <t t-out="d.threshold"/> pede confirmação: precisam de um segundo
+                            utilizador. Quem pediu não pode aprovar o próprio pedido.
+                        </p>
+                        <div t-if="this.state.deciding" class="o_edu_tr_card">
+                            <h3 class="o_edu_tr_h2"><t t-out="this.state.deciding.approve ? 'Aprovar' : 'Recusar'"/>: <t t-out="this.state.deciding.title.toLowerCase()"/></h3>
+                            <p class="mb-2" t-out="this.state.deciding.what"/>
+                            <textarea class="form-control" rows="2" t-att-placeholder="this.state.deciding.approve ? 'Notas (opcional)' : 'Porque recusa (obrigatório)'"
+                                      t-att-value="this.state.deciding.notes" t-on-input="(ev) => this.onDecideNotes(ev)"/>
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="button" class="btn" t-att-class="this.state.deciding.approve ? 'btn-primary' : 'btn-danger'" t-att-disabled="!this.canDecide" t-on-click="() => this.confirmDecide()">
+                                    <t t-out="this.state.deciding.approve ? 'Aprovar' : 'Recusar'"/>
+                                </button>
+                                <button type="button" class="btn btn-secondary" t-on-click="() => this.cancelDecide()">Cancelar</button>
+                            </div>
+                        </div>
+                        <p t-if="!d.approvals.length" class="o_edu_tr_card text-muted mb-0">Não há pedidos à espera.</p>
+                        <ul t-else="" class="o_edu_tr_card p-0 o_edu_tr_list o_edu_tr_approvals">
+                            <li t-foreach="d.approvals" t-as="a" t-key="a.kind + a.id">
+                                <div class="flex-grow-1 min-w-0">
+                                    <div><span class="fw-semibold" t-out="a.title"/> · <t t-out="a.what"/></div>
+                                    <div t-if="a.reason" class="small">«<t t-out="a.reason"/>»</div>
+                                    <div class="small text-muted">Pedido por <t t-out="a.by or '—'"/>, <t t-out="a.age"/></div>
+                                </div>
+                                <span t-if="a.mine" class="small text-muted">O teu pedido: outra pessoa decide</span>
+                                <t t-else="">
+                                    <button type="button" class="btn btn-sm btn-primary" t-on-click="() => this.startDecide(a, true)">Aprovar</button>
+                                    <button type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.startDecide(a, false)">Recusar</button>
+                                </t>
+                            </li>
+                        </ul>
+                    </section>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <t t-name="edu_roles.TreasuryDifferences">
+        <div class="o_action o_edu_treasury">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header>
+                        <h1 class="o_edu_tr_title">Diferenças de caixa</h1>
+                        <p class="mb-0 text-muted">
+                            Os fechos de caixa dos últimos <t t-out="d.days"/> dias em que o numerário contado não bateu com o registado.
+                            Negativo: falta dinheiro face ao registado. Positivo: sobra, que costuma ser um recebimento por registar.
+                            <t t-if="!d.all">Vês as tuas caixas; a direcção vê as de todos.</t>
+                        </p>
+                    </header>
+                    <p t-if="!d.closed" class="o_edu_tr_card mb-0">Ninguém fechou a caixa nos últimos <t t-out="d.days"/> dias.</p>
+                    <p t-elif="!d.rows.length" class="o_edu_tr_card mb-0">
+                        Nenhuma diferença: <t t-out="d.closed === 1 ? 'a caixa fechada bateu certo' : 'as ' + d.closed + ' caixas fechadas bateram certo'"/>.
+                    </p>
+                    <t t-else="">
+                        <p class="small text-muted mb-0"><t t-out="d.rows.length"/> de <t t-out="d.closed"/> fechos com diferença.</p>
+                        <div class="o_edu_tr_card p-0 table-responsive">
+                            <table class="table o_edu_tr_table mb-0">
+                                <thead>
+                                    <tr><th>Operador</th><th>Aberta</th><th>Fechada</th><th class="text-end">Registado</th><th class="text-end">Contado</th><th class="text-end">Diferença</th><th>Observações</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="d.rows" t-as="r" t-key="r.id">
+                                        <td t-out="r.operator"/>
+                                        <td class="text-nowrap" t-out="r.opened"/>
+                                        <td class="text-nowrap" t-out="r.closed"/>
+                                        <td class="text-end o_edu_tr_num" t-out="r.expected"/>
+                                        <td class="text-end o_edu_tr_num" t-out="r.declared"/>
+                                        <td class="text-end o_edu_tr_num fw-semibold" t-att-class="r.short ? 'text-danger' : 'text-warning'" t-out="r.difference"/>
+                                        <td class="small text-muted" t-out="r.notes"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <t t-name="edu_roles.TreasuryRules">
+        <div class="o_action o_edu_treasury">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header class="o_edu_tr_header">
+                        <div>
+                            <h1 class="o_edu_tr_title">Controlos internos</h1>
+                            <p class="mb-0 text-muted">As regras de segunda aprovação a que a tesouraria está sujeita. <t t-if="!d.can_edit">Só a direcção as altera.</t></p>
+                        </div>
+                        <button t-if="d.can_edit and !this.state.edit" type="button" class="btn btn-secondary" t-on-click="() => this.startEdit()">Alterar</button>
+                    </header>
+
+                    <section t-if="!this.state.edit" class="o_edu_tr_card p-0">
+                        <ul class="o_edu_tr_list o_edu_tr_rules">
+                            <li>
+                                <div class="fw-semibold">Pagamentos em numerário</div>
+                                <div t-if="d.cash_approval">Acima de <t t-out="d.threshold_text"/>, o pagamento fica por confirmar até outro utilizador o aprovar; só depois sai o recibo.</div>
+                                <div t-else="">Confirmados logo, seja qual for o valor.</div>
+                            </li>
+                            <li>
+                                <div class="fw-semibold">Anular uma factura</div>
+                                <div t-if="d.void_approval">Fica pedida, com a justificação, até outro utilizador a aprovar; aprovar emite a nota de crédito.</div>
+                                <div t-else="">A nota de crédito sai logo, com a justificação.</div>
+                            </li>
+                            <li>
+                                <div class="fw-semibold">Conceder uma bolsa</div>
+                                <div t-if="d.scholarship_approval">Quem regista a bolsa não a pode aprovar.</div>
+                                <div t-else="">Quem regista a bolsa também a pode aprovar.</div>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section t-else="" class="o_edu_tr_card">
+                        <t t-set="e" t-value="this.state.edit"/>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="o_edu_tr_r_cash" t-att-checked="e.cash_approval" t-on-change="(ev) => this.onEdit('cash_approval', ev)"/>
+                            <label class="form-check-label" for="o_edu_tr_r_cash">Numerário acima do limite aprovado por outro utilizador</label>
+                        </div>
+                        <label class="o_edu_tr_field mb-3 ms-4">
+                            <span>Limite do numerário (Kz)</span>
+                            <input type="number" min="0" step="1000" class="form-control" t-att-value="e.threshold" t-att-disabled="!e.cash_approval" t-on-input="(ev) => this.onEdit('threshold', ev)"/>
+                        </label>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="o_edu_tr_r_void" t-att-checked="e.void_approval" t-on-change="(ev) => this.onEdit('void_approval', ev)"/>
+                            <label class="form-check-label" for="o_edu_tr_r_void">Anulações aprovadas por outro utilizador</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="o_edu_tr_r_sch" t-att-checked="e.scholarship_approval" t-on-change="(ev) => this.onEdit('scholarship_approval', ev)"/>
+                            <label class="form-check-label" for="o_edu_tr_r_sch">Bolsas aprovadas por outro utilizador</label>
+                        </div>
+                        <p class="small text-muted">Desligar uma aprovação ou subir o limite tira um controlo: a alteração fica registada com o teu nome.</p>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" t-on-click="() => this.save()">Guardar</button>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.cancelEdit()">Cancelar</button>
+                        </div>
+                    </section>
+
+                    <p t-if="d.changed_by" class="small text-muted mb-0">Última alteração: <t t-out="d.changed_by"/>, <t t-out="d.changed_date"/>.</p>
                 </div>
             </Layout>
         </div>

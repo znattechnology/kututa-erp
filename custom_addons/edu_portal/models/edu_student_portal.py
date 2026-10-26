@@ -9,7 +9,7 @@ from odoo import api, fields, models
 from odoo.addons.edu_attendance.models.absence_rules import TECHNICAL, absence_limit, absence_status
 from odoo.addons.edu_evaluation.tools import grading
 from odoo.addons.edu_exam.models.edu_exam import SPECIAL
-from odoo.addons.edu_fees.models.edu_fee_payment_request import METHODS
+from odoo.addons.edu_fees.models.edu_fee_payment_request import METHODS, PORTAL_METHODS
 from odoo.exceptions import UserError
 from odoo.tools import format_amount
 from odoo.tools.mimetypes import guess_mimetype
@@ -1097,7 +1097,7 @@ class EduStudentPortal(models.AbstractModel):
         """Regista um pagamento enviado pelo portal (transferência ou depósito, com o comprovativo), para a tesouraria
         validar. As facturas indicadas têm de ser do aluno e estar por pagar; com elas vão as suas multas."""
         values = values or {}
-        if values.get('method') not in dict(METHODS):
+        if values.get('method') not in PORTAL_METHODS:
             raise UserError(self.env._('Escolha a forma de pagamento: transferência ou depósito.'))
         try:
             amount = round(float(values.get('amount') or 0), 2)

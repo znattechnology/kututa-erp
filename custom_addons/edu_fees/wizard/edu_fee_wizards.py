@@ -49,10 +49,56 @@ class EduFeePayment(models.TransientModel):
                 lambda m: (m.invoice_date_due, m.id)
             )
 
+    cash_session = fields.Boolean(compute='_compute_cash_hint')
+    needs_approval = fields.Boolean(compute='_compute_cash_hint')
+
+    @api.depends('journal_id', 'amount')
+    def _compute_cash_hint(self):
+        Session = self.env['edu.cash.session']
+        for wizard in self:
+            company = wizard.company_id or self.env.company
+            cash = wizard.journal_id.type == 'cash'
+            wizard.cash_session = not cash or bool(Session._current())
+            wizard.needs_approval = bool(
+                cash
+                and company.edu_cash_approval
+                and wizard.amount > company.edu_cash_approval_threshold
+                and not self.env.context.get('edu_fee_approved')
+            )
+
     def action_confirm(self):
         self.ensure_one()
         if self.amount <= 0:
             raise ValidationError(self.env._('O valor recebido tem de ser positivo.'))
+        if self.needs_approval:
+            # Numerário acima do limite da escola: fica por confirmar até outro utilizador o aprovar.
+            self.env['edu.fee.payment.request'].create(
+                {
+                    'student_id': self.student_id.id,
+                    'company_id': self.company_id.id,
+                    'submitted_by_id': self.env.uid,
+                    'method': 'cash',
+                    'amount': self.amount,
+                    'date': self.date,
+                    'reference': self.reference,
+                    'journal_id': self.journal_id.id,
+                    'invoice_ids': [fields.Command.set(self.selected_invoice_ids.ids)],
+                }
+            )
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'type': 'warning',
+                    'sticky': True,
+                    'message': self.env._(
+                        'Numerário acima de %s: o pagamento fica por aprovar por outro utilizador (Aprovações e '
+                        'caixa). Só depois sai o recibo.',
+                        self.currency_id.format(self.company_id.edu_cash_approval_threshold),
+                    ),
+                    'next': {'type': 'ir.actions.act_window_close'},
+                },
+            }
         invoices = self.invoice_ids
         partners = invoices.partner_id or self.student_id._edu_billing_partner()
         payments = self.env['account.payment']

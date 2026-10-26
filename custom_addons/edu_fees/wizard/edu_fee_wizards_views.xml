@@ -29,6 +29,14 @@
                         <field name="currency_id" column_invisible="1"/>
                     </list>
                 </field>
+                <field name="cash_session" invisible="1"/>
+                <field name="needs_approval" invisible="1"/>
+                <div class="alert alert-warning" role="alert" invisible="cash_session">
+                    A tua caixa está fechada: abre-a em Aprovações e caixa antes de receber numerário, para o fecho do dia bater.
+                </div>
+                <div class="alert alert-info" role="status" invisible="not needs_approval">
+                    Numerário acima do limite da escola: o pagamento fica por aprovar por outro utilizador; só depois sai o recibo.
+                </div>
                 <group invisible="not selected_invoice_ids">
                     <field name="selected_invoice_ids" widget="many2many_tags" readonly="1" string="Pagar primeiro"/>
                 </group>

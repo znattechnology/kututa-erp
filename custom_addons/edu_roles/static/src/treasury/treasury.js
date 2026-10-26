@@ -232,7 +232,8 @@ export class TreasuryStudent extends Component {
         const context = this.props.action.context || {};
         // O aluno fica no endereço (active_id): recarregar a página volta à mesma ficha.
         this.studentId = context.student_id || context.active_id;
-        this.state = proxy({ data: null, selected: [] });
+        this.notification = useService("notification");
+        this.state = proxy({ data: null, selected: [], voiding: null });
         onWillStart(() => this.load());
         onMounted(() => this.props.updateActionState?.({ active_id: this.studentId }));
     }
@@ -265,11 +266,211 @@ export class TreasuryStudent extends Component {
         return this.run("receive", ids);
     }
 
+    // Anular uma factura: com a justificação; fica pedida a outro utilizador quando a escola o exige.
+
+    startVoid(row) {
+        this.state.voiding = { id: row.id, label: `${row.number}, ${row.label}`, reason: "" };
+    }
+
+    cancelVoid() {
+        this.state.voiding = null;
+    }
+
+    onVoidReason(ev) {
+        this.state.voiding.reason = ev.target.value;
+    }
+
+    async confirmVoid() {
+        const voiding = this.state.voiding;
+        if (!voiding || !voiding.reason.trim()) {
+            return;
+        }
+        const result = await this.orm.call("edu.treasury", "request_void", [voiding.id, voiding.reason]);
+        this.state.voiding = null;
+        this.notification.add(
+            result === "requested"
+                ? "Anulação pedida: fica à espera de outro utilizador em Aprovações e caixa."
+                : "Factura anulada: foi emitida a nota de crédito.",
+            { type: result === "requested" ? "info" : "success" }
+        );
+        await this.load();
+    }
+
     print(doc) {
         return this.run(doc.model === "account.payment" ? "print_payment" : "print_move", null, doc.id);
     }
 }
 
+/**
+ * Aprovações e caixa, como no secPed: a caixa de quem recebe numerário (abre-se no início do turno; no fim conta-se o
+ * dinheiro e declara-se sem ver o esperado, e a diferença aparece logo) e as operações que pedem um segundo par de
+ * olhos: anular uma factura, conceder uma bolsa e o numerário acima do limite. Quem pediu não decide o seu pedido.
+ */
+export class TreasuryControls extends Component {
+    static template = "edu_roles.TreasuryControls";
+    static components = { Layout };
+
+    props = useProps(standardActionServiceProps);
+
+    setup() {
+        this.orm = useService("orm");
+        this.action = useService("action");
+        this.notification = useService("notification");
+        this.state = proxy({ data: null, closing: null, closed: null, deciding: null, busy: false });
+        onWillStart(() => this.load());
+    }
+
+    get display() {
+        return { controlPanel: {} };
+    }
+
+    async load() {
+        this.state.data = await this.orm.call("edu.treasury", "controls_data", []);
+    }
+
+    async openCash() {
+        await this.orm.call("edu.treasury", "open_cash", []);
+        this.state.closed = null;
+        this.notification.add("Caixa aberta.", { type: "success" });
+        await this.load();
+    }
+
+    startClose() {
+        this.state.closing = { declared: "", notes: "" };
+    }
+
+    cancelClose() {
+        this.state.closing = null;
+    }
+
+    onClosing(key, ev) {
+        this.state.closing[key] = ev.target.value;
+    }
+
+    async confirmClose() {
+        const closing = this.state.closing;
+        if (closing.declared === "" || this.state.busy) {
+            return;
+        }
+        this.state.busy = true;
+        try {
+            this.state.closed = await this.orm.call("edu.treasury", "close_cash", [parseFloat(closing.declared), closing.notes]);
+            this.state.closing = null;
+            await this.load();
+        } finally {
+            this.state.busy = false;
+        }
+    }
+
+    startDecide(item, approve) {
+        this.state.deciding = { kind: item.kind, id: item.id, approve, title: item.title, what: item.what, notes: "" };
+    }
+
+    cancelDecide() {
+        this.state.deciding = null;
+    }
+
+    onDecideNotes(ev) {
+        this.state.deciding.notes = ev.target.value;
+    }
+
+    get canDecide() {
+        const d = this.state.deciding;
+        return Boolean(d && (d.approve || d.notes.trim()) && !this.state.busy);
+    }
+
+    async confirmDecide() {
+        const d = this.state.deciding;
+        if (!this.canDecide) {
+            return;
+        }
+        this.state.busy = true;
+        try {
+            await this.orm.call("edu.treasury", "decide", [d.kind, d.id, d.approve, d.notes]);
+            this.notification.add(d.approve ? "Pedido aprovado." : "Pedido recusado.", { type: "success" });
+            this.state.deciding = null;
+            await this.load();
+        } finally {
+            this.state.busy = false;
+        }
+    }
+
+    openDifferences() {
+        return this.action.doAction("edu_roles.action_treasury_differences");
+    }
+}
+
+/** Diferenças de caixa: os fechos dos últimos 30 dias em que o contado não bateu com o registado. */
+export class TreasuryDifferences extends Component {
+    static template = "edu_roles.TreasuryDifferences";
+    static components = { Layout };
+
+    props = useProps(standardActionServiceProps);
+
+    setup() {
+        this.orm = useService("orm");
+        this.state = proxy({ data: null });
+        onWillStart(async () => {
+            this.state.data = await this.orm.call("edu.treasury", "differences", [30]);
+        });
+    }
+
+    get display() {
+        return { controlPanel: {} };
+    }
+}
+
+/**
+ * Controlos internos: as regras de segunda aprovação. Toda a tesouraria as lê (quem opera a caixa tem de saber o que
+ * fica à espera de outra pessoa); só a direcção as altera.
+ */
+export class TreasuryRules extends Component {
+    static template = "edu_roles.TreasuryRules";
+    static components = { Layout };
+
+    props = useProps(standardActionServiceProps);
+
+    setup() {
+        this.orm = useService("orm");
+        this.notification = useService("notification");
+        this.state = proxy({ data: null, edit: null });
+        onWillStart(async () => {
+            this.state.data = await this.orm.call("edu.treasury", "rules", []);
+        });
+    }
+
+    get display() {
+        return { controlPanel: {} };
+    }
+
+    startEdit() {
+        const d = this.state.data;
+        this.state.edit = {
+            threshold: String(d.threshold),
+            cash_approval: d.cash_approval,
+            void_approval: d.void_approval,
+            scholarship_approval: d.scholarship_approval,
+        };
+    }
+
+    cancelEdit() {
+        this.state.edit = null;
+    }
+
+    onEdit(key, ev) {
+        this.state.edit[key] = ev.target.type === "checkbox" ? ev.target.checked : ev.target.value;
+    }
+
+    async save() {
+        this.state.data = await this.orm.call("edu.treasury", "save_rules", [this.state.edit]);
+        this.state.edit = null;
+        this.notification.add("Controlos internos guardados.", { type: "success" });
+    }
+}
+
 registry.category("actions").add("edu_roles.treasury_home", TreasuryHome);
+registry.category("actions").add("edu_roles.treasury_controls", TreasuryControls);
+registry.category("actions").add("edu_roles.treasury_differences", TreasuryDifferences);
+registry.category("actions").add("edu_roles.treasury_rules", TreasuryRules);
 registry.category("actions").add("edu_roles.treasury_students", TreasuryStudents);
 registry.category("actions").add("edu_roles.treasury_student", TreasuryStudent);

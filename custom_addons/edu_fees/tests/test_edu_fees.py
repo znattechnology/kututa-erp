@@ -5,7 +5,7 @@ from odoo import Command
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.addons.edu_fees.models.edu_fee_plan import EduFeePlan, due_dates
 from odoo.exceptions import UserError
-from odoo.tests import tagged
+from odoo.tests import new_test_user, tagged
 
 PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 
@@ -330,6 +330,67 @@ class TestEduFees(AccountTestInvoicingCommon):
         other.reject_reason = 'O comprovativo não se lê.'
         other.action_reject()
         self.assertEqual(other.state, 'rejected')
+
+    def _second_cashier(self):
+        return new_test_user(
+            self.env,
+            'tesouraria.dois',
+            groups='edu_fees.group_edu_finance,account.group_account_invoice',
+            company_id=self.company.id,
+            company_ids=[self.company.id],
+        )
+
+    def test_void_with_approval(self):
+        """Anular uma factura: pedido com a justificação; quem pediu não aprova; outro aprova e sai a nota de
+        crédito."""
+        enrollment = self._enroll(date(2026, 9, 1))
+        invoice = self._generate(enrollment, date(2026, 9, 15)).filtered(lambda m: m.edu_category == 'tuition')
+        with self.assertRaises(UserError):
+            invoice.action_edu_request_void('  ')
+        self.assertEqual(invoice.action_edu_request_void('Propina facturada por engano'), 'requested')
+        request = self.env['edu.approval.request'].search([('move_id', '=', invoice.id)])
+        with self.assertRaises(UserError):
+            invoice.action_edu_request_void('Outra vez')  # um pedido pendente já cobre o caso
+        with self.assertRaises(UserError):
+            request._decide(True)  # quem pediu não decide
+        other = self._second_cashier()
+        request.with_user(other)._decide(True)
+        self.assertEqual(request.state, 'approved')
+        self.assertEqual(request.refund_id.move_type, 'out_refund')
+        self.assertEqual(request.refund_id.l10n_ao_edi_reason, 'Propina facturada por engano')
+        self.assertEqual(invoice.payment_state, 'reversed')
+        # Sem a aprovação, a nota de crédito sai logo; uma factura com pagamentos não se anula.
+        self.company.edu_void_approval = False
+        enrollment_invoices = self._generate(enrollment, date(2026, 10, 15))
+        october = enrollment_invoices.filtered(lambda m: m.edu_due_period == date(2026, 10, 8))
+        self.assertEqual(october.action_edu_request_void('Desistiu antes de Outubro'), 'voided')
+        self.assertEqual(october.payment_state, 'reversed')
+
+    def test_cash_above_threshold_and_cash_session(self):
+        """Numerário acima do limite fica por aprovar por outro utilizador; o fecho de caixa compara o contado com o
+        registado e avisa a direcção quando não bate."""
+        self.company.edu_cash_approval_threshold = 30_000
+        enrollment = self._enroll(date(2026, 9, 1))
+        self._generate(enrollment, date(2026, 9, 15))
+        cash = self.company_data['default_journal_cash']
+        session = self.env['edu.cash.session']._open()
+        self.assertEqual(self.env['edu.cash.session']._open(), session, 'uma caixa aberta de cada vez')
+        Payment = self.env['edu.fee.payment']
+        Payment.create({'student_id': self.student.id, 'amount': 20_000, 'journal_id': cash.id}).action_confirm()
+        result = Payment.create(
+            {'student_id': self.student.id, 'amount': 50_000, 'journal_id': cash.id}
+        ).action_confirm()
+        self.assertEqual(result['tag'], 'display_notification')
+        request = self.env['edu.fee.payment.request'].search([('method', '=', 'cash')])
+        self.assertEqual((request.state, request.amount), ('pending', 50_000))
+        with self.assertRaises(UserError):
+            request.action_confirm()  # quem recebeu não aprova
+        request.with_user(self._second_cashier()).action_confirm()
+        self.assertEqual(request.state, 'confirmed')
+        # Registado: 20 000 ao balcão e os 50 000 aprovados; contados 69 000: falta 1 000.
+        session.action_close(69_000.0, 'Troco')
+        self.assertEqual((session.expected_amount, session.difference), (70_000, -1_000))
+        self.assertIn('diferença', session.message_ids[:1].body)
 
     def test_gating_and_irregular(self):
         enrollment = self._enroll(date(2026, 9, 1))
