@@ -143,7 +143,9 @@ class EduTeacherHome(models.AbstractModel):
                     value = subject_result._trimester_classifications()[index]
                     if value is not None:
                         values.append(value)
-                positives = sum(1 for v in values if round_fn(v) >= policy.pass_grade)
+                # No técnico o CT não se arredonda (só a CA e a CFD); no geral, pela regra da escola.
+                technical = policy.regime == grading.TECHNICAL
+                positives = sum(1 for v in values if (v if technical else round_fn(v)) >= policy.pass_grade)
                 total = len(enrollments)
                 average = sum(values) / len(values) if values else None
                 result['grades'].append(

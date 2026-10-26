@@ -318,7 +318,9 @@ class EduGradeGrid(models.AbstractModel):
                 npp_grade = grade_by_key.get((enrollment.id, npp.id)) if npp else None
                 excused, absent = absences.get((enrollment.id, trimester.id), (0, 0))
                 classification = chain[index]
-                if classification is not None and enrollment.state in ENROLLED:
+                # As contas do trimestre (positivas, negativas, média da turma) só com notas lançadas nele: no técnico o
+                # CT dos trimestres seguintes já existe (com 0), mas o trimestre ainda não aconteceu.
+                if classification is not None and mts[index] is not None and enrollment.state in ENROLLED:
                     # No técnico o CT não se arredonda (só a CA e a CFD); no geral, a MT pela regra da escola.
                     shown = classification if technical else round_fn(classification)
                     positive = shown >= policy.pass_grade
