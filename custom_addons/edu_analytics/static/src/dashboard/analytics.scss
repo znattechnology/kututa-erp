@@ -1,0 +1,364 @@
+// Análise de dados: os filtros por cima, os separadores e os quadros. Os gráficos usam as peças e as cores dos painéis
+// (edu_roles/static/src/charts); aqui ficam as cores de cada resultado, as faixas, o mapa das disciplinas e as linhas.
+.o_edu_analytics {
+    --edu-chart-series: #2a78d6;
+    --edu-chart-series-track: #cde2fb;
+    --edu-chart-critical: #d03b3b;
+    --edu-chart-warning: #fab219;
+    --edu-chart-empty: #{mix($text-muted, $o-view-background-color, 30%)};
+    --edu-chart-grid: #{mix($text-muted, $o-view-background-color, 35%)};
+    --edu-an-done: #1baf7a;
+    --edu-an-out: #{$gray-700};
+    --edu-an-moved: #{$gray-500};
+    --edu-an-gone: #{$gray-400};
+
+    .o_edu_an_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_an_title {
+        margin: 0 0 4px;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_an_lead {
+        max-width: 80ch;
+        margin: 0;
+        color: $text-muted;
+    }
+
+    .o_edu_an_filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 12px 20px;
+        padding: 12px 16px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_an_years,
+    .o_edu_an_field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 0;
+    }
+
+    .o_edu_an_field .form-select {
+        width: auto;
+        min-width: 10rem;
+    }
+
+    .o_edu_an_filter_label {
+        color: $text-muted;
+        font-size: 0.8rem;
+    }
+
+    .o_edu_an_tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .o_edu_an_loading {
+        opacity: 0.55;
+        transition: opacity 0.15s;
+    }
+
+    .o_edu_an_stack {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .o_edu_an_grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+
+        @include media-breakpoint-down(lg) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_an_card {
+        min-width: 0;
+        padding: 16px 20px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_an_card_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_an_h2 {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_an_note {
+        max-width: 80ch;
+        margin-bottom: 12px;
+        color: $text-muted;
+        font-size: 0.85rem;
+    }
+
+    // Em destaque: uma frase por linha, com o sinal do que mudou.
+    .o_edu_an_highlights {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 4px 0 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+
+            > .oi {
+                margin-top: 2px;
+                color: $text-muted;
+            }
+        }
+    }
+
+    .o_edu_an_hl_bad > .oi {
+        color: var(--edu-chart-critical) !important;
+    }
+
+    .o_edu_an_hl_good > .oi {
+        color: var(--edu-chart-series) !important;
+    }
+
+    .o_edu_an_hl_warn > .oi {
+        color: $warning !important;
+    }
+
+    // As colunas das matrículas: o gráfico mais alto, e as colunas são botões (abrem os alunos).
+    .o_edu_an_vstacks {
+        height: 180px;
+    }
+
+    .o_edu_an_vstack {
+        width: 44px;
+        padding: 0;
+        border: 0;
+        background: none;
+
+        &:hover,
+        &:focus-visible {
+            outline: 2px solid $o-action;
+            outline-offset: 2px;
+        }
+    }
+
+    // As barras empilhadas: cada segmento é um botão.
+    .o_edu_an_bar {
+        height: 22px;
+
+        > button {
+            min-width: 4px;
+            padding: 0;
+            border: 0;
+
+            &:hover,
+            &:focus-visible {
+                outline: 2px solid $body-color;
+                outline-offset: -2px;
+            }
+        }
+    }
+
+    .o_edu_an_type_new { background: var(--edu-chart-series); }
+    .o_edu_an_type_renewal { background: color-mix(in srgb, var(--edu-chart-series) 45%, #{$o-view-background-color}); }
+    .o_edu_an_type_repeat { background: var(--edu-chart-warning); }
+    .o_edu_an_type_transfer_in { background: var(--edu-an-moved); }
+
+    .o_edu_an_k_promoted { background: var(--edu-chart-series); }
+    .o_edu_an_k_graduated { background: var(--edu-an-done); }
+    .o_edu_an_k_conditional { background: var(--edu-chart-warning); }
+    .o_edu_an_k_retained { background: var(--edu-chart-critical); }
+    .o_edu_an_k_dropped { background: var(--edu-an-out); }
+    .o_edu_an_k_transferred { background: var(--edu-an-moved); }
+    .o_edu_an_k_ongoing { background: var(--edu-chart-series-track); }
+
+    .o_edu_an_k_left {
+        background: repeating-linear-gradient(
+            135deg,
+            var(--edu-an-gone) 0 3px,
+            #{$o-view-background-color} 3px 6px
+        );
+    }
+
+    // As faixas das médias: abaixo de 10 no crítico; as outras em passos da série, do mais claro ao mais escuro.
+    .o_edu_an_band_0 { background: var(--edu-chart-critical); }
+    .o_edu_an_band_1 { background: color-mix(in srgb, var(--edu-chart-series) 40%, #{$o-view-background-color}); }
+    .o_edu_an_band_2 { background: color-mix(in srgb, var(--edu-chart-series) 68%, #{$o-view-background-color}); }
+    .o_edu_an_band_3 { background: var(--edu-chart-series); }
+
+    .o_edu_an_table {
+        font-size: 0.85rem;
+        font-variant-numeric: tabular-nums;
+
+        th {
+            color: $text-muted;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .o_edu_an_group {
+            border-left: 1px solid $border-color;
+        }
+    }
+
+    // O mapa das disciplinas: a célula mais escura quanto mais negativas (o valor escrito sempre).
+    .o_edu_an_heat_cell {
+        width: 8.5rem;
+        text-align: center;
+    }
+
+    .o_edu_an_heat_btn {
+        width: 100%;
+        padding: 3px 6px;
+        border: 0;
+        border-radius: 4px;
+        background: color-mix(in srgb, var(--edu-chart-critical) var(--edu-heat, 0%), #{$o-view-background-color});
+        color: $body-color;
+        font-variant-numeric: tabular-nums;
+
+        &:hover:not(:disabled),
+        &:focus-visible {
+            outline: 2px solid $body-color;
+            outline-offset: 1px;
+        }
+
+        &:disabled {
+            opacity: 1;
+            cursor: default;
+        }
+    }
+
+    .o_edu_an_heat_strong {
+        color: #fff;
+        font-weight: 600;
+    }
+
+    // O gráfico dos trimestres: uma linha por ano, na cor do ano.
+    .o_edu_an_svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+        font-size: 11px;
+    }
+
+    .o_edu_an_grid_lines {
+        line {
+            stroke: var(--edu-chart-grid);
+            stroke-width: 1;
+        }
+
+        text {
+            fill: $text-muted;
+        }
+    }
+
+    .o_edu_an_pass {
+        stroke: $body-color;
+        stroke-dasharray: 4 3;
+        stroke-width: 1;
+    }
+
+    .o_edu_an_axis {
+        fill: $text-muted;
+    }
+
+    .o_edu_an_line {
+        polyline {
+            fill: none;
+            stroke: var(--edu-subj);
+            stroke-width: 2;
+            stroke-linejoin: round;
+        }
+
+        circle {
+            fill: var(--edu-subj);
+            stroke: $o-view-background-color;
+            stroke-width: 2;
+        }
+
+        .o_edu_an_end {
+            fill: $body-color;
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_an_line_key {
+        background: var(--edu-subj);
+    }
+
+    // As turmas: o nome, a média numa barra de 0 a 20 e quantos transitaram; a linha inteira abre os alunos.
+    .o_edu_an_classes {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_edu_an_class {
+        display: grid;
+        grid-template-columns: minmax(110px, 22%) minmax(0, 1fr) 3.5em minmax(0, 32%);
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 32px;
+        padding: 2px 6px;
+        border: 0;
+        border-radius: 4px;
+        background: none;
+        color: inherit;
+        text-align: left;
+
+        &:hover,
+        &:focus-visible {
+            background: $o-gray-100;
+        }
+
+        @include media-breakpoint-down(md) {
+            grid-template-columns: minmax(80px, 30%) minmax(0, 1fr) 3em;
+
+            .o_edu_an_class_detail {
+                grid-column: 1 / -1;
+            }
+        }
+    }
+
+    .o_edu_an_class_detail {
+        font-size: 0.85rem;
+    }
+
+    @include media-breakpoint-down(md) {
+        .o_edu_an_body {
+            padding: 12px 16px 24px;
+        }
+    }
+}

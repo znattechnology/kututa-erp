@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_analytics.Dashboard">
+        <div class="o_action o_edu_analytics">
+            <Layout display="this.display">
+                <div class="o_edu_an_body" t-if="this.state.options">
+                    <header>
+                        <h1 class="o_edu_an_title">Análise de dados</h1>
+                        <p class="o_edu_an_lead">
+                            Os números da escola ano a ano: matrículas, resultados, o percurso dos alunos e o aproveitamento.
+                            Carregue numa barra para ver os alunos que ela conta.
+                        </p>
+                    </header>
+
+                    <p t-if="!this.state.options.years.length" class="o_edu_an_card text-muted mb-0">
+                        Ainda não há matrículas para analisar.
+                    </p>
+                    <t t-else="">
+                        <!-- Filtros: valem para os três separadores -->
+                        <section class="o_edu_an_filters" aria-label="Filtros">
+                            <div class="o_edu_an_years" role="group" aria-label="Anos lectivos">
+                                <span class="o_edu_an_filter_label">Anos lectivos</span>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button t-foreach="this.state.options.years" t-as="y" t-key="y.id" type="button" class="btn btn-sm"
+                                            t-att-class="this.state.filters.year_ids.includes(y.id) ? 'btn-primary' : 'btn-secondary'"
+                                            t-att-aria-pressed="this.state.filters.year_ids.includes(y.id) ? 'true' : 'false'"
+                                            t-on-click="() => this.toggleYear(y.id)">
+                                        <t t-out="y.name"/><t t-if="y.current"> (em curso)</t>
+                                    </button>
+                                    <button t-if="this.state.filters.year_ids.length !== this.state.options.years.length" type="button"
+                                            class="btn btn-sm btn-link" t-on-click="() => this.allYears()">Todos</button>
+                                </div>
+                            </div>
+                            <label class="o_edu_an_field">
+                                <span class="o_edu_an_filter_label">Curso</span>
+                                <select class="form-select form-select-sm" t-on-change="(ev) => this.onFilter('course_id', ev)">
+                                    <option value="" t-att-selected="!this.state.filters.course_id">Todos os cursos</option>
+                                    <option t-foreach="this.state.options.courses" t-as="c" t-key="c.id" t-att-value="c.id"
+                                            t-att-selected="c.id === this.state.filters.course_id" t-out="c.name"/>
+                                </select>
+                            </label>
+                            <label class="o_edu_an_field">
+                                <span class="o_edu_an_filter_label">Classe</span>
+                                <select class="form-select form-select-sm" t-on-change="(ev) => this.onFilter('class_number', ev)">
+                                    <option value="" t-att-selected="this.state.filters.class_number === ''">Todas</option>
+                                    <option t-foreach="this.state.options.class_numbers" t-as="n" t-key="n.id" t-att-value="n.id"
+                                            t-att-selected="n.id === this.state.filters.class_number" t-out="n.name"/>
+                                </select>
+                            </label>
+                            <label t-if="this.state.options.shifts.length > 1" class="o_edu_an_field">
+                                <span class="o_edu_an_filter_label">Turno</span>
+                                <select class="form-select form-select-sm" t-on-change="(ev) => this.onFilter('shift_id', ev)">
+                                    <option value="" t-att-selected="!this.state.filters.shift_id">Todos</option>
+                                    <option t-foreach="this.state.options.shifts" t-as="s" t-key="s.id" t-att-value="s.id"
+                                            t-att-selected="s.id === this.state.filters.shift_id" t-out="s.name"/>
+                                </select>
+                            </label>
+                            <button t-if="this.hasFilters" type="button" class="btn btn-sm btn-link align-self-end" t-on-click="() => this.clearFilters()">
+                                Limpar filtros
+                            </button>
+                        </section>
+
+                        <div role="tablist" aria-label="Análise" class="o_edu_an_tabs">
+                            <button type="button" role="tab" class="btn" t-att-class="this.state.tab === 'summary' ? 'btn-primary' : 'btn-secondary'"
+                                    t-att-aria-selected="this.state.tab === 'summary' ? 'true' : 'false'" t-on-click="() => this.setTab('summary')">Resumo</button>
+                            <button type="button" role="tab" class="btn" t-att-class="this.state.tab === 'cohort' ? 'btn-primary' : 'btn-secondary'"
+                                    t-att-aria-selected="this.state.tab === 'cohort' ? 'true' : 'false'" t-on-click="() => this.setTab('cohort')">Percurso dos alunos</button>
+                            <button type="button" role="tab" class="btn" t-att-class="this.state.tab === 'performance' ? 'btn-primary' : 'btn-secondary'"
+                                    t-att-aria-selected="this.state.tab === 'performance' ? 'true' : 'false'" t-on-click="() => this.setTab('performance')">Aproveitamento</button>
+                        </div>
+
+                        <div t-if="this.state.data" t-att-class="{ o_edu_an_loading: this.state.loading }">
+                            <p t-if="!this.summary.length" class="o_edu_an_card text-muted mb-0">Com estes filtros não há matrículas.</p>
+                            <t t-elif="this.state.tab === 'summary'" t-call="edu_analytics.Summary"/>
+                            <t t-elif="this.state.tab === 'cohort'" t-call="edu_analytics.Cohort"/>
+                            <t t-else="" t-call="edu_analytics.Performance"/>
+                        </div>
+                    </t>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <!-- Resumo: o que mudou, os números do último ano e cada ano lado a lado -->
+    <t t-name="edu_analytics.Summary">
+        <div class="o_edu_an_stack">
+            <section t-if="this.state.data.highlights.length" class="o_edu_an_card" aria-labelledby="o_edu_an_hl">
+                <h2 id="o_edu_an_hl" class="o_edu_an_h2">Em destaque</h2>
+                <ul class="o_edu_an_highlights">
+                    <li t-foreach="this.state.data.highlights" t-as="h" t-key="h_index" t-att-class="'o_edu_an_hl_' + h.tone">
+                        <i class="oi" aria-hidden="true" t-att-data-icon="h.icon"/>
+                        <span t-out="h.text"/>
+                    </li>
+                </ul>
+            </section>
+
+            <div class="o_edu_kpis">
+                <div t-foreach="this.kpis" t-as="k" t-key="k.key" class="o_edu_kpi">
+                    <span class="o_edu_kpi_label"><t t-out="k.label"/><t t-if="k.year">, <t t-out="k.year"/></t></span>
+                    <span class="o_edu_kpi_value" t-out="k.value"/>
+                    <span t-if="k.delta" class="o_edu_kpi_detail" t-att-class="this.deltaClass(k)">
+                        <t t-if="k.delta.same">Igual a <t t-out="k.delta.year"/></t>
+                        <t t-else=""><t t-out="k.delta.text + (k.unit || '')"/> face a <t t-out="k.delta.year"/></t>
+                    </span>
+                    <span class="o_edu_kpi_detail" t-out="k.detail"/>
+                </div>
+            </div>
+
+            <div class="o_edu_an_grid">
+                <section class="o_edu_an_card" aria-labelledby="o_edu_an_enr">
+                    <h2 id="o_edu_an_enr" class="o_edu_an_h2">Matrículas por ano</h2>
+                    <p class="o_edu_an_note">Todas as matrículas do ano, pelo tipo. Carregue numa coluna para ver os alunos.</p>
+                    <ul class="o_edu_chart_legend">
+                        <li t-foreach="this.state.options.types" t-as="t" t-key="t.key">
+                            <span t-att-class="'o_edu_chart_key o_edu_an_type_' + t.key"/><t t-out="t.label"/>
+                        </li>
+                    </ul>
+                    <ul class="o_edu_vstacks o_edu_an_vstacks">
+                        <li t-foreach="this.enrollColumns" t-as="c" t-key="c.year_id" class="o_edu_vstack_slot">
+                            <span class="o_edu_vstack_value" t-out="this.fmt(c.enrolled)"/>
+                            <button type="button" class="o_edu_vstack o_edu_an_vstack" t-att-style="'height: ' + c.height + '%'"
+                                    t-att-title="c.year + ': ' + this.fmt(c.enrolled) + ' matrículas'" t-on-click="() => this.students('year', { year_id: c.year_id })">
+                                <span t-foreach="c.parts" t-as="p" t-key="p.key" t-att-class="'o_edu_an_type_' + p.key"
+                                      t-att-style="'flex: 0 0 ' + p.share + '%'"/>
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="o_edu_vstacks_labels">
+                        <span t-foreach="this.enrollColumns" t-as="c" t-key="c.year_id" t-out="c.year"/>
+                    </div>
+                </section>
+
+                <section class="o_edu_an_card" aria-labelledby="o_edu_an_out">
+                    <h2 id="o_edu_an_out" class="o_edu_an_h2">Resultado de cada ano</h2>
+                    <p class="o_edu_an_note">Cada barra são as matrículas do ano. O ano em curso ainda não tem resultados.</p>
+                    <ul class="o_edu_chart_legend">
+                        <li t-foreach="this.usedOutcomes" t-as="o" t-key="o.key">
+                            <span t-att-class="'o_edu_chart_key o_edu_an_k_' + o.key"/><t t-out="o.label"/>
+                        </li>
+                    </ul>
+                    <ul class="o_edu_stacks">
+                        <li t-foreach="this.outcomeRows" t-as="r" t-key="r.year_id">
+                            <div class="o_edu_stack_head">
+                                <span class="fw-semibold" t-out="r.year"/>
+                                <span class="text-muted">
+                                    <t t-if="r.decided"><t t-out="this.pct(r.transition)"/> transitaram</t>
+                                    <t t-else="">Em curso</t>
+                                </span>
+                            </div>
+                            <div class="o_edu_stack o_edu_an_bar">
+                                <button t-foreach="r.parts" t-as="p" t-key="p.key" type="button" t-att-class="'o_edu_an_k_' + p.key"
+                                        t-att-style="'width: ' + p.width + '%'" t-att-title="p.label + ': ' + this.fmt(p.count)"
+                                        t-att-aria-label="r.year + ', ' + p.label + ': ' + this.fmt(p.count)"
+                                        t-on-click="() => this.students('outcome', { year_id: r.year_id, key: p.key })"/>
+                            </div>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+
+            <section class="o_edu_an_card" aria-labelledby="o_edu_an_tbl">
+                <h2 id="o_edu_an_tbl" class="o_edu_an_h2">Os números por ano</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm o_edu_an_table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Ano lectivo</th>
+                                <th class="text-end">Matrículas</th>
+                                <th class="text-end">Novas</th>
+                                <th class="text-end">Turmas</th>
+                                <th class="text-end">Ocupação</th>
+                                <th class="text-end">Transitaram</th>
+                                <th class="text-end">Com atraso</th>
+                                <th class="text-end">Não transitaram</th>
+                                <th class="text-end">Desistiram</th>
+                                <th class="text-end">Transferidos</th>
+                                <th class="text-end">Média final</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="this.summary" t-as="s" t-key="s.year_id">
+                                <td class="fw-semibold"><t t-out="s.year"/><t t-if="s.current"> <span class="badge text-bg-info">em curso</span></t></td>
+                                <td class="text-end" t-out="this.fmt(s.enrolled)"/>
+                                <td class="text-end" t-out="this.fmt(s.types.new)"/>
+                                <td class="text-end" t-out="this.fmt(s.classes)"/>
+                                <td class="text-end" t-out="s.capacity ? this.share(s.enrolled, s.capacity) : '—'"/>
+                                <td class="text-end" t-out="this.pct(s.transition)"/>
+                                <td class="text-end" t-out="this.pct(s.conditional)"/>
+                                <td class="text-end" t-out="this.pct(s.retention)"/>
+                                <td class="text-end" t-out="s.decided ? this.pct(s.dropout) : this.fmt(s.outcomes.dropped)"/>
+                                <td class="text-end" t-out="this.fmt(s.transferred)"/>
+                                <td class="text-end" t-out="this.fmt(s.average, 1)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="o_edu_an_note mt-2 mb-0">
+                    As taxas de transição e de retenção contam sobre os alunos avaliados; a desistência, sobre as matrículas do ano.
+                </p>
+            </section>
+        </div>
+    </t>
+
+    <!-- Percurso: os que entraram num ano e onde estão em cada ano seguinte -->
+    <t t-name="edu_analytics.Cohort">
+        <t t-set="c" t-value="this.cohort"/>
+        <p t-if="!c" class="o_edu_an_card text-muted mb-0">Com estes filtros não há alunos que tenham entrado na escola.</p>
+        <div t-else="" class="o_edu_an_stack">
+            <section class="o_edu_an_card">
+                <div class="o_edu_an_card_head">
+                    <div>
+                        <h2 class="o_edu_an_h2">Os alunos que entraram em <t t-out="c.entry_year"/></h2>
+                        <p class="o_edu_an_note mb-0">
+                            Novas matrículas e transferidos de outra escola nesse ano, seguidos ano a ano. Cada barra são os mesmos
+                            <t t-out="this.fmt(c.size)"/> alunos.
+                        </p>
+                    </div>
+                    <label class="o_edu_an_field">
+                        <span class="o_edu_an_filter_label">Entraram em</span>
+                        <select class="form-select form-select-sm" t-on-change="(ev) => this.onCohortYear(ev)">
+                            <option t-foreach="c.entry_years" t-as="y" t-key="y.id" t-att-value="y.id"
+                                    t-att-selected="y.id === c.entry_year_id" t-out="y.name"/>
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <div class="o_edu_kpis">
+                <div class="o_edu_kpi">
+                    <span class="o_edu_kpi_label">Entraram</span>
+                    <span class="o_edu_kpi_value" t-out="this.fmt(c.size)"/>
+                    <span class="o_edu_kpi_detail">em <t t-out="c.entry_year"/></span>
+                </div>
+                <div class="o_edu_kpi">
+                    <span class="o_edu_kpi_label">Continuam na escola</span>
+                    <span class="o_edu_kpi_value" t-out="this.share(c.kpis.present, c.size)"/>
+                    <span class="o_edu_kpi_detail"><t t-out="this.fmt(c.kpis.present)"/> alunos no último ano</span>
+                </div>
+                <div class="o_edu_kpi">
+                    <span class="o_edu_kpi_label">Saíram</span>
+                    <span class="o_edu_kpi_value" t-att-class="{ 'text-danger': c.kpis.left }" t-out="this.share(c.kpis.left, c.size)"/>
+                    <span class="o_edu_kpi_detail"><t t-out="this.fmt(c.kpis.left)"/> desistiram, foram transferidos ou não renovaram</span>
+                </div>
+                <div class="o_edu_kpi">
+                    <span class="o_edu_kpi_label">Ficaram retidos pelo menos uma vez</span>
+                    <span class="o_edu_kpi_value" t-out="this.share(c.kpis.ever_retained, c.size)"/>
+                    <span class="o_edu_kpi_detail"><t t-out="this.fmt(c.kpis.ever_retained)"/> alunos<t t-if="c.kpis.graduated">; <t t-out="this.fmt(c.kpis.graduated)"/> concluíram o curso</t></span>
+                </div>
+            </div>
+
+            <section class="o_edu_an_card" aria-labelledby="o_edu_an_path">
+                <h2 id="o_edu_an_path" class="o_edu_an_h2">Onde estão, ano a ano</h2>
+                <ul class="o_edu_chart_legend">
+                    <li t-foreach="this.usedCohortKeys" t-as="k" t-key="k.key">
+                        <span t-att-class="'o_edu_chart_key o_edu_an_k_' + k.key"/><t t-out="k.label"/>
+                    </li>
+                </ul>
+                <ul class="o_edu_stacks">
+                    <li t-foreach="this.cohortRows" t-as="r" t-key="r.year_id">
+                        <div class="o_edu_stack_head">
+                            <span><span class="fw-semibold" t-out="r.year"/><t t-if="r.classes"> · <t t-out="r.classes"/></t></span>
+                            <span class="text-muted"><t t-out="this.fmt(r.present)"/> matriculados</span>
+                        </div>
+                        <div class="o_edu_stack o_edu_an_bar">
+                            <button t-foreach="r.parts" t-as="p" t-key="p.key" type="button" t-att-class="'o_edu_an_k_' + p.key"
+                                    t-att-style="'width: ' + p.width + '%'" t-att-title="p.label + ': ' + this.fmt(p.count)"
+                                    t-att-aria-label="r.year + ', ' + p.label + ': ' + this.fmt(p.count)"
+                                    t-on-click="() => this.students('cohort', { year_id: r.year_id, key: p.key })"/>
+                        </div>
+                    </li>
+                </ul>
+
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm o_edu_an_table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Ano lectivo</th>
+                                <th t-foreach="this.usedCohortKeys" t-as="k" t-key="k.key" class="text-end" t-out="k.label"/>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="this.cohortRows" t-as="r" t-key="r.year_id">
+                                <td class="fw-semibold" t-out="r.year"/>
+                                <td t-foreach="this.usedCohortKeys" t-as="k" t-key="k.key" class="text-end">
+                                    <button t-if="r.segments[k.key]" type="button" class="btn btn-link btn-sm p-0"
+                                            t-on-click="() => this.students('cohort', { year_id: r.year_id, key: k.key })">
+                                        <t t-out="this.fmt(r.segments[k.key])"/>
+                                    </button>
+                                    <span t-else="" class="text-muted">—</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </t>
+
+    <!-- Aproveitamento: trimestres, médias por faixas, disciplinas, cursos e turmas -->
+    <t t-name="edu_analytics.Performance">
+        <t t-set="perf" t-value="this.performance"/>
+        <div class="o_edu_an_stack">
+            <div class="o_edu_an_grid">
+                <section class="o_edu_an_card" aria-labelledby="o_edu_an_tri">
+                    <h2 id="o_edu_an_tri" class="o_edu_an_h2">Média de cada trimestre</h2>
+                    <p class="o_edu_an_note">A média das notas trimestrais (MT) de todas as disciplinas, de 0 a 20. O traço é a positiva.</p>
+                    <t t-set="chart" t-value="this.trimesterChart"/>
+                    <p t-if="!chart" class="text-muted mb-0">Ainda não há notas trimestrais.</p>
+                    <t t-else="">
+                        <ul class="o_edu_chart_legend">
+                            <li t-foreach="chart.lines" t-as="l" t-key="l.year_id">
+                                <span t-att-class="'o_edu_chart_key o_edu_an_line_key ' + l.color"/><t t-out="l.year"/>
+                            </li>
+                        </ul>
+                        <svg class="o_edu_an_svg" t-att-viewBox="'0 0 ' + this.chart.width + ' ' + this.chart.height" role="img"
+                             aria-label="Média de cada trimestre por ano lectivo">
+                            <g class="o_edu_an_grid_lines">
+                                <t t-foreach="chart.ticks" t-as="tick" t-key="tick.value">
+                                    <line t-att-x1="this.chart.left" t-att-x2="this.chart.width - this.chart.right" t-att-y1="tick.y" t-att-y2="tick.y"/>
+                                    <text t-att-x="this.chart.left - 8" t-att-y="tick.y + 4" text-anchor="end" t-out="tick.value"/>
+                                </t>
+                            </g>
+                            <line t-if="chart.pass !== null" class="o_edu_an_pass" t-att-x1="this.chart.left"
+                                  t-att-x2="this.chart.width - this.chart.right" t-att-y1="chart.pass" t-att-y2="chart.pass"/>
+                            <text t-foreach="chart.xs" t-as="xl" t-key="xl.label" class="o_edu_an_axis" t-att-x="xl.x"
+                                  t-att-y="this.chart.height - 8" text-anchor="middle" t-out="xl.label"/>
+                            <g t-foreach="chart.lines" t-as="l" t-key="l.year_id" t-att-class="'o_edu_an_line ' + l.color">
+                                <polyline t-att-points="l.path"/>
+                                <circle t-foreach="l.points" t-as="p" t-key="p.i" t-att-cx="p.x" t-att-cy="p.y" r="5">
+                                    <title t-out="l.year + ', ' + chart.xs[p.i].label + ': ' + this.fmt(p.v, 1)"/>
+                                </circle>
+                                <text t-if="l.end" class="o_edu_an_end" t-att-x="l.end.x + 10" t-att-y="chart.labelYs[l_index] + 4"
+                                      t-out="l.year + ' · ' + this.fmt(l.end.v, 1)"/>
+                            </g>
+                        </svg>
+                        <table class="table table-sm o_edu_an_table mt-2 mb-0">
+                            <thead><tr><th>Ano lectivo</th><th class="text-end">1.º</th><th class="text-end">2.º</th><th class="text-end">3.º</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="chart.lines" t-as="l" t-key="l.year_id">
+                                    <td t-out="l.year"/>
+                                    <td t-foreach="l.values" t-as="v" t-key="v_index" class="text-end" t-out="this.fmt(v, 1)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                </section>
+
+                <section class="o_edu_an_card" aria-labelledby="o_edu_an_bands">
+                    <h2 id="o_edu_an_bands" class="o_edu_an_h2">Médias finais por faixas</h2>
+                    <p class="o_edu_an_note">Os alunos avaliados de cada ano pela média final, de 0 a 20.</p>
+                    <p t-if="!this.bandRows.length" class="text-muted mb-0">Ainda não há médias finais.</p>
+                    <t t-else="">
+                        <ul class="o_edu_chart_legend">
+                            <li t-foreach="this.state.options.bands" t-as="b" t-key="b.index">
+                                <span t-att-class="'o_edu_chart_key o_edu_an_band_' + b.index"/><t t-out="b.label"/>
+                            </li>
+                        </ul>
+                        <ul class="o_edu_stacks">
+                            <li t-foreach="this.bandRows" t-as="r" t-key="r.year_id">
+                                <div class="o_edu_stack_head">
+                                    <span class="fw-semibold" t-out="r.year"/>
+                                    <span class="text-muted"><t t-out="this.share(r.counts[0], r.total)"/> abaixo de 10</span>
+                                </div>
+                                <div class="o_edu_stack o_edu_an_bar">
+                                    <button t-foreach="r.parts" t-as="p" t-key="p.index" type="button" t-att-class="'o_edu_an_band_' + p.index"
+                                            t-att-style="'width: ' + p.width + '%'" t-att-title="p.label + ': ' + this.fmt(p.count)"
+                                            t-att-aria-label="r.year + ', ' + p.label + ': ' + this.fmt(p.count)"
+                                            t-on-click="() => this.students('band', { year_id: r.year_id, band: p.index })"/>
+                                </div>
+                            </li>
+                        </ul>
+                        <table class="table table-sm o_edu_an_table mt-3 mb-0">
+                            <thead>
+                                <tr><th>Ano lectivo</th><th t-foreach="this.state.options.bands" t-as="b" t-key="b.index" class="text-end" t-out="b.label"/></tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="this.bandRows" t-as="r" t-key="r.year_id">
+                                    <td t-out="r.year"/>
+                                    <td t-foreach="r.counts" t-as="n" t-key="n_index" class="text-end" t-out="this.fmt(n)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                </section>
+            </div>
+
+            <section class="o_edu_an_card" aria-labelledby="o_edu_an_subj">
+                <h2 id="o_edu_an_subj" class="o_edu_an_h2">Disciplinas com mais negativas</h2>
+                <p class="o_edu_an_note">
+                    A parte das classificações finais sem aprovação, por ano. Primeiro as que mais reprovam no conjunto dos anos;
+                    carregue numa célula para ver os alunos.
+                </p>
+                <p t-if="!perf.subjects.rows.length" class="text-muted mb-0">Ainda não há classificações finais.</p>
+                <div t-else="" class="table-responsive">
+                    <table class="table table-sm o_edu_an_table o_edu_an_heat mb-0">
+                        <thead>
+                            <tr>
+                                <th>Disciplina</th>
+                                <th t-foreach="perf.subjects.years" t-as="y" t-key="y.id" class="text-center" t-out="y.name"/>
+                                <th class="text-end">Todos os anos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="perf.subjects.rows" t-as="s" t-key="s.subject_id">
+                                <td t-out="s.subject"/>
+                                <td t-foreach="s.cells" t-as="cell" t-key="cell.year_id" class="o_edu_an_heat_cell">
+                                    <button t-if="cell.total" type="button" t-att-class="'o_edu_an_heat_btn ' + this.heatClass(cell.rate)"
+                                            t-att-style="this.heatStyle(cell.rate)" t-att-title="cell.failed + ' de ' + cell.total + ' com negativa'"
+                                            t-att-disabled="!cell.failed"
+                                            t-on-click="() => this.students('subject', { year_id: cell.year_id, subject_id: s.subject_id })">
+                                        <t t-out="this.pct(cell.rate)"/>
+                                    </button>
+                                    <span t-else="" class="text-muted">—</span>
+                                </td>
+                                <td class="text-end"><span class="fw-semibold" t-out="this.pct(s.rate)"/> <span class="small text-muted">(<t t-out="this.fmt(s.failed)"/>)</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section t-if="perf.courses.length > 1" class="o_edu_an_card" aria-labelledby="o_edu_an_courses">
+                <h2 id="o_edu_an_courses" class="o_edu_an_h2">Por curso</h2>
+                <p class="o_edu_an_note">Matrículas, taxa de transição e média final de cada curso em cada ano.</p>
+                <div class="table-responsive">
+                    <table class="table table-sm o_edu_an_table mb-0">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Curso</th>
+                                <th t-foreach="this.summary" t-as="y" t-key="y.year_id" colspan="3" class="text-center o_edu_an_group" t-out="y.year"/>
+                            </tr>
+                            <tr>
+                                <t t-foreach="this.summary" t-as="y" t-key="y.year_id">
+                                    <th class="text-end o_edu_an_group">Alunos</th>
+                                    <th class="text-end">Trans.</th>
+                                    <th class="text-end">Média</th>
+                                </t>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="perf.courses" t-as="c" t-key="c.course_id">
+                                <td><t t-out="c.course"/> <span class="small text-muted" t-out="c.code"/></td>
+                                <t t-foreach="c.cells" t-as="cell" t-key="cell.year_id">
+                                    <td class="text-end o_edu_an_group" t-out="cell.enrolled ? this.fmt(cell.enrolled) : '—'"/>
+                                    <td class="text-end" t-out="this.pct(cell.transition)"/>
+                                    <td class="text-end" t-out="this.fmt(cell.average, 1)"/>
+                                </t>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section t-if="perf.classes" class="o_edu_an_card" aria-labelledby="o_edu_an_classes">
+                <div class="o_edu_an_card_head">
+                    <div>
+                        <h2 id="o_edu_an_classes" class="o_edu_an_h2">Turmas de <t t-out="perf.classes.year"/></h2>
+                        <p class="o_edu_an_note mb-0">A média final de cada turma (o traço é a positiva) e quantos transitaram.</p>
+                    </div>
+                    <label t-if="perf.classes.years.length > 1" class="o_edu_an_field">
+                        <span class="o_edu_an_filter_label">Ano lectivo</span>
+                        <select class="form-select form-select-sm" t-on-change="(ev) => this.onClassYear(ev)">
+                            <option t-foreach="perf.classes.years" t-as="y" t-key="y.id" t-att-value="y.id"
+                                    t-att-selected="y.id === perf.classes.year_id" t-out="y.name"/>
+                        </select>
+                    </label>
+                </div>
+                <ul class="o_edu_an_classes">
+                    <li t-foreach="this.classRows" t-as="r" t-key="r.class_id">
+                        <button type="button" class="o_edu_an_class" t-on-click="() => this.students('class', { year_id: perf.classes.year_id, class_id: r.class_id })">
+                            <span class="o_edu_hbar_name" t-out="r.name"/>
+                            <span class="o_edu_hbar_track" aria-hidden="true">
+                                <span class="o_edu_hbar_pass" style="left: 50%"/>
+                                <span class="o_edu_hbar" t-att-class="{ o_edu_chart_neg: r.average !== null and r.average &lt; 10 }"
+                                      t-att-style="'width: ' + r.width + '%'"/>
+                            </span>
+                            <span class="o_edu_hbar_value"><t t-out="this.fmt(r.average, 1)"/></span>
+                            <span class="o_edu_an_class_detail">
+                                <t t-out="this.pct(r.transition)"/> transitaram
+                                <span class="text-muted">· <t t-out="this.fmt(r.students)"/> alunos<t t-if="r.retained">, <t t-out="r.retained === 1 ? '1 retido' : r.retained + ' retidos'"/></t></span>
+                            </span>
+                        </button>
+                    </li>
+                </ul>
+            </section>
+        </div>
+    </t>
+
+</templates>

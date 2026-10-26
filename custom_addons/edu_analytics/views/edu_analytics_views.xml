@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Análise de dados: o último menu da secretaria, para a direcção e a secretaria. -->
+    <record id="action_edu_analytics" model="ir.actions.client">
+        <field name="name">Análise de dados</field>
+        <field name="tag">edu_analytics.dashboard</field>
+    </record>
+    <menuitem id="menu_edu_analytics" name="Análise de dados" parent="edu_core.menu_edu_root" sequence="950"
+              action="action_edu_analytics" groups="edu_core.group_edu_user"/>
+</odoo>
