@@ -127,25 +127,58 @@ class TestEduRoles(TransactionCase):
         year = self.env['edu.academic.year'].with_user(self.clerk)
         self.assertTrue(year.has_access('write'))
         self.assertFalse(year.has_access('unlink'))
+        # A tesouraria tem a sua aplicação, com a barra lateral do secPed; não vê o menu da secretaria.
         cashier = self._menus(self.cashier)
-        self.assertIn('edu_fees.menu_edu_debtors', cashier)
-        # A tesouraria consulta os alunos no mesmo menu da secretaria (um só «Alunos» para a direcção).
-        self.assertIn('edu_people.menu_edu_student', cashier)
-        self.assertNotIn('edu_enrollment.menu_edu_application', cashier)
-        self.assertNotIn('edu_evaluation.menu_edu_assessment', cashier)
+        for xmlid in ('edu_roles.menu_treasury_home', 'edu_roles.menu_treasury_students',
+                      'edu_fees.menu_edu_payment_requests', 'edu_fees.menu_edu_invoices',
+                      'edu_roles.menu_treasury_receipts', 'edu_roles.menu_treasury_agt',
+                      'edu_fees.menu_edu_fee_plan', 'edu_fees.menu_edu_late_fee_rule'):  # fmt: skip
+            self.assertIn(xmlid, cashier)
+        for xmlid in ('edu_core.menu_edu_root', 'edu_people.menu_edu_student', 'edu_enrollment.menu_edu_application',
+                      'edu_evaluation.menu_edu_assessment', 'edu_fees.menu_edu_debtors'):  # fmt: skip
+            self.assertNotIn(xmlid, cashier)
+        self.assertNotIn('edu_roles.menu_treasury_root', clerk)
         director = self._menus(self.director)
-        for xmlid in ('edu_core.menu_edu_config', 'edu_fees.menu_edu_debtors', 'edu_enrollment.menu_edu_application'):
+        for xmlid in (
+            'edu_core.menu_edu_config',
+            'edu_roles.menu_treasury_students',
+            'edu_enrollment.menu_edu_application',
+        ):
             self.assertIn(xmlid, director)
 
     def test_default_app(self):
         # Sem acção inicial, o Odoo abre a primeira aplicação do menu: tem de ser a Secretaria Express, não o chat.
         root = self.env.ref('edu_core.menu_edu_root').id
-        for user in (self.clerk, self.cashier, self.director):
+        for user in (self.clerk, self.director):
             menus = self.env['ir.ui.menu'].with_user(user).load_menus(False)
             self.assertEqual(menus['root']['children'][0], root, user.login)
+        # A tesouraria entra na Tesouraria.
+        menus = self.env['ir.ui.menu'].with_user(self.cashier).load_menus(False)
+        self.assertEqual(menus['root']['children'][0], self.env.ref('edu_roles.menu_treasury_root').id)
         # O professor entra no Painel do Professor.
         menus = self.env['ir.ui.menu'].with_user(self.teacher_user).load_menus(False)
         self.assertEqual(menus['root']['children'][0], self.env.ref('edu_roles.menu_edu_teacher_root').id)
+
+    def test_treasury_pages(self):
+        """A tesouraria: o painel, «Facturar e receber» por turma e a ficha financeira; só para a tesouraria."""
+        student = self.env['edu.student'].create({'name': 'Aluno da tesouraria'})
+        enrollment = self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': self.class_a.id})
+        enrollment.action_confirm()
+        Treasury = self.env['edu.treasury'].with_user(self.cashier)
+        home = Treasury.home_data()
+        self.assertEqual(len(home['monthly']), 6)
+        self.assertEqual(home['overdue_count'], 0)
+        classes = Treasury.classes()['classes']
+        self.assertIn(self.class_a.id, [c['id'] for c in classes])
+        rows = Treasury.students(self.class_a.id, False, '')['rows']
+        self.assertIn(student.id, [r['student_id'] for r in rows])
+        self.assertFalse(Treasury.students(False, False, '')['rows'], 'sem turma nem pesquisa: escolher primeiro')
+        data = Treasury.student_data(student.id)
+        self.assertEqual((data['student']['name'], data['open'], data['documents']), (student.name, [], []))
+        action = Treasury.student_action(student.id, 'receive', [])
+        self.assertEqual((action['res_model'], action['views']), ('edu.fee.payment', [(False, 'form')]))
+        with self.assertRaises(AccessError):
+            self.env['edu.treasury'].with_user(self.clerk).home_data()
 
     def test_attendance_page(self):
         """«Presenças», como no secPed: a chamada começa com todos presentes mas só fica registada quando se guarda;

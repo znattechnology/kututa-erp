@@ -1,0 +1,282 @@
+// Tesouraria: o painel da cobrança, «Facturar e receber» e a ficha financeira do aluno, com o aspecto dos outros
+// painéis (cartões, listas e os gráficos comuns de edu_charts).
+.o_edu_treasury {
+    --edu-chart-series: #2a78d6;
+    --edu-chart-series-track: #cde2fb;
+    --edu-chart-grid: #{mix($text-muted, $o-view-background-color, 35%)};
+
+    .o_edu_tr_body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px 16px 32px;
+    }
+
+    .o_edu_tr_header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .o_edu_tr_title {
+        margin: 0 0 4px;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .o_edu_tr_h2 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .o_edu_tr_card {
+        padding: 16px 20px;
+        overflow: hidden;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_tr_card_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 4px 16px;
+        margin: 0;
+        padding: 16px 20px 12px;
+    }
+
+    .o_edu_tr_summary p {
+        max-width: 90ch;
+        margin-bottom: 6px;
+    }
+
+    .o_edu_tr_num {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .o_edu_tr_grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+        gap: 16px;
+        align-items: start;
+
+        @include media-breakpoint-down(lg) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_tr_main,
+    .o_edu_tr_side {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+    }
+
+    .o_edu_tr_list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        > li {
+            border-top: 1px solid $border-color;
+        }
+    }
+
+    .o_edu_tr_attention {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+    }
+
+    .o_edu_tr_row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 48px;
+        padding: 10px 20px;
+        border: 0;
+        background: none;
+        color: inherit;
+        text-align: left;
+
+        &:hover,
+        &:focus-visible {
+            background: $o-gray-100;
+        }
+    }
+
+    // Facturado e cobrado: duas colunas por mês, com 2px entre elas.
+    .o_edu_tr_invoiced {
+        background: var(--edu-chart-series-track);
+    }
+
+    .o_edu_tr_collected {
+        background: var(--edu-chart-series);
+    }
+
+    .o_edu_tr_months {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 12px;
+        height: 200px;
+        margin: 0 0 28px;
+        padding: 0;
+        border-bottom: 1px solid var(--edu-chart-grid);
+        list-style: none;
+    }
+
+    .o_edu_tr_month {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        min-width: 0;
+    }
+
+    .o_edu_tr_pair {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 2px;
+        height: 100%;
+    }
+
+    .o_edu_tr_bar {
+        width: 22px;
+        max-width: 45%;
+        min-height: 2px;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .o_edu_tr_month_label {
+        position: relative;
+        top: 22px;
+        height: 0;
+        color: $text-muted;
+        font-size: 0.75rem;
+        text-align: center;
+    }
+
+    .o_edu_tr_table {
+        font-size: 0.875rem;
+
+        th {
+            color: $text-muted;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+    }
+
+    .o_edu_tr_click {
+        cursor: pointer;
+    }
+
+    .o_edu_tr_check {
+        width: 36px;
+    }
+
+    .o_edu_tr_loading {
+        opacity: 0.55;
+    }
+
+    // Facturar e receber: as turmas à esquerda, os alunos à direita.
+    .o_edu_tr_layout {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+
+        @include media-breakpoint-down(md) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .o_edu_tr_panel {
+        position: sticky;
+        top: 8px;
+        padding: 12px;
+        border: 1px solid $border-color;
+        border-radius: $border-radius-lg;
+        background: $o-view-background-color;
+    }
+
+    .o_edu_tr_classes {
+        display: flex;
+        flex-direction: column;
+        max-height: 65vh;
+        overflow-y: auto;
+    }
+
+    .o_edu_tr_course {
+        margin: 10px 0 4px;
+        color: $text-muted;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .o_edu_tr_class {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border: 0;
+        border-radius: $border-radius;
+        background: none;
+        color: inherit;
+        font-size: 0.875rem;
+        text-align: left;
+
+        &:hover,
+        &:focus-visible {
+            background: $o-gray-100;
+        }
+
+        &.active {
+            background: rgba($o-action, 0.12);
+            font-weight: 600;
+        }
+    }
+
+    .o_edu_tr_tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 20px;
+
+        > .form-control {
+            flex: 1 1 280px;
+            max-width: 480px;
+        }
+    }
+
+    .o_edu_tr_dl {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        gap: 6px 16px;
+
+        dt {
+            color: $text-muted;
+            font-weight: 400;
+        }
+
+        dd {
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+    }
+}

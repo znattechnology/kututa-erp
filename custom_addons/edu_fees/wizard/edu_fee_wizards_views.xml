@@ -29,7 +29,11 @@
                         <field name="currency_id" column_invisible="1"/>
                     </list>
                 </field>
-                <div class="text-muted">O valor é imputado às facturas mais antigas; o excedente fica como crédito para as próximas.</div>
+                <group invisible="not selected_invoice_ids">
+                    <field name="selected_invoice_ids" widget="many2many_tags" readonly="1" string="Pagar primeiro"/>
+                </group>
+                <div class="text-muted" invisible="selected_invoice_ids">O valor é imputado às facturas mais antigas; o excedente fica como crédito para as próximas.</div>
+                <div class="text-muted" invisible="not selected_invoice_ids">O valor vai primeiro para as facturas escolhidas e depois para as mais antigas; o excedente fica como crédito para as próximas.</div>
                 <footer>
                     <button name="action_confirm" type="object" string="Registar o pagamento" class="btn-primary"/>
                     <button special="cancel" string="Cancelar"/>

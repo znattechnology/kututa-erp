@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="edu_roles.TreasuryHome">
+        <div class="o_action o_edu_treasury">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header class="o_edu_tr_header">
+                        <div>
+                            <h1 class="o_edu_tr_title">Painel</h1>
+                            <p class="mb-0 text-muted">A cobrança das propinas da escola.</p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button t-if="d.pending_payments" type="button" class="btn btn-primary" t-on-click="() => this.open('requests')">
+                                Validar <t t-out="this.plural(d.pending_payments, 'um comprovativo', 'comprovativos')"/>
+                            </button>
+                            <button type="button" class="btn btn-secondary" t-att-disabled="this.state.running" t-on-click="() => this.runOverdue()"
+                                    title="Aplica as multas às facturas vencidas e actualiza a situação dos alunos. Corre sozinho todas as noites.">
+                                <t t-out="this.state.running ? 'A actualizar…' : 'Actualizar o vencimento'"/>
+                            </button>
+                        </div>
+                    </header>
+
+                    <!-- O essencial em frases -->
+                    <section class="o_edu_tr_card o_edu_tr_summary">
+                        <p>
+                            <t t-if="!d.due_invoiced">Ainda não venceu nenhuma factura.</t>
+                            <t t-else="">
+                                Já venceram <span class="o_edu_tr_num" t-out="d.due_invoiced_text"/> em facturas e foram cobrados
+                                <span class="o_edu_tr_num" t-out="d.due_collected_text"/>, ou seja
+                                <span class="o_edu_tr_num fw-semibold" t-out="this.rateText(d.collection_rate)"/>.
+                            </t>
+                        </p>
+                        <p t-if="!d.overdue_amount">Não há facturas em atraso.</p>
+                        <p t-else="" class="text-danger">
+                            Estão em atraso <span class="o_edu_tr_num fw-semibold" t-out="d.overdue_text"/>, em
+                            <t t-out="this.plural(d.overdue_count, 'uma factura vencida', 'facturas vencidas')"/><t t-if="d.grace_days"> há mais de
+                            <t t-out="this.plural(d.grace_days, 'um dia', 'dias')"/> (a tolerância antes do bloqueio)</t>, de
+                            <t t-out="this.plural(d.students_in_debt, 'um aluno', 'alunos')"/><t t-if="d.students_total"> (dos
+                            <t t-out="d.students_total"/> com facturas)</t>.
+                        </p>
+                        <p t-if="d.upcoming" class="small text-muted mb-0">Ainda por vencer: <t t-out="d.upcoming_text"/> em facturas já emitidas.</p>
+                    </section>
+
+                    <!-- O que pede atenção -->
+                    <section t-if="d.attention.length" class="o_edu_tr_card p-0" aria-labelledby="o_edu_tr_att">
+                        <h2 id="o_edu_tr_att" class="o_edu_tr_h2 o_edu_tr_card_head">O que pede atenção</h2>
+                        <ul class="o_edu_tr_list">
+                            <li t-foreach="d.attention" t-as="a" t-key="a.key" class="o_edu_tr_attention">
+                                <i class="oi" t-att-data-icon="a.grave ? 'error' : 'warning'" t-att-class="a.grave ? 'text-danger' : 'text-warning'" aria-hidden="true"/>
+                                <span class="flex-grow-1" t-att-class="{ 'text-danger': a.grave }" t-out="a.text"/>
+                                <span t-if="a.key === 'pending' and d.pending_oldest_days >= 3" class="badge text-bg-warning">
+                                    o mais antigo há <t t-out="d.pending_oldest_days"/> dias
+                                </span>
+                                <button t-if="a.action" type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.open(a.action)" t-out="a.label"/>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <div class="o_edu_tr_grid">
+                        <div class="o_edu_tr_main">
+                            <!-- Facturado e cobrado, por mês -->
+                            <section class="o_edu_tr_card" aria-labelledby="o_edu_tr_month">
+                                <h2 id="o_edu_tr_month" class="o_edu_tr_h2">Facturado e cobrado, por mês</h2>
+                                <p t-if="!this.hasMonthly" class="text-muted mb-0">Sem facturas nem pagamentos nos últimos seis meses.</p>
+                                <t t-else="">
+                                    <p class="small text-muted">
+                                        Em <t t-out="this.currentMonth.name"/>: facturados <t t-out="this.currentMonth.invoiced_text"/>, cobrados
+                                        <t t-out="this.currentMonth.collected_text"/>.
+                                    </p>
+                                    <ul class="o_edu_chart_legend">
+                                        <li><span class="o_edu_chart_key o_edu_tr_invoiced"/>Facturado (pelo vencimento)</li>
+                                        <li><span class="o_edu_chart_key o_edu_tr_collected"/>Cobrado (pela data do pagamento)</li>
+                                    </ul>
+                                    <ul class="o_edu_tr_months">
+                                        <li t-foreach="this.months" t-as="m" t-key="m.month" class="o_edu_tr_month">
+                                            <div class="o_edu_tr_pair">
+                                                <span class="o_edu_tr_bar o_edu_tr_invoiced" t-att-style="'height: ' + m.invoicedHeight + '%'"
+                                                      t-att-title="m.name + ', facturado: ' + m.invoiced_text"/>
+                                                <span class="o_edu_tr_bar o_edu_tr_collected" t-att-style="'height: ' + m.collectedHeight + '%'"
+                                                      t-att-title="m.name + ', cobrado: ' + m.collected_text"/>
+                                            </div>
+                                            <span class="o_edu_tr_month_label" t-out="m.label"/>
+                                        </li>
+                                    </ul>
+                                    <table class="table table-sm o_edu_tr_table mt-3 mb-0">
+                                        <thead><tr><th>Mês</th><th class="text-end">Facturado</th><th class="text-end">Cobrado</th></tr></thead>
+                                        <tbody>
+                                            <tr t-foreach="this.months" t-as="m" t-key="m.month">
+                                                <td t-out="m.name"/><td class="text-end" t-out="m.invoiced_text"/><td class="text-end" t-out="m.collected_text"/>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </t>
+                            </section>
+
+                            <!-- Os maiores atrasos -->
+                            <section class="o_edu_tr_card p-0" aria-labelledby="o_edu_tr_debt">
+                                <div class="o_edu_tr_card_head">
+                                    <h2 id="o_edu_tr_debt" class="o_edu_tr_h2 mb-0">Os maiores atrasos</h2>
+                                    <button type="button" class="btn btn-link btn-sm p-0" t-on-click="() => this.open('debtors')">Ver os alunos em atraso</button>
+                                </div>
+                                <p t-if="!d.top_debtors.length" class="text-muted px-3 pb-3 mb-0">Nenhum aluno tem facturas em atraso.</p>
+                                <ul t-else="" class="o_edu_tr_list">
+                                    <li t-foreach="d.top_debtors" t-as="x" t-key="x.student_id">
+                                        <button type="button" class="o_edu_tr_row" t-on-click="() => this.open('student', x.student_id)">
+                                            <span class="flex-grow-1 min-w-0">
+                                                <span class="d-block text-truncate" t-out="x.name"/>
+                                                <span class="d-block small text-muted">
+                                                    <t t-out="x.class or 'Sem turma'"/><t t-if="x.matricula">, n.º <t t-out="x.matricula"/></t>
+                                                </span>
+                                            </span>
+                                            <span class="text-end">
+                                                <span class="d-block o_edu_tr_num text-danger" t-out="x.amount"/>
+                                                <span t-if="x.since" class="d-block small text-muted">desde <t t-out="x.since"/></span>
+                                            </span>
+                                            <i class="oi text-muted" data-icon="chevron_right" aria-hidden="true"/>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </section>
+                        </div>
+
+                        <aside class="o_edu_tr_side">
+                            <section class="o_edu_tr_card p-0" aria-labelledby="o_edu_tr_pay">
+                                <h2 id="o_edu_tr_pay" class="o_edu_tr_h2 o_edu_tr_card_head">Os últimos pagamentos</h2>
+                                <p t-if="!d.recent_payments.length" class="text-muted px-3 pb-3 mb-0">Ainda não há pagamentos de propinas.</p>
+                                <ul t-else="" class="o_edu_tr_list">
+                                    <li t-foreach="d.recent_payments" t-as="p" t-key="p.id">
+                                        <button type="button" class="o_edu_tr_row" t-on-click="() => this.open('payment', p.id)" title="Ver o recibo">
+                                            <span class="flex-grow-1 min-w-0">
+                                                <span class="d-block text-truncate" t-out="p.student"/>
+                                                <span class="d-block small text-muted"><t t-out="p.date"/> · <t t-out="p.journal"/><t t-if="p.receipt"> · <t t-out="p.receipt"/></t></span>
+                                            </span>
+                                            <span class="o_edu_tr_num" t-out="p.amount"/>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <t t-name="edu_roles.TreasuryStudents">
+        <div class="o_action o_edu_treasury">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body">
+                    <header>
+                        <h1 class="o_edu_tr_title">Facturar e receber</h1>
+                        <p class="mb-0 text-muted">
+                            Os alunos com a conta-corrente: o que está em atraso (vencido por pagar), o que está por pagar e o que já
+                            pagaram. Na ficha do aluno recebem-se pagamentos e cobram-se serviços.
+                        </p>
+                    </header>
+                    <div class="o_edu_tr_layout">
+                        <aside class="o_edu_tr_panel">
+                            <div class="small text-muted mb-1">Turmas de <t t-out="this.state.year"/></div>
+                            <input type="search" class="form-control form-control-sm mb-2" placeholder="Procurar turma"
+                                   t-att-value="this.state.classFilter" t-on-input="(ev) => this.onClassFilter(ev)"/>
+                            <div class="o_edu_tr_classes">
+                                <t t-foreach="this.classGroups" t-as="g" t-key="g.course">
+                                    <div class="o_edu_tr_course" t-out="g.course"/>
+                                    <button t-foreach="g.classes" t-as="c" t-key="c.id" type="button" class="o_edu_tr_class"
+                                            t-att-class="{ active: c.id === this.state.classId }" t-att-aria-pressed="c.id === this.state.classId ? 'true' : 'false'"
+                                            t-on-click="() => this.selectClass(c.id)">
+                                        <span class="flex-grow-1" t-out="c.name"/>
+                                        <span t-if="c.debtors" class="badge text-bg-danger" t-att-title="c.debtors + ' em atraso'" t-out="c.debtors"/>
+                                        <span class="small text-muted" t-out="c.students"/>
+                                    </button>
+                                </t>
+                            </div>
+                        </aside>
+
+                        <section class="o_edu_tr_main">
+                            <div class="o_edu_tr_tools">
+                                <input type="search" class="form-control" placeholder="Procurar aluno pelo nome ou n.º de matrícula"
+                                       t-att-value="this.state.query" t-on-input="(ev) => this.onQuery(ev)"/>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="o_edu_tr_debt_only"
+                                           t-att-checked="this.state.debtOnly" t-on-change="() => this.toggleDebt()"/>
+                                    <label class="form-check-label" for="o_edu_tr_debt_only">Só em atraso</label>
+                                </div>
+                            </div>
+
+                            <div t-if="!this.heading" class="o_edu_tr_card text-muted">
+                                Escolha uma turma à esquerda, procure um aluno, ou ligue «Só em atraso» para ver os alunos em atraso de toda a escola.
+                            </div>
+                            <t t-else="">
+                                <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2">
+                                    <h2 class="o_edu_tr_h2 mb-0" t-out="this.heading"/>
+                                    <span t-if="this.state.totals" class="small text-muted">
+                                        <t t-out="this.state.totals.debtors"/> em atraso · em atraso <t t-out="this.state.totals.overdue"/> ·
+                                        por pagar <t t-out="this.state.totals.open"/>
+                                    </span>
+                                </div>
+                                <div class="o_edu_tr_card p-0" t-att-class="{ o_edu_tr_loading: this.state.loading }">
+                                    <p t-if="!this.state.rows.length" class="text-muted p-3 mb-0">
+                                        <t t-if="this.state.debtOnly">Nenhum aluno em atraso.</t><t t-else="">Sem alunos.</t>
+                                    </p>
+                                    <div t-else="" class="table-responsive">
+                                        <table class="table table-hover o_edu_tr_table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th t-if="this.state.classId" class="text-end">N.º</th>
+                                                    <th>Aluno</th>
+                                                    <th t-if="!this.state.classId">Turma</th>
+                                                    <th class="text-end">Em atraso</th>
+                                                    <th class="text-end">Por pagar</th>
+                                                    <th class="text-end">Já pago</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr t-foreach="this.pageRows" t-as="r" t-key="r.student_id" class="o_edu_tr_click" t-on-click="() => this.openStudent(r)">
+                                                    <td t-if="this.state.classId" class="text-end text-muted" t-out="r.number"/>
+                                                    <td>
+                                                        <div t-out="r.name"/>
+                                                        <div t-if="r.matricula" class="small text-muted">n.º <t t-out="r.matricula"/></div>
+                                                    </td>
+                                                    <td t-if="!this.state.classId" class="text-muted" t-out="r.class"/>
+                                                    <td class="text-end o_edu_tr_num">
+                                                        <span t-if="r.overdue_text" class="text-danger" t-out="r.overdue_text"/>
+                                                        <span t-else="" class="text-muted">—</span>
+                                                        <div t-if="r.since" class="small text-muted">desde <t t-out="r.since"/></div>
+                                                    </td>
+                                                    <td class="text-end o_edu_tr_num" t-out="r.open_text or '—'"/>
+                                                    <td class="text-end o_edu_tr_num text-muted" t-out="r.paid_text or '—'"/>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div t-if="this.pages > 1" class="d-flex align-items-center justify-content-end gap-2">
+                                    <span class="small text-muted" t-out="this.pagerText"/>
+                                    <button type="button" class="btn btn-sm btn-secondary" t-att-disabled="this.state.page === 0" t-on-click="() => this.setPage(-1)" aria-label="Anteriores">
+                                        <i class="oi" data-icon="chevron_left" aria-hidden="true"/>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-secondary" t-att-disabled="this.state.page >= this.pages - 1" t-on-click="() => this.setPage(1)" aria-label="Seguintes">
+                                        <i class="oi" data-icon="chevron_right" aria-hidden="true"/>
+                                    </button>
+                                </div>
+                            </t>
+                        </section>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+    <t t-name="edu_roles.TreasuryStudent">
+        <div class="o_action o_edu_treasury">
+            <Layout display="this.display">
+                <div class="o_edu_tr_body" t-if="this.state.data">
+                    <t t-set="d" t-value="this.state.data"/>
+                    <header class="o_edu_tr_header">
+                        <div>
+                            <h1 class="o_edu_tr_title" t-out="d.student.name"/>
+                            <p class="mb-0 text-muted">
+                                <t t-out="d.student.class or 'Sem turma'"/><t t-if="d.student.matricula">, n.º <t t-out="d.student.matricula"/></t>
+                                · <t t-out="d.student.status"/>
+                            </p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-primary" t-att-disabled="!d.balance.has_open" t-on-click="() => this.receive([])">Receber pagamento</button>
+                            <button type="button" class="btn btn-secondary" t-on-click="() => this.run('charge')">Cobrar serviço</button>
+                        </div>
+                    </header>
+
+                    <section class="o_edu_tr_card o_edu_tr_summary">
+                        <p t-if="d.balance.overdue" class="text-danger">
+                            Tem <span class="o_edu_tr_num fw-semibold" t-out="d.balance.overdue"/> em atraso, desde <t t-out="d.balance.since"/>.
+                        </p>
+                        <p t-else="">Não tem nada em atraso.</p>
+                        <p>Por pagar no total: <span class="o_edu_tr_num" t-out="d.balance.open"/>. Já pagou <span class="o_edu_tr_num" t-out="d.balance.paid"/>.</p>
+                        <p class="small mb-0" t-att-class="d.gate.blocked ? 'text-danger' : 'text-muted'">
+                            <t t-if="d.gate.exempt">Isento das restrições por propinas (bolseiro do Estado ou menor).</t>
+                            <t t-elif="d.gate.blocked" t-out="d.gate.message"/>
+                            <t t-elif="d.gate.message" t-out="d.gate.message"/>
+                            <t t-else="">Sem restrições por propinas.</t>
+                        </p>
+                    </section>
+
+                    <div class="o_edu_tr_grid">
+                        <div class="o_edu_tr_main">
+                            <section class="o_edu_tr_card p-0" aria-labelledby="o_edu_tr_open">
+                                <div class="o_edu_tr_card_head">
+                                    <h2 id="o_edu_tr_open" class="o_edu_tr_h2 mb-0">Facturas por pagar</h2>
+                                    <button t-if="this.state.selected.length" type="button" class="btn btn-sm btn-primary" t-on-click="() => this.receive(this.state.selected)">
+                                        Receber as escolhidas (<t t-out="this.state.selected.length"/>)
+                                    </button>
+                                </div>
+                                <p t-if="!d.open.length" class="text-muted px-3 pb-3 mb-0">Não há nada por pagar.</p>
+                                <div t-else="" class="table-responsive">
+                                    <table class="table o_edu_tr_table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th class="o_edu_tr_check"><span class="visually-hidden">Escolher</span></th>
+                                                <th>Factura</th>
+                                                <th>Vence a</th>
+                                                <th class="text-end">Valor</th>
+                                                <th class="text-end">Por pagar</th>
+                                                <th/>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="d.open" t-as="m" t-key="m.id">
+                                                <td class="o_edu_tr_check">
+                                                    <input type="checkbox" class="form-check-input" t-att-checked="this.isSelected(m)"
+                                                           t-att-aria-label="'Escolher ' + m.label" t-on-change="() => this.toggle(m)"/>
+                                                </td>
+                                                <td>
+                                                    <div t-out="m.label"/>
+                                                    <div class="small text-muted"><t t-out="m.number"/><t t-if="m.category"> · <t t-out="m.category"/></t></div>
+                                                </td>
+                                                <td class="text-nowrap">
+                                                    <t t-out="m.due"/>
+                                                    <div t-if="m.late_days" class="small text-danger">há <t t-out="m.late_days"/> <t t-out="m.late_days === 1 ? 'dia' : 'dias'"/></div>
+                                                </td>
+                                                <td class="text-end o_edu_tr_num" t-out="m.total"/>
+                                                <td class="text-end o_edu_tr_num">
+                                                    <t t-out="m.residual"/>
+                                                    <div t-if="m.partial" class="small text-muted">paga em parte</div>
+                                                </td>
+                                                <td class="text-end text-nowrap">
+                                                    <button type="button" class="btn btn-sm btn-secondary" t-on-click="() => this.receive([m.id])">Receber</button>
+                                                    <button type="button" class="btn btn-sm btn-link" t-on-click="() => this.print({ model: 'account.move', id: m.id })">Imprimir</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+
+                            <section class="o_edu_tr_card p-0" aria-labelledby="o_edu_tr_docs">
+                                <h2 id="o_edu_tr_docs" class="o_edu_tr_h2 o_edu_tr_card_head">Documentos fiscais</h2>
+                                <p t-if="!d.documents.length" class="text-muted px-3 pb-3 mb-0">Ainda não há documentos.</p>
+                                <div t-else="" class="table-responsive">
+                                    <table class="table o_edu_tr_table mb-0">
+                                        <thead>
+                                            <tr><th>Documento</th><th>Data</th><th class="text-end">Valor</th><th>Situação</th><th/></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="d.documents" t-as="doc" t-key="doc.model + doc.id">
+                                                <td>
+                                                    <div><span class="fw-semibold" t-out="doc.kind"/> · <t t-out="doc.number"/></div>
+                                                    <div class="small text-muted text-truncate" t-out="doc.label"/>
+                                                </td>
+                                                <td class="text-nowrap" t-out="doc.date"/>
+                                                <td class="text-end o_edu_tr_num" t-out="doc.amount"/>
+                                                <td class="small" t-out="doc.state"/>
+                                                <td class="text-end"><button type="button" class="btn btn-sm btn-link" t-on-click="() => this.print(doc)">Imprimir</button></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        </div>
+
+                        <aside class="o_edu_tr_side">
+                            <section class="o_edu_tr_card" aria-labelledby="o_edu_tr_bill">
+                                <h2 id="o_edu_tr_bill" class="o_edu_tr_h2">Quem compra nas facturas</h2>
+                                <dl class="o_edu_tr_dl mb-0">
+                                    <dt>Nome</dt><dd t-out="d.billing.name"/>
+                                    <dt>NIF</dt><dd t-out="d.billing.vat or 'Sem NIF (consumidor final)'"/>
+                                    <dt>Morada</dt><dd t-out="d.billing.address or '—'"/>
+                                </dl>
+                                <p class="small text-muted mt-2 mb-0">
+                                    <t t-if="d.billing.is_guardian">É o encarregado, porque tem NIF.</t>
+                                    <t t-else="">As facturas saem em nome do aluno; com um encarregado com NIF, saem em nome dele.</t>
+                                </p>
+                            </section>
+                            <section class="o_edu_tr_card" aria-labelledby="o_edu_tr_guard">
+                                <h2 id="o_edu_tr_guard" class="o_edu_tr_h2">Encarregados</h2>
+                                <p t-if="!d.guardians.length" class="text-muted mb-0">Sem encarregado ligado.</p>
+                                <ul t-else="" class="list-unstyled mb-0">
+                                    <li t-foreach="d.guardians" t-as="g" t-key="g_index" class="mb-1">
+                                        <t t-out="g.name"/><span t-if="g.primary" class="badge text-bg-light ms-1">principal</span>
+                                        <div t-if="g.phone" class="small text-muted" t-out="g.phone"/>
+                                    </li>
+                                </ul>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
+            </Layout>
+        </div>
+    </t>
+
+</templates>

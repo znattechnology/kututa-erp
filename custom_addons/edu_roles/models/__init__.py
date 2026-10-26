@@ -14,6 +14,7 @@ from . import (
     edu_student,
     edu_teacher_home,
     edu_transfer,
+    edu_treasury,
     ir_http,
     ir_ui_menu,
     res_users,

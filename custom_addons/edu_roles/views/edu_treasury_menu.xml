@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A Tesouraria, como a «Administração Financeira» do secPed: uma aplicação própria com a barra lateral pela ordem
+         do trabalho: o painel; facturar e receber, validar os comprovativos; os documentos fiscais; a configuração. -->
+    <record id="action_treasury_home" model="ir.actions.client">
+        <field name="name">Painel</field>
+        <field name="tag">edu_roles.treasury_home</field>
+    </record>
+    <record id="action_treasury_students" model="ir.actions.client">
+        <field name="name">Facturar e receber</field>
+        <field name="tag">edu_roles.treasury_students</field>
+    </record>
+    <record id="action_treasury_receipts" model="ir.actions.act_window">
+        <field name="name">Recibos</field>
+        <field name="res_model">account.payment</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('payment_type', '=', 'inbound'), ('partner_type', '=', 'customer')]</field>
+        <field name="context">{'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ainda não há recibos</p>
+            <p>Cada pagamento recebido (ao balcão ou validado do portal) dá um recibo, que aparece aqui.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_treasury_root" name="Tesouraria" sequence="2" groups="edu_fees.group_edu_finance"
+              web_icon="edu_core,static/description/icon.png"/>
+    <menuitem id="menu_treasury_home" name="Painel" action="action_treasury_home" parent="menu_treasury_root" sequence="1"/>
+
+    <menuitem id="menu_treasury_billing" name="Facturação" parent="menu_treasury_root" sequence="10"/>
+    <menuitem id="menu_treasury_students" name="Facturar e receber" action="action_treasury_students"
+              parent="menu_treasury_billing" sequence="10"/>
+    <record id="edu_fees.menu_edu_payment_requests" model="ir.ui.menu">
+        <field name="name">Validar comprovativos</field>
+        <field name="parent_id" ref="menu_treasury_billing"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="edu_fees.menu_edu_scholarship" model="ir.ui.menu">
+        <field name="name">Bolsas e descontos</field>
+        <field name="parent_id" ref="menu_treasury_billing"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <menuitem id="menu_treasury_documents" name="Documentos" parent="menu_treasury_root" sequence="30"/>
+    <record id="edu_fees.menu_edu_invoices" model="ir.ui.menu">
+        <field name="name">Documentos fiscais</field>
+        <field name="parent_id" ref="menu_treasury_documents"/>
+        <field name="sequence">10</field>
+    </record>
+    <menuitem id="menu_treasury_receipts" name="Recibos" action="action_treasury_receipts"
+              parent="menu_treasury_documents" sequence="20"/>
+    <menuitem id="menu_treasury_agt" name="Comunicação com a AGT" action="l10n_ao_edi.l10n_ao_edi_document_action"
+              parent="menu_treasury_documents" sequence="30"/>
+
+    <menuitem id="menu_treasury_config" name="Configuração" parent="menu_treasury_root" sequence="90"/>
+    <record id="edu_fees.menu_edu_fee_plan" model="ir.ui.menu">
+        <field name="name">Planos e taxas</field>
+        <field name="parent_id" ref="menu_treasury_config"/>
+        <field name="sequence">10</field>
+        <field name="group_ids" eval="[(6, 0, [ref('edu_fees.group_edu_finance')])]"/>
+    </record>
+    <record id="edu_fees.menu_edu_late_fee_rule" model="ir.ui.menu">
+        <field name="name">Multas por atraso</field>
+        <field name="parent_id" ref="menu_treasury_config"/>
+        <field name="sequence">20</field>
+        <field name="group_ids" eval="[(6, 0, [ref('edu_fees.group_edu_finance')])]"/>
+    </record>
+
+    <!-- «Devedores» passou a «Facturar e receber» com «Só em atraso»; o menu «Propinas» da secretaria fica vazio. -->
+    <record id="edu_fees.menu_edu_debtors" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+</odoo>

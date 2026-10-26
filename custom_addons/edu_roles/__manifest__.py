@@ -37,6 +37,7 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
         'views/edu_lesson_views.xml',
         'wizard/edu_enrollment_confirmation_views.xml',
         'views/edu_enrollment_document_views.xml',
+        'views/edu_treasury_menu.xml',
     ],
     'assets': {
         'web.assets_backend': [
@@ -57,10 +58,14 @@ Secretaria Express: perfis de acesso iguais aos do secPed-Express.
             'edu_roles/static/src/reports/reports.js',
             'edu_roles/static/src/reports/reports.xml',
             'edu_roles/static/src/reports/reports.scss',
+            'edu_roles/static/src/treasury/treasury.js',
+            'edu_roles/static/src/treasury/treasury.xml',
+            'edu_roles/static/src/treasury/treasury.scss',
         ],
         'web.assets_web_dark': [
             'edu_roles/static/src/reports/reports.dark.scss',
             'edu_roles/static/src/charts/edu_charts.dark.scss',
+            'edu_roles/static/src/treasury/treasury.dark.scss',
         ],
     },
     'auto_install': True,

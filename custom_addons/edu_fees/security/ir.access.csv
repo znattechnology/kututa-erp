@@ -1,7 +1,7 @@
 id,name,model_id,group_id/id,operation,domain
-access_edu_fee_plan_finance,access_edu_fee_plan_finance,edu.fee.plan,edu_fees.group_edu_finance,r,
-access_edu_fee_plan_line_finance,access_edu_fee_plan_line_finance,edu.fee.plan.line,edu_fees.group_edu_finance,r,
-access_edu_late_fee_rule_finance,access_edu_late_fee_rule_finance,edu.late.fee.rule,edu_fees.group_edu_finance,r,
+access_edu_fee_plan_finance,access_edu_fee_plan_finance,edu.fee.plan,edu_fees.group_edu_finance,crud,
+access_edu_fee_plan_line_finance,access_edu_fee_plan_line_finance,edu.fee.plan.line,edu_fees.group_edu_finance,crud,
+access_edu_late_fee_rule_finance,access_edu_late_fee_rule_finance,edu.late.fee.rule,edu_fees.group_edu_finance,crud,
 access_edu_student_finance,access_edu_student_finance,edu.student,edu_fees.group_edu_finance,r,
 access_edu_guardian_finance,access_edu_guardian_finance,edu.guardian,edu_fees.group_edu_finance,r,
 access_edu_student_guardian_finance,access_edu_student_guardian_finance,edu.student.guardian,edu_fees.group_edu_finance,r,
