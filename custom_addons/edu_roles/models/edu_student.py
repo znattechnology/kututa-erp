@@ -11,16 +11,23 @@ class EduStudent(models.Model):
         'edu.enrollment', string='Última matrícula', compute='_compute_edu_last_enrollment_id'
     )
     edu_last_class_id = fields.Many2one('edu.class', string='Última turma', compute='_compute_edu_last_enrollment_id')
-    edu_last_state = fields.Selection(related='edu_last_enrollment_id.state', string='Resultado do ano')
+    # Calculado aqui (não «related» através da última matrícula, que não é guardada): mudar o estado de uma matrícula
+    # invalidava o campo com uma pesquisa pela última matrícula, que não se pode fazer.
+    edu_last_state = fields.Selection(
+        selection=lambda self: self.env['edu.enrollment']._fields['state'].selection,
+        string='Resultado do ano',
+        compute='_compute_edu_last_enrollment_id',
+    )
     edu_guardian_name = fields.Char(related='primary_guardian_id.name', string='Encarregado')
     edu_guardian_phone = fields.Char(related='primary_guardian_id.phone', string='Telefone do encarregado')
 
-    @api.depends('enrollment_ids.academic_year_id', 'enrollment_ids.class_id')
+    @api.depends('enrollment_ids.academic_year_id', 'enrollment_ids.class_id', 'enrollment_ids.state')
     def _compute_edu_last_enrollment_id(self):
         for student in self:
             last = student.enrollment_ids.sorted(lambda e: (e.academic_year_id.date_start, e.id), reverse=True)[:1]
             student.edu_last_enrollment_id = last
             student.edu_last_class_id = last.class_id
+            student.edu_last_state = last.state
 
     def action_edu_enroll_again(self):
         """A nova matrícula com o aluno, a matrícula anterior e o tipo (repetente, se ficou retido) já preenchidos."""

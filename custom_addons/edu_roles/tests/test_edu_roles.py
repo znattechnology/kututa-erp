@@ -237,6 +237,16 @@ class TestEduRoles(TransactionCase):
         with self.assertRaises(AccessError):
             self.env['edu.treasury'].with_user(self.clerk).home_data()
 
+    def test_confirm_enrollment_with_student_in_cache(self):
+        """Criar o aluno e confirmar a matrícula na mesma transacção: o «Resultado do ano» do aluno já lido não pode
+        rebentar a confirmação (era um «related» através de um campo calculado não guardado)."""
+        other = self.env['edu.student'].create({'name': 'Outro aluno'})
+        self.assertFalse(other.edu_last_state)  # um «Resultado do ano» em cache (como numa lista de alunos)
+        student = self.env['edu.student'].create({'name': 'Aluno novo'})
+        enrollment = self.env['edu.enrollment'].create({'student_id': student.id, 'class_id': self.class_a.id})
+        enrollment.action_confirm()
+        self.assertEqual((student.edu_last_enrollment_id, student.edu_last_state), (enrollment, enrollment.state))
+
     def test_treasury_controls(self):
         """Aprovações e caixa, diferenças e controlos internos: a caixa abre e fecha com a diferença; as regras só a
         direcção as altera."""
