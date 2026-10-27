@@ -1,4 +1,5 @@
 import unicodedata
+from decimal import ROUND_HALF_UP, Decimal
 
 from odoo import api, fields, models
 from odoo.addons.edu_evaluation.tools.grading import grade_text, round_units, technical_chain
@@ -226,11 +227,10 @@ class EduPautaPrint(models.TransientModel):
                 return ('', None)
             if not decimals:
                 text, shown = str(round_units(value)), round_units(value)
-            elif technical:
-                # Técnico: as notas com as casas decimais que tiverem; só a CA e a CFD se arredondam.
-                text, shown = grade_text(value), value
             else:
-                text, shown = f'{value:.1f}'.replace('.', ','), value
+                # Uma casa decimal, como na pauta do secPed (2,63 → 2,6); a cor segue a nota sem arredondar.
+                tenth = Decimal(str(value)).quantize(Decimal('0.1'), ROUND_HALF_UP)
+                text, shown = f'{tenth:f}'.replace('.', ','), value
             return (text, 'pos' if shown >= pass_grade else 'neg')
 
         def count(value):

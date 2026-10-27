@@ -268,6 +268,12 @@ class TestEduDocuments(TransactionCase):
         # Todas as disciplinas do plano aparecem, mesmo as que o aluno não tem (sem notas).
         self.assertEqual(wizard._subjects(), wizard._subjects() | self.edu_class.subject_line_ids.subject_id)
         self.assertIn('ep-neg', html)
+        # Notas coloridas e com uma casa decimal, como na pauta do secPed (o CT do técnico não arredonda: 2,63 → 2,6).
+        cells = [cell for row in wizard._pauta_data()['rows'] for found in row['cells'].values() for cell in found]
+        decimals = [text for text, tone in cells if ',' in text]
+        self.assertTrue(decimals)
+        self.assertEqual([text for text in decimals if len(text.split(',')[1]) != 1], [])
+        self.assertTrue(all(tone in ('pos', 'neg') for text, tone in cells if ',' in text))
         self.assertIn('P1 - Nota do Professor', html)
         self.assertIn('aprovação mínima 10 valores', html)
         self.assertIn('Professor', html)
