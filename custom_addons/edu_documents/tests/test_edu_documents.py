@@ -304,6 +304,13 @@ class TestEduDocuments(TransactionCase):
         self.assertIn('MAPA DE APROVEITAMENTO REFERENTE AO III TRIMESTRE', html)
         for text in ('A)', 'Língua Portuguesa', '>CF<', '>FJ<', '>FI<', 'Méd.', 'Director(a) de Turma', 'Visto'):
             self.assertIn(text, html)
+        # Como na pauta: uma casa decimal, a azul a positiva e a vermelho a negativa (também na média).
+        rows = mini._mini_pauta_data()['rows']
+        graded = [cell for row in rows for cell in row['cells'].values() if ',' in cell[0]]
+        self.assertTrue(graded)
+        self.assertTrue(all(len(cell[0].split(',')[1]) == 1 and cell[1] in ('pos', 'neg') for cell in graded))
+        self.assertTrue(all(len(row['average'].split(',')[1]) == 1 for row in rows if row['average'] != '—'))
+        self.assertIn('mp-neg', html)
         self.assertIn('mp-neg', html)
         mini.trimester_id = trimesters[0]
         html = self._render('edu_documents.action_report_mini_pauta', mini)

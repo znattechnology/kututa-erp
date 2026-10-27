@@ -2,11 +2,18 @@ import unicodedata
 from decimal import ROUND_HALF_UP, Decimal
 
 from odoo import api, fields, models
-from odoo.addons.edu_evaluation.tools.grading import grade_text, round_units, technical_chain
+from odoo.addons.edu_evaluation.tools.grading import round_units, technical_chain
 
 from ..models.report_helpers import Helpers
 
 ROMAN = {1: 'I', 2: 'II', 3: 'III', 4: 'IV'}
+
+
+def tenth_text(value):
+    """Uma nota com uma casa decimal, como na pauta do secPed (2,63 → 2,6; 12 → 12,0), com vírgula."""
+    return f'{Decimal(str(value)).quantize(Decimal("0.1"), ROUND_HALF_UP):f}'.replace('.', ',')
+
+
 # Largura das colunas da pauta (px a 96 ppp, medida no PDF) para dividir as disciplinas por folhas A3, como o
 # secPed; as folhas cheias esticam a tabela à largura da página.
 PAGE_WIDTH = 1500
@@ -229,8 +236,7 @@ class EduPautaPrint(models.TransientModel):
                 text, shown = str(round_units(value)), round_units(value)
             else:
                 # Uma casa decimal, como na pauta do secPed (2,63 → 2,6); a cor segue a nota sem arredondar.
-                tenth = Decimal(str(value)).quantize(Decimal('0.1'), ROUND_HALF_UP)
-                text, shown = f'{tenth:f}'.replace('.', ','), value
+                text, shown = tenth_text(value), value
             return (text, 'pos' if shown >= pass_grade else 'neg')
 
         def count(value):
@@ -393,6 +399,10 @@ class EduPautaPrint(models.TransientModel):
         terms = self._terms(trimester)
         cts = self._technical_cts(trimester) if technical else {}
         absences = self._trimester_absences(trimester)
+
+        def tone(value):
+            return False if value is None else ('pos' if value >= policy.pass_grade else 'neg')
+
         rows = []
         visitors = self._visitors()
         for enrollment in self._enrollments() | self.env['edu.enrollment'].concat(*visitors):
@@ -420,31 +430,26 @@ class EduPautaPrint(models.TransientModel):
                     if technical:
                         value = cts.get(key)
                     else:
-                        value = term.mt if term and term.has_mt else None
+                        # Geral: a MT arredondada, como na pauta.
+                        value = round_units(term.mt) if term and term.has_mt else None
                 excused, absent = absences.get(key, (0, 0))
-                # Técnico: o CT e a CF com as casas decimais que tiverem (só a CA e a CFD se arredondam).
-                shown = value if technical else (round_units(value) if value is not None else None)
+                # Como na pauta: uma casa decimal, a azul a positiva e a vermelho a negativa.
                 cells[subject.id] = (
-                    '—' if shown is None else (grade_text(shown) if technical else str(shown)),
-                    shown is not None and shown < policy.pass_grade,
+                    '—' if value is None else tenth_text(value),
+                    tone(value),
                     str(excused) if excused else '·',
                     str(absent) if absent else '·',
                 )
                 if value is not None:
                     values.append(value)
             average = sum(values) / len(values) if values else None
-            if average is None:
-                average_text = '—'
-            elif technical:
-                average_text = grade_text(average)  # técnico: com as casas decimais (só a CA e a CFD se arredondam)
-            else:
-                average_text = str(round_units(average))
             rows.append(
                 {
                     'number': '' if only is not None else enrollment.order_number or '',
                     'name': enrollment.student_id.name,
                     'cells': cells,
-                    'average': average_text,
+                    'average': '—' if average is None else tenth_text(average),
+                    'average_tone': tone(average),
                 }
             )
         count = max(len(subjects), 1)
@@ -457,8 +462,8 @@ class EduPautaPrint(models.TransientModel):
             'rows': rows,
             'title': f'MAPA DE APROVEITAMENTO REFERENTE AO {ROMAN.get(number, number)} TRIMESTRE',
             'context': self.class_id._document_context(),
-            'note': f'{label} — {description} · FJ/FI — faltas justificadas/injustificadas · negativas '
-            f'(< {round_units(policy.pass_grade)}) a vermelho.',
+            'note': f'{label} — {description} · FJ/FI — faltas justificadas/injustificadas · positivas a azul e '
+            f'negativas (< {round_units(policy.pass_grade)}) a vermelho.',
             'name_pct': name_pct,
             'subject_pct': subject_pct,
             # Colunas estreitas: os nomes das disciplinas em minúsculas e mais pequenos, para não partirem a meio.
