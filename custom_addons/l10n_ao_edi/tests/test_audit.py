@@ -216,7 +216,7 @@ class TestL10nAoEdiAudit(L10nAoEdiCommon):
         self.mark_sent(invoice)
         payment = self.register_payment(invoice)
         first = payment.l10n_ao_edi_document_no
-        payment.l10n_ao_edi_state = 'invalid'
+        payment.sudo().l10n_ao_edi_state = 'invalid'
         payment.action_l10n_ao_edi_issue_receipt()
         self.assertNotEqual(payment.l10n_ao_edi_document_no, first)
         payload = payment._l10n_ao_edi_payload_values()

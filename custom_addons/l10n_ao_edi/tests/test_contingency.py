@@ -33,7 +33,7 @@ class TestL10nAoEdiContingency(L10nAoEdiCommon):
 
     def test_sixty_days_without_communication_blocks_issuing(self):
         old = self._create_invoice()
-        old.l10n_ao_edi_system_entry_date = fields.Datetime.now() - timedelta(days=61)
+        old.sudo().l10n_ao_edi_system_entry_date = fields.Datetime.now() - timedelta(days=61)
         self.company.l10n_ao_edi_last_communication = False
         with self.assertRaisesRegex(UserError, '60 dias'):
             self._create_invoice()

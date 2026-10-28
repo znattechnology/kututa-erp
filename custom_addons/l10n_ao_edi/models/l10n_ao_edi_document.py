@@ -195,7 +195,7 @@ class L10nAoEdiDocument(models.Model):
             except Exception as error:  # noqa: BLE001 - um lote com erro não pode bloquear a fila
                 _logger.exception('AGT: erro no envio de um lote da empresa %s', company.name)
                 for record in batch:
-                    record.l10n_ao_edi_error = self.env._('Erro no envio: %s', error)
+                    record._l10n_ao_edi_set({'l10n_ao_edi_error': self.env._('Erro no envio: %s', error)})
             if not self.env.context.get('l10n_ao_edi_no_commit'):
                 # Cada chamada à AGT fica gravada antes da seguinte (o efeito externo já aconteceu).
                 remaining = sum(len(b) for _c, b in batches[index + 1 :])
@@ -259,11 +259,11 @@ class L10nAoEdiDocument(models.Model):
             for record in records:
                 record_errors = by_document.get(record._l10n_ao_edi_number())
                 if record_errors and not self._is_already_registered(record_errors):
-                    record.write(
+                    record._l10n_ao_edi_set(
                         {'l10n_ao_edi_state': 'invalid', 'l10n_ao_edi_error': self._format_errors(record_errors)}
                     )
                 else:
-                    record.write({'l10n_ao_edi_state': 'sent', 'l10n_ao_edi_error': False})
+                    record._l10n_ao_edi_set({'l10n_ao_edi_state': 'sent', 'l10n_ao_edi_error': False})
             document.next_poll = fields.Datetime.now() + timedelta(minutes=POLL_DELAYS[0])
             self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_poll')._trigger(document.next_poll)
             return document
@@ -275,11 +275,13 @@ class L10nAoEdiDocument(models.Model):
         for record in records:
             record_errors = by_document.get(record._l10n_ao_edi_number())
             if record_errors and self._is_already_registered(record_errors):
-                record.write({'l10n_ao_edi_state': 'sent', 'l10n_ao_edi_error': False})
+                record._l10n_ao_edi_set({'l10n_ao_edi_state': 'sent', 'l10n_ao_edi_error': False})
             elif record_errors:
-                record.write({'l10n_ao_edi_state': 'invalid', 'l10n_ao_edi_error': self._format_errors(record_errors)})
+                record._l10n_ao_edi_set(
+                    {'l10n_ao_edi_state': 'invalid', 'l10n_ao_edi_error': self._format_errors(record_errors)}
+                )
             else:
-                record.l10n_ao_edi_error = message
+                record._l10n_ao_edi_set({'l10n_ao_edi_error': message})
         return document
 
     # -------------------------------------------------------------------------
@@ -307,7 +309,9 @@ class L10nAoEdiDocument(models.Model):
         (um reenvio de um documento que a AGT afinal tem é reconhecido pelo erro E09)."""
         self.write({'state': 'error', 'error_message': message})
         for field in self._queue_fields().values():
-            self[field].filtered(lambda r: r.l10n_ao_edi_state == 'sent').write({'l10n_ao_edi_state': 'to_send'})
+            self[field].filtered(lambda r: r.l10n_ao_edi_state == 'sent')._l10n_ao_edi_set(
+                {'l10n_ao_edi_state': 'to_send'}
+            )
 
     def _poll(self):
         self.ensure_one()
@@ -356,9 +360,9 @@ class L10nAoEdiDocument(models.Model):
             if item.get('documentStatus') == 'V' or (
                 item.get('successRequestID') and self._is_already_registered(item_errors, code_key='errorCode')
             ):
-                record.write({'l10n_ao_edi_state': 'valid', 'l10n_ao_edi_error': False})
+                record._l10n_ao_edi_set({'l10n_ao_edi_state': 'valid', 'l10n_ao_edi_error': False})
             else:
-                record.write(
+                record._l10n_ao_edi_set(
                     {
                         'l10n_ao_edi_state': 'invalid',
                         'l10n_ao_edi_error': self._format_errors(item_errors, code_key='errorCode'),
@@ -366,7 +370,7 @@ class L10nAoEdiDocument(models.Model):
                 )
         for record in missing:
             # A AGT não devolveu estado para o documento: volta à fila (não pode ficar «enviado» para sempre).
-            record.write(
+            record._l10n_ao_edi_set(
                 {
                     'l10n_ao_edi_state': 'to_send',
                     'l10n_ao_edi_error': self.env._('Sem estado no pedido %s: será reenviado.', self.request_id),

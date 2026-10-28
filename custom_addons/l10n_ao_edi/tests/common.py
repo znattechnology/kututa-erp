@@ -125,4 +125,4 @@ class L10nAoEdiCommon(AccountTestInvoicingCommon):
 
     def mark_sent(self, *records):
         for record in records:
-            record.l10n_ao_edi_state = 'sent'
+            record.sudo().l10n_ao_edi_state = 'sent'

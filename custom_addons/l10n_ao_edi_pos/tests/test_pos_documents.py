@@ -224,7 +224,7 @@ class TestL10nAoEdiPosDocuments(L10nAoEdiPosCommon):
 
     def test_communication_lock_counts_pos_orders(self):
         order = self.sync_order([(self.pos_product, 1)])
-        order.l10n_ao_edi_system_entry_date = fields.Datetime.now() - timedelta(days=61)
+        order.sudo().l10n_ao_edi_system_entry_date = fields.Datetime.now() - timedelta(days=61)
         with self.assertRaisesRegex(UserError, 'Emissão bloqueada'):
             self.sync_order([(self.pos_product, 1)])
 

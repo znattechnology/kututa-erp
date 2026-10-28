@@ -5,6 +5,7 @@ from . import (
     account_payment,
     ir_actions_report,
     l10n_ao_edi_document,
+    l10n_ao_edi_guard,
     l10n_ao_edi_series,
     product_template,
     res_company,

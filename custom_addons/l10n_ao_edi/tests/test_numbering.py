@@ -1,6 +1,6 @@
 from odoo import fields
-from odoo.exceptions import UserError
-from odoo.tests import tagged
+from odoo.exceptions import AccessError, UserError
+from odoo.tests import new_test_user, tagged
 
 from .common import L10nAoEdiCommon
 
@@ -41,9 +41,38 @@ class TestL10nAoEdiNumbering(L10nAoEdiCommon):
         with self.assertRaisesRegex(UserError, 'nota de crédito'):
             invoice.button_cancel()
 
+    def test_agt_technical_fields_are_server_only(self):
+        """Por RPC não se muda o estado AGT (nem o documento assinado, a série, as rejeições ou as impressões) de um
+        documento comunicado para o repor em rascunho e alterá-lo: só o próprio módulo grava estes campos."""
+        invoice = self._create_invoice()
+        invoice.sudo().l10n_ao_edi_state = 'valid'
+        self.assertFalse(invoice.env.su)
+        for vals in (
+            {'l10n_ao_edi_state': False},
+            {'l10n_ao_edi_state': 'invalid'},
+            {'l10n_ao_edi_series_id': False},
+            {'l10n_ao_edi_payload': '{}'},
+            {'l10n_ao_edi_rejected_payloads': '[{}]'},
+            {'l10n_ao_edi_print_count': 0},
+        ):
+            with self.assertRaises(AccessError):
+                invoice.write(vals)
+        self.assertEqual(invoice.l10n_ao_edi_state, 'valid')
+        with self.assertRaisesRegex(UserError, 'nota de crédito'):
+            invoice.button_draft()
+        with self.assertRaises(AccessError):
+            self._create_invoice(post=False, l10n_ao_edi_state='valid')
+
+    def test_read_only_user_cannot_communicate(self):
+        """Um utilizador só de leitura não dispara pedidos à AGT (irreversíveis)."""
+        invoice = self._create_invoice()
+        auditor = new_test_user(self.env, login='auditor_agt', groups='account.group_account_readonly')
+        with self.assertRaises(AccessError):
+            invoice.with_user(auditor).action_l10n_ao_edi_send_now()
+
     def test_credit_note_rules(self):
         invoice = self._create_invoice()
-        invoice.l10n_ao_edi_state = 'valid'
+        invoice.sudo().l10n_ao_edi_state = 'valid'
         refund = invoice._reverse_moves([{'invoice_date': invoice.invoice_date}], cancel=False)
         # A referência do Odoo («Estorno de: …») não conta como motivo: só o motivo AGT escrito pelo utilizador.
         refund.ref = 'Estorno de: FT'

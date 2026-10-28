@@ -101,9 +101,20 @@ class TestL10nAoEdiPosAudit(L10nAoEdiPosCommon):
         self.assertEqual(json.loads(order.l10n_ao_edi_payload)['companyName'], 'Cliente Angola, Lda')
         self.assertEqual(order._l10n_ao_edi_payload_values()['companyName'], 'Cliente Angola, Lda')
 
+    def test_agt_state_from_client_is_ignored(self):
+        """Um caixa não anula uma venda certificada mudando o estado AGT por RPC (o POS reenvia as vendas, por isso
+        os dados AGT vindos do cliente são ignorados, sem erro)."""
+        order = self.sync_order([(self.pos_product, 1)])
+        self.assertFalse(order.env.su)
+        state, number = order.l10n_ao_edi_state, order.l10n_ao_edi_document_no
+        order.write({'l10n_ao_edi_state': 'invalid', 'l10n_ao_edi_document_no': 'TV X/1', 'l10n_ao_edi_print_count': 0})
+        self.assertEqual((order.l10n_ao_edi_state, order.l10n_ao_edi_document_no), (state, number))
+        order.action_l10n_ao_edi_correct()  # só corrige rejeitados: nada muda
+        self.assertEqual(order.l10n_ao_edi_document_no, number)
+
     def test_rejected_tv_is_corrected(self):
         order = self.sync_order([(self.pos_product, 1)])
-        order.l10n_ao_edi_state = 'invalid'
+        order.sudo().l10n_ao_edi_state = 'invalid'
         with self.assertRaisesRegex(UserError, 'rejeitado'):
             self.sync_refund(order)
         order.action_l10n_ao_edi_correct()

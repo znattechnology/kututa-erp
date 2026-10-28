@@ -68,7 +68,7 @@ class TestL10nAoEdiPayload(L10nAoEdiCommon):
 
     def test_credit_note_references_origin(self):
         invoice = self._create_invoice()
-        invoice.l10n_ao_edi_state = 'valid'
+        invoice.sudo().l10n_ao_edi_state = 'valid'
         wizard = (
             self.env['account.move.reversal']
             .with_context(active_model='account.move', active_ids=invoice.ids)

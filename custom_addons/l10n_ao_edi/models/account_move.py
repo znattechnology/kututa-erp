@@ -27,7 +27,7 @@ LOCKED_FIELDS = (
 
 
 class AccountMove(models.Model):
-    _inherit = 'account.move'
+    _inherit = ['account.move', 'l10n_ao_edi.guard.mixin']
 
     l10n_ao_edi_required = fields.Boolean(compute='_compute_l10n_ao_edi_required')
     l10n_ao_document_type = fields.Selection(
@@ -243,7 +243,7 @@ class AccountMove(models.Model):
         series, number = self.env['l10n_ao_edi.series']._l10n_ao_edi_next_number(
             self.company_id, self.l10n_ao_document_type, date.year
         )
-        self.write(
+        self._l10n_ao_edi_set(
             {
                 'l10n_ao_edi_series_id': series.id,
                 'l10n_ao_edi_contingency': series.contingency,
@@ -364,15 +364,15 @@ class AccountMove(models.Model):
             move._l10n_ao_edi_check_before_post()
             if move.l10n_ao_edi_state == 'invalid':
                 # Correcção de um documento rejeitado: novo número, com referência ao rejeitado (documentStatus «C»).
-                move.l10n_ao_edi_rejected_document_no = move.name
+                move._l10n_ao_edi_set({'l10n_ao_edi_rejected_document_no': move.name})
                 move._l10n_ao_edi_archive_rejected_payload()
-                move.write({'name': '/', 'l10n_ao_edi_series_id': False, 'l10n_ao_edi_print_count': 0})
+                move._l10n_ao_edi_set({'name': '/', 'l10n_ao_edi_series_id': False, 'l10n_ao_edi_print_count': 0})
             if not move.l10n_ao_edi_series_id:
                 move._l10n_ao_edi_assign_number()
         posted = super()._post(soft=soft)
         to_send = posted.filtered(lambda m: m.l10n_ao_edi_required and m.l10n_ao_edi_series_id)
         if to_send:
-            to_send.write(
+            to_send._l10n_ao_edi_set(
                 {
                     'l10n_ao_edi_state': 'to_send',
                     'l10n_ao_edi_error': False,
@@ -381,7 +381,9 @@ class AccountMove(models.Model):
             )
             # O documento fica fixado na emissão: é este o enviado, mesmo que o cliente ou os artigos mudem.
             for move in to_send:
-                move.l10n_ao_edi_payload = json.dumps(move._l10n_ao_edi_document_values(), ensure_ascii=False)
+                move._l10n_ao_edi_set(
+                    {'l10n_ao_edi_payload': json.dumps(move._l10n_ao_edi_document_values(), ensure_ascii=False)}
+                )
             self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_send').sudo()._trigger()
         return posted
 
@@ -390,7 +392,7 @@ class AccountMove(models.Model):
         for record in self.filtered('l10n_ao_edi_payload'):
             history = json.loads(record.l10n_ao_edi_rejected_payloads or '[]')
             history.append(json.loads(record.l10n_ao_edi_payload))
-            record.l10n_ao_edi_rejected_payloads = json.dumps(history, ensure_ascii=False)
+            record._l10n_ao_edi_set({'l10n_ao_edi_rejected_payloads': json.dumps(history, ensure_ascii=False)})
 
     def _l10n_ao_edi_payload_values(self):
         """Documento a enviar: o fixado na emissão (ou calculado agora, para documentos anteriores)."""
@@ -401,7 +403,14 @@ class AccountMove(models.Model):
         field = self._fields[field_name]
         return field.convert_to_record(field.convert_to_cache(value, self), self) != self[field_name]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._l10n_ao_edi_check_technical(vals)
+        return super().create(vals_list)
+
     def write(self, vals):
+        self._l10n_ao_edi_check_technical(vals)
         if locked_fields := [field for field in LOCKED_FIELDS if field in vals]:
             for move in self._l10n_ao_edi_locked():
                 changed = [field for field in locked_fields if move._l10n_ao_edi_value_changes(field, vals[field])]
@@ -463,6 +472,7 @@ class AccountMove(models.Model):
         return 'AD' if tax_lines and all(line.account_id == deductible_account for line in tax_lines) else 'ND'
 
     def _l10n_ao_edi_vendor_validate(self, action):
+        self._l10n_ao_edi_check_can_communicate()
         for move in self:
             if move.move_type not in ('in_invoice', 'in_refund') or move.state != 'posted':
                 raise UserError(self.env._('Só se validam na AGT facturas de fornecedor confirmadas.'))
@@ -494,7 +504,7 @@ class AccountMove(models.Model):
                 raise UserError(
                     self.env._('A AGT não aceitou a validação: %s', errors or result.get('actionResultCode') or status)
                 )
-            move.write(
+            move._l10n_ao_edi_set(
                 {
                     'l10n_ao_edi_vendor_document_no': document_no,
                     'l10n_ao_edi_vendor_state': 'confirmed' if action == 'C' else 'rejected',
@@ -509,6 +519,7 @@ class AccountMove(models.Model):
         return self._l10n_ao_edi_vendor_validate('R')
 
     def action_l10n_ao_edi_send_now(self):
+        self._l10n_ao_edi_check_can_communicate()
         if self.company_id.filtered('l10n_ao_edi_contingency'):
             raise UserError(
                 self.env._(

@@ -9,3 +9,12 @@ __pycache__/
 .env
 docs/referencias/salarios/fontes/Lei-14-25-OGE-2026-DR.pdf
 docs/referencias/salarios/fontes/Lei-15-23-OGE-2024-DR.pdf
+# Chaves, certificados e cópias de bases de dados nunca vão para o git
+*.pem
+*.key
+*.p12
+*.pfx
+*.sql
+*.dump
+*.backup
+*.mov

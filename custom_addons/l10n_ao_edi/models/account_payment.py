@@ -15,7 +15,7 @@ RECEIPT_DOCUMENT_TYPE = 'RG'
 class AccountPayment(models.Model):
     """Recibo (RG): emitido em cada recebimento de facturas (art. 6.º do DP n.º 71/25)."""
 
-    _inherit = 'account.payment'
+    _inherit = ['account.payment', 'l10n_ao_edi.guard.mixin']
 
     l10n_ao_edi_required = fields.Boolean(compute='_compute_l10n_ao_edi_required')
     l10n_ao_edi_series_id = fields.Many2one('l10n_ao_edi.series', string='Série AGT', readonly=True, copy=False)
@@ -130,7 +130,7 @@ class AccountPayment(models.Model):
         for record in self.filtered('l10n_ao_edi_payload'):
             history = json.loads(record.l10n_ao_edi_rejected_payloads or '[]')
             history.append(json.loads(record.l10n_ao_edi_payload))
-            record.l10n_ao_edi_rejected_payloads = json.dumps(history, ensure_ascii=False)
+            record._l10n_ao_edi_set({'l10n_ao_edi_rejected_payloads': json.dumps(history, ensure_ascii=False)})
 
     def _l10n_ao_edi_payload_values(self):
         self.ensure_one()
@@ -160,7 +160,7 @@ class AccountPayment(models.Model):
             )
             if payment.l10n_ao_edi_state == 'invalid':
                 payment._l10n_ao_edi_archive_rejected_payload()
-            payment.write(
+            payment._l10n_ao_edi_set(
                 {
                     # Correcção de um recibo rejeitado: novo número, com referência ao rejeitado (documentStatus «C»).
                     'l10n_ao_edi_rejected_document_no': payment.l10n_ao_edi_document_no
@@ -177,7 +177,9 @@ class AccountPayment(models.Model):
                 }
             )
             # O recibo fica fixado na emissão (facturas e montantes liquidados), mesmo que a reconciliação mude.
-            payment.l10n_ao_edi_payload = json.dumps(payment._l10n_ao_edi_document_values(), ensure_ascii=False)
+            payment._l10n_ao_edi_set(
+                {'l10n_ao_edi_payload': json.dumps(payment._l10n_ao_edi_document_values(), ensure_ascii=False)}
+            )
             issued |= payment
         if issued:
             self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_send').sudo()._trigger()
@@ -192,12 +194,23 @@ class AccountPayment(models.Model):
         return True
 
     def action_l10n_ao_edi_send_now(self):
+        self._l10n_ao_edi_check_can_communicate()
         self.env['l10n_ao_edi.document'].with_context(l10n_ao_edi_no_commit=True)._send_records(self)
         return True
 
     # -------------------------------------------------------------------------
     # Bloqueios
     # -------------------------------------------------------------------------
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._l10n_ao_edi_check_technical(vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._l10n_ao_edi_check_technical(vals)
+        return super().write(vals)
 
     def _l10n_ao_edi_locked(self):
         return self.filtered(lambda p: p.l10n_ao_edi_state in EDI_LOCKED_STATES)

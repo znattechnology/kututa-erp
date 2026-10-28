@@ -85,6 +85,7 @@ class L10nAoEdiSeries(models.Model):
 
     def action_request_series(self):
         """Pede a série à AGT (serviço solicitarSerie)."""
+        self.check_access('write')  # antes do pedido (irreversível): quem pede tem de poder gerir as séries
         for series in self:
             company = series.company_id
             if company.l10n_ao_edi_environment != 'demo':

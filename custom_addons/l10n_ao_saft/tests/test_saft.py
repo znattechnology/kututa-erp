@@ -114,7 +114,7 @@ class TestL10nAoSaft(L10nAoEdiCommon):
     def test_legacy_document_without_payload(self):
         invoice = self._create_invoice()
         self.mark_sent(invoice)
-        invoice.l10n_ao_edi_payload = False
+        invoice.sudo().l10n_ao_edi_payload = False
         root = self._export('F')
         self.assertEqual(
             root.findtext('s:SourceDocuments/s:SalesInvoices/s:Invoice/s:InvoiceNo', namespaces=NS), invoice.name
@@ -124,7 +124,7 @@ class TestL10nAoSaft(L10nAoEdiCommon):
         invoice = self._create_invoice()
         self.mark_sent(invoice)
         original = invoice.name
-        invoice.l10n_ao_edi_state = 'invalid'
+        invoice.sudo().l10n_ao_edi_state = 'invalid'
         invoice.button_draft()
         invoice.action_post()
         self.assertNotEqual(invoice.name, original)

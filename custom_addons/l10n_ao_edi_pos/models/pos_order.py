@@ -21,7 +21,7 @@ class PosOrder(models.Model):
     Uma venda facturada não tem talão: o documento AGT é a própria factura (FR, ou FT se for a crédito).
     """
 
-    _inherit = 'pos.order'
+    _inherit = ['pos.order', 'l10n_ao_edi.guard.mixin']
 
     l10n_ao_edi_required = fields.Boolean(related='company_id.l10n_ao_edi_enabled')
     l10n_ao_document_type = fields.Selection(
@@ -249,8 +249,8 @@ class PosOrder(models.Model):
         if self.l10n_ao_edi_state == 'invalid' and self.l10n_ao_edi_payload:
             history = json.loads(self.l10n_ao_edi_rejected_payloads or '[]')
             history.append(json.loads(self.l10n_ao_edi_payload))
-            self.l10n_ao_edi_rejected_payloads = json.dumps(history, ensure_ascii=False)
-        self.write(
+            self._l10n_ao_edi_set({'l10n_ao_edi_rejected_payloads': json.dumps(history, ensure_ascii=False)})
+        self._l10n_ao_edi_set(
             {
                 'l10n_ao_edi_rejected_document_no': self.l10n_ao_edi_document_no
                 if self.l10n_ao_edi_state == 'invalid'
@@ -266,14 +266,25 @@ class PosOrder(models.Model):
             }
         )
         # O documento fica fixado na emissão: é este o enviado à AGT.
-        self.l10n_ao_edi_payload = json.dumps(self._l10n_ao_edi_document_values(), ensure_ascii=False)
+        self._l10n_ao_edi_set(
+            {'l10n_ao_edi_payload': json.dumps(self._l10n_ao_edi_document_values(), ensure_ascii=False)}
+        )
         self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_send').sudo()._trigger()
 
     def action_l10n_ao_edi_correct(self):
         """Documento rejeitado pela AGT: emite o documento de correcção (novo número, documentStatus «C»)."""
+        self._l10n_ao_edi_check_can_communicate('point_of_sale.group_pos_user')
         for order in self.filtered(lambda o: o.l10n_ao_edi_state == 'invalid'):
             order._l10n_ao_edi_issue_document()
         return True
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Os dados da comunicação com a AGT vindos do POS (que reenvia as vendas sincronizadas) são ignorados.
+        return super().create([self._l10n_ao_edi_strip_technical(vals) for vals in vals_list])
+
+    def write(self, vals):
+        return super().write(self._l10n_ao_edi_strip_technical(vals))
 
     def process_saved_payments(self, order, existing_order):
         # Venda já paga e com documento AGT emitido: um novo envio do POS (re-sincronização) não a pode alterar.
@@ -282,6 +293,7 @@ class PosOrder(models.Model):
         return super().process_saved_payments(order, existing_order)
 
     def action_l10n_ao_edi_send_now(self):
+        self._l10n_ao_edi_check_can_communicate('point_of_sale.group_pos_user')
         self.env['l10n_ao_edi.document'].with_context(l10n_ao_edi_no_commit=True)._send_records(self)
         return True
 
