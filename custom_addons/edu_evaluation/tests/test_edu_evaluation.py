@@ -465,6 +465,36 @@ class TestEduEvaluation(TransactionCase):
             result.action_remove_points()
         self.assertEqual(result.enrollment_id.year_result_id.status, 'promoted')
 
+    def test_teacher_cannot_move_grades_elsewhere(self):
+        """As regras da janela de lançamento valem também para o destino: o professor não muda uma avaliação nem uma
+        nota para outra disciplina ou trimestre (antes só se verificava a de origem)."""
+        ana = self.students[0]
+        self._enroll(self.class7, ana, ['LP', 'MAT'])
+        lp, mat = self._subject(self.class7, 'LP'), self._subject(self.class7, 'MAT')
+        self.env['edu.teaching.assignment'].create(
+            {'class_id': self.class7.id, 'subject_id': lp.id, 'teacher_id': self.teacher.id}
+        )
+        empty = (
+            self.env['edu.assessment']
+            .with_user(self.teacher_user)
+            .create({'name': 'MAC', 'class_id': self.class7.id, 'subject_id': lp.id, 'trimester_id': self.t1.id})
+        )
+        with self.assertRaises(AccessError):
+            empty.write({'subject_id': mat.id})
+        with self.assertRaises(AccessError):
+            empty.write({'trimester_id': self.t2.id})
+        graded = self._assess(self.class7, 'LP', self.t1, 'continuous', {ana: 12}, user=self.teacher_user)
+        with self.assertRaises(UserError):
+            graded.write({'trimester_id': self.t2.id})
+        # A nota não passa para uma prova de outra disciplina (lançada por quem a lecciona).
+        other = self.env['edu.assessment'].sudo().create(
+            {'name': 'PT', 'class_id': self.class7.id, 'subject_id': mat.id, 'trimester_id': self.t1.id,
+             'assessment_type': 'trimester_test'}
+        )  # fmt: skip
+        grade = graded.grade_ids.with_user(self.teacher_user)
+        with self.assertRaises(AccessError):
+            grade.write({'assessment_id': other.id})
+
     def test_grade_entry_window(self):
         ana = self.students[0]
         self._enroll(self.class7, ana, ['LP'])

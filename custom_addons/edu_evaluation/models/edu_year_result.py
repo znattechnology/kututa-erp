@@ -242,10 +242,21 @@ class EduYearResult(models.Model):
     def write(self, vals):
         """A decisão (automática ou manual) só a escreve o sistema (os recálculos correm em sudo) ou a direcção: a
         secretaria não altera resultados por chamada directa."""
-        protected = {'status', 'manual', 'decided_by_id', 'decided_date', 'reason', 'requires_review'}
+        protected = {
+            'status', 'manual', 'decided_by_id', 'decided_date', 'reason', 'requires_review', 'average',
+            'negative_count', 'absence_excluded', 'enrollment_id',
+        }  # fmt: skip
         if protected & set(vals) and not self.env.su and not self.env.user.has_group('edu_core.group_edu_manager'):
             raise AccessError(self.env._('Só a direcção altera a decisão do ano.'))
         return super().write(vals)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # O resultado do ano calcula-o o sistema (em sudo) a partir das notas: a secretaria não o cria à mão (por
+        # exemplo apagando-o e criando-o de novo como «concluído»).
+        if not self.env.su and not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise AccessError(self.env._('O resultado do ano é calculado pelo sistema.'))
+        return super().create(vals_list)
 
     def _set_manual(self, status, reason=None):
         if not self.env.user.has_group('edu_core.group_edu_manager'):

@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import is_trusted
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import split_every
 
@@ -63,7 +64,7 @@ class EduFeePayment(models.TransientModel):
                 cash
                 and company.edu_cash_approval
                 and wizard.amount > company.edu_cash_approval_threshold
-                and not self.env.context.get('edu_fee_approved')
+                and not is_trusted(self.env)  # já aprovado (edu.fee.payment.request), não por contexto do cliente
             )
 
     def action_confirm(self):

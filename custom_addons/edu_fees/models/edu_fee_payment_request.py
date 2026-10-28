@@ -1,5 +1,6 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.addons.edu_core.tools.trust import is_trusted, trusted
+from odoo.exceptions import AccessError, UserError
 
 METHODS = [
     ('transfer', 'Transferência bancária'),
@@ -70,6 +71,28 @@ class EduFeePaymentRequest(models.Model):
             amount = request.currency_id.format(request.amount) if request.currency_id else request.amount
             request.display_name = f'{request.student_id.name} · {amount} · {request.date or ""}'
 
+    _PROTECTED = frozenset(
+        {
+            'student_id', 'company_id', 'submitted_by_id', 'method', 'amount', 'date', 'reference', 'proof',
+            'proof_name', 'invoice_ids', 'state', 'verified_by_id', 'verified_date', 'payment_ids',
+        }
+    )  # fmt: skip
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env):
+            # Quem envia é quem cria (não um colega escolhido pelo cliente): outro aprova o numerário.
+            vals_list = [
+                dict(vals, submitted_by_id=self.env.uid, state='pending', verified_by_id=False, payment_ids=False)
+                for vals in vals_list
+            ]
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if not is_trusted(self.env) and self._PROTECTED & set(vals):
+            raise AccessError(self.env._('O pagamento enviado só muda pela validação ou pela rejeição.'))
+        return super().write(vals)
+
     def action_confirm(self):
         """Regista o pagamento na conta indicada, imputa-o às facturas (as escolhidas primeiro, depois as mais
         antigas) e emite o recibo, como o «Receber pagamento» da tesouraria."""
@@ -80,10 +103,9 @@ class EduFeePaymentRequest(models.Model):
                 raise UserError(self.env._('Quem recebeu o numerário não pode aprovar o próprio pagamento.'))
             if not request.journal_id:
                 raise UserError(self.env._('Escolha a conta onde o pagamento entrou.'))
-            wizard = (
-                self.env['edu.fee.payment']
-                .with_context(edu_fee_approved=True)
-                .create(
+            # Já aprovado por outra pessoa: o assistente regista o pagamento sem voltar a pedir aprovação.
+            with trusted(self.env):
+                wizard = self.env['edu.fee.payment'].create(
                     {
                         'student_id': request.student_id.id,
                         'journal_id': request.journal_id.id,
@@ -93,17 +115,17 @@ class EduFeePaymentRequest(models.Model):
                         'selected_invoice_ids': [fields.Command.set(request.invoice_ids.ids)],
                     }
                 )
-            )
-            action = wizard.action_confirm()
+                action = wizard.action_confirm()
             payments = self.env['account.payment'].search(action['domain'])
-            request.write(
-                {
-                    'state': 'confirmed',
-                    'payment_ids': [fields.Command.set(payments.ids)],
-                    'verified_by_id': self.env.user.id,
-                    'verified_date': fields.Datetime.now(),
-                }
-            )
+            with trusted(self.env):
+                request.write(
+                    {
+                        'state': 'confirmed',
+                        'payment_ids': [fields.Command.set(payments.ids)],
+                        'verified_by_id': self.env.user.id,
+                        'verified_date': fields.Datetime.now(),
+                    }
+                )
             request._notify_submitter(
                 self.env._(
                     'O pagamento de %(amount)s de %(date)s foi validado pela tesouraria.',
@@ -119,9 +141,10 @@ class EduFeePaymentRequest(models.Model):
                 raise UserError(self.env._('Este pagamento já foi tratado.'))
             if not (request.reject_reason or '').strip():
                 raise UserError(self.env._('Escreva o motivo da rejeição: quem pagou vai lê-lo no portal.'))
-            request.write(
-                {'state': 'rejected', 'verified_by_id': self.env.user.id, 'verified_date': fields.Datetime.now()}
-            )
+            with trusted(self.env):
+                request.write(
+                    {'state': 'rejected', 'verified_by_id': self.env.user.id, 'verified_date': fields.Datetime.now()}
+                )
             request._notify_submitter(
                 self.env._(
                     'O pagamento de %(amount)s de %(date)s não foi aceite: %(reason)s',

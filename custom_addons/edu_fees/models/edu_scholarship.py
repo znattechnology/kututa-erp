@@ -1,5 +1,6 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.addons.edu_core.tools.trust import is_trusted, trusted
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 TYPES = [
     ('full', 'Integral'),
@@ -72,8 +73,19 @@ class EduScholarship(models.Model):
             if scholarship.date_to and scholarship.date_to < scholarship.date_from:
                 raise ValidationError(self.env._('A bolsa termina antes de começar.'))
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env):
+            # Uma bolsa nasce sempre como pedido de quem a cria: a aprovação é de outra pessoa (action_approve).
+            vals_list = [
+                dict(vals, state='draft', requested_by_id=self.env.uid, approved_by_id=False) for vals in vals_list
+            ]
+        return super().create(vals_list)
+
     def write(self, vals):
-        if 'requested_by_id' in vals and not self.env.su:
+        if not is_trusted(self.env):
+            if {'state', 'approved_by_id'} & set(vals):
+                raise AccessError(self.env._('O estado da bolsa só muda por aprovação ou anulação.'))
             vals = {k: v for k, v in vals.items() if k != 'requested_by_id'}  # quem pediu não se escolhe
         locked = {'scholarship_type', 'discount_percent', 'discount_amount', 'date_from', 'date_to', 'student_id'}
         approved = self.filtered(lambda s: s.state == 'approved') if locked & set(vals) else self.browse()
@@ -88,11 +100,13 @@ class EduScholarship(models.Model):
         for scholarship in self.filtered(lambda s: s.state == 'draft'):
             if scholarship.company_id.edu_scholarship_approval and scholarship.requested_by_id == self.env.user:
                 raise UserError(self.env._('Quem pediu a bolsa não a pode aprovar.'))
-            scholarship.write({'state': 'approved', 'approved_by_id': self.env.uid})
+            with trusted(self.env):
+                scholarship.write({'state': 'approved', 'approved_by_id': self.env.uid})
         return True
 
     def action_cancel(self):
-        self.write({'state': 'cancelled'})
+        with trusted(self.env):
+            self.write({'state': 'cancelled'})
         return True
 
     def _discount(self, amount):

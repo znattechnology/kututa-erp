@@ -3,7 +3,7 @@ from datetime import date
 from psycopg2 import IntegrityError
 
 from odoo import Command
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, new_test_user, tagged
 from odoo.tools import mute_logger
 
@@ -101,6 +101,23 @@ class TestEduRecords(TransactionCase):
         self.assertTrue(graduation.diploma_number.startswith(f'{date.today().year}/'))
         self.assertEqual(graduation.state, 'issued')
         self.assertEqual(len(graduation.final_result_ids), 2)
+        # A secretaria não escreve a classificação, o número nem a assinatura do diploma, nem recria o resultado do
+        # ano como «concluído» (só as acções e o cálculo do sistema).
+        clerk = new_test_user(self.env, 'clerk_grad', groups='edu_core.group_edu_user')
+        for vals in (
+            {'final_grade': 20},
+            {'diploma_number': '2026/9999'},
+            {'signed_by_id': clerk.id},
+            {'state': 'draft'},
+        ):
+            with self.assertRaises(AccessError):
+                graduation.with_user(clerk).write(vals)
+        with self.assertRaises(UserError):
+            graduation.with_user(clerk).write({'final_project_id': False})
+        with self.assertRaises(AccessError):
+            self.env['edu.year.result'].with_user(clerk).create(
+                {'enrollment_id': self.enrollment.id, 'status': 'graduated'}
+            )
         with mute_logger('odoo.sql_db'), self.assertRaises(IntegrityError), self.cr.savepoint():
             self.env['edu.student'].create({'name': 'Outro', 'process_number': '1520'})
 

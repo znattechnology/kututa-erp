@@ -1,5 +1,6 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.addons.edu_core.tools.trust import is_trusted, trusted
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 PERIOD_KINDS = [
     ('trimester_test', 'Provas trimestrais'),
@@ -177,13 +178,38 @@ class EduExamSession(models.Model):
                     self.env._('%s já tem outro exame a essa hora.', ', '.join(students.mapped('name')))
                 )
 
+    @api.constrains('assessment_ids', 'subject_id', 'class_ids', 'period_id')
+    def _check_assessments(self):
+        """As notas da sessão entram nas avaliações ligadas fora da janela do professor: só provas e exames desta
+        disciplina, das turmas da sessão e do trimestre da época (nunca a avaliação contínua de outra disciplina)."""
+        for session in self:
+            for assessment in session.assessment_ids:
+                wrong = (
+                    assessment.subject_id != session.subject_id
+                    or assessment.assessment_type == 'continuous'
+                    or (session.class_ids and assessment.class_id not in session.class_ids)
+                    or (session.period_id.trimester_id and assessment.trimester_id != session.period_id.trimester_id)
+                )
+                if wrong:
+                    raise ValidationError(
+                        self.env._(
+                            '«%(assessment)s» não é uma prova de %(subject)s desta sessão.',
+                            assessment=assessment.display_name,
+                            subject=session.subject_id.name,
+                        )
+                    )
+
     @api.model_create_multi
     def create(self, vals_list):
+        if not is_trusted(self.env) and any(vals.get('state', 'scheduled') != 'scheduled' for vals in vals_list):
+            raise AccessError(self.env._('Uma sessão de exame começa sempre marcada.'))
         sessions = super().create(vals_list)
         sessions._check_conflicts()
         return sessions
 
     def write(self, vals):
+        if 'state' in vals and not is_trusted(self.env):
+            raise AccessError(self.env._('O estado da sessão só muda ao realizá-la ou anulá-la.'))
         result = super().write(vals)
         if {'date', 'hour_from', 'hour_to', 'state'} & set(vals):
             self._check_conflicts()
@@ -271,11 +297,13 @@ class EduExamSession(models.Model):
                 raise UserError(self.env._('Faltam as notas de: %s.', ', '.join(missing.mapped('student_id.name'))))
             for seat in session.seat_ids:
                 seat._push_score()
-            session.state = 'done'
+            with trusted(self.env):
+                session.state = 'done'
         return True
 
     def action_cancel(self):
-        self.write({'state': 'cancelled'})
+        with trusted(self.env):
+            self.write({'state': 'cancelled'})
         return True
 
 

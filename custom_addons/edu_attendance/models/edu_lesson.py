@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import is_marked, trusted
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 from .absence_rules import AT_RISK, FAILED
@@ -112,7 +113,8 @@ class EduLesson(models.Model):
                 else:
                     value = 0
                 if lesson.lesson_number != value:
-                    lesson.with_context(edu_lesson_system=True).write({'lesson_number': value})
+                    with trusted(self.env):
+                        lesson.write({'lesson_number': value})
 
     @api.depends('attendance_ids.state')
     def _compute_counts(self):
@@ -208,14 +210,15 @@ class EduLesson(models.Model):
         return lessons
 
     def write(self, vals):
-        if self.env.context.get('edu_lesson_system'):
-            return super().write(vals)
-        self._check_can_manage()
+        # Geração e renumeração das aulas pelo próprio sistema: marca do servidor, não contexto do cliente.
+        system = is_marked(self.env)
+        if not system:
+            self._check_can_manage()
         locked = {'state', 'date', 'hour_from', 'hour_to', 'class_id', 'subject_id', 'summary'} & set(vals)
-        if locked:
+        if locked and not system:
             self._check_open_trimester()
         result = super().write(vals)
-        if locked:
+        if locked and not system:
             self._check_open_trimester()
         if {'state', 'date', 'hour_from'} & set(vals):
             self._renumber()
@@ -417,6 +420,11 @@ class EduLessonAttendance(models.Model):
             vals = dict(vals, justified_by_id=False, justified_date=False)
             vals.setdefault('justification', False)
         result = super().write(vals)
+        if {'lesson_id', 'enrollment_id'} & set(vals):
+            # Mudar a linha de aula ou de aluno: as regras valem também para o destino (não só para a origem).
+            self._check_can_manage()
+            self.lesson_id._check_open_trimester()
+            self.filtered(lambda line: line.state == 'excused')._check_can_justify()
         if 'state' in vals:
             self.filtered(lambda line: line.lesson_state == 'done')._edu_check_limits()
         return result

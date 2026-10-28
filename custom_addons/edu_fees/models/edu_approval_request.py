@@ -1,5 +1,6 @@
-from odoo import fields, models
-from odoo.exceptions import UserError
+from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import is_trusted, trusted
+from odoo.exceptions import AccessError, UserError
 
 
 class EduApprovalRequest(models.Model):
@@ -39,6 +40,34 @@ class EduApprovalRequest(models.Model):
     decision_notes = fields.Text(string='Notas da decisão', readonly=True)
     refund_id = fields.Many2one('account.move', string='Nota de crédito', readonly=True)
 
+    _PROTECTED = frozenset(
+        {
+            'move_id',
+            'reason',
+            'requested_by_id',
+            'state',
+            'decided_by_id',
+            'decided_date',
+            'decision_notes',
+            'refund_id',
+        }
+    )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env):
+            # Quem pede é quem cria (não um colega escolhido pelo cliente): outro decide.
+            vals_list = [
+                dict(vals, requested_by_id=self.env.uid, state='pending', decided_by_id=False, refund_id=False)
+                for vals in vals_list
+            ]
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if not is_trusted(self.env) and self._PROTECTED & set(vals):
+            raise AccessError(self.env._('O pedido de anulação só muda pela decisão (aprovar ou recusar).'))
+        return super().write(vals)
+
     def _decide(self, approve, notes=False):
         self.ensure_one()
         if self.state != 'pending':
@@ -55,5 +84,6 @@ class EduApprovalRequest(models.Model):
         }
         if approve:
             values['refund_id'] = self.move_id._edu_void(self.reason).id
-        self.write(values)
+        with trusted(self.env):
+            self.write(values)
         return True

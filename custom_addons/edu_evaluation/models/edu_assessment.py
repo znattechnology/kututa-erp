@@ -168,7 +168,16 @@ class EduAssessment(models.Model):
     def write(self, vals):
         for assessment in self:
             check_grade_entry(self.env, assessment.class_id, assessment.subject_id, assessment.trimester_id)
+        keys = {'class_id', 'subject_id', 'trimester_id'} & set(vals)
+        if keys and self.grade_ids:
+            raise UserError(
+                self.env._('Esta avaliação já tem notas: não pode mudar de turma, disciplina ou trimestre.')
+            )
         result = super().write(vals)
+        if keys:
+            # A turma, a disciplina e o trimestre de destino também têm de estar abertos para quem lança.
+            for assessment in self:
+                check_grade_entry(self.env, assessment.class_id, assessment.subject_id, assessment.trimester_id)
         if {'weight', 'max_score', 'assessment_type'} & set(vals):
             self.grade_ids._recompute_results()
         return result
@@ -261,6 +270,10 @@ class EduGrade(models.Model):
     def write(self, vals):
         for assessment in self.assessment_id:
             check_grade_entry(self.env, assessment.class_id, assessment.subject_id, assessment.trimester_id)
+        if vals.get('assessment_id'):
+            # A nota mudada para outra avaliação: a de destino também tem de estar aberta para quem lança.
+            target = self.env['edu.assessment'].browse(vals['assessment_id'])
+            check_grade_entry(self.env, target.class_id, target.subject_id, target.trimester_id)
         result = super().write(self._prepare(vals))
         if {'score', 'absent', 'graded'} & set(vals):
             self._recompute_results()

@@ -236,6 +236,12 @@ class TestEduAttendance(TransactionCase):
             self.env['edu.lesson'].create(
                 {'class_id': self.class_sec.id, 'subject_id': subject.id, 'date': date(2026, 9, 8)}
             )
+        # A excepção interna das aulas não se pede pelo contexto: nem o trimestre fechado nem a aula de outro
+        # professor se alteram com «edu_lesson_system» vindo do cliente.
+        with self.assertRaisesRegex(UserError, 'fechado'):
+            lesson.with_context(edu_lesson_system=True).write({'state': 'cancelled'})
+        with self.assertRaises((AccessError, UserError)):
+            lesson.with_user(self.teacher_user).with_context(edu_lesson_system=True).write({'summary': 'Forjado'})
 
     def test_generate_skips_holidays(self):
         subject = self._subject_with_hours(self.class_sec, 2)

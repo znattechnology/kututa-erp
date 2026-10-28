@@ -1,7 +1,7 @@
 from datetime import date
 
 from odoo import Command
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -150,6 +150,15 @@ class TestEduExam(TransactionCase):
         session.with_user(clerk).action_done()
         grades = {grade.student_id: grade for grade in assessment.grade_ids}
         self.assertEqual((grades[carla].score, grades[ana].score, grades[ana].absent), (14, 0, True))
+        # Realizada não volta a marcada pela mão (para relançar notas), e a sessão só leva provas da sua disciplina e
+        # do trimestre da época: nunca a avaliação contínua (a nota entraria por fora da janela do professor).
+        with self.assertRaises(AccessError):
+            session.with_user(clerk).write({'state': 'scheduled'})
+        continuous = self.env['edu.assessment'].create(
+            {'name': 'MAC', 'class_id': self.edu_class.id, 'subject_id': self.lp.id, 'trimester_id': first.id}
+        )
+        with self.assertRaises(ValidationError):
+            session.assessment_ids = [Command.link(continuous.id)]
         period.action_close()
         self.assertEqual(period.state, 'closed')
 

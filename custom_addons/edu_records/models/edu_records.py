@@ -1,6 +1,7 @@
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import is_trusted, trusted
 from odoo.addons.edu_evaluation.tools import grading
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 
 class EduStudent(models.Model):
@@ -109,7 +110,8 @@ class EduTrainingMixin(models.AbstractModel):
 
     def _act(self, vals):
         """As acções (iniciar, fechar, anular, reabrir) gravam o estado por aqui, depois das suas verificações."""
-        return self.with_context(edu_training_action=True).write(vals)
+        with trusted(self.env):  # marca do servidor: o cliente não a põe por contexto
+            return self.write(vals)
 
     def write(self, vals):
         if not self.env.su:
@@ -120,7 +122,7 @@ class EduTrainingMixin(models.AbstractModel):
                     raise UserError(
                         self.env._('Como tutor ou orientador só regista o acompanhamento; o resto é da secretaria.')
                     )
-            elif not self.env.context.get('edu_training_action'):
+            elif not is_trusted(self.env):
                 if 'state' in vals:
                     raise UserError(self.env._('O estado muda pelos botões da ficha (iniciar, fechar, reabrir).'))
                 if set(vals) & set(self._locked_fields) and self.filtered(lambda r: r.state in self._closed_states):
@@ -505,12 +507,37 @@ class EduGraduation(models.Model):
                 'signed' if graduation.signed_by_id else 'to_sign' if graduation.verified_by_id else 'to_verify'
             )
 
+    _PROTECTED = frozenset(
+        {
+            'plan_average', 'final_grade', 'diploma_number', 'state', 'verified_by_id', 'verified_date',
+            'signed_by_id', 'signed_date',
+        }
+    )  # fmt: skip
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env) and any(self._PROTECTED & set(vals) for vals in vals_list):
+            raise AccessError(self.env._('A classificação e o diploma calculam-se e emitem-se pelas acções.'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        """Classificação, número do diploma, estado, verificação e assinatura só pelas acções (calcular, emitir,
+        verificar, assinar, anular); depois de emitida, o estágio, a PAP e o resultado do ano já não mudam."""
+        if not is_trusted(self.env):
+            if self._PROTECTED & set(vals):
+                raise AccessError(self.env._('A classificação e o diploma calculam-se e emitem-se pelas acções.'))
+            frozen = {'internship_id', 'final_project_id', 'year_result_id', 'student_id', 'date'} & set(vals)
+            if frozen and self.filtered(lambda g: g.state != 'draft'):
+                raise UserError(self.env._('A conclusão já foi emitida: não pode ser alterada.'))
+        return super().write(vals)
+
     def action_mark_verified(self):
         for graduation in self:
             if graduation.state != 'issued':
                 raise UserError(self.env._('Emita a conclusão antes de verificar o diploma.'))
             if not graduation.verified_by_id:
-                graduation.write({'verified_by_id': self.env.uid, 'verified_date': fields.Datetime.now()})
+                with trusted(self.env):
+                    graduation.write({'verified_by_id': self.env.uid, 'verified_date': fields.Datetime.now()})
         return True
 
     def action_mark_signed(self):
@@ -520,7 +547,8 @@ class EduGraduation(models.Model):
             if not graduation.verified_by_id:
                 raise UserError(self.env._('O diploma tem de ser verificado antes de ser assinado.'))
             if not graduation.signed_by_id:
-                graduation.write({'signed_by_id': self.env.uid, 'signed_date': fields.Datetime.now()})
+                with trusted(self.env):
+                    graduation.write({'signed_by_id': self.env.uid, 'signed_date': fields.Datetime.now()})
         return True
 
     def _compute_final_result_ids(self):
@@ -570,7 +598,8 @@ class EduGraduation(models.Model):
                 internship=internship,
                 formula=policy.course_formula,
             )
-            graduation.write({'plan_average': pc or 0.0, 'final_grade': final or 0.0})
+            with trusted(self.env):
+                graduation.write({'plan_average': pc or 0.0, 'final_grade': final or 0.0})
         return True
 
     def action_issue(self):
@@ -590,18 +619,20 @@ class EduGraduation(models.Model):
             if course.requires_internship and not graduation.internship_id:
                 raise UserError(self.env._('O curso exige o estágio curricular aprovado.'))
             sequence = graduation._diploma_sequence()
-            graduation.write(
-                {
-                    'diploma_number': sequence.with_context(ir_sequence_date=graduation.date).next_by_id(),
-                    'state': 'issued',
-                }
-            )
+            with trusted(self.env):
+                graduation.write(
+                    {
+                        'diploma_number': sequence.with_context(ir_sequence_date=graduation.date).next_by_id(),
+                        'state': 'issued',
+                    }
+                )
         return True
 
     def action_cancel(self):
         if not self.env.user.has_group('edu_core.group_edu_manager'):
             raise UserError(self.env._('Só a direcção anula uma conclusão emitida.'))
-        self.write({'state': 'cancelled'})
+        with trusted(self.env):
+            self.write({'state': 'cancelled'})
         return True
 
     def _diploma_sequence(self):

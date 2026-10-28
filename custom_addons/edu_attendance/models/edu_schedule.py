@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import trusted
 
 
 class EduSchedule(models.Model):
@@ -35,9 +36,10 @@ class EduSchedule(models.Model):
 
     def _edu_sync_future_lessons(self):
         """Outro professor ou outra sala: as aulas futuras acompanham (com substituição, fica o substituto)."""
-        for lesson in self._edu_future_lessons().with_context(edu_lesson_system=True):
+        for lesson in self._edu_future_lessons():
             schedule = lesson.schedule_id
-            lesson.write({'teacher_id': schedule._teacher_on(lesson.date).id, 'room_id': schedule.room_id.id})
+            with trusted(self.env):
+                lesson.write({'teacher_id': schedule._teacher_on(lesson.date).id, 'room_id': schedule.room_id.id})
 
 
 class EduScheduleReplacement(models.Model):
@@ -67,7 +69,7 @@ class EduScheduleReplacement(models.Model):
     @api.model
     def _sync_lessons(self, keys):
         """A aula já gerada passa para o substituto (que faz a chamada e o sumário) ou volta ao professor da turma."""
-        Lesson = self.env['edu.lesson'].sudo().with_context(edu_lesson_system=True)
+        Lesson = self.env['edu.lesson'].sudo()
         for schedule_id, day in keys:
             schedule = self.env['edu.schedule'].browse(schedule_id).exists()
             if not schedule:

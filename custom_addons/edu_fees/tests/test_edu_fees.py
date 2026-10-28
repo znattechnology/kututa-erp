@@ -4,7 +4,7 @@ from unittest.mock import patch
 from odoo import Command
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 from odoo.addons.edu_fees.models.edu_fee_plan import EduFeePlan, due_dates
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from odoo.tests import new_test_user, tagged
 
 PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
@@ -202,7 +202,7 @@ class TestEduFees(AccountTestInvoicingCommon):
         self.assertEqual(Plan._for_enrollment(enrollment), by_class)
 
     def test_scholarships(self):
-        Scholarship = self.env['edu.scholarship']
+        Scholarship = self.env['edu.scholarship'].sudo()  # bolsas já aprovadas (o fluxo de aprovação é testado abaixo)
         due = date(2026, 10, 8)
         cases = [
             ({'scholarship_type': 'full'}, 50_000),
@@ -411,6 +411,54 @@ class TestEduFees(AccountTestInvoicingCommon):
         self.assertEqual((session.expected_amount, session.difference), (70_000, -1_000))
         self.assertIn('diferença', session.message_ids[:1].body)
 
+    def test_four_eyes_cannot_be_forged(self):
+        """Quem pede não aprova, também por RPC: a bolsa nasce como pedido de quem a cria e o estado só muda pela
+        aprovação; nos pedidos de anulação e de numerário quem pediu é sempre quem os cria; a dispensa de aprovação
+        do numerário não se consegue pelo contexto."""
+        colleague = self._second_cashier()
+        scholarship = self.env['edu.scholarship'].create(
+            {
+                'student_id': self.student.id,
+                'academic_year_id': self.year.id,
+                'scholarship_type': 'full',
+                'date_from': date(2026, 9, 1),
+                'state': 'approved',
+                'requested_by_id': colleague.id,
+                'approved_by_id': self.env.uid,
+            }  # fmt: skip
+        )
+        self.assertEqual((scholarship.state, scholarship.requested_by_id), ('draft', self.env.user))
+        self.assertFalse(scholarship.approved_by_id)
+        with self.assertRaises(AccessError):
+            scholarship.write({'state': 'approved'})
+        with self.assertRaises(UserError):
+            scholarship.action_approve()
+        # Anulação: o pedido «em nome de um colega» fica em nome de quem o fez, que não o decide.
+        enrollment = self._enroll(date(2026, 9, 1))
+        invoice = self._generate(enrollment, date(2026, 9, 15)).filtered(lambda m: m.edu_category == 'tuition')
+        request = self.env['edu.approval.request'].create(
+            {'move_id': invoice.id, 'reason': 'Engano', 'requested_by_id': colleague.id, 'state': 'approved'}
+        )
+        self.assertEqual((request.requested_by_id, request.state), (self.env.user, 'pending'))
+        with self.assertRaises(AccessError):
+            request.write({'requested_by_id': colleague.id})
+        with self.assertRaises(UserError):
+            request._decide(True)
+        # Numerário acima do limite: o contexto do cliente não dispensa a aprovação, nem se escolhe quem recebeu.
+        self.company.edu_cash_approval_threshold = 30_000
+        self.env['edu.cash.session']._open()
+        cash = self.company_data['default_journal_cash']
+        wizard = (
+            self.env['edu.fee.payment']
+            .with_context(edu_fee_approved=True)
+            .create({'student_id': self.student.id, 'amount': 50_000, 'journal_id': cash.id})
+        )
+        self.assertEqual(wizard.action_confirm()['tag'], 'display_notification')
+        pending = self.env['edu.fee.payment.request'].search([('method', '=', 'cash')])
+        self.assertEqual(pending.submitted_by_id, self.env.user)
+        with self.assertRaises(AccessError):
+            pending.write({'submitted_by_id': colleague.id})
+
     def test_gating_and_irregular(self):
         enrollment = self._enroll(date(2026, 9, 1))
         self._generate(enrollment, date(2026, 9, 10))
@@ -428,8 +476,8 @@ class TestEduFees(AccountTestInvoicingCommon):
         )
         with self.assertRaisesRegex(UserError, 'Situação financeira'):
             document.action_issue()
-        # Bolseiro do Estado: isento do bloqueio.
-        self.env['edu.scholarship'].create(
+        # Bolseiro do Estado: isento do bloqueio (bolsa já aprovada).
+        self.env['edu.scholarship'].sudo().create(
             {
                 'student_id': self.student.id,
                 'academic_year_id': self.year.id,
