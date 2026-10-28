@@ -7,6 +7,7 @@ import pytz
 from lxml import etree
 
 from odoo import api, fields, models
+from odoo.addons.l10n_ao_edi.models.l10n_ao_edi_guard import trusted
 from odoo.exceptions import UserError
 from odoo.tools import file_path
 from odoo.tools.float_utils import float_round
@@ -236,7 +237,10 @@ class SaftBuilder:
                     # Documentos emitidos antes da fixação do payload: reconstrói-se a partir do registo,
                     # sem voltar a assinar (a assinatura não entra no SAF-T).
                     try:
-                        payload = record.with_context(l10n_ao_edi_skip_signature=True)._l10n_ao_edi_document_values()
+                        with trusted(self.env):
+                            payload = record.with_context(
+                                l10n_ao_edi_skip_signature=True
+                            )._l10n_ao_edi_document_values()
                     except Exception as error:  # noqa: BLE001
                         raise UserError(
                             self.env._(

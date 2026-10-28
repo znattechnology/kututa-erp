@@ -7,6 +7,8 @@ from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
+from ..tools.trust import import_mode, trusted
+
 EVENT_TYPES = [
     ('holiday', 'Feriado / pausa'),
     ('exam', 'Provas e exames'),
@@ -64,7 +66,7 @@ class EduCalendarEvent(models.Model):
             event.is_national = bool(event.national_key)
 
     def write(self, vals):
-        if not self.env.context.get('edu_calendar_import') and {'name', 'date_start', 'date_end'} & set(vals):
+        if not import_mode(self.env, 'edu_calendar_import') and {'name', 'date_start', 'date_end'} & set(vals):
             vals = {**vals, 'edited': True}
         return super().write(vals)
 
@@ -127,6 +129,10 @@ class EduAcademicYear(models.Model):
     def action_load_national_calendar(self):
         """Carrega (ou actualiza) o Calendário Escolar Nacional deste ano lectivo. Os eventos que a escola alterou não
         se tocam; os que saíram do calendário nacional retiram-se, se a escola não os mudou."""
+        with trusted(self.env):
+            return self._load_national_calendar()
+
+    def _load_national_calendar(self):
         Event = self.env['edu.calendar.event'].with_context(edu_calendar_import=True)
         Level = self.env['edu.level'].with_context(active_test=False)
         for year in self:

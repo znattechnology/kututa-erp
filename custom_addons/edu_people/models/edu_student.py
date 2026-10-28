@@ -1,6 +1,7 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import import_mode, trusted
 from odoo.exceptions import UserError, ValidationError
 
 MATRICULA_SEQUENCE = 'edu.student.matricula'
@@ -93,7 +94,7 @@ class EduStudent(models.Model):
                 raise ValidationError(self.env._('A data de nascimento de %s é futura.', student.name))
 
     def write(self, vals):
-        if self.env.context.get('edu_matricula_import'):
+        if import_mode(self.env, 'edu_matricula_import'):
             return super().write(vals)
         locked = {'matricula_number', 'matricula_year', 'matricula_seq'} & set(vals)
         if locked and self.filtered('matricula_number'):
@@ -130,14 +131,15 @@ class EduStudent(models.Model):
         for student in self.filtered(lambda s: not s.matricula_number):
             year = year or fields.Date.context_today(student).year
             seq = int(student._matricula_sequence().next_by_id())
-            student.with_context(edu_matricula_import=True).write(
-                {
-                    'matricula_seq': seq,
-                    'matricula_year': year,
-                    'matricula_number': f'{year}-{seq:04d}',
-                    'enrollment_date': student.enrollment_date or date or fields.Date.context_today(student),
-                }
-            )
+            with trusted(self.env):
+                student.with_context(edu_matricula_import=True).write(
+                    {
+                        'matricula_seq': seq,
+                        'matricula_year': year,
+                        'matricula_number': f'{year}-{seq:04d}',
+                        'enrollment_date': student.enrollment_date or date or fields.Date.context_today(student),
+                    }
+                )
         return True
 
     def action_assign_matricula_number(self):

@@ -1,5 +1,6 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.addons.edu_core.tools.trust import is_trusted, trusted
+from odoo.exceptions import AccessError, UserError
 
 DOCUMENT_TYPES = [
     ('frequency', 'Declaração de frequência'),
@@ -144,6 +145,27 @@ class EduDocument(models.Model):
         if kind in ('certificate', 'diploma') and (not self.graduation_id or self.graduation_id.state != 'issued'):
             raise UserError(self.env._('O certificado e o diploma exigem a conclusão emitida.'))
 
+    # O número, o estado, quem emitiu e as impressões só os grava a emissão (e a contagem do PDF): por chamada
+    # directa ficavam números fora da sequência, reimpressões sem «2.ª via» e documentos emitidos «reabertos».
+    _PROTECTED = frozenset({'name', 'state', 'issued_by_id', 'print_count'})
+    _ISSUED_FROZEN = frozenset(
+        {'document_type', 'student_id', 'enrollment_id', 'transfer_id', 'graduation_id', 'date', 'purpose'}
+    )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env) and any(self._PROTECTED & set(vals) for vals in vals_list):
+            raise AccessError(self.env._('O documento recebe o número ao ser emitido.'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if not is_trusted(self.env):
+            if self._PROTECTED & set(vals):
+                raise AccessError(self.env._('O número e o estado do documento mudam ao emiti-lo ou anulá-lo.'))
+            if self._ISSUED_FROZEN & set(vals) and self.filtered(lambda d: d.state != 'draft'):
+                raise UserError(self.env._('Um documento emitido não se altera: anule-o e emita outro.'))
+        return super().write(vals)
+
     def action_issue(self):
         for document in self.filtered(lambda d: d.state == 'draft'):
             document._check_requirements()
@@ -151,15 +173,16 @@ class EduDocument(models.Model):
             label = (year.name or str(document.date.year)).replace('/', '-')
             sequence = document._sequence()
             number = sequence.next_by_id()
-            document.write(
-                {
-                    'name': f'{PREFIXES[document.document_type]}/Nº{int(number):02d}/{label}',
-                    'state': 'issued',
-                    'issued_by_id': self.env.uid,
-                    # A data do documento é a da emissão (o rascunho pode ter sido visto noutro dia).
-                    'date': fields.Date.context_today(self),
-                }
-            )
+            with trusted(self.env):
+                document.write(
+                    {
+                        'name': f'{PREFIXES[document.document_type]}/Nº{int(number):02d}/{label}',
+                        'state': 'issued',
+                        'issued_by_id': self.env.uid,
+                        # A data do documento é a da emissão (o rascunho pode ter sido visto noutro dia).
+                        'date': fields.Date.context_today(self),
+                    }
+                )
         return True
 
     def _sequence(self):
@@ -190,7 +213,8 @@ class EduDocument(models.Model):
         return self.env.ref(REPORTS[self.document_type]).preview_action(self)
 
     def action_cancel(self):
-        self.write({'state': 'cancelled'})
+        with trusted(self.env):
+            self.write({'state': 'cancelled'})
         return True
 
     @api.ondelete(at_uninstall=False)

@@ -3,6 +3,7 @@ from datetime import timedelta
 from markupsafe import Markup
 
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import import_mode
 
 DOCUMENT_DEADLINE_DAYS = 60
 FIRST_ENROLLMENT_TYPES = ('new', 'transfer_in')
@@ -76,7 +77,7 @@ class EduEnrollment(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         enrollments = super().create(vals_list)
-        if not self.env.context.get('edu_matricula_import'):
+        if not import_mode(self.env, 'edu_matricula_import'):
             enrollments.filtered(lambda e: e.enrollment_type in FIRST_ENROLLMENT_TYPES)._create_document_lines()
         return enrollments
 

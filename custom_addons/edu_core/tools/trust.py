@@ -27,3 +27,9 @@ def is_trusted(env):
 def is_marked(env):
     """Só a marca do servidor (sem contar o sudo): para as regras que também valem em sudo."""
     return getattr(env.cr, TRUSTED, 0) > 0
+
+
+def import_mode(env, key):
+    """Flag de contexto de importação ou de escrita interna (por exemplo «edu_matricula_import»): só vale em sudo
+    (a migração do secPed) ou com a marca do servidor; vinda do cliente, é ignorada."""
+    return bool(env.context.get(key)) and (env.su or is_marked(env))

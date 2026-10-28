@@ -829,6 +829,8 @@ export class TreasuryPay extends Component {
         return (
             this.total > 0 &&
             method?.available &&
+            // No TPA e no depósito, a referência do talão confere o pagamento na conciliação bancária.
+            (this.state.method === "cash" || this.state.reference.trim()) &&
             !this.cardBlocked &&
             !this.excessive &&
             !this.state.busy

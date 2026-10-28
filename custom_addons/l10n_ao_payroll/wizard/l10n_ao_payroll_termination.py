@@ -5,6 +5,7 @@ from odoo.addons.l10n_ao_hr.models.hr_employee import seniority_years
 from odoo.exceptions import UserError
 
 from ..tools.payroll_calc import hourly_rate, round2, seniority_compensation
+from ..tools.trust import trusted
 
 # Motivo de cessação (xmlid do l10n_ao_hr) -> artigo da compensação.
 COMPENSATION_BY_REASON = {
@@ -256,7 +257,8 @@ class L10nAoPayrollTermination(models.TransientModel):
         )
         slip.action_compute()
         if run.state == 'draft':
-            run.state = 'computed'
+            with trusted(self.env):
+                run.state = 'computed'
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'l10n_ao_payroll.payslip',

@@ -1,6 +1,7 @@
 from markupsafe import Markup
 
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import import_mode
 from odoo.exceptions import ValidationError
 from odoo.fields import Domain
 
@@ -301,7 +302,7 @@ class EduTeachingAssignment(models.Model):
     def _sync_schedule(self):
         """Trocar o professor passa para as aulas do horário dessa turma e disciplina (no período da colocação); os
         choques com outras aulas do novo professor são recusados pelo horário."""
-        if self.env.context.get('edu_schedule_import'):
+        if import_mode(self.env, 'edu_schedule_import'):
             return
         Schedule = self.env['edu.schedule']
         for assignment in self:

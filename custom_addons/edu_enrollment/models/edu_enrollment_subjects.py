@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import trusted
 from odoo.exceptions import UserError, ValidationError
 
 from .edu_enrollment import SEAT_STATES
@@ -116,7 +117,8 @@ class EduEnrollmentLowerSubject(models.Model):
         lines = super().create(vals_list)
         for line in lines:
             # Fica inscrito na disciplina (as notas lançam-se na turma da classe anterior).
-            line.enrollment_id.with_context(edu_enrollment_reseed=True).subject_ids |= line.subject_id
+            with trusted(self.env):
+                line.enrollment_id.with_context(edu_enrollment_reseed=True).subject_ids |= line.subject_id
         return lines
 
     def unlink(self):
@@ -126,7 +128,8 @@ class EduEnrollmentLowerSubject(models.Model):
         for enrollment, subject in pairs:
             own = enrollment.class_id.subject_line_ids.subject_id
             if subject not in own and subject not in enrollment._edu_locked_subjects():
-                enrollment.with_context(edu_enrollment_reseed=True).subject_ids -= subject
+                with trusted(self.env):
+                    enrollment.with_context(edu_enrollment_reseed=True).subject_ids -= subject
         return result
 
 

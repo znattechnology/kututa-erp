@@ -5,9 +5,10 @@ from datetime import timedelta
 import requests
 
 from odoo import fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 from ..tools import jws_sign
+from .l10n_ao_edi_guard import is_trusted
 
 _logger = logging.getLogger(__name__)
 
@@ -102,6 +103,8 @@ class ResCompany(models.Model):
             )
 
     def write(self, vals):
+        if 'l10n_ao_edi_environment' in vals:
+            self._l10n_ao_edi_check_environment_change(vals['l10n_ao_edi_environment'])
         if 'l10n_ao_edi_contingency' in vals:
             vals['l10n_ao_edi_contingency_start'] = fields.Datetime.now() if vals['l10n_ao_edi_contingency'] else False
         result = super().write(vals)
@@ -109,6 +112,36 @@ class ResCompany(models.Model):
             # Fim da contingência: os documentos emitidos entretanto seguem para a AGT.
             self.env.ref('l10n_ao_edi.ir_cron_l10n_ao_edi_send').sudo()._trigger()
         return result
+
+    def _l10n_ao_edi_check_environment_change(self, environment):
+        """No ambiente «demonstração» nada vai para a AGT e as respostas são simuladas: mudar de ambiente é só do
+        administrador do sistema, fica registado na ficha da empresa, e uma empresa que já comunicou documentos à AGT
+        não volta à demonstração (os documentos seguintes ficariam «válidos» sem terem sido enviados)."""
+        changed = self.filtered(lambda c: c.l10n_ao_edi_environment != environment)
+        if not changed:
+            return
+        if not self.env.su and not self.env.user.has_group('base.group_system'):
+            raise AccessError(self.env._('Só o administrador do sistema muda o ambiente AGT.'))
+        if environment == 'demo':
+            Document = self.env['l10n_ao_edi.document'].sudo()
+            for company in changed.filtered(lambda c: c.l10n_ao_edi_environment in ('test', 'production')):
+                if Document.search_count([('company_id', '=', company.id)], limit=1):
+                    raise UserError(
+                        self.env._(
+                            '%s já comunicou documentos à AGT: não pode voltar ao ambiente de demonstração.',
+                            company.name,
+                        )
+                    )
+        labels = dict(self._fields['l10n_ao_edi_environment']._description_selection(self.env))
+        for company in changed:
+            company.partner_id.sudo().message_post(
+                body=self.env._(
+                    'Ambiente AGT: %(old)s → %(new)s (por %(user)s).',
+                    old=labels.get(company.l10n_ao_edi_environment, '—'),
+                    new=labels.get(environment, '—'),
+                    user=self.env.user.name,
+                )
+            )
 
     def _l10n_ao_edi_check_communication_lock(self):
         """Art. 17.º/5 do DP n.º 71/25: falha de comunicação superior a 60 dias bloqueia a emissão."""
@@ -150,7 +183,7 @@ class ResCompany(models.Model):
     def _l10n_ao_edi_sign(self, payload):
         """Assinatura com a chave do contribuinte (jwsDocumentSignature / jwsSignature)."""
         self.ensure_one()
-        if self.env.context.get('l10n_ao_edi_skip_signature'):
+        if self.env.context.get('l10n_ao_edi_skip_signature') and is_trusted(self.env):
             # Reconstrução do documento para fins internos (SAF-T): não se volta a assinar.
             return ''
         return jws_sign(payload, self.sudo().l10n_ao_edi_taxpayer_key_id)

@@ -41,7 +41,7 @@ class EduAttendancePage(models.AbstractModel):
     def _lesson(self, lesson_id):
         """A aula, com a verificação de sempre (professor da disciplina, director de turma ou substituto)."""
         lesson = self.env['edu.lesson'].browse(lesson_id).exists()
-        if not lesson:
+        if not lesson or lesson.sudo().company_id not in self.env.companies:
             raise UserError(self.env._('A aula já não existe.'))
         lesson._check_can_manage()
         return lesson
@@ -126,7 +126,7 @@ class EduAttendancePage(models.AbstractModel):
     def _check_class_subject(self, class_id, subject_id):
         edu_class = self.env['edu.class'].sudo().browse(class_id).exists()
         subject = self.env['edu.subject'].sudo().browse(subject_id).exists()
-        if not edu_class or not subject:
+        if not edu_class or not subject or edu_class.company_id not in self.env.companies:
             raise UserError(self.env._('A turma ou a disciplina já não existe.'))
         if not self._staff():
             employee = self._employee()

@@ -370,5 +370,20 @@ class TestL10nAoPayroll(AccountTestInvoicingCommon):
         run.action_close()
         self.assertEqual(run.state, 'closed')
         self.assertTrue(run.move_id)
+        # Um recibo fechado não muda por chamada directa: nem o líquido (que o ficheiro do banco paga), nem o estado,
+        # nem os rendimentos extra; nem a folha volta a «calculada» à mão.
+        slip = run.payslip_ids[:1]
+        with self.assertRaises(AccessError):
+            slip.write({'net': 1_000_000})
+        with self.assertRaises(AccessError):
+            slip.write({'state': 'draft'})
+        with self.assertRaises(UserError):
+            self.env['l10n_ao_payroll.payslip.extra'].with_user(officer).create(
+                {'payslip_id': slip.id, 'name': 'Prémio', 'amount': 50_000}
+            )
+        with self.assertRaises(UserError):
+            slip.action_compute()
+        with self.assertRaises(AccessError):
+            run.write({'state': 'computed'})
         run.action_cancel()
         self.assertEqual(run.state, 'cancelled')

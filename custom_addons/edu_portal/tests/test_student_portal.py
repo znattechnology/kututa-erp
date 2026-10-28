@@ -209,6 +209,10 @@ class TestStudentPortal(HttpCase):
         teachers = self.env['hr.employee.public'].search([], limit=1)
         with self.assertRaises(AccessError):
             Report._render_qweb_html('edu_documents.report_teachers', teachers.ids)
+        # Nem por chamada directa ao ORM: os tempos do horário que o aluno lê são só os das suas turmas.
+        Schedule = self.env['edu.schedule'].with_user(self.ana_user)
+        self.assertFalse(Schedule.search([('class_id', '=', other_class.id)]))
+        self.assertFalse(Schedule.search([('class_id', 'not in', self.ana.enrollment_ids.class_id.ids)]))
         # Os auxiliares do portal não se chamam por RPC: só as páginas.
         Portal = type(self.env['edu.student.portal'])
         for name in ('grades', 'exams', 'absences', 'fees', 'profile', 'internships', 'projects'):

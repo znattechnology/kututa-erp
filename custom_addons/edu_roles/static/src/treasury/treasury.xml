@@ -500,7 +500,7 @@
                                         </select>
                                     </label>
                                     <label class="o_edu_tr_field">
-                                        <span>N.º da operação (opcional)</span>
+                                        <span>N.º da operação<t t-if="this.state.method === 'cash'"> (opcional)</t></span>
                                         <input type="text" class="form-control" placeholder="Do talão do TPA ou do depósito"
                                                t-att-value="this.state.reference" t-on-input="(ev) => this.onReference(ev)"/>
                                     </label>

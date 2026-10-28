@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import trusted
 from odoo.exceptions import UserError
 
 
@@ -193,9 +194,11 @@ class EduEnrollment(models.Model):
         for enrollment in self.filtered(lambda e: e.state in ('active', 'irregular')):
             status = enrollment.sudo().year_result_id.status
             if status in ('promoted', 'conditional', 'graduated'):
-                enrollment.state = 'completed'
+                with trusted(self.env):
+                    enrollment.state = 'completed'
             elif status == 'retained':
-                enrollment.state = 'retained'
+                with trusted(self.env):
+                    enrollment.state = 'retained'
             else:
                 open_enrollments |= enrollment
         return open_enrollments

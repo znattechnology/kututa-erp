@@ -1,7 +1,8 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.addons.edu_core.tools.trust import is_trusted, trusted
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 from .edu_enrollment import SEAT_STATES
 
@@ -177,7 +178,16 @@ class EduTransfer(models.Model):
             if kind == 'course_change' and target.course_id == origin.course_id:
                 raise ValidationError(self.env._('Numa mudança de curso, a turma de destino é de outro curso.'))
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env):
+            vals_list = [dict(vals, state='pending', reviewed_by_id=False) for vals in vals_list]
+        return super().create(vals_list)
+
     def write(self, vals):
+        # A decisão é da direcção, pelos botões (aprovar, rejeitar, concluir, cancelar).
+        if not is_trusted(self.env) and {'state', 'reviewed_by_id'} & set(vals):
+            raise AccessError(self.env._('A transferência muda de estado pelos botões (aprovar, rejeitar, concluir).'))
         # Mudar o destino de uma transferência aprovada volta a pedir a decisão da direcção.
         decided = {'to_class_id', 'external_school', 'vacancy_confirmed', 'vacancy_reference', 'transfer_type'}
         if decided & set(vals) and 'state' not in vals and not self.env.user.has_group('edu_core.group_edu_manager'):
@@ -195,7 +205,8 @@ class EduTransfer(models.Model):
         for transfer in self:
             if transfer.state != 'pending':
                 raise UserError(self.env._('Só se aprova uma transferência pendente.'))
-            transfer.write({'state': 'approved', 'reviewed_by_id': self.env.uid})
+            with trusted(self.env):
+                transfer.write({'state': 'approved', 'reviewed_by_id': self.env.uid})
         return True
 
     def action_reject(self):
@@ -205,13 +216,15 @@ class EduTransfer(models.Model):
                 raise UserError(self.env._('Só se rejeita uma transferência pendente.'))
             if not transfer.decision_note:
                 raise UserError(self.env._('Indique a fundamentação da rejeição.'))
-            transfer.write({'state': 'rejected', 'reviewed_by_id': self.env.uid})
+            with trusted(self.env):
+                transfer.write({'state': 'rejected', 'reviewed_by_id': self.env.uid})
         return True
 
     def action_cancel(self):
         if self.filtered(lambda t: t.state == 'completed'):
             raise UserError(self.env._('Uma transferência concluída não se cancela.'))
-        self.write({'state': 'cancelled'})
+        with trusted(self.env):
+            self.write({'state': 'cancelled'})
         return True
 
     @api.ondelete(at_uninstall=False)
@@ -239,7 +252,8 @@ class EduTransfer(models.Model):
                     transfer._complete_external()
                 else:
                     transfer._complete_internal()
-            transfer.state = 'completed'
+            with trusted(self.env):
+                transfer.state = 'completed'
         return True
 
     def _complete_external(self):
@@ -267,7 +281,8 @@ class EduTransfer(models.Model):
             vals['subject_ids'] = [
                 fields.Command.set((target.subject_line_ids.subject_id | enrollment._edu_locked_subjects()).ids)
             ]
-        enrollment.with_context(edu_enrollment_reseed=True).write(vals)
+        with trusted(self.env):
+            enrollment.with_context(edu_enrollment_reseed=True).write(vals)
         if target.course_id != origin.course_id:
             # As disciplinas feitas numa turma da classe anterior eram do curso antigo.
             enrollment.lower_subject_ids.unlink()

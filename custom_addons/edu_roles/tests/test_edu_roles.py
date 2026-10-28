@@ -226,6 +226,21 @@ class TestEduRoles(TransactionCase):
         self.assertEqual(result['status'], 'done')
         payment = self.env['account.payment'].browse(result['payment_ids'])
         self.assertEqual((payment.amount, payment.memo), (8_800, 'T-1'))
+        # TPA e depósito exigem a referência do talão; a mesma factura duas vezes conta uma só vez (a soma passa do
+        # que falta pagar e é recusada); facturas de outro aluno não entram.
+        with self.assertRaisesRegex(UserError, 'n.º da operação'):
+            Treasury.register_payment(
+                student.id, {'allocations': [{'id': sale['id'], 'amount': 1_000}], 'method': 'pos', 'reference': ' '}
+            )
+        with self.assertRaises(UserError):
+            Treasury.register_payment(
+                student.id,
+                {
+                    'allocations': [{'id': sale['id'], 'amount': 15_000}, {'id': sale['id'], 'amount': 15_000}],
+                    'method': 'cash',
+                },
+            )
+        self.assertEqual(self.env['account.move'].browse(sale['id']).amount_residual, 20_000)
         self.assertEqual(self.env['account.move'].browse(sale['id']).amount_residual, 20_000)
         # Em numerário acima do limite fica à espera de outra pessoa.
         self.env.company.write({'edu_cash_approval': True, 'edu_cash_approval_threshold': 10_000})

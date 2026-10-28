@@ -1,5 +1,6 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.addons.edu_core.tools.trust import is_trusted, trusted
+from odoo.exceptions import AccessError, UserError
 
 from ..tools.grading import TECHNICAL
 
@@ -60,6 +61,18 @@ class EduCouncilSession(models.Model):
             if session.state == 'realized':
                 raise UserError(self.env._('O conselho já foi encerrado: não é possível alterar votações nem notas.'))
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env):
+            vals_list = [dict(vals, state='draft', realized_by_id=False, realized_date=False) for vals in vals_list]
+        return super().create(vals_list)
+
+    def write(self, vals):
+        # Iniciar, encerrar e reabrir só pelos botões (com as suas regras: director, votações apuradas, direcção).
+        if not is_trusted(self.env) and {'state', 'realized_by_id', 'realized_date', 'class_id'} & set(vals):
+            raise AccessError(self.env._('O conselho de turma muda de estado pelos botões (iniciar, encerrar).'))
+        return super().write(vals)
+
     def action_open_board(self):
         self.ensure_one()
         return self.class_id.action_open_council()
@@ -67,7 +80,8 @@ class EduCouncilSession(models.Model):
     def action_start(self):
         """O director inicia o conselho: os professores da turma passam a votar e a bonificar."""
         self._check_director(self.env._('Só o director de turma inicia o conselho.'))
-        self.filtered(lambda s: s.state == 'draft').write({'state': 'open'})
+        with trusted(self.env):
+            self.filtered(lambda s: s.state == 'draft').write({'state': 'open'})
         return True
 
     def action_realize(self):
@@ -78,14 +92,18 @@ class EduCouncilSession(models.Model):
                 raise UserError(
                     self.env._('Há %s votação(ões) por apurar. Apure-as antes de encerrar o conselho.', len(pending))
                 )
-            session.write({'state': 'realized', 'realized_by_id': self.env.uid, 'realized_date': fields.Datetime.now()})
+            with trusted(self.env):
+                session.write(
+                    {'state': 'realized', 'realized_by_id': self.env.uid, 'realized_date': fields.Datetime.now()}
+                )
             self.env['edu.year.result']._compute_for_classes(session.class_id)
         return True
 
     def action_reopen(self):
         if not self.env.user.has_group('edu_core.group_edu_manager'):
             raise UserError(self.env._('Só a direcção reabre um conselho de turma realizado.'))
-        self.write({'state': 'open', 'realized_by_id': False, 'realized_date': False})
+        with trusted(self.env):
+            self.write({'state': 'open', 'realized_by_id': False, 'realized_date': False})
         return True
 
     def _members(self):
@@ -103,9 +121,10 @@ class EduCouncilSession(models.Model):
         # Várias votações podem estar abertas ao mesmo tempo, mas só uma por nota.
         if self.vote_ids.filtered(lambda v: v.state == 'open' and v.result_id == result):
             raise UserError(self.env._('Já existe uma votação aberta para esta nota.'))
-        return self.env['edu.council.vote'].create(
-            {'session_id': self.id, 'result_id': result.id, 'base': result.annual}
-        )
+        with trusted(self.env):
+            return self.env['edu.council.vote'].create(
+                {'session_id': self.id, 'result_id': result.id, 'base': result.annual}
+            )
 
 
 class EduCouncilVote(models.Model):
@@ -130,6 +149,17 @@ class EduCouncilVote(models.Model):
     favor = fields.Integer(string='A favor', compute='_compute_count')
     against = fields.Integer(string='Contra', compute='_compute_count')
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env):
+            raise AccessError(self.env._('As votações abrem-se pelo director de turma, no conselho.'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if not is_trusted(self.env) and {'state', 'result_id', 'session_id', 'base'} & set(vals):
+            raise AccessError(self.env._('A votação só muda pelo apuramento.'))
+        return super().write(vals)
+
     @api.depends('ballot_ids.in_favor')
     def _compute_count(self):
         for vote in self:
@@ -145,10 +175,13 @@ class EduCouncilVote(models.Model):
         if employee not in self.session_id._members():
             raise UserError(self.env._('Só os professores da turma podem votar.'))
         ballot = self.ballot_ids.filtered(lambda b: b.teacher_id == employee)
-        if ballot:
-            ballot.in_favor = in_favor
-        else:
-            self.env['edu.council.ballot'].create({'vote_id': self.id, 'teacher_id': employee.id, 'in_favor': in_favor})
+        with trusted(self.env):
+            if ballot:
+                ballot.in_favor = in_favor
+            else:
+                self.env['edu.council.ballot'].create(
+                    {'vote_id': self.id, 'teacher_id': employee.id, 'in_favor': in_favor}
+                )
 
     def action_vote_favor(self):
         self.cast(self.env.user.employee_id, True)
@@ -181,7 +214,8 @@ class EduCouncilVote(models.Model):
                     )
                 )
             approved = vote.favor * 2 > voted
-            vote.state = 'applied' if approved else 'rejected'
+            with trusted(self.env):
+                vote.state = 'applied' if approved else 'rejected'
             if approved:
                 vote.result_id._set_points(COUNCIL_POINTS, 'council', vote)
                 messages.append(self.env._('Aprovado (%(f)s/%(t)s) — +2 aplicado.', f=vote.favor, t=voted))
@@ -200,3 +234,21 @@ class EduCouncilBallot(models.Model):
     company_id = fields.Many2one(related='vote_id.company_id', store=True)
 
     _vote_teacher_uniq = models.Constraint('UNIQUE(vote_id, teacher_id)', 'O professor já votou.')
+
+    # Cada professor da turma vota em seu nome, pelo boletim do conselho (cast): sem boletins criados ou mudados
+    # por chamada directa (votar por outro professor, ou numa votação de outra turma).
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not is_trusted(self.env):
+            raise AccessError(self.env._('Vote pelo quadro do conselho de turma.'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if not is_trusted(self.env):
+            raise AccessError(self.env._('Vote pelo quadro do conselho de turma.'))
+        return super().write(vals)
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_only_system(self):
+        if not is_trusted(self.env):
+            raise AccessError(self.env._('Um voto não se apaga.'))

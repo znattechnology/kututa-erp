@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import import_mode
 from odoo.exceptions import ValidationError
 
 from .edu_time_slot import format_hour
@@ -162,7 +163,7 @@ class EduSchedule(models.Model):
                 ('room_id', self.env._('A sala %(name)s já está ocupada: %(other)s.')),
             ]
             # Migração: o horário afixado entra como está, com os choques de professor e de sala; ficam no relatório.
-            if self.env.context.get('edu_schedule_import'):
+            if import_mode(self.env, 'edu_schedule_import'):
                 checks = checks[:1]
             for field_name, message in checks:
                 if not schedule[field_name]:
@@ -177,7 +178,7 @@ class EduSchedule(models.Model):
                         }
                     )
             # O professor não pode ter, à mesma hora, uma substituição marcada noutra turma.
-            if schedule.teacher_id and not self.env.context.get('edu_schedule_import'):
+            if schedule.teacher_id and not import_mode(self.env, 'edu_schedule_import'):
                 busy = self.env['edu.schedule.replacement'].search(
                     [
                         ('replacement_teacher_id', '=', schedule.teacher_id.id),

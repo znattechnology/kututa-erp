@@ -3,7 +3,8 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.addons.edu_core.tools.trust import import_mode, is_trusted, trusted
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 # Estados que ocupam vaga na turma (o irregular está matriculado, com propinas em atraso).
 SEAT_STATES = ('active', 'irregular')
@@ -169,8 +170,8 @@ class EduEnrollment(models.Model):
         avaliação acrescenta retenções e disciplinas em atraso."""
         self.ensure_one()
         if (
-            self.env.context.get('edu_matricula_import')
-            or self.env.context.get('edu_reactivate')
+            import_mode(self.env, 'edu_matricula_import')
+            or import_mode(self.env, 'edu_reactivate')
             or self.enrollment_type not in ('new', 'transfer_in')
         ):
             return  # na reactivação já não se volta a ver a idade nem o prazo da primeira matrícula
@@ -295,7 +296,8 @@ class EduEnrollment(models.Model):
             vals = {'state': 'active', 'warning': '\n'.join(enrollment._edu_enrollment_warnings()) or False}
             if not enrollment.order_number:
                 vals['order_number'] = self._next_order_number(enrollment.class_id)
-            enrollment.write(vals)
+            with trusted(self.env):
+                enrollment.write(vals)
         return True
 
     @api.depends('state', 'drop_justified', 'class_number')
@@ -342,16 +344,17 @@ class EduEnrollment(models.Model):
                 )
             if enrollment.state not in SEAT_STATES:
                 raise UserError(self.env._('A matrícula de %s já está fechada.', enrollment.student_id.name))
-            enrollment.write(
-                {
-                    'state': state,
-                    'drop_date': day or fields.Date.context_today(self),
-                    'drop_reason': reason or False,
-                    'drop_reason_code': reason_code,
-                    'drop_requested_by': requested_by,
-                    'drop_justified': justified,
-                }
-            )
+            with trusted(self.env):
+                enrollment.write(
+                    {
+                        'state': state,
+                        'drop_date': day or fields.Date.context_today(self),
+                        'drop_reason': reason or False,
+                        'drop_reason_code': reason_code,
+                        'drop_requested_by': requested_by,
+                        'drop_justified': justified,
+                    }
+                )
         return True
 
     def action_drop(self):
@@ -389,7 +392,8 @@ class EduEnrollment(models.Model):
                     )
                 )
             enrollment._check_capacity()
-            enrollment.with_context(edu_reactivate=True)._edu_check_enrollment_allowed()
+            with trusted(self.env):
+                enrollment.with_context(edu_reactivate=True)._edu_check_enrollment_allowed()
             labels = dict(DROP_REASONS)
             enrollment.message_post(
                 body=self.env._(
@@ -398,29 +402,40 @@ class EduEnrollment(models.Model):
                     reason=labels.get(enrollment.drop_reason_code) or enrollment.drop_reason or '—',
                 )
             )
-            enrollment.write(
-                {
-                    'state': 'active',
-                    'drop_date': False,
-                    'drop_reason': False,
-                    'drop_reason_code': False,
-                    'drop_requested_by': False,
-                    'drop_justified': False,
-                }
-            )
+            with trusted(self.env):
+                enrollment.write(
+                    {
+                        'state': 'active',
+                        'drop_date': False,
+                        'drop_reason': False,
+                        'drop_reason_code': False,
+                        'drop_requested_by': False,
+                        'drop_justified': False,
+                    }
+                )
             enrollment._check_one_per_year()
         return True
 
     def action_mark_irregular(self):
-        self.filtered(lambda e: e.state == 'active').write({'state': 'irregular'})
+        with trusted(self.env):
+            self.filtered(lambda e: e.state == 'active').write({'state': 'irregular'})
         return True
 
     def action_mark_regular(self):
-        self.filtered(lambda e: e.state == 'irregular').write({'state': 'active'})
+        with trusted(self.env):
+            self.filtered(lambda e: e.state == 'irregular').write({'state': 'active'})
         return True
 
     def write(self, vals):
-        if 'subject_ids' in vals and not self.env.context.get('edu_enrollment_reseed'):
+        if not is_trusted(self.env) and not self.env.user.has_group('edu_core.group_edu_manager'):
+            # O estado e a turma mudam pelos fluxos (confirmar, anular, reactivar, transferir), com as suas regras.
+            if 'state' in vals:
+                raise AccessError(
+                    self.env._('O estado da matrícula muda pelos botões (confirmar, anular, transferir).')
+                )
+            if 'class_id' in vals and self.filtered(lambda e: e.state != 'draft'):
+                raise UserError(self.env._('A turma de uma matrícula em curso muda por transferência.'))
+        if 'subject_ids' in vals and not import_mode(self.env, 'edu_enrollment_reseed'):
             for enrollment in self:
                 if enrollment.state in CLOSED_STATES + ('completed', 'retained'):
                     raise UserError(self.env._('As disciplinas só se alteram numa matrícula em curso.'))

@@ -8,10 +8,11 @@ import xlsxwriter
 
 from odoo import api, fields, models
 from odoo.addons.l10n_ao_hr.models.l10n_ao_hr_overtime import round_overtime_hours
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools import date_utils
 
 from ..tools.payroll_calc import Component, Inputs, compute, round2
+from ..tools.trust import is_trusted, trusted
 
 UNPAID_CODES = ('UNPAID', 'UNJUSTIFIED', 'MATERNITY')
 # Descontos que não são encargos nem retenções: valores devidos pelo trabalhador (aviso prévio em falta).
@@ -140,7 +141,8 @@ class L10nAoPayrollRun(models.Model):
                 [{'run_id': run.id, 'employee_id': employee.id} for employee in employees if employee not in existing]
             )
             run.payslip_ids.filtered(lambda s: s.state == 'draft').action_compute()
-            run.state = 'computed'
+            with trusted(self.env):
+                run.state = 'computed'
 
     def action_close(self):
         for run in self:
@@ -161,16 +163,17 @@ class L10nAoPayrollRun(models.Model):
             # O fecho mexe na contabilidade e na sequência: o utilizador de RH não precisa de direitos nelas.
             run.company_id.sudo()._l10n_ao_payroll_ensure_accounting()
             sequence = run._payslip_sequence()
-            for slip in slips.sorted(lambda s: (s.employee_id.name or '', s.id)):
-                slip.number = sequence.next_by_id()
-                slip._apply_advances()
-                if slip.vacation_subsidy:
-                    employee = slip.employee_id.sudo()
-                    slip.vacation_subsidy_prev_year = employee.l10n_ao_payroll_vacation_subsidy_year
-                    employee.l10n_ao_payroll_vacation_subsidy_year = run.year
-            slips.write({'state': 'done'})
-            run.move_id = run.sudo()._create_move(slips.sudo())
-            run.state = 'closed'
+            with trusted(self.env):
+                for slip in slips.sorted(lambda s: (s.employee_id.name or '', s.id)):
+                    slip.number = sequence.next_by_id()
+                    slip._apply_advances()
+                    if slip.vacation_subsidy:
+                        employee = slip.employee_id.sudo()
+                        slip.vacation_subsidy_prev_year = employee.l10n_ao_payroll_vacation_subsidy_year
+                        employee.l10n_ao_payroll_vacation_subsidy_year = run.year
+                slips.write({'state': 'done'})
+                run.move_id = run.sudo()._create_move(slips.sudo())
+                run.state = 'closed'
 
     def action_cancel(self):
         for run in self:
@@ -184,16 +187,24 @@ class L10nAoPayrollRun(models.Model):
                 employee = slip.employee_id.sudo()
                 if employee.l10n_ao_payroll_vacation_subsidy_year == run.year:
                     employee.l10n_ao_payroll_vacation_subsidy_year = slip.vacation_subsidy_prev_year
-            run.payslip_ids.write({'state': 'cancelled'})
-            run.payslip_ids.mapped('advance_deduction_ids.advance_id')._settle_if_done()
-            run.state = 'cancelled'
+            with trusted(self.env):
+                run.payslip_ids.write({'state': 'cancelled'})
+                run.payslip_ids.mapped('advance_deduction_ids.advance_id')._settle_if_done()
+                run.state = 'cancelled'
 
     def action_draft(self):
         for run in self:
             if run.state != 'cancelled':
                 raise UserError(self.env._('Só uma folha anulada volta a rascunho.'))
             run.payslip_ids.unlink()
-            run.state = 'draft'
+            with trusted(self.env):
+                run.state = 'draft'
+
+    def write(self, vals):
+        # O estado e o lançamento da folha só mudam pelas acções (Calcular, Fechar, Anular, Repor).
+        if not is_trusted(self.env) and {'state', 'move_id'} & set(vals):
+            raise AccessError(self.env._('O estado da folha muda pelos botões (Calcular, Fechar, Anular).'))
+        return super().write(vals)
 
     def _payslip_sequence(self):
         self.ensure_one()
@@ -493,7 +504,21 @@ class L10nAoPayrollPayslip(models.Model):
             slip.display_name = f'{slip.number or "Rascunho"} · {slip.employee_id.name} · {slip.run_id.name}'
 
     # ------------------------------------------------------------------
+    # Calculados pelo processamento (cálculo, fecho, anulação): não se escrevem por chamada directa.
+    _RESULT_FIELDS = frozenset(
+        {
+            'state', 'number', 'hourly_rate', 'gross', 'irt_base', 'irt', 'inss_base', 'inss_employee',
+            'inss_employer', 'absences', 'sanction', 'advance', 'deductions', 'net', 'warning', 'line_ids',
+            'vacation_subsidy_prev_year', 'run_id', 'employee_id',
+        }
+    )  # fmt: skip
+
     def write(self, vals):
+        if not is_trusted(self.env):
+            if self._RESULT_FIELDS & set(vals):
+                raise AccessError(self.env._('Os valores do recibo calculam-se pela folha (Calcular, Fechar, Anular).'))
+            if self.filtered(lambda s: s.state != 'draft') and {k for k in vals if not k.startswith('message_')}:
+                raise UserError(self.env._('O recibo já está fechado ou anulado: não pode ser alterado.'))
         if not self.env.context.get('l10n_ao_payroll_auto') and {'vacation_subsidy', 'christmas_months'} & set(vals):
             vals = dict(vals, subsidies_manual=True)
         return super().write(vals)
@@ -685,6 +710,11 @@ class L10nAoPayrollPayslip(models.Model):
         return 12
 
     def action_compute(self):
+        # Já recusa recibos fechados; o cálculo grava os valores e as linhas como escrita interna.
+        with trusted(self.env):
+            return self._l10n_ao_payroll_compute()
+
+    def _l10n_ao_payroll_compute(self):
         for slip in self:
             if slip.state != 'draft':
                 raise UserError(self.env._('O recibo já está fechado.'))
@@ -772,6 +802,27 @@ class L10nAoPayrollPayslipLine(models.Model):
     rate = fields.Monetary(string='Valor unitário')
     amount = fields.Monetary(string='Valor', required=True)
 
+    def _check_payslip_open(self, payslips=None):
+        if not is_trusted(self.env) and (payslips or self.payslip_id).filtered(lambda s: s.state != 'draft'):
+            raise UserError(self.env._('O recibo já está fechado ou anulado: não pode ser alterado.'))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._check_payslip_open()
+        return records
+
+    def write(self, vals):
+        self._check_payslip_open()
+        result = super().write(vals)
+        if 'payslip_id' in vals:
+            self._check_payslip_open()
+        return result
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_if_open(self):
+        self._check_payslip_open()
+
 
 class L10nAoPayrollPayslipExtra(models.Model):
     _name = 'l10n_ao_payroll.payslip.extra'
@@ -784,3 +835,24 @@ class L10nAoPayrollPayslipExtra(models.Model):
     amount = fields.Monetary(string='Valor', required=True)
     subject_irt = fields.Boolean(string='Sujeito a IRT', default=True)
     subject_inss = fields.Boolean(string='Sujeito a INSS', default=True)
+
+    def _check_payslip_open(self, payslips=None):
+        if not is_trusted(self.env) and (payslips or self.payslip_id).filtered(lambda s: s.state != 'draft'):
+            raise UserError(self.env._('O recibo já está fechado ou anulado: não pode ser alterado.'))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._check_payslip_open()
+        return records
+
+    def write(self, vals):
+        self._check_payslip_open()
+        result = super().write(vals)
+        if 'payslip_id' in vals:
+            self._check_payslip_open()
+        return result
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_if_open(self):
+        self._check_payslip_open()

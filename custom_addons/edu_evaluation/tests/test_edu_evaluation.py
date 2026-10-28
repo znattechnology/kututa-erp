@@ -969,6 +969,13 @@ class TestEduEvaluation(TransactionCase):
         session = Session.browse(data['session']['id'])
         with self.assertRaisesRegex(UserError, 'director'):
             session.with_user(self.teacher_user).board_start()
+        # Nem por chamada directa: o professor não inicia nem encerra o conselho, não abre votações nem cria votos.
+        with self.assertRaises(AccessError):
+            session.with_user(self.teacher_user).write({'state': 'open'})
+        with self.assertRaises(AccessError):
+            self.env['edu.council.vote'].with_user(self.teacher_user).create(
+                {'session_id': session.id, 'result_id': self.env['edu.subject.result'].search([], limit=1).id}
+            )
         board = session.with_user(director_user)
         data = board.board_start()
         self.assertEqual(data['session']['state'], 'open')

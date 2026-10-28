@@ -1,6 +1,8 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+from .l10n_ao_edi_guard import is_trusted
+
 # Tipos de documento de facturação electrónica (Anexo I do DE n.º 683/25, documentType).
 AGT_DOCUMENT_TYPES = [
     ('FT', 'FT - Factura'),
@@ -71,6 +73,14 @@ class L10nAoEdiSeries(models.Model):
         for series in self:
             if series.state == 'active' and not series.code:
                 raise ValidationError(self.env._('Uma série activa tem de ter o código atribuído pela AGT.'))
+
+    def write(self, vals):
+        # Uma série activa numera documentos já comunicados: o código e os limites só mudam pela AGT (pedido ou
+        # sincronização) e o próximo número só pela reserva; à mão abriam-se buracos ou repetiam-se números.
+        locked = {'code', 'first_number', 'last_number', 'next_number', 'document_type', 'year', 'company_id'}
+        if not is_trusted(self.env) and locked & set(vals) and self.filtered(lambda s: s.state != 'draft'):
+            raise UserError(self.env._('A numeração de uma série AGT activa ou encerrada não se altera.'))
+        return super().write(vals)
 
     def action_activate(self):
         """Activa uma série obtida no Portal do Contribuinte (código introduzido manualmente)."""

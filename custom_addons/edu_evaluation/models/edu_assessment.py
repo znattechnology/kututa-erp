@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.addons.edu_core.tools.trust import import_mode
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 ASSESSMENT_TYPES = [
@@ -104,7 +105,7 @@ class EduAssessment(models.Model):
                 )
                 # Migração: a PG que a escola lançou entra mesmo fora da regra (fica no relatório).
                 if policy.regime != 'technical' or (
-                    not line[:1].has_global_exam and not self.env.context.get('edu_global_exam_import')
+                    not line[:1].has_global_exam and not import_mode(self.env, 'edu_global_exam_import')
                 ):
                     raise ValidationError(self.env._('%s não tem prova global.', assessment.subject_id.name))
             if assessment.assessment_type == 'national_exam':
@@ -299,6 +300,6 @@ class EduGrade(models.Model):
         return {(grade.enrollment_id.id, grade.subject_id.id, grade.trimester_id.id) for grade in self}
 
     def _recompute_results(self):
-        if self.env.context.get('edu_defer_results'):
+        if import_mode(self.env, 'edu_defer_results'):
             return  # importação: quem importa recalcula a pauta no fim, uma só vez
         self.env['edu.term.result']._recompute_keys(self._result_keys())

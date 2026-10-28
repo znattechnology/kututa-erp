@@ -648,9 +648,24 @@ class EduTreasury(models.AbstractModel):
         journal = self._pay_journal(method)
         if not journal:
             raise UserError(self.env._('A escola não tem um diário para esta forma de pagamento.'))
+        if method in ('pos', 'deposit') and not reference.strip():
+            # Sem a referência do talão do TPA ou do depósito, o pagamento não se confere na conciliação bancária.
+            raise UserError(self.env._('Indique o n.º da operação do talão do TPA ou do depósito.'))
         Move = self.env['account.move']
-        rows = [(Move.browse(row['id']).exists(), float(row['amount'] or 0)) for row in allocations]
-        rows = [(move, amount) for move, amount in rows if move and amount > 0]
+        # A mesma factura indicada duas vezes conta uma só vez (com a soma), antes das verificações do pagamento.
+        merged = {}
+        for row in allocations:
+            move = Move.browse(row['id']).exists()
+            amount = float(row['amount'] or 0)
+            if move and amount > 0:
+                merged[move] = merged.get(move, 0.0) + amount
+        rows = list(merged.items())
+        open_invoices = student._edu_open_invoices()
+        for move, _amount in rows:
+            if move.edu_student_id != student or move.move_type != 'out_invoice' or move.state != 'posted':
+                raise UserError(self.env._('A factura %s não é deste aluno.', move.name))
+            if move not in open_invoices:
+                raise UserError(self.env._('A factura %s já está paga.', move.name))
         sale = Move
         if service_ids:
             sale = student._edu_charge_services([(service_id, 1) for service_id in service_ids], key=key)

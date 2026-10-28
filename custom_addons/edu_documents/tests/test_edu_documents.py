@@ -1,8 +1,8 @@
 from datetime import date
 
 from odoo import Command
-from odoo.exceptions import UserError
-from odoo.tests import TransactionCase, tagged
+from odoo.exceptions import AccessError, UserError
+from odoo.tests import TransactionCase, new_test_user, tagged
 
 
 @tagged('post_install', '-at_install', 'edu')
@@ -109,6 +109,13 @@ class TestEduDocuments(TransactionCase):
         document = self._document('frequency', purpose='efeitos de bolsa de estudo')
         self.assertEqual(document.name, 'DSN/Nº01/2026-2027')
         self.assertEqual(self._document('frequency').name, 'DSN/Nº02/2026-2027')
+        # O número, o estado e as impressões só mudam pela emissão: nem «reabrir», nem reimprimir sem «2.ª via».
+        clerk = new_test_user(self.env, 'clerk_docs', groups='edu_core.group_edu_user')
+        for vals in ({'print_count': 0}, {'state': 'draft'}, {'name': 'DSN/Nº99/2026-2027'}):
+            with self.assertRaises(AccessError):
+                document.with_user(clerk).write(vals)
+        with self.assertRaises(UserError):
+            document.with_user(clerk).write({'purpose': 'outro fim'})
         html = self._render('edu_documents.action_report_declaration_frequency', document)
         for text in ('Ana Kiala', 'filha de', 'nascida a 10 de Maio de 2007', '13ª (Décima Terceira) Classe',
                      'efeitos de bolsa de estudo', 'A SUBDIRECTORA PEDAGÓGICA', '//MARIANO HUNGULO//',

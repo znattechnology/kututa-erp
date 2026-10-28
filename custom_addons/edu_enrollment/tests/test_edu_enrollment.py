@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from freezegun import freeze_time
 
 from odoo.exceptions import AccessError, UserError, ValidationError
-from odoo.tests import TransactionCase, tagged
+from odoo.tests import TransactionCase, new_test_user, tagged
 
 
 @tagged('post_install', '-at_install', 'edu')
@@ -220,6 +220,14 @@ class TestEduEnrollment(TransactionCase):
         )
         with self.assertRaises(UserError):
             transfer.action_complete()
+        # A secretaria não aprova a transferência nem muda a turma ou o estado da matrícula por chamada directa.
+        clerk = new_test_user(self.env, 'clerk_transfer', groups='edu_core.group_edu_user')
+        with self.assertRaises(AccessError):
+            transfer.with_user(clerk).write({'state': 'approved'})
+        with self.assertRaises(UserError):
+            enrollment.with_user(clerk).write({'class_id': self.class_cont.id})
+        with self.assertRaises(AccessError):
+            enrollment.with_user(clerk).write({'state': 'transferred'})
         transfer.action_approve()
         transfer.action_complete()
         self.assertEqual(transfer.state, 'completed')
