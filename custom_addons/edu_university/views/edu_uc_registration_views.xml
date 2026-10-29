@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_uc_registration_list" model="ir.ui.view">
+        <field name="name">edu.uc.registration.list</field>
+        <field name="model">edu.uc.registration</field>
+        <field name="arch" type="xml">
+            <list string="Inscrições em UC" decoration-muted="state == 'dropped'" decoration-success="state == 'passed'"
+                  decoration-danger="state == 'failed'" create="false">
+                <field name="student_id"/>
+                <field name="subject_id"/>
+                <field name="course_year"/>
+                <field name="semester"/>
+                <field name="credits" sum="Total"/>
+                <field name="class_id"/>
+                <field name="attempt"/>
+                <field name="is_backlog"/>
+                <field name="state"/>
+                <field name="academic_year_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_uc_registration_search" model="ir.ui.view">
+        <field name="name">edu.uc.registration.search</field>
+        <field name="model">edu.uc.registration</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="student_id"/>
+                <field name="subject_id"/>
+                <field name="class_id"/>
+                <filter name="backlog" string="Em atraso" domain="[('is_backlog', '=', True)]"/>
+                <filter name="repeat" string="Repetentes na UC" domain="[('attempt', '>', 1)]"/>
+                <separator/>
+                <filter name="enrolled" string="Inscritos" domain="[('state', '=', 'enrolled')]"/>
+                <filter name="failed" string="Reprovados" domain="[('state', '=', 'failed')]"/>
+                <filter name="group_subject" string="UC" context="{'group_by': 'subject_id'}"/>
+                <filter name="group_year" string="Ano académico" context="{'group_by': 'academic_year_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_edu_uc_registration" model="ir.actions.act_window">
+        <field name="name">Inscrições em UC</field>
+        <field name="res_model">edu.uc.registration</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_enrolled': 1}</field>
+    </record>
+
+    <record id="edu_university_regulation_list" model="ir.ui.view">
+        <field name="name">edu.university.regulation.list</field>
+        <field name="model">edu.university.regulation</field>
+        <field name="arch" type="xml">
+            <list string="Regulamentos académicos">
+                <field name="level_id"/>
+                <field name="max_attempts"/>
+                <field name="max_semester_credits"/>
+                <field name="max_backlog"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="edu_university_regulation_form" model="ir.ui.view">
+        <field name="name">edu.university.regulation.form</field>
+        <field name="model">edu.university.regulation</field>
+        <field name="arch" type="xml">
+            <form string="Regulamento académico">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="level_id" options="{'no_create': True}"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Inscrição">
+                            <field name="max_attempts"/>
+                            <field name="max_semester_credits"/>
+                        </group>
+                        <group string="Progressão">
+                            <field name="max_backlog"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Regulamento aprovado pela instituição (n.º, data)…"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_edu_university_regulation" model="ir.actions.act_window">
+        <field name="name">Regulamentos académicos</field>
+        <field name="res_model">edu.university.regulation</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_edu_uc_registration" action="action_edu_uc_registration" parent="edu_core.menu_edu_students"
+              sequence="6"/>
+    <menuitem id="menu_edu_university_regulation" action="action_edu_university_regulation"
+              parent="edu_core.menu_edu_config" sequence="45"/>
+
+    <record id="edu_enrollment_form_university" model="ir.ui.view">
+        <field name="name">edu.enrollment.form.university</field>
+        <field name="model">edu.enrollment</field>
+        <field name="inherit_id" ref="edu_enrollment.edu_enrollment_form"/>
+        <field name="arch" type="xml">
+            <page name="subjects" position="attributes">
+                <attribute name="invisible">level_subsystem == 'higher'</attribute>
+            </page>
+            <page name="subjects" position="before">
+                <page string="Unidades curriculares" name="ucs" invisible="level_subsystem != 'higher'">
+                    <field name="uc_registration_ids" readonly="state not in ('active', 'irregular')"
+                           context="{'default_enrollment_id': id}">
+                        <list editable="bottom" decoration-muted="state == 'dropped'"
+                              decoration-success="state == 'passed'" decoration-danger="state == 'failed'">
+                            <field name="subject_id" options="{'no_create': True}"
+                                   readonly="id"/>
+                            <field name="course_year"/>
+                            <field name="semester"/>
+                            <field name="uc_type"/>
+                            <field name="credits" sum="Total"/>
+                            <field name="class_id" options="{'no_create': True}"/>
+                            <field name="attempt"/>
+                            <field name="is_backlog"/>
+                            <field name="state"/>
+                            <field name="academic_year_id" column_invisible="1"/>
+                            <field name="course_id" column_invisible="1"/>
+                            <button name="action_drop" type="object" string="Anular" class="btn-link"
+                                    invisible="state != 'enrolled'"/>
+                        </list>
+                    </field>
+                    <group>
+                        <group>
+                            <field name="uc_credits"/>
+                            <field name="uc_backlog_count"/>
+                        </group>
+                    </group>
+                    <p class="text-muted small">Na confirmação da matrícula o estudante fica inscrito nas UCs
+                    obrigatórias do ano e nas UCs em atraso; as optativas acrescentam-se aqui. As UCs em atraso
+                    frequentam-se numa turma do ano a que pertencem, onde se lançam as notas.</p>
+                </page>
+            </page>
+        </field>
+    </record>
+</odoo>

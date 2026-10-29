@@ -38,7 +38,7 @@ Decisões tomadas:
 | 4. RH e salários | Concluída e auditada: `l10n_ao_hr` (4a) e `l10n_ao_payroll` (4b) | `docs/fases/fase-4-l10n_ao_hr-payroll.md`, `auditoria-fase-4.md` |
 | 5. Académico | Concluída: 5a (`edu_core`, `edu_people`), 5b (`edu_timetable`, `edu_enrollment`) e 5c (`edu_attendance`, `edu_evaluation`, `edu_payroll`) 5d (`edu_exam`, `edu_records`, `edu_documents`), 5e (`edu_fees`), 5g (`edu_roles`, perfis e acessos) e 5f (`edu_migration_secped`: Vovó Eva migrada para a base `vovo_eva`, 19 395 de 19 395 classificações iguais às do secPed; L.B.D.F, a primeira do geral, na base `lbdf`, 16 700 de 16 700) concluídas: gate da Fase 5 cumprido | `docs/fases/fase-5a-edu_core-people.md`, `fase-5b-edu_timetable-enrollment.md`, `fase-5c-edu_attendance-evaluation.md`, `fase-5d-edu_exam-records-documents.md`, `fase-5e-edu_fees.md`, `fase-5g-edu_roles.md`, `fase-5f-edu_migration_secped.md`, `fase-5f2-migracao-lbdf.md` |
 | 6. Complementos | `edu_portal` e `edu_analytics` feitos; `edu_secretaria`, `edu_library` e `edu_reprography` adiados (não prioritários) | |
-| 7. Universidade | Em curso: 7a (`edu_university`: subsistema superior, licenciatura e mestrado, semestres, UCs com créditos, encarregado opcional) | `docs/fases/fase-7-edu_university.md` |
+| 7. Universidade | Em curso: 7a (`edu_university`: subsistema superior, licenciatura e mestrado, semestres, UCs com créditos, encarregado opcional) e 7b (inscrição por UC, UCs em atraso, precedências, créditos, prescrição) | `docs/fases/fase-7-edu_university.md` |
 
 ## Princípios de arquitectura
 1. **Nunca editar `odoo/`.** Todo o código fica em `custom_addons/`, para que as actualizações do Odoo 20.0 continuem a ser só `git submodule update`.
