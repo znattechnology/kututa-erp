@@ -83,11 +83,15 @@ mestrado. Não se duplica nada: a escola continua a ser a empresa, o curso o `ed
   fica sem esse exame.
 
 ### Progressão e conclusão (7e)
-- Resultado do ano: passa se as UCs em atraso (do ano e anteriores) não excederem o limite; senão fica no mesmo ano
-  e inscreve-se só nas UCs em falta.
-- **`edu.thesis`** (TFC ou dissertação): tema, orientador, co-orientador, júri, data e acta da defesa, nota.
-- Conclusão: todas as UCs e o trabalho final aprovados; média final ponderada pelos créditos; certificado de
-  habilitações, diploma e declaração com notas pelos relatórios do `edu_documents`.
+- Reaproveita o **resultado do ano** (`edu.year.result`) e o fecho do ano: no superior a decisão sai das UCs. Passa
+  sem atraso; passa com até N UCs obrigatórias por aprovar (do ano e dos anteriores); acima disso fica no mesmo ano e
+  inscreve-se só nas UCs em falta; no último ano conclui com todas aprovadas. Com UCs por decidir fica pendente.
+  A média do ano é pesada pelos créditos.
+- O **TFC ou a dissertação** registam-se como a PAP (`edu.final.project`), com co-orientador e júri externo; a nota
+  da defesa é a nota da UC do trabalho final.
+- **Conclusão** (`edu.graduation`): média final do curso = média das UCs pesada pelos créditos (o trabalho final é
+  uma UC), arredondada pelo regulamento; diploma numerado; certificado de habilitações com as UCs por ano e
+  semestre, créditos, trabalho final e média; diploma com o grau e o curso.
 
 ### Portal, propinas e demo (7f)
 - Portal do estudante: UCs inscritas, notas, créditos, exames e propinas; sem portal do encarregado.

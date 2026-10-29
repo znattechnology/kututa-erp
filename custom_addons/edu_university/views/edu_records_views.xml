@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_final_project_form_university" model="ir.ui.view">
+        <field name="name">edu.final.project.form.university</field>
+        <field name="model">edu.final.project</field>
+        <field name="inherit_id" ref="edu_records.edu_final_project_form"/>
+        <field name="arch" type="xml">
+            <field name="advisor_id" position="after">
+                <field name="edu_kind" invisible="edu_kind == 'pap'"/>
+                <field name="co_advisor_id" options="{'no_create': True}" invisible="edu_kind == 'pap'"/>
+            </field>
+            <field name="jury_ids" position="after">
+                <field name="external_jury" invisible="edu_kind == 'pap'"/>
+                <field name="uc_registration_id" invisible="not uc_registration_id"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="edu_graduation_form_university" model="ir.ui.view">
+        <field name="name">edu.graduation.form.university</field>
+        <field name="model">edu.graduation</field>
+        <field name="inherit_id" ref="edu_records.edu_graduation_form"/>
+        <field name="arch" type="xml">
+            <field name="final_result_ids" position="attributes">
+                <attribute name="invisible">uc_result_ids</attribute>
+            </field>
+            <field name="final_result_ids" position="after">
+                <field name="uc_result_ids" invisible="not uc_result_ids">
+                    <list>
+                        <field name="subject_id"/>
+                        <field name="course_year"/>
+                        <field name="semester"/>
+                        <field name="academic_year_id"/>
+                        <field name="credits" sum="Total"/>
+                        <field name="final_grade"/>
+                        <field name="result_source"/>
+                    </list>
+                </field>
+            </field>
+            <field name="internship_id" position="attributes">
+                <attribute name="invisible">uc_result_ids</attribute>
+            </field>
+            <field name="plan_average" position="after">
+                <field name="uc_credits" invisible="not uc_result_ids"/>
+            </field>
+        </field>
+    </record>
+</odoo>

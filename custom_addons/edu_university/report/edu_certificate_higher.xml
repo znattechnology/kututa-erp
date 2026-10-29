@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Certificado de habilitações do ensino superior: as UCs por ano e semestre, com os créditos, o trabalho final
+         e a média final do curso pesada pelos créditos. -->
+    <template id="report_certificate_higher" inherit_id="edu_documents.report_certificate">
+        <xpath expr="//div[hasclass('page')]/t[@t-if='technical']" position="attributes">
+            <attribute name="t-if">technical and not higher</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/t[@t-else='']" position="attributes">
+            <attribute name="t-else"/>
+            <attribute name="t-elif">not higher</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/t[@t-elif='not higher']" position="after">
+            <t t-else="">
+                <t t-set="ucs" t-value="g.uc_result_ids"/>
+                <t t-set="project" t-value="g.final_project_id"/>
+                <p>
+                    <t t-out="company.edu_director_name"/>, <t t-out="company.edu_director_title or 'Reitor(a)'"/>
+                    da <t t-out="company.name"/>, certifica que <t t-call="edu_documents.identity"/>, concluiu no ano académico
+                    <t t-out="g.academic_year_id.name"/> o curso de <t t-out="g.level_id.name"/> em <t t-out="g.course_id.name"/>,
+                    com <t t-out="h.num(g.uc_credits)"/> créditos, tendo obtido as seguintes classificações:
+                </p>
+                <table class="edu-table o_ignore_layout_styling">
+                    <thead>
+                        <tr>
+                            <th>Unidade curricular</th>
+                            <th>Ano</th>
+                            <th>Semestre</th>
+                            <th>Ano académico</th>
+                            <th>Créditos</th>
+                            <th>Classificação</th>
+                            <th>Por extenso</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="ucs" t-as="r">
+                            <td t-out="r.subject_id.name"/>
+                            <td class="text-center"><t t-out="r.course_year"/>.º</td>
+                            <td class="text-center" t-out="'Anual' if r.semester == 'annual' else '%s.º' % r.semester"/>
+                            <td class="text-center" t-out="r.academic_year_id.name"/>
+                            <td class="text-center" t-out="h.num(r.credits)"/>
+                            <td class="text-center" t-out="h.num(r.final_grade)"/>
+                            <td t-out="h.words(r.final_grade).capitalize()"/>
+                        </tr>
+                    </tbody>
+                </table>
+                <p t-if="project">
+                    <t t-out="'Dissertação' if project.edu_kind == 'dissertation' else 'Trabalho de fim de curso'"/>:
+                    «<t t-out="project.name"/>», defendido a <t t-out="h.date(project.defense_date)"/>, com a classificação de
+                    <t t-out="h.grade(project.grade, 'title')"/>.
+                </p>
+                <p>
+                    <strong>Média final do curso: <t t-out="h.grade(g.final_grade, 'title')"/></strong> (média das
+                    classificações das unidades curriculares pesada pelos créditos).
+                </p>
+                <p><strong>OBS: O presente Certificado destina-se para <t t-out="o.purpose"/>.</strong></p>
+                <p>
+                    Por ser verdade e me ter sido solicitado e assim constar nos documentos que ficam arquivados nos serviços
+                    académicos, mandei passar o presente Certificado, que vai por mim assinado e autenticado com o selo branco em
+                    uso nesta instituição.
+                </p>
+            </t>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]" position="before">
+            <t t-set="higher" t-value="g.level_id.subsystem == 'higher'"/>
+        </xpath>
+    </template>
+
+    <!-- Diploma: no superior, o grau e o curso. -->
+    <template id="report_diploma_higher" inherit_id="edu_documents.report_diploma">
+        <xpath expr="//div[hasclass('edu-subtitle')]" position="attributes">
+            <attribute name="t-out">'Formação Média Técnica' if g.level_id.subsystem == 'technical' else ('%s em %s' % (g.level_id.name, g.course_id.name) if g.level_id.subsystem == 'higher' else g.level_id.name)</attribute>
+        </xpath>
+    </template>
+</odoo>

@@ -43,6 +43,20 @@ class EduEnrollment(models.Model):
                 )
         return False
 
+    def _edu_uc_missing_subjects(self):
+        """As UCs obrigatórias do plano, do ano do estudante e dos anteriores, que ainda não aprovou."""
+        self.ensure_one()
+        lines = self.class_id.curriculum_id.line_ids.filtered(
+            lambda line: line.is_compulsory and line.year_id.year <= self.class_number
+        )
+        passed = (
+            self.env['edu.uc.registration']
+            .sudo()
+            .search([('student_id', '=', self.student_id.id), ('state', '=', 'passed')])
+            .subject_id
+        )
+        return lines.subject_id - passed
+
     def action_confirm(self):
         result = super().action_confirm()
         self.filtered(lambda e: e.level_subsystem == 'higher' and e.state == 'active')._edu_uc_generate()

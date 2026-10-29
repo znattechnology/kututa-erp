@@ -17,12 +17,16 @@ Secretaria Express: o ensino superior sobre a mesma base académica.
   semestre
 * Exames: épocas normal, de recurso, especial e de melhoria; convocados tirados da situação de cada inscrição
   (admitidos, por aprovar, finalistas, aprovados); a pauta da sessão dá a nota na UC
+* Resultado do ano pelas UCs: passa com até N UCs em atraso, senão fica no mesmo ano; conclui no último ano com
+  todas aprovadas
+* Trabalho final (TFC ou dissertação) sobre a PAP: orientador, co-orientador, júri, defesa; a nota é a da UC
+* Conclusão do curso com a média pesada pelos créditos; certificado de habilitações e diploma
 * Encarregado de educação opcional: o estudante é o adquirente das suas facturas
     """,
     'author': 'Kututa ERP',
     'countries': ['ao'],
     'category': 'Education',
-    'depends': ['edu_exam'],
+    'depends': ['edu_documents'],
     'data': [
         'security/ir.access.csv',
         'data/edu_level_data.xml',
@@ -32,6 +36,8 @@ Secretaria Express: o ensino superior sobre a mesma base académica.
         'views/edu_student_views.xml',
         'views/edu_uc_registration_views.xml',
         'views/edu_exam_views.xml',
+        'views/edu_records_views.xml',
+        'report/edu_certificate_higher.xml',
     ],
     'license': 'OPL-1',
 }

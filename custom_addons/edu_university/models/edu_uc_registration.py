@@ -3,7 +3,7 @@ from odoo.addons.edu_core.tools.trust import import_mode, is_marked, is_trusted,
 from odoo.addons.edu_enrollment.models.edu_enrollment import SEAT_STATES
 from odoo.exceptions import AccessError, UserError, ValidationError
 
-from ..tools.grading_higher import frequency_mark, resolve
+from ..tools.grading_higher import Outcome, frequency_mark, resolve, round_grade
 from .edu_curriculum import SEMESTERS
 
 STATES = [
@@ -26,6 +26,7 @@ SOURCES = [
     ('appeal', 'Recurso'),
     ('special', 'Exame especial'),
     ('improvement', 'Melhoria'),
+    ('final_work', 'Defesa do trabalho final'),
 ]
 EXAMS = ('exam_normal', 'exam_appeal', 'exam_special', 'exam_improvement')
 # Calculados pelo motor: só o servidor os escreve.
@@ -408,6 +409,8 @@ class EduUcRegistration(models.Model):
                 for name in EXAMS
             }
             outcome = resolve(rules, mf, attendance, **exams)
+            if registration.curriculum_line_id.is_final_work:
+                outcome = registration._final_work_outcome(rules, outcome)
             decided = outcome.source and (outcome.source != 'frequency' or registration._period().state == 'closed')
             vals = {
                 'frequency_mark': mf or 0,
@@ -424,6 +427,25 @@ class EduUcRegistration(models.Model):
             if changed:
                 with trusted(self.env):
                     registration.write(changed)
+
+    def _final_work_outcome(self, rules, outcome):
+        """A UC do trabalho final tem a nota da defesa (TFC ou dissertação), não a da frequência."""
+        project = (
+            self.env['edu.final.project']
+            .sudo()
+            .search(
+                [
+                    ('student_id', '=', self.student_id.id),
+                    ('enrollment_id', '=', self.enrollment_id.id),
+                    ('state', 'in', ('passed', 'failed')),
+                ],
+                limit=1,
+            )
+        )
+        if not project:
+            return Outcome(outcome.status, None, False, '')
+        final = round_grade(project.grade, rules.rounding)
+        return Outcome(outcome.status, final, final >= rules.pass_grade, 'final_work')
 
     @api.model
     def _edu_uc_refresh_keys(self, pairs):
