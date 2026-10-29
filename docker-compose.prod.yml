@@ -6,10 +6,19 @@
 #   /websocket  ->  odoo:8072   (bus/chat em modo multi-worker)
 #   o resto     ->  odoo:8069
 # As portas do Odoo só ficam expostas em 127.0.0.1. Ver docs/producao.md.
+
+# Rotação de logs: sem tecto, o json-file do Docker cresce até encher o disco. 5 × 10 MB por serviço.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
 services:
   db:
     image: postgres:17
     restart: unless-stopped
+    logging: *logging
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -27,6 +36,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
     restart: unless-stopped
+    logging: *logging
     depends_on:
       db:
         condition: service_healthy
