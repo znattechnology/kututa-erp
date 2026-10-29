@@ -5,4 +5,5 @@ from . import (
     test_uc_exam,
     test_uc_graduation,
     test_uc_registration,
+    test_uc_services,
 )

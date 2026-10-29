@@ -69,6 +69,7 @@ class EduExamSession(models.Model):
             if session.state != 'scheduled':
                 raise UserError(self.env._('A sessão já foi realizada ou anulada.'))
             present = session.seat_ids.uc_registration_id
+            summoned = session._edu_uc_candidates() - present
             self.env['edu.exam.seat'].create(
                 [
                     {
@@ -76,9 +77,11 @@ class EduExamSession(models.Model):
                         'enrollment_id': registration.enrollment_id.id,
                         'uc_registration_id': registration.id,
                     }
-                    for registration in session._edu_uc_candidates() - present
+                    for registration in summoned
                 ]
             )
+            if session.kind != 'uc_normal':
+                summoned._edu_charge(session.kind)
             session._check_conflicts()
         return super(EduExamSession, self - uc_sessions).action_summon()
 

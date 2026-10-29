@@ -72,4 +72,44 @@
             <attribute name="t-out">'Formação Média Técnica' if g.level_id.subsystem == 'technical' else ('%s em %s' % (g.level_id.name, g.course_id.name) if g.level_id.subsystem == 'higher' else g.level_id.name)</attribute>
         </xpath>
     </template>
+
+    <!-- Declaração com notas no superior: as UCs aprovadas até ao ano da matrícula, com créditos e média pesada. -->
+    <template id="report_declaration_grades_higher" inherit_id="edu_documents.report_declaration_grades">
+        <xpath expr="//div[hasclass('page')]" position="before">
+            <t t-set="higher" t-value="e.level_subsystem == 'higher'"/>
+            <t t-set="ucs" t-value="e._edu_uc_transcript() if higher else False"/>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/p[3]" position="attributes">
+            <attribute name="t-if">not higher</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/table" position="attributes">
+            <attribute name="t-if">not higher</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/table" position="after">
+            <t t-if="higher">
+                <t t-set="credits" t-value="sum(ucs.mapped('credits'))"/>
+                <p>
+                    Está matriculado(a) no ano académico <t t-out="e.academic_year_id.name"/> no <t t-out="e.class_number"/>.º ano do
+                    curso de <t t-out="e.course_id.level_id.name"/> em <t t-out="e.course_id.name"/>, tendo obtido aprovação nas
+                    seguintes unidades curriculares, num total de <t t-out="h.num(credits)"/> créditos<t t-if="credits">, com a
+                    média de <strong t-out="h.grade(sum(r.final_grade * r.credits for r in ucs) / credits)"/></t>:
+                </p>
+                <table class="edu-table o_ignore_layout_styling">
+                    <thead><tr><th>UNIDADE CURRICULAR</th><th>ANO</th><th>ANO ACADÉMICO</th><th>CRÉDITOS</th><th>NOTA</th></tr></thead>
+                    <tbody>
+                        <tr t-foreach="ucs" t-as="r">
+                            <td t-out="r.subject_id.name"/>
+                            <td class="text-center"><t t-out="r.course_year"/>.º</td>
+                            <td class="text-center" t-out="r.academic_year_id.name"/>
+                            <td class="text-center" t-out="h.num(r.credits)"/>
+                            <td class="text-center" t-out="h.grade(r.final_grade)"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+        </xpath>
+        <xpath expr="//t[@t-set='annex']" position="attributes">
+            <attribute name="t-value">'Classificações na escala de 0 a 20 valores. Média pesada pelos créditos.' if higher else 'Anexo VI · Despacho n.º 60/08, de 30 de Abril · Classificações na escala de 0 a 20 valores, arredondadas às unidades.'</attribute>
+        </xpath>
+    </template>
 </odoo>

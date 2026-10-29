@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_fee_plan_form_university" model="ir.ui.view">
+        <field name="name">edu.fee.plan.form.university</field>
+        <field name="model">edu.fee.plan</field>
+        <field name="inherit_id" ref="edu_fees.edu_fee_plan_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_ids']//field[@name='mandatory']" position="after">
+                <field name="uc_trigger" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

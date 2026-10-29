@@ -1,10 +1,13 @@
 from . import (
     edu_academic_year,
     edu_curriculum,
+    edu_document,
     edu_enrollment,
     edu_evaluation,
     edu_exam,
+    edu_fees,
     edu_level,
+    edu_portal,
     edu_records,
     edu_student,
     edu_uc_registration,

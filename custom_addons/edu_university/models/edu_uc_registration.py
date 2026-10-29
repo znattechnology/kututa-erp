@@ -248,6 +248,7 @@ class EduUcRegistration(models.Model):
                 registration._sync_enrollment()
         # As regras correm depois do n.º da inscrição (prescrição) e da ligação à turma.
         registrations._check_registration()
+        registrations.filtered('is_backlog')._edu_charge('backlog')
         return registrations
 
     def write(self, vals):

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- «Minhas notas» no ensino superior: as UCs do ano, com as provas, a MF, a situação, os exames e a nota final. -->
+    <t t-name="edu_university.StudentGrades" t-inherit="edu_portal.StudentGrades" t-inherit-mode="extension">
+        <xpath expr="//section[@t-elif='!g.active']" position="before">
+            <t t-elif="g.higher" t-call="edu_university.Part.UcBoard"/>
+        </xpath>
+    </t>
+
+    <t t-name="edu_university.Part.UcBoard">
+        <div class="o_edu_kpis">
+            <div class="o_edu_kpi">
+                <span class="o_edu_kpi_label">Créditos do curso</span>
+                <span class="o_edu_kpi_value"><t t-out="g.credits_earned"/> de <t t-out="g.credits_course"/></span>
+                <span class="o_edu_kpi_detail"><t t-out="g.credits_pct"/>% do curso concluído</span>
+            </div>
+            <div class="o_edu_kpi">
+                <span class="o_edu_kpi_label">Média do curso</span>
+                <span class="o_edu_kpi_value" t-att-class="{'text-danger': g.course_average and !g.course_average.pos}" t-out="this.gradeText(g.course_average)"/>
+                <span class="o_edu_kpi_detail">pesada pelos créditos</span>
+            </div>
+            <div class="o_edu_kpi">
+                <span class="o_edu_kpi_label">UCs aprovadas este ano</span>
+                <span class="o_edu_kpi_value"><t t-out="g.passed_count"/> de <t t-out="g.ucs.length"/></span>
+                <span class="o_edu_kpi_detail"><t t-out="g.credits_year"/> créditos inscritos</span>
+            </div>
+            <div class="o_edu_kpi">
+                <span class="o_edu_kpi_label">Para exame</span>
+                <span class="o_edu_kpi_value" t-att-class="{'text-danger': g.exam_count}" t-out="g.exam_count"/>
+                <span class="o_edu_kpi_detail">admitido(a), sem nota final</span>
+            </div>
+        </div>
+        <div t-if="g.year_result" class="alert mb-0" t-att-class="g.year_result.bad ? 'alert-danger' : (g.year_result.good ? 'alert-success' : 'alert-warning')">
+            <t t-set="r" t-value="g.year_result"/>
+            <span class="fw-semibold">Resultado do ano: <t t-out="r.status"/></span><t t-if="r.average">, com média de <t t-out="r.average"/></t>.
+            <t t-if="r.negatives.length"> Por aprovar: <t t-out="this.list(r.negatives)"/>.</t>
+        </div>
+        <section t-if="!g.ucs.length" class="o_edu_st_card text-muted">Ainda não estás inscrito(a) em unidades curriculares.</section>
+        <div t-else="" class="o_edu_st_card p-0 o_edu_st_scroll">
+            <table class="table table-sm mb-0 o_edu_st_table">
+                <thead>
+                    <tr>
+                        <th>Unidade curricular</th>
+                        <th class="text-center">Créditos</th>
+                        <th>Provas e trabalhos</th>
+                        <th class="text-center" title="Média de frequência">MF</th>
+                        <th>Frequência</th>
+                        <th>Exames</th>
+                        <th class="text-center o_edu_st_sep" title="Nota final">Final</th>
+                        <th>Situação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="g.ucs" t-as="u" t-key="u.id" t-att-class="{'text-muted': u.state_key === 'dropped'}">
+                        <td>
+                            <div t-out="u.name"/>
+                            <div class="small text-muted"><t t-out="u.year"/>.º ano · <t t-out="u.semester"/><t t-if="u.backlog"> · em atraso</t></div>
+                        </td>
+                        <td class="text-center" t-out="u.credits"/>
+                        <td>
+                            <span t-if="!u.components.length" class="text-muted">—</span>
+                            <span t-foreach="u.components" t-as="c" t-key="c_index" class="me-2 text-nowrap">
+                                <span class="small text-muted" t-out="c.name + ' '"/><span t-att-class="this.gradeClass(c.value)" t-out="this.gradeText(c.value)"/>
+                            </span>
+                        </td>
+                        <td class="text-center"><span t-att-class="this.gradeClass(u.mf, true)" t-out="this.gradeText(u.mf)"/></td>
+                        <td>
+                            <span t-out="u.status"/>
+                            <div t-if="u.attendance !== null" class="small text-muted">presenças <t t-out="u.attendance"/>%</div>
+                        </td>
+                        <td>
+                            <span t-if="!u.exams.length" class="text-muted">—</span>
+                            <span t-foreach="u.exams" t-as="x" t-key="x_index" class="me-2 text-nowrap">
+                                <span class="small text-muted" t-out="x.label + ' '"/><span t-att-class="this.gradeClass(x.value)" t-out="this.gradeText(x.value)"/>
+                            </span>
+                        </td>
+                        <td class="text-center o_edu_st_sep"><span t-att-class="this.gradeClass(u.final, true)" t-out="this.gradeText(u.final)"/></td>
+                        <td>
+                            <span t-att-class="{'text-primary fw-semibold': u.state_key === 'passed', 'text-danger fw-semibold': u.state_key === 'failed'}" t-out="u.state"/>
+                            <div t-if="u.source and u.final" class="small text-muted" t-out="u.source"/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="small text-muted mb-0">Aprovação com <t t-out="g.pass_text"/> valores. A situação por frequência fica definitiva quando o semestre fecha.</p>
+    </t>
+</templates>

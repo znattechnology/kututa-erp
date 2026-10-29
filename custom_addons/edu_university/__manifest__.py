@@ -21,12 +21,14 @@ Secretaria Express: o ensino superior sobre a mesma base académica.
   todas aprovadas
 * Trabalho final (TFC ou dissertação) sobre a PAP: orientador, co-orientador, júri, defesa; a nota é a da UC
 * Conclusão do curso com a média pesada pelos créditos; certificado de habilitações e diploma
+* Emolumentos automáticos por UC: inscrição em UC em atraso, recurso, especial e melhoria
+* Declaração com notas das UCs aprovadas; portal do estudante com as UCs, a MF, os exames e os créditos
 * Encarregado de educação opcional: o estudante é o adquirente das suas facturas
     """,
     'author': 'Kututa ERP',
     'countries': ['ao'],
     'category': 'Education',
-    'depends': ['edu_documents'],
+    'depends': ['edu_portal'],
     'data': [
         'security/ir.access.csv',
         'data/edu_level_data.xml',
@@ -37,7 +39,13 @@ Secretaria Express: o ensino superior sobre a mesma base académica.
         'views/edu_uc_registration_views.xml',
         'views/edu_exam_views.xml',
         'views/edu_records_views.xml',
+        'views/edu_fees_views.xml',
         'report/edu_certificate_higher.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'edu_university/static/src/portal/*',
+        ],
+    },
     'license': 'OPL-1',
 }
