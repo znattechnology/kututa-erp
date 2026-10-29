@@ -1,0 +1,26 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* muk_web_group
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 20.0\n"
+"PO-Revision-Date: 2026-10-29 15:00+0100\n"
+"Last-Translator: Kututa ERP\n"
+"Language-Team: Portuguese\n"
+"Language: pt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: muk_web_group
+#. odoo-javascript
+#: code:addons/muk_web_group/static/src/search/collapse_all/collapse_all.xml:0
+msgid "Collapse All"
+msgstr "Recolher tudo"
+
+#. module: muk_web_group
+#. odoo-javascript
+#: code:addons/muk_web_group/static/src/search/expand_all/expand_all.xml:0
+msgid "Expand All"
+msgstr "Expandir tudo"
