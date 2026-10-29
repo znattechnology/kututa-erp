@@ -33,6 +33,8 @@ RUN useradd --system --create-home --home-dir /var/lib/odoo --shell /usr/sbin/no
 
 # Código e configuração pertencem ao root (só leitura); só /var/lib/odoo é gravável pelo utilizador odoo.
 COPY odoo /opt/odoo
+# Temas oficiais do site (submódulo design-themes, LGPL).
+COPY design-themes /opt/design-themes
 COPY custom_addons /mnt/extra-addons
 COPY docker/odoo.conf /etc/odoo/odoo.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
