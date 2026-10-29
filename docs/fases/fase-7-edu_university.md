@@ -29,7 +29,8 @@ mestrado. Não se duplica nada: a escola continua a ser a empresa, o curso o `ed
 | Média de frequência (MF) | média ponderada das provas de frequência e trabalhos do semestre |
 | Dispensa de exame | MF ≥ 14 (a MF é a nota final) |
 | Admissão a exame normal | 7 ≤ MF < 14 |
-| Exclusão | MF < 7 ou assiduidade abaixo de 75 % |
+| Exclusão | MF < 7 ou assiduidade abaixo de 75 % (faltas injustificadas nas aulas dadas) |
+| Recurso dos excluídos | não (configurável) |
 | Nota final com exame | 40 % MF + 60 % exame (configurável; 0 % = só o exame) |
 | Mínimo no exame | 10 (configurável; abaixo reprova mesmo com MF alta) |
 | Recurso | quem reprovou ou faltou ao normal; mesma fórmula, com a nota do recurso |
@@ -67,8 +68,11 @@ mestrado. Não se duplica nada: a escola continua a ser a empresa, o curso o `ed
 - **`edu.university.regulation`**: o regulamento por instituição e nível (valores acima).
 - Avaliações e notas: reaproveita-se `edu.assessment`/`edu.grade` e a grelha de notas, por turma, UC e semestre, com
   os tipos «Prova de frequência» e «Trabalho».
-- **`edu.uc.result`** (resultado na UC, um por inscrição): MF, situação (dispensado, admitido, excluído), exame
-  normal, recurso, especial, melhoria, nota final, aprovado, créditos obtidos.
+- O resultado fica **na própria inscrição em UC** (há uma por UC; um modelo à parte só duplicava): MF, assiduidade,
+  situação (dispensado, admitido, excluído), exame normal, recurso, especial, melhoria, nota final, origem da nota,
+  créditos obtidos. As notas lançadas na grelha recalculam-no (o cálculo das médias trimestrais é desviado para
+  aqui nas matrículas do superior); a situação por frequência fecha com o semestre (a anual, com o 2.º), a nota de
+  exame decide logo.
 - Motor puro em `tools/grading_higher.py`, com testes «golden» sobre o regulamento por defeito.
 
 ### Exames (7d)

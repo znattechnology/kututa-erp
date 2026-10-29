@@ -1,8 +1,9 @@
 from odoo import api, fields, models
-from odoo.addons.edu_core.tools.trust import import_mode, is_trusted, trusted
+from odoo.addons.edu_core.tools.trust import import_mode, is_marked, is_trusted, trusted
 from odoo.addons.edu_enrollment.models.edu_enrollment import SEAT_STATES
 from odoo.exceptions import AccessError, UserError, ValidationError
 
+from ..tools.grading_higher import frequency_mark, resolve
 from .edu_curriculum import SEMESTERS
 
 STATES = [
@@ -13,6 +14,26 @@ STATES = [
 ]
 # Por aprovar: conta como UC em atraso no ano seguinte.
 PENDING = ('failed', 'dropped', 'enrolled')
+FREQUENCY_STATUSES = [
+    ('pending', 'Sem média'),
+    ('exempt', 'Dispensado'),
+    ('admitted', 'Admitido a exame'),
+    ('excluded', 'Excluído'),
+]
+SOURCES = [
+    ('frequency', 'Frequência'),
+    ('normal', 'Exame normal'),
+    ('appeal', 'Recurso'),
+    ('special', 'Exame especial'),
+    ('improvement', 'Melhoria'),
+]
+EXAMS = ('exam_normal', 'exam_appeal', 'exam_special', 'exam_improvement')
+# Calculados pelo motor: só o servidor os escreve.
+COMPUTED = (
+    'frequency_mark', 'has_frequency_mark', 'attendance_rate', 'has_attendance', 'frequency_status', 'final_grade',
+    'has_final', 'result_source',
+)  # fmt: skip
+ASSESSMENT_TYPES = ('frequency', 'coursework', 'continuous')
 
 
 class EduUcRegistration(models.Model):
@@ -56,6 +77,26 @@ class EduUcRegistration(models.Model):
     is_backlog = fields.Boolean(string='Em atraso', compute='_compute_is_backlog', store=True)
     state = fields.Selection(STATES, string='Situação', default='enrolled', required=True, readonly=True, copy=False)
     note = fields.Char(string='Observação')
+    # Avaliação (motor em tools/grading_higher.py, regras do regulamento académico)
+    frequency_mark = fields.Float(string='MF', digits=(4, 2), readonly=True, help='Média de frequência.')
+    has_frequency_mark = fields.Boolean(readonly=True)
+    attendance_rate = fields.Float(string='Assiduidade (%)', digits=(5, 1), readonly=True)
+    has_attendance = fields.Boolean(readonly=True)
+    frequency_status = fields.Selection(
+        FREQUENCY_STATUSES, string='Frequência', default='pending', required=True, readonly=True
+    )
+    exam_normal = fields.Float(string='Exame normal', digits=(4, 2))
+    has_exam_normal = fields.Boolean(string='Com exame normal')
+    exam_appeal = fields.Float(string='Recurso', digits=(4, 2))
+    has_exam_appeal = fields.Boolean(string='Com recurso')
+    exam_special = fields.Float(string='Exame especial', digits=(4, 2))
+    has_exam_special = fields.Boolean(string='Com exame especial')
+    exam_improvement = fields.Float(string='Melhoria', digits=(4, 2))
+    has_exam_improvement = fields.Boolean(string='Com melhoria')
+    final_grade = fields.Float(string='Nota final', digits=(4, 2), readonly=True)
+    has_final = fields.Boolean(string='Com nota final', readonly=True)
+    result_source = fields.Selection(SOURCES, string='Origem da nota', readonly=True)
+    credits_earned = fields.Float(string='Créditos obtidos', compute='_compute_credits_earned', digits=(4, 1))
 
     _enrollment_subject_uniq = models.Constraint(
         'UNIQUE(enrollment_id, subject_id)', 'O estudante já está inscrito nesta UC neste ano.'
@@ -68,6 +109,11 @@ class EduUcRegistration(models.Model):
             registration.curriculum_line_id = curriculum.line_ids.filtered(
                 lambda line, s=registration.subject_id: line.subject_id == s
             )[:1]
+
+    @api.depends('state', 'credits')
+    def _compute_credits_earned(self):
+        for registration in self:
+            registration.credits_earned = registration.credits if registration.state == 'passed' else 0
 
     @api.depends('course_year', 'enrollment_id.class_number')
     def _compute_is_backlog(self):
@@ -206,10 +252,21 @@ class EduUcRegistration(models.Model):
     def write(self, vals):
         if 'state' in vals and not is_trusted(self.env):
             raise AccessError(self.env._('A situação na UC resulta da avaliação (ou de «Anular»).'))
+        if set(COMPUTED) & set(vals) and not is_trusted(self.env):
+            raise AccessError(self.env._('A média, a situação e a nota final calculam-se a partir das notas.'))
+        exams = set(EXAMS) & set(vals)
+        if exams:
+            vals = dict(vals)
+            for name in exams:
+                vals.setdefault(f'has_{name}', vals[name] is not False and vals[name] is not None)
+            for registration in self:
+                registration._check_exam_entry(vals)
         if {'enrollment_id', 'subject_id'} & set(vals) and not is_trusted(self.env):
             raise UserError(self.env._('Para mudar de UC, anule esta inscrição e crie outra.'))
         old_classes = {registration: registration.class_id for registration in self}
         result = super().write(vals)
+        if exams or {f'has_{name}' for name in EXAMS} & set(vals):
+            self._edu_uc_refresh()
         if 'class_id' in vals:
             for registration in self.filtered(lambda r: r.class_id != old_classes[r]):
                 registration._unsync_enrollment(old_classes[registration])
@@ -271,3 +328,106 @@ class EduUcRegistration(models.Model):
             ).unlink()
             if self.subject_id in enrollment.subject_ids:
                 enrollment.subject_ids -= self.subject_id
+
+    # ------------------------------------------------------------------
+    # Avaliação
+    # ------------------------------------------------------------------
+    def _check_exam_entry(self, vals):
+        """O exame normal é dos admitidos; o recurso, de quem não aprovou (e, se o regulamento deixar, dos excluídos);
+        a melhoria, de quem aprovou. As notas de exame vão de 0 a 20."""
+        self.ensure_one()
+        for name in EXAMS:
+            if vals.get(name) and not 0 <= vals[name] <= 20:
+                raise ValidationError(self.env._('As notas de exame vão de 0 a 20.'))
+        if self.state == 'dropped':
+            raise UserError(self.env._('A inscrição em %s foi anulada.', self.subject_id.name))
+        if is_marked(self.env):
+            return  # as pautas das sessões de exame (o servidor sabe quem foi convocado)
+        status = self.frequency_status
+        if vals.get('has_exam_normal') and status != 'admitted':
+            raise UserError(self.env._('Só os admitidos fazem o exame normal de %s.', self.subject_id.name))
+        if vals.get('has_exam_appeal'):
+            excluded_ok = status == 'excluded' and self._regulation().appeal_for_excluded
+            if status != 'admitted' and not excluded_ok:
+                raise UserError(self.env._('O recurso de %s não é para esta situação.', self.subject_id.name))
+        if vals.get('has_exam_improvement') and self.state != 'passed':
+            raise UserError(self.env._('A melhoria é de uma UC aprovada.'))
+
+    def _period(self):
+        """O período lectivo onde a UC termina (a anual, no 2.º semestre)."""
+        self.ensure_one()
+        number = 2 if self.semester == 'annual' else int(self.semester or 1)
+        return self.academic_year_id.trimester_ids.filtered(lambda t: t.number == number)[:1]
+
+    def _frequency_items(self):
+        grades = (
+            self.env['edu.grade']
+            .sudo()
+            .search(
+                [
+                    ('enrollment_id', '=', self.enrollment_id.id),
+                    ('subject_id', '=', self.subject_id.id),
+                    ('class_id', '=', self.class_id.id),
+                    ('assessment_type', 'in', ASSESSMENT_TYPES),
+                    ('graded', '=', True),
+                ]
+            )
+        )
+        return [
+            (grade.score * 20 / (grade.assessment_id.max_score or 20), grade.assessment_id.weight or 0)
+            for grade in grades
+        ]
+
+    def _attendance(self):
+        """% de presenças nas aulas dadas da UC (as faltas justificadas não contam contra); None sem aulas."""
+        lines = (
+            self.env['edu.lesson.attendance']
+            .sudo()
+            .search(
+                [
+                    ('enrollment_id', '=', self.enrollment_id.id),
+                    ('subject_id', '=', self.subject_id.id),
+                    ('class_id', '=', self.class_id.id),
+                    ('lesson_state', '=', 'done'),
+                ]
+            )
+        )
+        if not lines:
+            return None
+        return 100 * len(lines.filtered(lambda line: line.state != 'absent')) / len(lines)
+
+    def _edu_uc_refresh(self):
+        """Recalcula a MF, a situação e a nota final; a situação na UC fecha com o período (a nota de exame decide
+        logo)."""
+        for registration in self.filtered(lambda r: r.state != 'dropped'):
+            rules = registration._regulation()._rules()
+            mf = frequency_mark(registration._frequency_items())
+            attendance = registration._attendance()
+            exams = {
+                name.removeprefix('exam_'): registration[name] if registration[f'has_{name}'] else None
+                for name in EXAMS
+            }
+            outcome = resolve(rules, mf, attendance, **exams)
+            decided = outcome.source and (outcome.source != 'frequency' or registration._period().state == 'closed')
+            vals = {
+                'frequency_mark': mf or 0,
+                'has_frequency_mark': mf is not None,
+                'attendance_rate': attendance or 0,
+                'has_attendance': attendance is not None,
+                'frequency_status': outcome.status,
+                'final_grade': outcome.final or 0,
+                'has_final': outcome.final is not None,
+                'result_source': outcome.source or False,
+                'state': ('passed' if outcome.passed else 'failed') if decided else 'enrolled',
+            }
+            changed = {key: value for key, value in vals.items() if registration[key] != value}
+            if changed:
+                with trusted(self.env):
+                    registration.write(changed)
+
+    @api.model
+    def _edu_uc_refresh_keys(self, pairs):
+        """Recalcula as inscrições de [(matrícula, UC)] (notas lançadas ou apagadas)."""
+        domain = [('enrollment_id', 'in', list({e for e, _s in pairs}))]
+        registrations = self.sudo().search(domain).filtered(lambda r: (r.enrollment_id.id, r.subject_id.id) in pairs)
+        registrations._edu_uc_refresh()

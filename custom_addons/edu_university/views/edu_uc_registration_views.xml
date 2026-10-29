@@ -14,7 +14,23 @@
                 <field name="class_id"/>
                 <field name="attempt"/>
                 <field name="is_backlog"/>
+                <field name="frequency_mark" optional="show" invisible="not has_frequency_mark"/>
+                <field name="attendance_rate" optional="hide" invisible="not has_attendance"/>
+                <field name="frequency_status" optional="show"/>
+                <field name="exam_normal" optional="show" invisible="not has_exam_normal"/>
+                <field name="exam_appeal" optional="show" invisible="not has_exam_appeal"/>
+                <field name="exam_special" optional="hide" invisible="not has_exam_special"/>
+                <field name="exam_improvement" optional="hide" invisible="not has_exam_improvement"/>
+                <field name="final_grade" invisible="not has_final"/>
+                <field name="result_source" optional="hide"/>
                 <field name="state"/>
+                <field name="has_frequency_mark" column_invisible="1"/>
+                <field name="has_attendance" column_invisible="1"/>
+                <field name="has_exam_normal" column_invisible="1"/>
+                <field name="has_exam_appeal" column_invisible="1"/>
+                <field name="has_exam_special" column_invisible="1"/>
+                <field name="has_exam_improvement" column_invisible="1"/>
+                <field name="has_final" column_invisible="1"/>
                 <field name="academic_year_id" optional="hide"/>
                 <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
@@ -34,6 +50,10 @@
                 <separator/>
                 <filter name="enrolled" string="Inscritos" domain="[('state', '=', 'enrolled')]"/>
                 <filter name="failed" string="Reprovados" domain="[('state', '=', 'failed')]"/>
+                <separator/>
+                <filter name="exempt" string="Dispensados" domain="[('frequency_status', '=', 'exempt')]"/>
+                <filter name="admitted" string="Admitidos a exame" domain="[('frequency_status', '=', 'admitted')]"/>
+                <filter name="excluded" string="Excluídos" domain="[('frequency_status', '=', 'excluded')]"/>
                 <filter name="group_subject" string="UC" context="{'group_by': 'subject_id'}"/>
                 <filter name="group_year" string="Ano académico" context="{'group_by': 'academic_year_id'}"/>
             </search>
@@ -56,6 +76,9 @@
                 <field name="max_attempts"/>
                 <field name="max_semester_credits"/>
                 <field name="max_backlog"/>
+                <field name="exemption_grade"/>
+                <field name="admission_grade"/>
+                <field name="frequency_weight"/>
                 <field name="company_id" groups="base.group_multi_company"/>
             </list>
         </field>
@@ -81,6 +104,19 @@
                         </group>
                         <group string="Progressão">
                             <field name="max_backlog"/>
+                        </group>
+                        <group string="Frequência">
+                            <field name="pass_grade"/>
+                            <field name="exemption_grade"/>
+                            <field name="admission_grade"/>
+                            <field name="min_attendance"/>
+                        </group>
+                        <group string="Exames">
+                            <field name="frequency_weight"/>
+                            <field name="exam_min"/>
+                            <field name="appeal_for_excluded"/>
+                            <field name="special_fixed_pass"/>
+                            <field name="rounding"/>
                         </group>
                     </group>
                     <field name="note" placeholder="Regulamento aprovado pela instituição (n.º, data)…"/>
@@ -123,7 +159,12 @@
                             <field name="class_id" options="{'no_create': True}"/>
                             <field name="attempt"/>
                             <field name="is_backlog"/>
+                            <field name="frequency_mark" invisible="not has_frequency_mark"/>
+                            <field name="frequency_status"/>
+                            <field name="final_grade" invisible="not has_final"/>
                             <field name="state"/>
+                            <field name="has_frequency_mark" column_invisible="1"/>
+                            <field name="has_final" column_invisible="1"/>
                             <field name="academic_year_id" column_invisible="1"/>
                             <field name="course_id" column_invisible="1"/>
                             <button name="action_drop" type="object" string="Anular" class="btn-link"

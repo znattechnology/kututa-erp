@@ -12,12 +12,15 @@ Secretaria Express: o ensino superior sobre a mesma base académica.
 * Inscrição por unidade curricular: na matrícula, as UCs obrigatórias do ano e as UCs em atraso (numa turma do
   ano a que pertencem); precedências, créditos por semestre e prescrição pelo regulamento académico
 * Regulamento académico por instituição e nível, com valores de origem típicos
+* Avaliação: provas de frequência e trabalhos na grelha de notas; média de frequência, dispensa, admissão e
+  exclusão (também pela assiduidade); exame normal, recurso, especial e melhoria; a situação na UC fecha com o
+  semestre
 * Encarregado de educação opcional: o estudante é o adquirente das suas facturas
     """,
     'author': 'Kututa ERP',
     'countries': ['ao'],
     'category': 'Education',
-    'depends': ['edu_enrollment'],
+    'depends': ['edu_evaluation'],
     'data': [
         'security/ir.access.csv',
         'data/edu_level_data.xml',

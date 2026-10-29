@@ -75,3 +75,21 @@ class EduTrimester(models.Model):
             if overlap:
                 raise ValidationError(self.env._('Os semestres de %s sobrepõem-se.', year.name))
         return super(EduTrimester, self - higher)._check_dates()
+
+    def action_close(self):
+        result = super().action_close()
+        self.filtered('edu_is_higher')._edu_uc_refresh()
+        return result
+
+    def action_reopen(self):
+        result = super().action_reopen()
+        self.filtered('edu_is_higher')._edu_uc_refresh()
+        return result
+
+    def _edu_uc_refresh(self):
+        """Fechar (ou reabrir) o semestre fecha (ou reabre) a situação nas UCs que nele terminam."""
+        for semester in self:
+            semesters = ['annual', str(semester.number)] if semester.number == 2 else [str(semester.number)]
+            self.env['edu.uc.registration'].sudo().search(
+                [('academic_year_id', '=', semester.academic_year_id.id), ('semester', 'in', semesters)]
+            )._edu_uc_refresh()
