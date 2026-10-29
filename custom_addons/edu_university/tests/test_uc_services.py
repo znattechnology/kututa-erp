@@ -152,6 +152,6 @@ class TestUcServices(AccountTestInvoicingCommon):
         data = self.env['edu.student.portal'].grades(self.student, second)
         self.assertTrue(data['higher'])
         self.assertEqual({row['name'] for row in data['ucs']}, {'Biologia', 'Fisiologia'})
-        self.assertEqual((data['credits_earned'], data['credits_course']), (8, 22))
+        self.assertEqual((data['credits_earned'], data['credits_course']), ('8', '22'))
         self.assertEqual(data['course_average']['text'], '14')
         self.assertTrue(next(row for row in data['ucs'] if row['name'] == 'Biologia')['backlog'])

@@ -40,6 +40,7 @@ Secretaria Express: o ensino superior sobre a mesma base académica.
         'views/edu_exam_views.xml',
         'views/edu_records_views.xml',
         'views/edu_fees_views.xml',
+        'views/edu_uc_equivalence_views.xml',
         'report/edu_certificate_higher.xml',
     ],
     'assets': {

@@ -162,3 +162,30 @@ class TestUcRegistration(TransactionCase):
         )
         with self.assertRaises(AccessError):
             registration.with_user(user).state = 'passed'
+
+    def test_equivalence(self):
+        """Transferido para o 2.º ano: as UCs do 1.º creditam-se por equivalência e contam para a progressão."""
+        second = self._enroll(self.c2_y2)
+        self.assertEqual(second.uc_registration_ids.subject_id, self.micro, 'Estatística precisa de MAT2.')
+        Registration = self.env['edu.uc.registration']
+        for subject, grade in ((self.mat1, 12), (self.intro, 14), (self.mat2, 11)):
+            Registration._edu_credit_equivalence(second, subject, grade, 'Universidade de origem')
+        credited = second.uc_registration_ids.filtered('is_equivalence')
+        self.assertEqual(set(credited.mapped('state')), {'passed'})
+        self.assertNotIn(self.mat1, second.subject_ids, 'Não entra nas listas da turma.')
+        credited._edu_uc_refresh()
+        self.assertEqual(set(credited.mapped('final_grade')), {12, 14, 11}, 'O recálculo não apaga a equivalência.')
+        self.assertEqual(second._edu_uc_missing_subjects(), self.micro | self.stats, 'Só faltam as do 2.º ano.')
+        # Com MAT2 creditada, Estatística (que dependia dela) entra sozinha.
+        self.assertIn(self.stats, second.uc_registration_ids.subject_id)
+        with self.assertRaises(ValidationError):
+            Registration._edu_credit_equivalence(second, self.opt, 8)
+        user = self.env['res.users'].create(
+            {'name': 'Sec', 'login': 'sec_eq', 'group_ids': [(6, 0, [self.env.ref('edu_core.group_edu_user').id])]}
+        )
+        with self.assertRaises(AccessError):
+            Registration.with_user(user)._edu_credit_equivalence(second, self.opt, 15)
+        with self.assertRaises(AccessError):
+            Registration.with_user(user).create(
+                {'enrollment_id': second.id, 'subject_id': self.opt.id, 'is_equivalence': True}
+            )

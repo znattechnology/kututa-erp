@@ -161,6 +161,7 @@
                             <field name="class_id" options="{'no_create': True}"/>
                             <field name="attempt"/>
                             <field name="is_backlog"/>
+                            <field name="is_equivalence" optional="hide"/>
                             <field name="frequency_mark" invisible="not has_frequency_mark"/>
                             <field name="frequency_status"/>
                             <field name="final_grade" invisible="not has_final"/>
@@ -173,6 +174,8 @@
                                     invisible="state != 'enrolled'"/>
                         </list>
                     </field>
+                    <button name="action_uc_equivalence" type="object" string="Creditar por equivalência" class="btn-link"
+                            groups="edu_core.group_edu_manager" invisible="state not in ('active', 'irregular')"/>
                     <group>
                         <group>
                             <field name="uc_credits"/>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_uc_equivalence_form" model="ir.ui.view">
+        <field name="name">edu.uc.equivalence.form</field>
+        <field name="model">edu.uc.equivalence</field>
+        <field name="arch" type="xml">
+            <form string="Creditar UC por equivalência">
+                <group>
+                    <field name="enrollment_id" readonly="1"/>
+                    <field name="allowed_subject_ids" invisible="1"/>
+                    <field name="subject_id" options="{'no_create': True}"/>
+                    <field name="grade"/>
+                    <field name="note" placeholder="Instituição, curso e documento"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Creditar" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

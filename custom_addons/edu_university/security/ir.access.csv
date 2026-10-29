@@ -5,3 +5,4 @@ access_edu_uc_registration_user,access_edu_uc_registration_user,edu.uc.registrat
 access_edu_uc_registration_employee,access_edu_uc_registration_employee,edu.uc.registration,base.group_user,r,
 edu_university_regulation_comp_rule,edu.university.regulation multi-empresa,edu.university.regulation,,crud,"[('company_id', 'in', company_ids)]"
 edu_uc_registration_comp_rule,edu.uc.registration multi-empresa,edu.uc.registration,,crud,"[('company_id', 'in', company_ids)]"
+access_edu_uc_equivalence_manager,access_edu_uc_equivalence_manager,edu.uc.equivalence,edu_core.group_edu_manager,crud,

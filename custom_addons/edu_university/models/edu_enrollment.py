@@ -28,7 +28,7 @@ class EduEnrollment(models.Model):
         limit = regulation.max_semester_credits
         if not limit:
             return False
-        active = self.uc_registration_ids.filtered(lambda r: r.state != 'dropped')
+        active = self.uc_registration_ids.filtered(lambda r: r.state != 'dropped' and not r.is_equivalence)
         annual = sum(active.filtered(lambda r: r.semester == 'annual').mapped('credits')) / 2
         for semester in ('1', '2'):
             total = annual + sum(active.filtered(lambda r, s=semester: r.semester == s).mapped('credits'))
@@ -117,3 +117,14 @@ class EduEnrollment(models.Model):
                 if warnings:
                     enrollment.warning = '\n'.join(filter(None, [enrollment.warning, *warnings]))
         return True
+
+    def action_uc_equivalence(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.env._('Creditar UC por equivalência'),
+            'res_model': 'edu.uc.equivalence',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_enrollment_id': self.id},
+        }

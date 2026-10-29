@@ -3,6 +3,12 @@ from odoo.addons.edu_portal.models.edu_student_portal import grade_text
 
 from .edu_uc_registration import FREQUENCY_STATUSES, SOURCES, STATES
 
+
+def number(value):
+    """Os créditos como as notas: vírgula decimal, sem zeros à direita (7,5; 6)."""
+    return f'{value:g}'.replace('.', ',')
+
+
 SEMESTER_LABELS = {'1': '1.º sem.', '2': '2.º sem.', 'annual': 'Anual'}
 
 
@@ -87,7 +93,8 @@ class EduStudentPortal(models.AbstractModel):
                     'code': registration.subject_id.code or '',
                     'semester': SEMESTER_LABELS.get(registration.semester, ''),
                     'year': registration.course_year,
-                    'credits': registration.credits,
+                    'credits': number(registration.credits),
+                    'credits_value': registration.credits,
                     'backlog': registration.is_backlog,
                     'components': components,
                     'mf': cell(registration.frequency_mark, registration.has_frequency_mark),
@@ -101,6 +108,11 @@ class EduStudentPortal(models.AbstractModel):
                     'state_key': registration.state,
                 }
             )
+        # A média do ano até agora: as notas finais já dadas e, nas outras UCs, a MF.
+        values = [r['final']['value'] if r['final'] else r['mf']['value'] for r in rows if r['final'] or r['mf']]
+        if values:
+            mean = sum(values) / len(values)
+            data['year_average'] = {'text': grade_text(mean), 'pos': mean >= regulation.pass_grade}
         passed = enrollment._edu_uc_transcript()
         course_credits = enrollment.class_id.curriculum_id.total_credits
         earned = sum(passed.mapped('credits'))
@@ -108,9 +120,9 @@ class EduStudentPortal(models.AbstractModel):
         data.update(
             {
                 'ucs': rows,
-                'credits_year': sum(r['credits'] for r in rows if r['state_key'] != 'dropped'),
-                'credits_earned': earned,
-                'credits_course': course_credits,
+                'credits_year': number(sum(r['credits_value'] for r in rows if r['state_key'] != 'dropped')),
+                'credits_earned': number(earned),
+                'credits_course': number(course_credits),
                 'credits_pct': round(100 * earned / course_credits) if course_credits else 0,
                 'course_average': cell(average, average is not None),
                 'passed_count': len([r for r in rows if r['state_key'] == 'passed']),

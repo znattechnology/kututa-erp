@@ -93,11 +93,19 @@ mestrado. Não se duplica nada: a escola continua a ser a empresa, o curso o `ed
   uma UC), arredondada pelo regulamento; diploma numerado; certificado de habilitações com as UCs por ano e
   semestre, créditos, trabalho final e média; diploma com o grau e o curso.
 
-### Portal, propinas e demo (7f)
-- Portal do estudante: UCs inscritas, notas, créditos, exames e propinas; sem portal do encarregado.
-- Propinas mensais pelo `edu_fees`; emolumentos a pedido (inscrição em UC em atraso, exame de recurso e especial,
-  melhoria, certificado).
-- Base de demonstração `kututa_universidade` com uma licenciatura e um mestrado.
+### Portal, propinas, equivalências e demo (7f)
+- **Emolumentos por UC:** as taxas do plano com gatilho (inscrição em UC em atraso, recurso, especial, melhoria)
+  facturam-se ao estudante uma vez por inscrição, quando acontece; ficam fora da geração das propinas e do balcão.
+- **Equivalências:** a direcção credita UCs aprovadas noutra instituição ou curso (transferência, migração), com
+  nota, sem frequência nem exames; contam para a progressão e destravam as precedências.
+- **Declaração com notas:** as UCs aprovadas até ao ano da matrícula, com créditos e média pesada (a meio do curso).
+- **Portal do estudante:** o painel e «Minhas notas» mostram as UCs (provas e trabalhos, MF, presenças, situação,
+  exames, nota final) e os créditos e a média do curso; sem portal do encarregado.
+- **Turmas:** «2.º ano A · EI», não «2ª A».
+- **Base de demonstração** `kututa_universidade` (Instituto Superior Kianda, fictício): Licenciatura em Engenharia
+  Informática (4 anos, TFC) e Mestrado em Gestão de Sistemas de Informação (dissertação); 2025/26 fechado com
+  notas reais (14 passam, 3 com UCs em atraso, 1 retido), 2026/27 com a 1.ª frequência lançada. Script em
+  `tools/seed_demo_universidade.py`; os acessos ficam num ficheiro fora do repositório.
 
 ## Gate
 Um estudante de licenciatura faz o ciclo completo sem encarregado: candidatura → matrícula → inscrição em UCs →
@@ -105,6 +113,10 @@ frequências → dispensa, exame e recurso → passagem com UCs em atraso → TF
 com os casos calculados à mão sobre o regulamento por defeito.
 
 ## Pendentes
+- Ver o certificado e o diploma em PDF e acertá-los pelo modelo oficial de uma universidade.
+- As provas da turma no portal mostram as sessões das épocas do superior a toda a turma (devia ser só aos convocados).
+- O planeador visual de provas ainda não conhece as épocas do superior.
+- A facturação dos emolumentos só corre com a AGT ligada (como as propinas).
 - Regulamento de uma universidade cliente, para afinar os valores por defeito.
 - Doutoramento.
 - Mapas para o MESCTI (estatísticas oficiais), quando houver modelo.

@@ -27,12 +27,13 @@ SOURCES = [
     ('special', 'Exame especial'),
     ('improvement', 'Melhoria'),
     ('final_work', 'Defesa do trabalho final'),
+    ('equivalence', 'Equivalência'),
 ]
 EXAMS = ('exam_normal', 'exam_appeal', 'exam_special', 'exam_improvement')
 # Calculados pelo motor: só o servidor os escreve.
 COMPUTED = (
     'frequency_mark', 'has_frequency_mark', 'attendance_rate', 'has_attendance', 'frequency_status', 'final_grade',
-    'has_final', 'result_source',
+    'has_final', 'result_source', 'is_equivalence',
 )  # fmt: skip
 ASSESSMENT_TYPES = ('frequency', 'coursework', 'continuous')
 
@@ -58,7 +59,11 @@ class EduUcRegistration(models.Model):
     course_id = fields.Many2one(related='enrollment_id.course_id', store=True)
     subject_id = fields.Many2one('edu.subject', string='Unidade curricular', required=True, check_company=True)
     curriculum_line_id = fields.Many2one(
-        'edu.curriculum.line', string='Linha do plano', compute='_compute_curriculum_line_id', store=True
+        'edu.curriculum.line',
+        string='Linha do plano',
+        compute='_compute_curriculum_line_id',
+        store=True,
+        precompute=True,
     )
     course_year = fields.Integer(string='Ano', related='curriculum_line_id.year_id.year', store=True)
     semester = fields.Selection(SEMESTERS, string='Semestre', related='curriculum_line_id.semester', store=True)
@@ -97,6 +102,9 @@ class EduUcRegistration(models.Model):
     final_grade = fields.Float(string='Nota final', digits=(4, 2), readonly=True)
     has_final = fields.Boolean(string='Com nota final', readonly=True)
     result_source = fields.Selection(SOURCES, string='Origem da nota', readonly=True)
+    is_equivalence = fields.Boolean(
+        string='Por equivalência', readonly=True, help='Aprovada noutra instituição ou curso e creditada aqui.'
+    )
     credits_earned = fields.Float(string='Créditos obtidos', compute='_compute_credits_earned', digits=(4, 1))
 
     _enrollment_subject_uniq = models.Constraint(
@@ -201,6 +209,8 @@ class EduUcRegistration(models.Model):
                         current=enrollment.class_number,
                     )
                 )
+            if registration.is_equivalence:
+                continue
             if subject in registration._passed_subjects() and registration.state != 'passed':
                 raise ValidationError(self.env._('O estudante já aprovou %s.', subject.name))
             missing = registration._missing_precedences()
@@ -239,13 +249,16 @@ class EduUcRegistration(models.Model):
         enrollments = self.env['edu.enrollment'].browse(
             [vals['enrollment_id'] for vals in vals_list if vals.get('enrollment_id')]
         )
+        if not is_trusted(self.env) and any(set(COMPUTED) & set(vals) for vals in vals_list):
+            raise AccessError(self.env._('A situação e a nota da UC não se gravam à mão.'))
         if not is_trusted(self.env) and enrollments.filtered(lambda e: e.state not in SEAT_STATES):
             raise UserError(self.env._('Só se inscreve em UCs com a matrícula em curso.'))
         registrations = super().create(vals_list)
         for registration in registrations:
             with trusted(self.env):
                 registration.attempt = len(registration._previous()) + 1
-                registration._sync_enrollment()
+                if not registration.is_equivalence:
+                    registration._sync_enrollment()
         # As regras correm depois do n.º da inscrição (prescrição) e da ligação à turma.
         registrations._check_registration()
         registrations.filtered('is_backlog')._edu_charge('backlog')
@@ -282,10 +295,36 @@ class EduUcRegistration(models.Model):
                 raise UserError(self.env._('Uma UC com resultado não se elimina.'))
 
     def unlink(self):
-        pairs = [(registration, registration.class_id) for registration in self]
+        pairs = [(registration, registration.class_id) for registration in self if not registration.is_equivalence]
         for registration, edu_class in pairs:
             registration._unsync_enrollment(edu_class)
         return super().unlink()
+
+    @api.model
+    def _edu_credit_equivalence(self, enrollment, subject, grade, note=False):
+        """Credita uma UC do plano aprovada noutra instituição ou curso (transferência, migração): fica aprovada com
+        a nota, sem frequência nem exames, e não entra nas listas da turma. Só a direcção."""
+        if not self.env.su and not self.env.user.has_group('edu_core.group_edu_manager'):
+            raise AccessError(self.env._('Só a direcção credita UCs por equivalência.'))
+        if not 10 <= grade <= 20:
+            raise ValidationError(self.env._('A UC creditada tem nota de aprovação (10 a 20).'))
+        with trusted(self.env):
+            registration = self.with_context(edu_uc_generate=True).create(
+                {'enrollment_id': enrollment.id, 'subject_id': subject.id, 'is_equivalence': True, 'note': note}
+            )
+            registration.write(
+                {
+                    'state': 'passed',
+                    'final_grade': grade,
+                    'has_final': True,
+                    'result_source': 'equivalence',
+                    'frequency_status': 'exempt',
+                }
+            )
+        # O que estava bloqueado por esta precedência entra agora.
+        if enrollment.state in SEAT_STATES:
+            enrollment._edu_uc_generate()
+        return registration
 
     def action_drop(self):
         """Anula a inscrição na UC: sai das listas da turma; conta como inscrição e fica por aprovar."""
@@ -401,7 +440,7 @@ class EduUcRegistration(models.Model):
     def _edu_uc_refresh(self):
         """Recalcula a MF, a situação e a nota final; a situação na UC fecha com o período (a nota de exame decide
         logo)."""
-        for registration in self.filtered(lambda r: r.state != 'dropped'):
+        for registration in self.filtered(lambda r: r.state != 'dropped' and not r.is_equivalence):
             rules = registration._regulation()._rules()
             mf = frequency_mark(registration._frequency_items())
             attendance = registration._attendance()

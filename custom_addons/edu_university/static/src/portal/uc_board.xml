@@ -7,6 +7,47 @@
         </xpath>
     </t>
 
+    <!-- O painel: no superior, as UCs (nota final ou MF) e os créditos do curso, em vez dos trimestres. -->
+    <t t-name="edu_university.StudentHome" t-inherit="edu_portal.StudentHome" t-inherit-mode="extension">
+        <xpath expr="//h2[@id='o_edu_st_chart_grades']" position="replace">
+            <h2 id="o_edu_st_chart_grades" class="o_edu_st_h2 mb-0">
+                <t t-if="g.higher">Unidades curriculares</t>
+                <t t-else="">Notas do <t t-out="g.active ? g.active.name : 'trimestre'"/></t>
+            </h2>
+        </xpath>
+        <xpath expr="//section[@aria-labelledby='o_edu_st_chart_grades']/p[@t-elif='!g.active']" position="before">
+            <t t-elif="g.higher">
+                <p class="small text-muted mb-3">A nota final quando já existe; antes, a média de frequência (MF).</p>
+                <div class="o_edu_hbars" role="list">
+                    <div t-foreach="g.ucs.filter((u) => u.final or u.mf)" t-as="u" t-key="u.id" class="o_edu_hbar_row" role="listitem">
+                        <t t-set="v" t-value="u.final or u.mf"/>
+                        <span class="o_edu_hbar_name" t-out="u.name"/>
+                        <span class="o_edu_hbar_track">
+                            <span class="o_edu_hbar_pass" t-att-style="'left: ' + this.passLeft + '%'"/>
+                            <span class="o_edu_hbar" t-att-class="{'o_edu_chart_neg': !v.pos}" t-att-style="'width: ' + (v.value * 5) + '%'"/>
+                        </span>
+                        <span class="o_edu_hbar_value"><t t-out="v.text"/><span class="small text-muted"> <t t-out="u.final ? 'final' : 'MF'"/></span></span>
+                    </div>
+                </div>
+                <t t-set="ungraded" t-value="g.ucs.filter((u) => !u.final and !u.mf and u.state_key !== 'dropped')"/>
+                <p t-if="ungraded.length" class="small mb-0 mt-3"><span class="text-muted">Sem nota (<t t-out="ungraded.length"/>):</span> <t t-out="this.list(ungraded.map((u) => u.name))"/>.</p>
+            </t>
+        </xpath>
+        <xpath expr="//section[@aria-labelledby='o_edu_st_chart_trend']" position="attributes">
+            <attribute name="t-if">!g.higher</attribute>
+        </xpath>
+        <xpath expr="//section[@aria-labelledby='o_edu_st_chart_trend']" position="after">
+            <section t-if="g.higher" class="o_edu_st_card" aria-labelledby="o_edu_st_credits">
+                <h2 id="o_edu_st_credits" class="o_edu_st_h2">Créditos do curso</h2>
+                <p class="mb-1"><span class="fs-3 fw-semibold" t-out="g.credits_earned"/> de <t t-out="g.credits_course"/></p>
+                <div class="progress" role="progressbar" t-att-aria-valuenow="g.credits_pct" aria-valuemin="0" aria-valuemax="100" style="height: 8px;">
+                    <div class="progress-bar" t-att-style="'width: ' + g.credits_pct + '%'"/>
+                </div>
+                <p class="small text-muted mb-0 mt-2"><t t-out="g.credits_pct"/>% do curso concluído<t t-if="g.course_average">, média <t t-out="g.course_average.text"/></t>.</p>
+            </section>
+        </xpath>
+    </t>
+
     <t t-name="edu_university.Part.UcBoard">
         <div class="o_edu_kpis">
             <div class="o_edu_kpi">
