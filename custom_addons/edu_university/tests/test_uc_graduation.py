@@ -156,4 +156,8 @@ class TestUcGraduation(TransactionCase):
         self.assertNotIn('Plano Curricular (PC)', html, 'Sem o quadro do técnico.')
         diploma = graduation._graduation_document('diploma')
         html = self.env['ir.actions.report']._render_qweb_html('edu_documents.action_report_diploma', diploma.ids)[0]
-        self.assertIn('Licenciatura em Arquitectura', html.decode())
+        html = html.decode()
+        self.assertIn('Licenciatura em Arquitectura', html)
+        self.assertIn('Ministério do Ensino Superior', html)
+        self.assertIn('conferido o grau de', html)
+        self.assertNotIn('nesta Escola', html)

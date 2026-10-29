@@ -16,9 +16,9 @@
                 <t t-set="project" t-value="g.final_project_id"/>
                 <p>
                     <t t-out="company.edu_director_name"/>, <t t-out="company.edu_director_title or 'Reitor(a)'"/>
-                    da <t t-out="company.name"/>, certifica que <t t-call="edu_documents.identity"/>, concluiu no ano académico
+                    <t t-out="company.edu_name_of"/>, certifica que <t t-call="edu_documents.identity"/>, concluiu no ano académico
                     <t t-out="g.academic_year_id.name"/> o curso de <t t-out="g.level_id.name"/> em <t t-out="g.course_id.name"/>,
-                    com <t t-out="h.num(g.uc_credits)"/> créditos, tendo obtido as seguintes classificações:
+                    com <t t-out="('%g' % g.uc_credits).replace('.', ',')"/> créditos, tendo obtido as seguintes classificações:
                 </p>
                 <table class="edu-table o_ignore_layout_styling">
                     <thead>
@@ -38,7 +38,7 @@
                             <td class="text-center"><t t-out="r.course_year"/>.º</td>
                             <td class="text-center" t-out="'Anual' if r.semester == 'annual' else '%s.º' % r.semester"/>
                             <td class="text-center" t-out="r.academic_year_id.name"/>
-                            <td class="text-center" t-out="h.num(r.credits)"/>
+                            <td class="text-center" t-out="('%g' % r.credits).replace('.', ',')"/>
                             <td class="text-center" t-out="h.num(r.final_grade)"/>
                             <td t-out="h.words(r.final_grade).capitalize()"/>
                         </tr>
@@ -66,10 +66,46 @@
         </xpath>
     </template>
 
-    <!-- Diploma: no superior, o grau e o curso. -->
+    <!-- Diploma: no superior, o grau conferido, o curso e quem assina (reitor e responsável académico). -->
     <template id="report_diploma_higher" inherit_id="edu_documents.report_diploma">
+        <xpath expr="//div[hasclass('page')]" position="before">
+            <t t-set="higher" t-value="g.level_id.subsystem == 'higher'"/>
+            <t t-set="degree" t-value="('Mestre' if g.level_id.code == 'MESTRADO' else h.by_gender(student.gender, 'Licenciado', 'Licenciada')) if higher else ''"/>
+        </xpath>
         <xpath expr="//div[hasclass('edu-subtitle')]" position="attributes">
-            <attribute name="t-out">'Formação Média Técnica' if g.level_id.subsystem == 'technical' else ('%s em %s' % (g.level_id.name, g.course_id.name) if g.level_id.subsystem == 'higher' else g.level_id.name)</attribute>
+            <attribute name="t-out">'Formação Média Técnica' if g.level_id.subsystem == 'technical' else ('%s em %s' % (g.level_id.name, g.course_id.name) if higher else g.level_id.name)</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/p[1]" position="attributes">
+            <attribute name="t-if">not higher</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/p[3]" position="attributes">
+            <attribute name="t-if">not higher</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/p[3]" position="after">
+            <t t-if="higher">
+                <p>
+                    <t t-out="company.edu_director_name"/>, <t t-out="company.edu_director_title or 'Reitor(a)'"/>, e
+                    <t t-out="company.edu_pedagogical_director_name"/>, <t t-out="company.edu_pedagogical_title or 'responsável académico(a)'"/>,
+                    <t t-out="company.edu_name_of"/>, fazem saber que <t t-call="edu_documents.identity"/>, concluiu no ano académico
+                    <t t-out="g.academic_year_id.name"/> o curso de <t t-out="g.level_id.name"/> em <t t-out="g.course_id.name"/>, sendo-lhe
+                    conferido o grau de <strong t-out="degree"/>, com a classificação final de
+                    <strong t-out="h.grade(g.final_grade, 'title').replace('Valores', 'valores')"/>, conforme consta do processo individual
+                    n.º <t t-if="student.process_number" t-out="student.process_number"/><t t-else=""><t t-set="width" t-value="60"/><t t-call="edu_documents.blank"/></t>
+                    e da folha n.º <t t-if="g.page_number" t-out="g.page_number"/><t t-else=""><t t-set="width" t-value="50"/><t t-call="edu_documents.blank"/></t>
+                    do Livro de Termos n.º <t t-if="g.book_number" t-out="g.book_number"/><t t-else=""><t t-set="width" t-value="50"/><t t-call="edu_documents.blank"/></t>.
+                </p>
+                <p>
+                    Pelo que, para efeitos legais e de harmonia com a legislação em vigor, lhe mandámos passar o presente Diploma, que
+                    vai por nós assinado e autenticado com o selo branco em uso nesta instituição.
+                </p>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Cabeçalho oficial: no superior, o Ministério do Ensino Superior, Ciência, Tecnologia e Inovação. -->
+    <template id="header_higher" inherit_id="edu_documents.header">
+        <xpath expr="//t[@t-if='official']/div[hasclass('edu-state')][1]" position="replace">
+            <div class="edu-state">República de Angola<br/><t t-if="company.edu_is_higher">Ministério do Ensino Superior, Ciência, Tecnologia e Inovação</t><t t-else="">Ministério da Educação</t></div>
         </xpath>
     </template>
 
@@ -79,7 +115,13 @@
             <t t-set="higher" t-value="e.level_subsystem == 'higher'"/>
             <t t-set="ucs" t-value="e._edu_uc_transcript() if higher else False"/>
         </xpath>
-        <xpath expr="//div[hasclass('page')]/p[3]" position="attributes">
+        <xpath expr="//div[hasclass('page')]/p[1]" position="attributes">
+            <attribute name="t-if">not higher</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/p[1]" position="after">
+            <p t-if="higher"><strong><t t-out="(company.edu_director_name or '').upper()"/>, <t t-out="(company.edu_director_title or 'Reitor(a)').upper()"/> <t t-out="company.edu_name_of.upper()"/>.</strong></p>
+        </xpath>
+        <xpath expr="//div[hasclass('page')]/p[4]" position="attributes">
             <attribute name="t-if">not higher</attribute>
         </xpath>
         <xpath expr="//div[hasclass('page')]/table" position="attributes">
@@ -91,7 +133,7 @@
                 <p>
                     Está matriculado(a) no ano académico <t t-out="e.academic_year_id.name"/> no <t t-out="e.class_number"/>.º ano do
                     curso de <t t-out="e.course_id.level_id.name"/> em <t t-out="e.course_id.name"/>, tendo obtido aprovação nas
-                    seguintes unidades curriculares, num total de <t t-out="h.num(credits)"/> créditos<t t-if="credits">, com a
+                    seguintes unidades curriculares, num total de <t t-out="('%g' % credits).replace('.', ',')"/> créditos<t t-if="credits">, com a
                     média de <strong t-out="h.grade(sum(r.final_grade * r.credits for r in ucs) / credits)"/></t>:
                 </p>
                 <table class="edu-table o_ignore_layout_styling">
@@ -101,7 +143,7 @@
                             <td t-out="r.subject_id.name"/>
                             <td class="text-center"><t t-out="r.course_year"/>.º</td>
                             <td class="text-center" t-out="r.academic_year_id.name"/>
-                            <td class="text-center" t-out="h.num(r.credits)"/>
+                            <td class="text-center" t-out="('%g' % r.credits).replace('.', ',')"/>
                             <td class="text-center" t-out="h.grade(r.final_grade)"/>
                         </tr>
                     </tbody>

@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.addons.edu_core.tools.trust import trusted
 from odoo.exceptions import UserError
 
@@ -9,6 +9,15 @@ UC_KINDS = {
     'uc_special': 'exam_special',
     'uc_improvement': 'exam_improvement',
 }
+
+
+def guess_uc_kind(name):
+    """A época do superior pelo nome do evento do calendário académico."""
+    text = (name or '').casefold()
+    for word, kind in (('recurso', 'uc_appeal'), ('especial', 'uc_special'), ('melhoria', 'uc_improvement')):
+        if word in text:
+            return kind
+    return 'uc_normal'
 
 
 class EduExamPeriod(models.Model):
@@ -23,6 +32,21 @@ class EduExamPeriod(models.Model):
         ],
         ondelete={kind: 'set default' for kind in UC_KINDS},
     )
+
+    def _planner_period(self):
+        """No calendário de provas, as épocas do superior convocam-se como os exames especiais."""
+        data = super()._planner_period()
+        if self.kind in UC_KINDS:
+            data['special'] = True
+        return data
+
+    @api.model
+    def planner_create_from_event(self, event_id):
+        """Numa instituição de ensino superior, a época criada do calendário é uma época do superior."""
+        period = self.browse(super().planner_create_from_event(event_id))
+        if period.company_id.edu_is_higher and period.kind not in UC_KINDS:
+            period.kind = guess_uc_kind(period.name)
+        return period.id
 
 
 class EduExamSession(models.Model):

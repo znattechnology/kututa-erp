@@ -102,6 +102,11 @@ mestrado. Não se duplica nada: a escola continua a ser a empresa, o curso o `ed
 - **Portal do estudante:** o painel e «Minhas notas» mostram as UCs (provas e trabalhos, MF, presenças, situação,
   exames, nota final) e os créditos e a média do curso; sem portal do encarregado.
 - **Turmas:** «2.º ano A · EI», não «2ª A».
+- **Provas no portal:** as épocas do superior só aparecem a quem foi convocado.
+- **Calendário de provas:** as épocas do superior criam-se do calendário académico (normal, recurso, especial,
+  melhoria pelo nome do evento) e têm o botão «Convocar».
+- **Documentos:** cabeçalho com o Ministério do Ensino Superior, Ciência, Tecnologia e Inovação; assinam o reitor e o
+  responsável académico (cargo configurável na instituição); o diploma diz o grau conferido (Licenciado(a), Mestre).
 - **Base de demonstração** `kututa_universidade` (Instituto Superior Kianda, fictício): Licenciatura em Engenharia
   Informática (4 anos, TFC) e Mestrado em Gestão de Sistemas de Informação (dissertação); 2025/26 fechado com
   notas reais (14 passam, 3 com UCs em atraso, 1 retido), 2026/27 com a 1.ª frequência lançada. Script em
@@ -113,9 +118,8 @@ frequências → dispensa, exame e recurso → passagem com UCs em atraso → TF
 com os casos calculados à mão sobre o regulamento por defeito.
 
 ## Pendentes
-- Ver o certificado e o diploma em PDF e acertá-los pelo modelo oficial de uma universidade.
-- As provas da turma no portal mostram as sessões das épocas do superior a toda a turma (devia ser só aos convocados).
-- O planeador visual de provas ainda não conhece as épocas do superior.
+- Confirmar o texto do certificado, do diploma e da declaração pelo modelo oficial de uma universidade (os PDFs já
+  foram revistos: cabeçalho do MESCTI, reitor e responsável académico configuráveis, grau conferido, créditos).
 - A facturação dos emolumentos só corre com a AGT ligada (como as propinas).
 - Regulamento de uma universidade cliente, para afinar os valores por defeito.
 - Doutoramento.

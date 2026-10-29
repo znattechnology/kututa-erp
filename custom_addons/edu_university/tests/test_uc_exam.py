@@ -131,3 +131,34 @@ class TestUcExam(TransactionCase):
         self.env['edu.curriculum.year'].create({'curriculum_id': self.edu_class.curriculum_id.id, 'year': 2})
         self.enrollments.invalidate_recordset()
         self.assertFalse(self._session('uc_special', 26).seat_ids)
+
+    def test_portal_only_summoned(self):
+        """Na página das provas, a época normal só aparece a quem foi convocado (o Abel está dispensado)."""
+        period = self.env['edu.exam.period'].create(
+            {'name': 'Normal', 'kind': 'uc_normal', 'academic_year_id': self.year.id,
+             'date_start': date(2027, 2, 1), 'date_end': date(2027, 2, 28)}
+        )  # fmt: skip
+        session = self.env['edu.exam.session'].create(
+            {'period_id': period.id, 'subject_id': self.accounting.id, 'date': date(2027, 2, 3),
+             'class_ids': [(6, 0, self.edu_class.ids)]}
+        )  # fmt: skip
+        session.action_summon()
+        Portal = self.env['edu.student.portal']
+        abel = self.enrollments.filtered(lambda e: e.student_id.name == 'Abel')
+        beatriz = self.enrollments.filtered(lambda e: e.student_id.name == 'Beatriz')
+        self.assertFalse(Portal.exams(abel.student_id, abel)['rows'])
+        rows = Portal.exams(beatriz.student_id, beatriz)['rows']
+        self.assertEqual([row['id'] for row in rows], session.ids)
+
+    def test_planner(self):
+        event = self.env['edu.calendar.event'].create(
+            {'name': 'Exames de recurso do 1.º semestre', 'event_type': 'exam', 'academic_year_id': self.year.id,
+             'date_start': date(2027, 3, 1), 'date_end': date(2027, 3, 12)}
+        )  # fmt: skip
+        period = self.env['edu.exam.period'].browse(self.env['edu.exam.period'].planner_create_from_event(event.id))
+        self.assertEqual(period.kind, 'uc_appeal')
+        self.assertTrue(period._planner_period()['special'], 'Com o botão «Convocar».')
+        result = period.planner_mark(self.accounting.id, '2027-03-02', 9.0, 11.0, self.edu_class.ids)
+        self.assertEqual(result['created'], 1)
+        # Sem época normal feita, os admitidos ainda por aprovar (Beatriz, Celso, Elias); não o Abel nem a Dora.
+        self.assertEqual(period.planner_summon('2027-03-02', 9.0, 11.0), 3)

@@ -86,11 +86,12 @@ class Helpers:
         return f'O {title}'
 
     def pedagogical_title(self):
-        return (
-            'A SUBDIRECTORA PEDAGÓGICA'
-            if self.company.edu_pedagogical_director_gender == 'f'
-            else 'O SUBDIRECTOR PEDAGÓGICO'
-        )
+        female = self.company.edu_pedagogical_director_gender == 'f'
+        # O ensino superior configura o cargo (por exemplo «Vice-Reitora para os Assuntos Académicos»).
+        custom = getattr(self.company, 'edu_pedagogical_title', False)
+        if custom:
+            return f'{"A" if female else "O"} {custom.upper()}'
+        return 'A SUBDIRECTORA PEDAGÓGICA' if female else 'O SUBDIRECTOR PEDAGÓGICO'
 
     def city(self):
         return self.company.edu_document_city or self.company.city or ''

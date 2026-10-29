@@ -1,6 +1,7 @@
 from odoo import api, models
 from odoo.addons.edu_portal.models.edu_student_portal import grade_text
 
+from .edu_exam import UC_KINDS
 from .edu_uc_registration import FREQUENCY_STATUSES, SOURCES, STATES
 
 
@@ -129,4 +130,31 @@ class EduStudentPortal(models.AbstractModel):
                 'exam_count': len([r for r in rows if r['status_key'] == 'admitted' and r['state_key'] != 'passed']),
             }
         )
+        return data
+
+    @api.private
+    @api.model
+    def exams(self, student, enrollment):
+        """As épocas do superior (normal, recurso, especial, melhoria) só aparecem a quem foi convocado: estar na turma
+        não basta (o dispensado não vai ao normal, quem aprovou não vai ao recurso)."""
+        data = super().exams(student, enrollment)
+        if not data['rows']:
+            return data
+        sessions = self.env['edu.exam.session'].sudo().browse([row['id'] for row in data['rows']])
+        hidden = {
+            session.id
+            for session in sessions
+            if session.kind in UC_KINDS and student not in session.seat_ids.student_id
+        }
+        if not hidden:
+            return data
+        for period in data['periods']:
+            period['rows'] = [row for row in period['rows'] if row['id'] not in hidden]
+            for index, row in enumerate(period['rows']):
+                row['first_of_day'] = not index or period['rows'][index - 1]['date'] != row['date']
+        data['periods'] = [period for period in data['periods'] if period['rows']]
+        data['rows'] = [row for row in data['rows'] if row['id'] not in hidden]
+        data['count'] = len(data['rows'])
+        data['days'] = len({row['date'] for row in data['rows']})
+        data['next'] = next((row for row in data['rows'] if not row['done']), None)
         return data

@@ -27,6 +27,7 @@ company.write(
         'edu_pedagogical_director_gender': 'f',
         'edu_mescti_code': 'IES-0000 (demonstração)',
         'edu_motto': 'Saber para transformar',
+        'edu_pedagogical_title': 'Vice-Reitora para os Assuntos Académicos',
     }
 )
 LIC = env.ref('edu_university.level_licenciatura')

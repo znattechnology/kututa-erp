@@ -10,6 +10,8 @@
             </field>
             <field name="edu_mined_code" position="after">
                 <field name="edu_mescti_code" invisible="edu_school_type != 'higher'"/>
+                <field name="edu_pedagogical_title" invisible="edu_school_type != 'higher'"
+                       placeholder="Vice-Reitor(a) para os Assuntos Académicos"/>
             </field>
         </field>
     </record>
