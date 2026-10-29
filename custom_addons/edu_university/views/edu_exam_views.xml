@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_exam_session_form_university" model="ir.ui.view">
+        <field name="name">edu.exam.session.form.university</field>
+        <field name="model">edu.exam.session</field>
+        <field name="inherit_id" ref="edu_exam.edu_exam_session_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='seat_ids']/list/field[@name='student_id']" position="after">
+                <field name="uc_registration_id" string="Situação na UC" optional="show" readonly="1"
+                       column_invisible="parent.kind not in ('uc_normal', 'uc_appeal', 'uc_special', 'uc_improvement')"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

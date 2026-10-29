@@ -15,12 +15,14 @@ Secretaria Express: o ensino superior sobre a mesma base académica.
 * Avaliação: provas de frequência e trabalhos na grelha de notas; média de frequência, dispensa, admissão e
   exclusão (também pela assiduidade); exame normal, recurso, especial e melhoria; a situação na UC fecha com o
   semestre
+* Exames: épocas normal, de recurso, especial e de melhoria; convocados tirados da situação de cada inscrição
+  (admitidos, por aprovar, finalistas, aprovados); a pauta da sessão dá a nota na UC
 * Encarregado de educação opcional: o estudante é o adquirente das suas facturas
     """,
     'author': 'Kututa ERP',
     'countries': ['ao'],
     'category': 'Education',
-    'depends': ['edu_evaluation'],
+    'depends': ['edu_exam'],
     'data': [
         'security/ir.access.csv',
         'data/edu_level_data.xml',
@@ -29,6 +31,7 @@ Secretaria Express: o ensino superior sobre a mesma base académica.
         'views/edu_curriculum_views.xml',
         'views/edu_student_views.xml',
         'views/edu_uc_registration_views.xml',
+        'views/edu_exam_views.xml',
     ],
     'license': 'OPL-1',
 }

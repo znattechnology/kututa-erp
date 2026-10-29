@@ -76,9 +76,11 @@ mestrado. Não se duplica nada: a escola continua a ser a empresa, o curso o `ed
 - Motor puro em `tools/grading_higher.py`, com testes «golden» sobre o regulamento por defeito.
 
 ### Exames (7d)
-- Épocas novas no `edu.exam.period`: **Época normal**, **Recurso**, **Época especial**, reaproveitando a Melhoria.
-- Os candidatos de cada sessão saem dos resultados (admitidos ao normal, reprovados para o recurso…); a nota lançada
-  na pauta da sessão alimenta o `edu.uc.result`.
+- Épocas novas no `edu.exam.period`: **Época normal**, **Recurso**, **Época especial** e **Melhoria** (superior).
+- Convocados de cada sessão pela situação da inscrição: normal = admitidos; recurso = admitidos não aprovados (quem
+  reprovou ou faltou ao normal) e, se o regulamento deixar, os excluídos; especial = finalistas (opção) com até N
+  UCs por aprovar no ano; melhoria = aprovados. A nota da pauta da sessão vai para o exame da inscrição; quem falta
+  fica sem esse exame.
 
 ### Progressão e conclusão (7e)
 - Resultado do ano: passa se as UCs em atraso (do ano e anteriores) não excederem o limite; senão fica no mesmo ano

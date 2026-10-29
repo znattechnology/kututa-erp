@@ -116,6 +116,8 @@
                             <field name="exam_min"/>
                             <field name="appeal_for_excluded"/>
                             <field name="special_fixed_pass"/>
+                            <field name="special_max_ucs"/>
+                            <field name="special_final_year_only"/>
                             <field name="rounding"/>
                         </group>
                     </group>

@@ -69,6 +69,14 @@ class EduUniversityRegulation(models.Model):
         default=True,
         help='No exame especial, a positiva é sempre a nota de aprovação (10).',
     )
+    special_max_ucs = fields.Integer(
+        string='Época especial: UCs por aprovar (máximo)',
+        default=2,
+        help='Vai à época especial quem tem, no máximo, este número de UCs por aprovar no ano.',
+    )
+    special_final_year_only = fields.Boolean(
+        string='Época especial só no último ano', default=True, help='Só para a conclusão do curso.'
+    )
     rounding = fields.Selection(
         [('unit', 'Às unidades'), ('tenth', 'Às décimas')], string='Arredondamento da nota final', default='unit'
     )
