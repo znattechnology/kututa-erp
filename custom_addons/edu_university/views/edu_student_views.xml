@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_student_form_university" model="ir.ui.view">
+        <field name="name">edu.student.form.university</field>
+        <field name="model">edu.student</field>
+        <field name="inherit_id" ref="edu_people.edu_student_form"/>
+        <field name="arch" type="xml">
+            <field name="primary_guardian_id" position="attributes">
+                <attribute name="invisible">edu_is_higher and not primary_guardian_id</attribute>
+            </field>
+            <field name="primary_guardian_id" position="after">
+                <field name="edu_is_higher" invisible="1"/>
+            </field>
+            <page name="guardians" position="attributes">
+                <attribute name="string">Encarregados</attribute>
+            </page>
+            <xpath expr="//page[@name='guardians']/field[@name='guardian_link_ids']" position="before">
+                <p class="text-muted" invisible="not edu_is_higher">
+                    No ensino superior o encarregado é opcional: ligue-o só se houver quem acompanhe ou pague as
+                    propinas do estudante.
+                </p>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="edu_application_form_university" model="ir.ui.view">
+        <field name="name">edu.application.form.university</field>
+        <field name="model">edu.application</field>
+        <field name="inherit_id" ref="edu_enrollment.edu_application_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='guardian_name']/.." position="attributes">
+                <attribute name="invisible">edu_is_higher and not guardian_name</attribute>
+            </xpath>
+            <field name="guardian_name" position="before">
+                <field name="edu_is_higher" invisible="1"/>
+            </field>
+            <field name="birth_date" position="before">
+                <p class="text-muted" colspan="2" invisible="not edu_is_higher">
+                    Ensino superior: o encarregado é opcional; as facturas vão para o candidato.
+                </p>
+            </field>
+        </field>
+    </record>
+</odoo>

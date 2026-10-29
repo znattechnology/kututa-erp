@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="edu_academic_year_form_university" model="ir.ui.view">
+        <field name="name">edu.academic.year.form.university</field>
+        <field name="model">edu.academic.year</field>
+        <field name="inherit_id" ref="edu_core.edu_academic_year_form"/>
+        <field name="arch" type="xml">
+            <button name="action_generate_trimesters" position="attributes">
+                <attribute name="invisible">trimester_ids or edu_is_higher</attribute>
+            </button>
+            <button name="action_generate_trimesters" position="after">
+                <button name="action_generate_trimesters" type="object" string="Criar os semestres" class="btn-primary"
+                        invisible="trimester_ids or not edu_is_higher"/>
+                <field name="edu_is_higher" invisible="1"/>
+            </button>
+            <field name="trimester_ids" position="attributes">
+                <attribute name="string">Períodos lectivos</attribute>
+            </field>
+        </field>
+    </record>
+</odoo>

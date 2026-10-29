@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_edu_university" model="ir.ui.view">
+        <field name="name">res.company.form.edu.university</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="edu_core.view_company_form_edu"/>
+        <field name="arch" type="xml">
+            <field name="edu_mined_code" position="attributes">
+                <attribute name="invisible">edu_school_type == 'higher'</attribute>
+            </field>
+            <field name="edu_mined_code" position="after">
+                <field name="edu_mescti_code" invisible="edu_school_type != 'higher'"/>
+            </field>
+        </field>
+    </record>
+</odoo>

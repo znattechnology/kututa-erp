@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Subsistema de ensino superior (Lei de Bases n.º 17/16, com a Lei n.º 32/20): graduação e pós-graduação. O
+         «da classe / à classe» é o ano do curso; a duração de cada curso acerta-se no curso. -->
+    <record id="level_licenciatura" model="edu.level">
+        <field name="name">Licenciatura</field>
+        <field name="code">LICENCIATURA</field>
+        <field name="sequence">20</field>
+        <field name="subsystem">higher</field>
+        <field name="class_from">1</field>
+        <field name="class_to">4</field>
+    </record>
+    <record id="level_mestrado" model="edu.level">
+        <field name="name">Mestrado</field>
+        <field name="code">MESTRADO</field>
+        <field name="sequence">21</field>
+        <field name="subsystem">higher</field>
+        <field name="class_from">1</field>
+        <field name="class_to">2</field>
+    </record>
+</odoo>
