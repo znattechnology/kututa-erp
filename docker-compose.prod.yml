@@ -47,6 +47,8 @@ services:
       PGUSER: ${DB_USER}
       PGPASSWORD: ${DB_PASSWORD}
       ODOO_MASTER_PASSWORD: ${ODOO_MASTER_PASSWORD}
+      # Chave da API da Anthropic para o chat do site com IA (kututa_ai_chat); vazia = assistente indisponível.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - '127.0.0.1:8069:8069'
       - '127.0.0.1:8072:8072'

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="chatbot_kututa_ia" model="chatbot.script">
+        <field name="title">Assistente Kututa</field>
+    </record>
+    <record id="chatbot_kututa_ia_passo" model="chatbot.script.step">
+        <field name="chatbot_script_id" ref="chatbot_kututa_ia"/>
+        <field name="sequence">1</field>
+        <field name="step_type">kututa_ia</field>
+        <field name="message">Olá! Sou o Assistente Kututa, um assistente automático com inteligência artificial. Posso esclarecer dúvidas sobre o Kututa ERP, a facturação electrónica da AGT e os preços, ou marcar uma demonstração. Esta conversa fica registada para a equipa da Kututa dar seguimento. Em que posso ajudar?</field>
+    </record>
+</odoo>

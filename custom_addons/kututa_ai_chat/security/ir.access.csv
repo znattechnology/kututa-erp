@@ -1,0 +1,3 @@
+id,name,model_id,group_id/id,operation,domain
+access_kututa_ia_uso_manager,access_kututa_ia_uso_manager,kututa.ia.uso,sales_team.group_sale_manager,r,
+access_kututa_ia_uso_system,access_kututa_ia_uso_system,kututa.ia.uso,base.group_system,crud,

@@ -22,7 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY odoo/requirements.txt /tmp/requirements.txt
 # rlPyCairo: backend de imagem do reportlab (códigos de barras e QR code da AGT); o pip não o inclui.
-RUN pip install --no-cache-dir -r /tmp/requirements.txt rlPyCairo==0.4.0 \
+# anthropic: SDK da API da Anthropic, para o chat do site com IA (kututa_ai_chat).
+RUN pip install --no-cache-dir -r /tmp/requirements.txt rlPyCairo==0.4.0 anthropic==2.3.0 \
     && apt-get purge -y --auto-remove \
         build-essential libpq-dev libldap2-dev libsasl2-dev libxml2-dev libxslt1-dev \
         libjpeg62-turbo-dev zlib1g-dev libffi-dev libcairo2-dev pkg-config \

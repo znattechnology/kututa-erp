@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="kututa_ia_uso_view_list" model="ir.ui.view">
+        <field name="name">kututa.ia.uso.list</field>
+        <field name="model">kututa.ia.uso</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false">
+                <field name="create_date" string="Data"/>
+                <field name="channel_id"/>
+                <field name="modelo"/>
+                <field name="motivo_paragem"/>
+                <field name="tokens_entrada" sum="Total"/>
+                <field name="tokens_cache_lidos" sum="Total"/>
+                <field name="tokens_cache_escritos" sum="Total"/>
+                <field name="tokens_saida" sum="Total"/>
+                <field name="custo_usd" sum="Total"/>
+                <field name="erro" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="kututa_ia_uso_action" model="ir.actions.act_window">
+        <field name="name">Custos do chat com IA</field>
+        <field name="res_model">kututa.ia.uso</field>
+        <field name="view_mode">list,pivot,graph</field>
+    </record>
+
+    <menuitem id="kututa_ia_uso_menu" name="Custos do chat com IA" parent="im_livechat.menu_reporting_livechat"
+              action="kututa_ia_uso_action" sequence="90" groups="sales_team.group_sale_manager"/>
+</odoo>
