@@ -1,0 +1,8 @@
+// Cores da marca Kututa ERP (manual em kututa-brand/manual). Com !default e à cabeça do pacote, ficam no lugar
+// do roxo do Odoo; o muk_web_colors, quando instalado, define-as sem !default e por isso continua a mandar.
+$o-community-color: #13294B !default;
+$o-brand-primary: #1F5FA8 !default;
+$o-success: #1C7F57 !default;
+$o-info: #2B78C5 !default;
+$o-warning: #D9A400 !default;
+$o-danger: #C2333F !default;

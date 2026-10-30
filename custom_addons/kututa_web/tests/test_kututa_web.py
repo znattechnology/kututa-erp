@@ -39,3 +39,21 @@ class TestKututaFavicon(HttpCase):
         self.authenticate('admin', 'admin')
         html = self.url_open('/odoo').text
         self.assertIn('rel="shortcut icon" href="/kututa_web/favicon"', html)
+
+    def test_pwa_manifest_is_kututa(self):
+        manifest = self.url_open('/web/manifest.webmanifest').json()
+        self.assertEqual(manifest['name'], 'Kututa ERP')
+        self.assertEqual(manifest['theme_color'], '#13294B')
+        self.assertTrue(all(i['src'].startswith('/kututa_web/static/img/') for i in manifest['icons']))
+        self.assertIn('maskable', [i.get('purpose') for i in manifest['icons']])
+        self.assertEqual(self.url_open(manifest['icons'][0]['src']).status_code, 200)
+
+
+@tagged('post_install', '-at_install')
+class TestKututaCores(TransactionCase):
+    def test_brand_colors_in_primary_variables(self):
+        # As cores da marca entram à cabeça das variáveis, antes das do Odoo (que são !default).
+        paths = [p[0] for p in self.env['ir.asset']._get_asset_paths('web._assets_primary_variables', {})]
+        marca = next(i for i, p in enumerate(paths) if p.endswith('kututa_web/static/scss/marca.scss'))
+        odoo = next(i for i, p in enumerate(paths) if p.endswith('web/static/src/scss/primary_variables.scss'))
+        self.assertLess(marca, odoo)

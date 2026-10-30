@@ -1,8 +1,11 @@
 import hashlib
 
 from odoo import http
+from odoo.addons.web.controllers.webmanifest import WebManifest
 from odoo.http import request
 from odoo.tools import file_open
+
+IMG = '/kututa_web/static/img'
 
 
 class KututaFavicon(http.Controller):
@@ -27,3 +30,20 @@ class KututaFavicon(http.Controller):
 def _odoo_favicon_checksum():
     with file_open('web/static/img/favicon.ico', 'rb') as f:
         return hashlib.sha1(f.read()).hexdigest()
+
+
+class KututaWebManifest(WebManifest):
+    """App instalável (PWA) com o nome, as cores e os ícones do Kututa ERP em vez dos do Odoo."""
+
+    def _get_webmanifest(self):
+        manifest = super()._get_webmanifest()
+        if not request.env['ir.config_parameter'].sudo().get_str('web.web_app_name'):
+            manifest['name'] = 'Kututa ERP'
+        manifest.update(background_color='#13294B', theme_color='#13294B')
+        manifest['icons'] = [
+            {'src': f'{IMG}/icone-{size}.png', 'sizes': f'{size}x{size}', 'type': 'image/png'} for size in (192, 512)
+        ] + [{'src': f'{IMG}/icone-maskable-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'}]
+        return manifest
+
+    def _icon_path(self):
+        return 'kututa_web/static/img/icone-192.png'
