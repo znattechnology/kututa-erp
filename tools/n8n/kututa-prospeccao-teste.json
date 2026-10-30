@@ -1,0 +1,270 @@
+{
+  "name": "Kututa - Prospecção (teste)",
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Executar à mão",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "n2",
+      "name": "Ler consultas activas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://kututa.ao/json/2/kututa.prospect.query/search_read",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Odoo-Database",
+              "value": "kututa"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ domain: [], fields: [\"profile_code\", \"fonte\", \"consulta\", \"provincia\", \"cidade\", \"url_lista\"] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kututaOdooN8n",
+          "name": "Odoo Kututa (n8n Prospecção)"
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Candidatos de teste",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Candidatos de TESTE (organizações fictícias): provam o contrato sem tocar em dados reais.\n// Para pesquisar a sério, desligue este nó e ligue o ramo do Google Places.\nconst agora = new Date().toISOString();\nconst candidatos = [\n  { organizacao: 'TESTE Colégio Horizonte', cidade: 'Luanda', provincia: 'luanda', telefone: '+244 900 000 001',\n    website: 'https://exemplo.ao/horizonte', place_id: 'TESTE-1' },\n  { organizacao: 'TESTE Instituto Médio Aurora', cidade: 'Lubango', provincia: 'huila', telefone: '+244 900 000 002',\n    website: 'https://exemplo.ao/aurora', place_id: 'TESTE-2' },\n];\nconst vals_list = candidatos.map(c => ({\n  profile_code: 'escolas',\n  ...c,\n  fontes_json: JSON.stringify([{ campo: 'organização', url: c.website, fonte: 'manual', data: agora }]),\n}));\nreturn [{ json: { vals_list } }];"
+      }
+    },
+    {
+      "id": "n6",
+      "name": "Google Places (pesquisa)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        520
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://places.googleapis.com/v1/places:searchText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ textQuery: $json.consulta + \" \" + ($json.cidade || \"\"), regionCode: \"AO\", languageCode: \"pt\", pageSize: 20 }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kututaGooglePlaces",
+          "name": "Google Places API"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "id": "n7",
+      "name": "Converter para o Odoo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        520
+      ],
+      "parameters": {
+        "jsCode": "// Converte a resposta do Google Places (Text Search, API nova) em entradas da caixa de entrada do Odoo.\n// Só guardamos no Odoo o place_id sem prazo; o resto é apagado pelo Odoo ao fim de 30 dias se ninguém o verificar.\nconst agora = new Date().toISOString();\nconst vals_list = [];\nfor (const item of $input.all()) {\n  const consulta = item.json.consulta || {};\n  for (const p of (item.json.places || [])) {\n    const url = p.googleMapsUri || `https://www.google.com/maps/place/?q=place_id:${p.id}`;\n    vals_list.push({\n      profile_code: consulta.profile_code,\n      query_id: consulta.id,\n      organizacao: p.displayName && p.displayName.text,\n      morada: p.formattedAddress,\n      cidade: consulta.cidade,\n      provincia: consulta.provincia,\n      telefone: p.nationalPhoneNumber,\n      website: p.websiteUri,\n      place_id: p.id,\n      fontes_json: JSON.stringify([{ campo: 'organização, morada e telefone', url, fonte: 'google_places', data: agora }]),\n    });\n  }\n}\nreturn [{ json: { vals_list: vals_list.slice(0, 50) } }];"
+      },
+      "disabled": true
+    },
+    {
+      "id": "n4",
+      "name": "Entregar ao Odoo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://kututa.ao/json/2/kututa.prospect.intake/create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Odoo-Database",
+              "value": "kututa"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ vals_list: $json.vals_list }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kututaOdooN8n",
+          "name": "Odoo Kututa (n8n Prospecção)"
+        }
+      }
+    },
+    {
+      "id": "n8",
+      "name": "Juntar ids",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// O Odoo devolve a lista dos ids criados; o n8n pode entregá-la como uma ou várias linhas.\nconst ids = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  if (Array.isArray(j)) ids.push(...j);\n  else if (Array.isArray(j.data)) ids.push(...j.data);\n  else if (typeof j.data === 'number') ids.push(j.data);\n}\nreturn [{ json: { ids } }];"
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Ver resultado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://kututa.ao/json/2/kututa.prospect.intake/search_read",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Odoo-Database",
+              "value": "kututa"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ domain: [[\"id\", \"in\", $json.ids]], fields: [\"organizacao\", \"estado\", \"mensagem\", \"lead_id\"] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kututaOdooN8n",
+          "name": "Odoo Kututa (n8n Prospecção)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Executar à mão": {
+      "main": [
+        [
+          {
+            "node": "Ler consultas activas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler consultas activas": {
+      "main": [
+        [
+          {
+            "node": "Candidatos de teste",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidatos de teste": {
+      "main": [
+        [
+          {
+            "node": "Entregar ao Odoo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Places (pesquisa)": {
+      "main": [
+        [
+          {
+            "node": "Converter para o Odoo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entregar ao Odoo": {
+      "main": [
+        [
+          {
+            "node": "Juntar ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Juntar ids": {
+      "main": [
+        [
+          {
+            "node": "Ver resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "active": false
+}
