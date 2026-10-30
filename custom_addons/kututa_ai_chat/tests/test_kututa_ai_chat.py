@@ -233,7 +233,9 @@ class TestKututaAiChat(TransactionCase):
         self.assertEqual(pedido['output_config'], {'effort': 'medium'})
         # O Haiku não aceita a recuperação de recusas: o pedido vai sem fallbacks.
         self.assertNotIn('fallbacks', pedido)
-        self.assertNotIn('betas', pedido)
+        self.assertEqual(pedido['betas'], ['thinking-binding-controls-2026-08-01'])
+        # Raciocínio de instruções antigas ou de outro modelo é descartado, não faz falhar a conversa.
+        self.assertEqual(pedido['thinking']['block_binding'], {'prefix_mismatch_behavior': 'drop_block'})
 
     def test_sonnet_leva_fallbacks_e_modelo_invalido_volta_ao_opus(self):
         params = self.env['ir.config_parameter'].sudo()

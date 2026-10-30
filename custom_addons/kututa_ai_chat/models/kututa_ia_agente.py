@@ -161,11 +161,16 @@ class KututaIaAgente(models.AbstractModel):
         modelo = params.get_str('kututa_ia.modelo', MODELO)
         if modelo not in MODELOS:
             modelo = MODELO
-        extra = (
-            {'betas': ['server-side-fallback-2026-07-01'], 'fallbacks': 'default'}
-            if MODELOS[modelo]['fallbacks']
-            else {}
-        )
+        # O raciocínio guardado no histórico fica preso às instruções e ao modelo com que foi gerado; quando
+        # mudam (nova versão das instruções, outro modelo nas definições), a API descarta esses blocos em vez
+        # de recusar o pedido.
+        extra = {
+            'betas': ['thinking-binding-controls-2026-08-01'],
+            'thinking': {'type': 'adaptive', 'block_binding': {'prefix_mismatch_behavior': 'drop_block'}},
+        }
+        if MODELOS[modelo]['fallbacks']:
+            extra['betas'].append('server-side-fallback-2026-07-01')
+            extra['fallbacks'] = 'default'
         esforco = params.get_str('kututa_ia.esforco', 'low')
         historico = json.loads(channel.kututa_ia_historico or '[]')
         historico.append({'role': 'user', 'content': texto[:4000]})
