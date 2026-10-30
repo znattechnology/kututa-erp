@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.kututa.prospect</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="crm.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='crm']" position="inside">
+                <block title="Prospecção" name="kututa_prospect" groups="kututa_prospect.group_prospect_manager">
+                    <setting string="Classificação com IA"
+                             help="Classifica os leads de prospecção novos e escreve rascunhos (Claude). A chave da API está no servidor (ANTHROPIC_API_KEY).">
+                        <field name="kututa_prospect_ia_activa"/>
+                        <div class="content-group mt16" invisible="not kututa_prospect_ia_activa">
+                            <div class="row">
+                                <label class="col-lg-4 o_light_label" for="kututa_prospect_modelo"/>
+                                <field name="kututa_prospect_modelo" class="oe_inline"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting string="Afirmação sobre a AGT"
+                             help="A única frase sobre a AGT usada nos rascunhos e modelos (marcador {{ kututa_agt }}). Enquanto o estado for «Em homologação», nenhum texto pode dizer «certificado pela AGT».">
+                        <div class="row">
+                            <label class="col-lg-4 o_light_label" for="kututa_prospect_agt_estado"/>
+                            <field name="kututa_prospect_agt_estado" class="oe_inline"/>
+                        </div>
+                        <div class="row">
+                            <label class="col-lg-4 o_light_label" for="kututa_prospect_agt_texto"/>
+                            <field name="kututa_prospect_agt_texto"/>
+                        </div>
+                    </setting>
+                    <setting string="Limite do n8n" help="Máximo de entradas por dia do utilizador técnico (contém um n8n avariado).">
+                        <field name="kututa_prospect_max_entradas_dia"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

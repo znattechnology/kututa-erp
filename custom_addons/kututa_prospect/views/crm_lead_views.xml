@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="crm_lead_view_form" model="ir.ui.view">
+        <field name="name">crm.lead.form.kututa.prospect</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_kp_verificar" string="Aprovar (verificado)" type="object" class="oe_highlight"
+                        groups="kututa_prospect.group_prospect_user"
+                        invisible="not kp_profile_id or kp_verificacao != 'nao_verificado'"/>
+                <button name="action_kp_rejeitar" string="Rejeitar" type="object"
+                        groups="kututa_prospect.group_prospect_user"
+                        invisible="not kp_profile_id or kp_verificacao != 'nao_verificado'"/>
+                <button name="action_kp_classificar" string="Classificar com IA" type="object"
+                        groups="kututa_prospect.group_prospect_user"
+                        invisible="not kp_profile_id or kp_verificacao == 'rejeitado'"/>
+                <button name="action_kp_gerar_rascunho" string="Gerar rascunho" type="object"
+                        groups="kututa_prospect.group_prospect_user"
+                        invisible="not kp_profile_id or kp_verificacao == 'rejeitado' or kp_excluido"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="before">
+                <field name="kp_excluido" invisible="1"/>
+                <field name="kp_verificacao" invisible="1"/>
+                <div class="alert alert-danger" role="alert" invisible="not kp_excluido or not kp_profile_id">
+                    Esta organização está na lista de exclusão: não pode ser contactada por nenhum produto.
+                </div>
+                <div class="alert alert-warning" role="alert"
+                     invisible="not kp_profile_id or kp_verificacao != 'nao_verificado' or kp_excluido">
+                    Lead de prospecção por verificar: confirme cada dado na fonte (separador Prospecção). Não pode receber mensagens até ser verificado.
+                </div>
+            </xpath>
+            <xpath expr="//page[@name='internal_notes']" position="before">
+                <page string="Prospecção" name="kututa_prospect" invisible="not kp_profile_id"
+                      groups="kututa_prospect.group_prospect_user">
+                    <group>
+                        <group>
+                            <field name="kp_profile_id" readonly="kp_verificacao == 'verificado'"/>
+                            <field name="kp_produto_principal_id"/>
+                            <field name="kp_produto_secundario_ids" widget="many2many_tags"/>
+                            <field name="kp_pontuacao"/>
+                            <field name="kp_nif"/>
+                        </group>
+                        <group>
+                            <field name="kp_verificado_por" invisible="kp_verificacao != 'verificado'"/>
+                            <field name="kp_verificado_em" invisible="kp_verificacao != 'verificado'"/>
+                            <field name="kp_motivo_rejeicao" invisible="kp_verificacao != 'rejeitado'"/>
+                            <field name="kp_classificado_em"/>
+                            <field name="kp_modelo_ia"/>
+                            <field name="kp_place_id"/>
+                            <field name="kp_dedup_key"/>
+                        </group>
+                    </group>
+                    <separator string="Pontuação por produto"/>
+                    <field name="kp_score_ids" readonly="1">
+                        <list>
+                            <field name="profile_id"/>
+                            <field name="pontuacao"/>
+                            <field name="criterios_cumpridos"/>
+                            <field name="justificacao"/>
+                        </list>
+                    </field>
+                    <field name="kp_justificacao" readonly="1" placeholder="Ainda não classificado pela IA."/>
+                    <separator string="Fontes dos dados"/>
+                    <field name="kp_fonte_ids">
+                        <list editable="bottom" delete="false">
+                            <field name="campo"/>
+                            <field name="fonte"/>
+                            <field name="url" widget="url"/>
+                            <field name="data_recolha"/>
+                        </list>
+                    </field>
+                    <separator string="Rascunho da primeira mensagem"/>
+                    <field name="kp_rascunho" placeholder="Use «Gerar rascunho» e reveja o texto antes de qualquer envio."/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_list_prospect" model="ir.ui.view">
+        <field name="name">crm.lead.list.kututa.prospect</field>
+        <field name="model">crm.lead</field>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <list create="false" decoration-muted="kp_verificacao == 'rejeitado'" decoration-danger="kp_excluido">
+                <field name="kp_excluido" column_invisible="1"/>
+                <field name="partner_name" string="Organização"/>
+                <field name="kp_profile_id"/>
+                <field name="kp_produto_principal_id"/>
+                <field name="kp_pontuacao" widget="progressbar"/>
+                <field name="city"/>
+                <field name="kp_fonte_count"/>
+                <field name="kp_verificacao"/>
+                <field name="stage_id"/>
+                <field name="user_id" optional="show"/>
+                <field name="create_date" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_search_prospect" model="ir.ui.view">
+        <field name="name">crm.lead.search.kututa.prospect</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="kp_por_verificar" string="Prospecção por verificar"
+                        domain="[('kp_profile_id', '!=', False), ('kp_verificacao', '=', 'nao_verificado')]"/>
+                <filter name="kp_verificados" string="Prospecção verificada"
+                        domain="[('kp_profile_id', '!=', False), ('kp_verificacao', '=', 'verificado')]"/>
+                <filter name="kp_sem_classificacao" string="Sem classificação da IA"
+                        domain="[('kp_profile_id', '!=', False), ('kp_classificado_em', '=', False)]"/>
+                <filter name="kp_grupo_perfil" string="Perfil de prospecção" context="{'group_by': 'kp_profile_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_action_prospect_rever" model="ir.actions.act_window">
+        <field name="name">Leads para rever</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="domain">[('kp_profile_id', '!=', False)]</field>
+        <field name="context">{'search_default_kp_por_verificar': 1, 'default_type': 'opportunity'}</field>
+        <field name="search_view_id" ref="crm.view_crm_case_opportunities_filter"/>
+        <field name="view_ids" eval="[Command.clear(),
+            Command.create({'view_mode': 'list', 'view_id': ref('crm_lead_view_list_prospect')}),
+            Command.create({'view_mode': 'form', 'view_id': ref('crm.crm_lead_view_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nenhum lead de prospecção por rever</p>
+            <p>Os leads chegam pela caixa de entrada do n8n ou são criados à mão com um perfil de prospecção.</p>
+        </field>
+    </record>
+</odoo>

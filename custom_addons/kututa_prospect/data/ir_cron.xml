@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="cron_classificar" model="ir.cron">
+        <field name="name">Prospecção: classificar leads novos com IA</field>
+        <field name="model_id" ref="model_kututa_prospect_ia"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_classificar()</field>
+        <field name="interval_number">15</field>
+        <field name="interval_type">minutes</field>
+    </record>
+
+    <record id="cron_retencao" model="ir.cron">
+        <field name="name">Prospecção: apagar dados do Google com mais de 30 dias e dados de leads rejeitados</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="state">code</field>
+        <field name="code">model._kp_cron_retencao()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

@@ -1,0 +1,23 @@
+id,name,model_id,group_id/id,operation,domain
+access_kp_profile_user,Prospecção: perfis (utilizador),kututa.prospect.profile,kututa_prospect.group_prospect_user,r,
+access_kp_profile_manager,Prospecção: perfis (gestor),kututa.prospect.profile,kututa_prospect.group_prospect_manager,crud,
+access_kp_profile_n8n,Prospecção: perfis activos (n8n),kututa.prospect.profile,kututa_prospect.group_prospect_integration,r,"[('active', '=', True)]"
+access_kp_query_user,Prospecção: consultas (utilizador),kututa.prospect.query,kututa_prospect.group_prospect_user,r,
+access_kp_query_manager,Prospecção: consultas (gestor),kututa.prospect.query,kututa_prospect.group_prospect_manager,crud,
+access_kp_query_n8n,Prospecção: consultas activas (n8n),kututa.prospect.query,kututa_prospect.group_prospect_integration,r,"[('active', '=', True), ('profile_id.active', '=', True)]"
+access_kp_criterion_user,Prospecção: critérios (utilizador),kututa.prospect.criterion,kututa_prospect.group_prospect_user,r,
+access_kp_criterion_manager,Prospecção: critérios (gestor),kututa.prospect.criterion,kututa_prospect.group_prospect_manager,crud,
+access_kp_cadence_user,Prospecção: cadência (utilizador),kututa.prospect.cadence,kututa_prospect.group_prospect_user,r,
+access_kp_cadence_manager,Prospecção: cadência (gestor),kututa.prospect.cadence,kututa_prospect.group_prospect_manager,crud,
+access_kp_intake_user,Prospecção: entradas (utilizador),kututa.prospect.intake,kututa_prospect.group_prospect_user,r,
+access_kp_intake_n8n,Prospecção: entradas próprias (n8n),kututa.prospect.intake,kututa_prospect.group_prospect_integration,cr,"[('create_uid', '=', user.id)]"
+access_kp_exclusion_user,Prospecção: exclusões (utilizador),kututa.prospect.exclusion,kututa_prospect.group_prospect_user,cr,
+access_kp_exclusion_manager,Prospecção: exclusões (gestor),kututa.prospect.exclusion,kututa_prospect.group_prospect_manager,crud,
+access_kp_score_user,Prospecção: pontuações (utilizador),kututa.prospect.score,kututa_prospect.group_prospect_user,r,
+access_kp_source_user,Prospecção: fontes (utilizador),kututa.prospect.source,kututa_prospect.group_prospect_user,cr,
+access_kp_rejeitar_user,Prospecção: rejeitar (utilizador),kututa.prospect.rejeitar,kututa_prospect.group_prospect_user,crud,
+kp_profile_company_rule,Prospecção: perfis por empresa,kututa.prospect.profile,,crud,"[('company_id', 'in', company_ids)]"
+kp_query_company_rule,Prospecção: consultas por empresa,kututa.prospect.query,,crud,"[('company_id', 'in', company_ids)]"
+kp_intake_company_rule,Prospecção: entradas por empresa,kututa.prospect.intake,,crud,"[('company_id', 'in', company_ids)]"
+kp_exclusion_company_rule,Prospecção: exclusões por empresa,kututa.prospect.exclusion,,crud,"[('company_id', 'in', company_ids)]"
+kp_lead_team_rule,Prospecção: leads de prospecção só para a equipa,crm.lead,,crud,"[] if user.has_group('kututa_prospect.group_prospect_manager') else ['|', '|', ('kp_profile_id', '=', False), ('team_id', 'in', user.crm_team_ids.ids), ('team_id.user_id', '=', user.id)]"

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_groups_privilege_prospect" model="res.groups.privilege">
+        <field name="name">Prospecção</field>
+        <field name="sequence">20</field>
+        <field name="category_id" ref="base.module_category_sales"/>
+    </record>
+
+    <record id="group_prospect_user" model="res.groups">
+        <field name="name">Utilizador</field>
+        <field name="sequence">10</field>
+        <field name="privilege_id" ref="res_groups_privilege_prospect"/>
+        <field name="implied_ids" eval="[(4, ref('sales_team.group_sale_salesman'))]"/>
+        <field name="comment">Revê, verifica, rejeita e contacta os leads de prospecção da sua equipa; regista exclusões.</field>
+    </record>
+
+    <record id="group_prospect_manager" model="res.groups">
+        <field name="name">Gestor</field>
+        <field name="sequence">20</field>
+        <field name="privilege_id" ref="res_groups_privilege_prospect"/>
+        <field name="implied_ids" eval="[(4, ref('group_prospect_user')), (4, ref('sales_team.group_sale_manager'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        <field name="comment">Configura os perfis, a afirmação sobre a AGT e o modelo de IA; vê os leads de todas as equipas; apaga exclusões.</field>
+    </record>
+
+    <record id="group_prospect_integration" model="res.groups">
+        <field name="name">Integração (n8n)</field>
+        <field name="sequence">30</field>
+        <field name="privilege_id" ref="res_groups_privilege_prospect"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Só para o utilizador técnico do n8n: lê os perfis e as consultas activos e entrega candidatos na caixa de entrada. Não vê leads.</field>
+    </record>
+
+    <!-- Utilizador técnico do n8n: sem palavra-passe (não entra pela interface); autentica-se com uma chave de API
+         criada pelo administrador em Preferências › Segurança da conta. -->
+    <record id="user_n8n" model="res.users">
+        <field name="name">n8n Prospecção</field>
+        <field name="login">n8n-prospect@kututa.ao</field>
+        <field name="group_ids" eval="[Command.set([ref('group_prospect_integration')])]"/>
+        <field name="notification_type">email</field>
+    </record>
+</odoo>

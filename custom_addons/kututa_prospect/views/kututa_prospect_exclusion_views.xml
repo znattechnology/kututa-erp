@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="kututa_prospect_exclusion_view_list" model="ir.ui.view">
+        <field name="name">kututa.prospect.exclusion.list</field>
+        <field name="model">kututa.prospect.exclusion</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="data"/>
+                <field name="organizacao"/>
+                <field name="nif"/>
+                <field name="email_normalized"/>
+                <field name="phone_sanitized"/>
+                <field name="cidade"/>
+                <field name="motivo"/>
+                <field name="profile_id" optional="show"/>
+                <field name="user_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="kututa_prospect_exclusion_view_form" model="ir.ui.view">
+        <field name="name">kututa.prospect.exclusion.form</field>
+        <field name="model">kututa.prospect.exclusion</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        A exclusão vale para todos os produtos: nenhum perfil volta a criar ou contactar esta organização. Basta uma das chaves coincidir.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="organizacao"/>
+                            <field name="nif"/>
+                            <field name="email_normalized"/>
+                            <field name="phone_sanitized"/>
+                            <field name="cidade"/>
+                        </group>
+                        <group>
+                            <field name="motivo"/>
+                            <field name="profile_id"/>
+                            <field name="origem_lead_id"/>
+                            <field name="data"/>
+                            <field name="user_id"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="kututa_prospect_exclusion_action" model="ir.actions.act_window">
+        <field name="name">Exclusões</field>
+        <field name="res_model">kututa.prospect.exclusion</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

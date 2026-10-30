@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="stage_para_rever" model="crm.stage">
+        <field name="name">Para rever</field>
+        <field name="sequence">0</field>
+        <field name="team_ids" eval="[Command.set([ref('sales_team.team_sales_department')])]"/>
+        <field name="requirements">Lead de prospecção por verificar: confirme cada dado na fonte própria da organização antes de aprovar. Não pode receber mensagens até ser verificado.</field>
+    </record>
+
+    <record id="utm_source_n8n" model="utm.source">
+        <field name="name">Prospecção n8n</field>
+    </record>
+</odoo>

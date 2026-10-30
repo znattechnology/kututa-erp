@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="kututa_prospect_profile_view_list" model="ir.ui.view">
+        <field name="name">kututa.prospect.profile.list</field>
+        <field name="model">kututa.prospect.profile</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="team_id"/>
+                <field name="tom"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="kututa_prospect_profile_view_form" model="ir.ui.view">
+        <field name="name">kututa.prospect.profile.form</field>
+        <field name="model">kututa.prospect.profile</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_ligar_produtos" string="Ligar produtos pelas referências" type="object"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Inactivo" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Ex.: Gestão escolar"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="team_id"/>
+                            <field name="stage_review_id"/>
+                        </group>
+                        <group>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Produto" name="produto">
+                            <group>
+                                <field name="prefixos_produtos"/>
+                                <field name="product_tmpl_ids" widget="many2many_tags"/>
+                                <field name="segmento"/>
+                                <field name="limites"/>
+                            </group>
+                        </page>
+                        <page string="Pesquisa" name="pesquisa">
+                            <field name="query_ids">
+                                <list editable="bottom">
+                                    <field name="fonte"/>
+                                    <field name="consulta"/>
+                                    <field name="provincia"/>
+                                    <field name="cidade"/>
+                                    <field name="url_lista" optional="show"/>
+                                    <field name="ultima_execucao" optional="show"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Qualificação" name="qualificacao">
+                            <group>
+                                <field name="cargos"/>
+                                <field name="dores"/>
+                            </group>
+                            <field name="criterio_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="peso"/>
+                                    <field name="obrigatorio"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Mensagem" name="mensagem">
+                            <group>
+                                <field name="tom"/>
+                                <field name="tom_notas"/>
+                                <field name="canal_email"/>
+                                <field name="canal_telefone"/>
+                                <field name="canal_whatsapp"/>
+                                <field name="canal_visita"/>
+                            </group>
+                            <label for="proposta_valor"/>
+                            <field name="proposta_valor"/>
+                        </page>
+                        <page string="Cadência" name="cadencia">
+                            <field name="cadencia_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="dias_apos"/>
+                                    <field name="canal"/>
+                                    <field name="activity_type_id"/>
+                                    <field name="nota"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="kututa_prospect_profile_action" model="ir.actions.act_window">
+        <field name="name">Perfis de prospecção</field>
+        <field name="res_model">kututa.prospect.profile</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+</odoo>

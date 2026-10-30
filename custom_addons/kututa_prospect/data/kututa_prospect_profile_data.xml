@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Os quatro perfis iniciais. Funcionalidades reais do código; a afirmação sobre a AGT usa sempre o marcador
+         {{ kututa_agt }} (o Kututa ainda não está homologado). -->
+
+    <!-- Gestão escolar -->
+    <record id="profile_escolas" model="kututa.prospect.profile">
+        <field name="name">Gestão escolar</field>
+        <field name="code">escolas</field>
+        <field name="sequence">10</field>
+        <field name="team_id" ref="sales_team.team_sales_department"/>
+        <field name="prefixos_produtos">KUT-ESC-,KUT-MIG-ACAD</field>
+        <field name="segmento">Colégios privados e comparticipados, do primário ao secundário, e escolas técnico-profissionais (institutos médios). Começa por Luanda, Benguela e Huíla. Escolas públicas não são alvo.</field>
+        <field name="cargos">Director(a) geral
+Director(a) pedagógico(a)
+Chefe de secretaria
+Responsável financeiro(a)</field>
+        <field name="dores">Pautas feitas à mão em Excel
+Erros no cálculo das médias e das transições
+Propinas em atraso sem controlo
+Emissão lenta de declarações e certificados
+Facturação electrónica obrigatória a partir de 1/1/2027</field>
+        <field name="proposta_valor"><![CDATA[<ul>
+<li>Pautas calculadas pelo regime oficial (DE 424/25 no ensino geral, Despacho 60/08 no técnico), com conselho de turma e reapreciação.</li>
+<li>Matrículas com vagas e número de ordem, transferências e rematrícula.</li>
+<li>Horários com detecção de conflitos e sumários com os limites legais de faltas.</li>
+<li>Declarações, certificados, diplomas, mini-pautas, pautas A3 e cartão de estudante.</li>
+<li>Propinas com uma factura por cobrança, multas, bolsas aprovadas por outra pessoa e bloqueio de devedores.</li>
+<li>Área do Estudante e do Encarregado.</li>
+<li>Migração a partir de outro sistema.</li>
+<li>No plano Completo, também contabilidade e salários dos professores, com os tempos lectivos.</li>
+</ul>]]></field>
+        <field name="limites">Não prometer aplicação móvel nativa (a Área do Estudante funciona no navegador do telemóvel). Não dizer que o Kututa é certificado pela AGT.</field>
+        <field name="canal_email" eval="True"/>
+        <field name="canal_telefone" eval="True"/>
+        <field name="canal_visita" eval="True"/>
+    </record>
+    <record id="criterion_escolas_privada" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="sequence">1</field>
+        <field name="name">Escola privada ou comparticipada</field>
+        <field name="peso">5</field>
+        <field name="obrigatorio" eval="True"/>
+    </record>
+    <record id="criterion_escolas_alunos" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="sequence">2</field>
+        <field name="name">Mais de 200 alunos</field>
+        <field name="peso">4</field>
+    </record>
+    <record id="criterion_escolas_site" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="sequence">3</field>
+        <field name="name">Tem site ou e-mail institucional</field>
+        <field name="peso">2</field>
+    </record>
+    <record id="criterion_escolas_tecnico" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="sequence">4</field>
+        <field name="name">Tem ensino técnico-profissional</field>
+        <field name="peso">3</field>
+    </record>
+    <record id="cadence_escolas_1" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="sequence">1</field>
+        <field name="dias_apos">0</field>
+        <field name="canal">email</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_email"/>
+        <field name="nota">Primeiro e-mail com o rascunho revisto</field>
+    </record>
+    <record id="cadence_escolas_2" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="sequence">2</field>
+        <field name="dias_apos">3</field>
+        <field name="canal">telefone</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_call"/>
+        <field name="nota">Ligar à secretaria e pedir o contacto da direcção</field>
+    </record>
+    <record id="cadence_escolas_3" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="sequence">3</field>
+        <field name="dias_apos">10</field>
+        <field name="canal">email</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_email"/>
+        <field name="nota">E-mail de seguimento; propor visita se houver resposta</field>
+    </record>
+    <record id="query_escolas_luanda" model="kututa.prospect.query">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="fonte">google_places</field>
+        <field name="consulta">colégio</field>
+        <field name="provincia">luanda</field>
+        <field name="cidade">Luanda</field>
+    </record>
+    <record id="query_escolas_benguela" model="kututa.prospect.query">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="fonte">google_places</field>
+        <field name="consulta">colégio</field>
+        <field name="provincia">benguela</field>
+        <field name="cidade">Benguela</field>
+    </record>
+    <record id="query_escolas_lubango" model="kututa.prospect.query">
+        <field name="profile_id" ref="profile_escolas"/>
+        <field name="fonte">google_places</field>
+        <field name="consulta">instituto médio</field>
+        <field name="provincia">huila</field>
+        <field name="cidade">Lubango</field>
+    </record>
+
+    <!-- Universidade -->
+    <record id="profile_universidade" model="kututa.prospect.profile">
+        <field name="name">Universidade</field>
+        <field name="code">universidade</field>
+        <field name="sequence">20</field>
+        <field name="team_id" ref="sales_team.team_sales_department"/>
+        <field name="prefixos_produtos">KUT-UNI-</field>
+        <field name="segmento">Instituições de ensino superior privadas e públicas (universidades, institutos superiores e escolas superiores).</field>
+        <field name="cargos">Reitor(a)
+Vice-reitor(a) para os assuntos académicos
+Secretário(a)-geral
+Director(a) dos serviços académicos
+Director(a) financeiro(a)</field>
+        <field name="dores">Inscrições por unidade curricular com precedências feitas à mão
+Controlo de créditos e prescrição
+Emolumentos por unidade curricular
+Emissão de certificados e diplomas</field>
+        <field name="proposta_valor"><![CDATA[<ul>
+<li>Licenciatura e mestrado em semestres; unidades curriculares com créditos, horas e tipo.</li>
+<li>Inscrição com precedências, limite de créditos e prescrição conforme o regulamento académico.</li>
+<li>Frequência, dispensa e exames normal, de recurso, especial e de melhoria.</li>
+<li>Transição por unidades em atraso e média pesada pelos créditos.</li>
+<li>TFC e dissertação (DP 193/18).</li>
+<li>Emolumentos automáticos por unidade curricular.</li>
+<li>Portal do estudante.</li>
+</ul>]]></field>
+        <field name="limites">Não prometer integração com sistemas do MESCTI. Não dizer que o Kututa é certificado pela AGT.</field>
+        <field name="canal_email" eval="True"/>
+        <field name="canal_telefone" eval="True"/>
+        <field name="canal_visita" eval="True"/>
+    </record>
+    <record id="criterion_universidade_licenciada" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_universidade"/>
+        <field name="sequence">1</field>
+        <field name="name">Instituição licenciada pelo MESCTI</field>
+        <field name="peso">5</field>
+        <field name="obrigatorio" eval="True"/>
+    </record>
+    <record id="criterion_universidade_estudantes" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_universidade"/>
+        <field name="sequence">2</field>
+        <field name="name">Mais de 1 500 estudantes</field>
+        <field name="peso">4</field>
+    </record>
+    <record id="cadence_universidade_1" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_universidade"/>
+        <field name="sequence">1</field>
+        <field name="dias_apos">0</field>
+        <field name="canal">email</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_email"/>
+        <field name="nota">E-mail institucional com o rascunho revisto</field>
+    </record>
+    <record id="cadence_universidade_2" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_universidade"/>
+        <field name="sequence">2</field>
+        <field name="dias_apos">5</field>
+        <field name="canal">telefone</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_call"/>
+        <field name="nota">Ligar para marcar reunião; ciclo longo, seguimento mensal</field>
+    </record>
+    <record id="query_universidade_mescti" model="kututa.prospect.query">
+        <field name="profile_id" ref="profile_universidade"/>
+        <field name="fonte">lista_mescti</field>
+        <field name="consulta">instituições de ensino superior</field>
+    </record>
+    <record id="query_universidade_luanda" model="kututa.prospect.query">
+        <field name="profile_id" ref="profile_universidade"/>
+        <field name="fonte">google_places</field>
+        <field name="consulta">instituto superior</field>
+        <field name="provincia">luanda</field>
+        <field name="cidade">Luanda</field>
+    </record>
+
+    <!-- Restauração e retalho com POS -->
+    <record id="profile_restauracao" model="kututa.prospect.profile">
+        <field name="name">Restauração e retalho com POS</field>
+        <field name="code">restauracao</field>
+        <field name="sequence">30</field>
+        <field name="team_id" ref="sales_team.team_sales_department"/>
+        <field name="prefixos_produtos">KUT-ESS,KUT-POS</field>
+        <field name="segmento">Restaurantes, cafés, pastelarias, lojas e farmácias com uma a cinco caixas.</field>
+        <field name="cargos">Proprietário(a)
+Gerente</field>
+        <field name="dores">Obrigação de facturação electrónica a partir de 1/1/2027
+Falhas de internet
+Stock sem controlo</field>
+        <field name="proposta_valor"><![CDATA[<ul>
+<li>Talão de venda preparado para a comunicação à AGT.</li>
+<li>Factura/recibo e factura a crédito no mesmo ecrã; nota de crédito com motivo.</li>
+<li>Talão com QR e menção «2.ª via» nas reimpressões.</li>
+<li>Continua a vender sem internet e emite o documento ao sincronizar.</li>
+<li>Stock actualizado a cada venda.</li>
+</ul>]]></field>
+        <field name="limites">Não há talões próprios de restaurante (consulta de mesa, pré-conta): não os prometer. Não dizer que o Kututa é certificado pela AGT.</field>
+        <field name="canal_email" eval="False"/>
+        <field name="canal_telefone" eval="True"/>
+        <field name="canal_visita" eval="True"/>
+    </record>
+    <record id="criterion_restauracao_morada" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_restauracao"/>
+        <field name="sequence">1</field>
+        <field name="name">Estabelecimento com morada fixa</field>
+        <field name="peso">5</field>
+        <field name="obrigatorio" eval="True"/>
+    </record>
+    <record id="criterion_restauracao_telefone" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_restauracao"/>
+        <field name="sequence">2</field>
+        <field name="name">Tem telefone público</field>
+        <field name="peso">3</field>
+    </record>
+    <record id="criterion_restauracao_actividade" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_restauracao"/>
+        <field name="sequence">3</field>
+        <field name="name">Sinais de actividade recente</field>
+        <field name="peso">1</field>
+    </record>
+    <record id="cadence_restauracao_1" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_restauracao"/>
+        <field name="sequence">1</field>
+        <field name="dias_apos">0</field>
+        <field name="canal">telefone</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_call"/>
+        <field name="nota">Ligar ou visitar primeiro; e-mail só se houver endereço institucional</field>
+    </record>
+    <record id="query_restauracao_luanda" model="kututa.prospect.query">
+        <field name="profile_id" ref="profile_restauracao"/>
+        <field name="fonte">google_places</field>
+        <field name="consulta">pastelaria</field>
+        <field name="provincia">luanda</field>
+        <field name="cidade">Luanda</field>
+    </record>
+
+    <!-- Empresas e facturação AGT -->
+    <record id="profile_empresas" model="kututa.prospect.profile">
+        <field name="name">Empresas e facturação electrónica</field>
+        <field name="code">empresas</field>
+        <field name="sequence">40</field>
+        <field name="team_id" ref="sales_team.team_sales_department"/>
+        <field name="prefixos_produtos">KUT-ESS,KUT-NEG,KUT-EMP,KUT-CORP</field>
+        <field name="segmento">PME contribuintes de IVA no regime geral ou simplificado, que ficam obrigadas à facturação electrónica a 1/1/2027.</field>
+        <field name="cargos">Director(a) geral
+Director(a) financeiro(a)
+Contabilista
+Responsável administrativo(a)</field>
+        <field name="dores">Prazo de 1/1/2027 para a facturação electrónica
+Excel ou software não preparado
+Salários com IRT e INSS feitos à mão
+SAF-T</field>
+        <field name="proposta_valor"><![CDATA[<ul>
+<li>Plano de contas PGC e impostos com os códigos da AGT.</li>
+<li>Facturação electrónica com séries, comunicação e contingência ({{ kututa_agt }}).</li>
+<li>Recibos com retenções e SAF-T (AO).</li>
+<li>Balanço e Demonstração de Resultados em PDF e Excel; amortizações (DP 207/15).</li>
+<li>Salários com IRT (Lei 14/25), INSS de 3% e 8%, subsídios, ficheiro bancário e mapas.</li>
+<li>Contratos segundo a LGT.</li>
+</ul>]]></field>
+        <field name="limites">Não dizer que o Kututa é certificado pela AGT. Não prometer prazos de implementação.</field>
+        <field name="canal_email" eval="True"/>
+        <field name="canal_telefone" eval="True"/>
+    </record>
+    <record id="criterion_empresas_nif" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_empresas"/>
+        <field name="sequence">1</field>
+        <field name="name">Empresa com NIF ou site institucional</field>
+        <field name="peso">3</field>
+    </record>
+    <record id="criterion_empresas_dimensao" model="kututa.prospect.criterion">
+        <field name="profile_id" ref="profile_empresas"/>
+        <field name="sequence">2</field>
+        <field name="name">5 a 200 trabalhadores</field>
+        <field name="peso">4</field>
+    </record>
+    <record id="cadence_empresas_1" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_empresas"/>
+        <field name="sequence">1</field>
+        <field name="dias_apos">0</field>
+        <field name="canal">email</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_email"/>
+        <field name="nota">Primeiro e-mail com o rascunho revisto</field>
+    </record>
+    <record id="cadence_empresas_2" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_empresas"/>
+        <field name="sequence">2</field>
+        <field name="dias_apos">4</field>
+        <field name="canal">telefone</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_call"/>
+        <field name="nota">Ligar ao responsável financeiro</field>
+    </record>
+    <record id="cadence_empresas_3" model="kututa.prospect.cadence">
+        <field name="profile_id" ref="profile_empresas"/>
+        <field name="sequence">3</field>
+        <field name="dias_apos">14</field>
+        <field name="canal">email</field>
+        <field name="activity_type_id" ref="mail.mail_activity_data_email"/>
+        <field name="nota">E-mail sobre o prazo de 1/1/2027</field>
+    </record>
+    <record id="query_empresas_luanda" model="kututa.prospect.query">
+        <field name="profile_id" ref="profile_empresas"/>
+        <field name="fonte">google_places</field>
+        <field name="consulta">empresa de distribuição</field>
+        <field name="provincia">luanda</field>
+        <field name="cidade">Luanda</field>
+    </record>
+
+    <function model="kututa.prospect.profile" name="_ligar_todos_os_produtos"/>
+</odoo>

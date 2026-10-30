@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="kututa_prospect_intake_view_list" model="ir.ui.view">
+        <field name="name">kututa.prospect.intake.list</field>
+        <field name="model">kututa.prospect.intake</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false"
+                  decoration-success="estado == 'criado'" decoration-muted="estado in ('duplicado', 'excluido')"
+                  decoration-danger="estado in ('rejeitado', 'erro')">
+                <field name="create_date" string="Recebida em"/>
+                <field name="profile_code"/>
+                <field name="organizacao"/>
+                <field name="cidade"/>
+                <field name="estado"/>
+                <field name="mensagem"/>
+                <field name="lead_id"/>
+                <field name="create_uid" string="Entregue por" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="kututa_prospect_intake_view_form" model="ir.ui.view">
+        <field name="name">kututa.prospect.intake.form</field>
+        <field name="model">kututa.prospect.intake</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <header>
+                    <field name="estado" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="profile_code"/>
+                            <field name="query_id"/>
+                            <field name="organizacao"/>
+                            <field name="nif"/>
+                            <field name="email"/>
+                            <field name="telefone"/>
+                            <field name="website" widget="url"/>
+                        </group>
+                        <group>
+                            <field name="morada"/>
+                            <field name="cidade"/>
+                            <field name="provincia"/>
+                            <field name="nome_contacto"/>
+                            <field name="cargo_contacto"/>
+                            <field name="place_id"/>
+                            <field name="mensagem"/>
+                            <field name="lead_id"/>
+                        </group>
+                    </group>
+                    <label for="fontes_json"/>
+                    <field name="fontes_json"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="kututa_prospect_intake_view_search" model="ir.ui.view">
+        <field name="name">kututa.prospect.intake.search</field>
+        <field name="model">kututa.prospect.intake</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="organizacao"/>
+                <field name="profile_code"/>
+                <filter name="criados" string="Leads criados" domain="[('estado', '=', 'criado')]"/>
+                <filter name="problemas" string="Rejeitadas ou com erro" domain="[('estado', 'in', ('rejeitado', 'erro'))]"/>
+                <separator/>
+                <filter name="grupo_estado" string="Estado" context="{'group_by': 'estado'}"/>
+                <filter name="grupo_perfil" string="Perfil" context="{'group_by': 'profile_code'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="kututa_prospect_intake_action" model="ir.actions.act_window">
+        <field name="name">Entradas do n8n</field>
+        <field name="res_model">kututa.prospect.intake</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

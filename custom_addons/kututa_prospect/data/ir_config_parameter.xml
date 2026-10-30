@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="param_ia_activa" model="ir.config_parameter">
+        <field name="key">kututa_prospect.ia_activa</field>
+        <field name="value">False</field>
+    </record>
+    <record id="param_modelo" model="ir.config_parameter">
+        <field name="key">kututa_prospect.modelo</field>
+        <field name="value">claude-haiku-5-5</field>
+    </record>
+    <record id="param_agt_estado" model="ir.config_parameter">
+        <field name="key">kututa_prospect.agt_estado</field>
+        <field name="value">em_homologacao</field>
+    </record>
+    <record id="param_agt_texto" model="ir.config_parameter">
+        <field name="key">kututa_prospect.agt_texto</field>
+        <field name="value">Facturação electrónica preparada para o modelo da AGT (DP 71/25 e DE 683/25), em processo de certificação.</field>
+    </record>
+    <record id="param_max_entradas_dia" model="ir.config_parameter">
+        <field name="key">kututa_prospect.max_entradas_dia</field>
+        <field name="value">2000</field>
+    </record>
+</odoo>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="kututa_prospect_uso_action" model="ir.actions.act_window">
+        <field name="name">Custos da IA na prospecção</field>
+        <field name="res_model">kututa.ia.uso</field>
+        <field name="view_mode">list,pivot,graph</field>
+        <field name="domain">[('kp_lead_id', '!=', False)]</field>
+    </record>
+
+    <menuitem id="menu_prospect_root" name="Prospecção" parent="crm.crm_menu_root" sequence="6"
+              groups="kututa_prospect.group_prospect_user"/>
+    <menuitem id="menu_prospect_rever" name="Leads para rever" parent="menu_prospect_root"
+              action="crm_lead_action_prospect_rever" sequence="1"/>
+    <menuitem id="menu_prospect_intake" name="Entradas do n8n" parent="menu_prospect_root"
+              action="kututa_prospect_intake_action" sequence="2"/>
+    <menuitem id="menu_prospect_exclusion" name="Exclusões" parent="menu_prospect_root"
+              action="kututa_prospect_exclusion_action" sequence="3"/>
+    <menuitem id="menu_prospect_profile" name="Perfis de prospecção" parent="crm.crm_menu_config"
+              action="kututa_prospect_profile_action" sequence="40" groups="kututa_prospect.group_prospect_manager"/>
+    <menuitem id="menu_prospect_uso" name="Custos da IA" parent="menu_prospect_root"
+              action="kututa_prospect_uso_action" sequence="10" groups="kututa_prospect.group_prospect_manager"/>
+</odoo>
