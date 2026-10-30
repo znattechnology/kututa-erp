@@ -1,4 +1,4 @@
-from odoo.tests import TransactionCase, tagged
+from odoo.tests import HttpCase, TransactionCase, tagged
 
 
 @tagged('post_install', '-at_install')
@@ -24,3 +24,18 @@ class TestKututaWeb(TransactionCase):
         self.assertFalse(user.tour_enabled)
         self.assertFalse(user._init_odoobot())
         self.assertEqual(user.odoobot_state, 'disabled')
+
+
+@tagged('post_install', '-at_install')
+class TestKututaFavicon(HttpCase):
+    def test_backend_favicon_is_not_odoo(self):
+        # Sem favicon próprio no site (ou sem website), o separador mostra o ícone do Kututa ERP.
+        response = self.url_open('/kututa_web/favicon')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.url.endswith('/kututa_web/static/img/favicon.png'))
+        self.assertEqual(response.headers['Content-Type'], 'image/png')
+
+    def test_webclient_uses_kututa_favicon(self):
+        self.authenticate('admin', 'admin')
+        html = self.url_open('/odoo').text
+        self.assertIn('rel="shortcut icon" href="/kututa_web/favicon"', html)

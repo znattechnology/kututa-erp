@@ -1,6 +1,6 @@
 {
     'name': 'Kututa ERP - Interface',
-    'version': '20.0.1.2.0',
+    'version': '20.0.1.3.0',
     'summary': 'Menu lateral recolhível, painel de mensagens escondido por omissão e layout dos documentos definido',
     'description': """
 Kututa ERP: melhorias de navegação e de espaço no cliente web.
@@ -13,6 +13,7 @@ Kututa ERP: melhorias de navegação e de espaço no cliente web.
 * Sem os tours de boas-vindas nem a conversa do OdooBot (em inglês)
 * Correcções de tradução do núcleo para pt-AO nos textos mais visíveis
 * Os documentos não mostram o logótipo de exemplo do Odoo quando a empresa ainda não tem logótipo
+* O separador do navegador mostra o favicon do site da escola (ou o ícone do Kututa ERP), não o do Odoo
 * Todas as empresas ficam com um layout de documentos definido, para a impressão sair logo em PDF em vez de
   abrir o assistente de configuração do Odoo
     """,
