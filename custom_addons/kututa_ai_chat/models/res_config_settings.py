@@ -22,3 +22,9 @@ class ResConfigSettings(models.TransientModel):
     kututa_ia_max_respostas = fields.Integer(
         'Máximo de respostas por conversa', config_parameter='kututa_ia.max_respostas', default=30
     )
+    kututa_ia_max_conversas_ip = fields.Integer(
+        'Máximo de conversas por IP em 24 horas',
+        config_parameter='kututa_ia.max_conversas_ip',
+        default=5,
+        help='Conversas novas com o assistente de IA vindas do mesmo endereço IP nas últimas 24 horas. 0 = sem limite.',
+    )

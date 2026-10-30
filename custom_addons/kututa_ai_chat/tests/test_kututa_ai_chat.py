@@ -249,6 +249,26 @@ class TestKututaAiChat(TransactionCase):
         self.assertEqual(cliente.pedidos[0]['fallbacks'], 'default')
         self.assertEqual(cliente.pedidos[1]['model'], 'claude-opus-5-5')
 
+    def test_limite_de_conversas_por_ip(self):
+        self.env['res.config.settings'].create({'kututa_ia_max_conversas_ip': 2}).execute()
+        Canal = self.env['discuss.channel']
+        canais = [Canal.create({'name': f'Visitante {i}', 'channel_type': 'group'}) for i in range(4)]
+        cliente = ClienteFalso([resposta([texto(f'r{i}')]) for i in range(3)])
+        with self._com(cliente), patch.object(type(self.agente), '_ip_visitante', lambda self_: '102.1.2.3'):
+            r1 = self.agente._responder(canais[0], 'Olá')
+            r2 = self.agente._responder(canais[1], 'Olá')
+            r3 = self.agente._responder(canais[2], 'Olá')
+            # A conversa já aceite continua a ser atendida mesmo depois de atingido o limite.
+            r4 = self.agente._responder(canais[0], 'Outra pergunta')
+        self.assertEqual((r1.text, r2.text, r4.text), ('r0', 'r1', 'r2'))
+        self.assertEqual(r3.text, agente_mod.LIMITE_IP)
+        self.assertTrue(r3.handover)
+        self.assertFalse(canais[2].kututa_ia_ip)
+        # Outro IP não é afectado.
+        cliente = ClienteFalso([resposta([texto('ok')])])
+        with self._com(cliente), patch.object(type(self.agente), '_ip_visitante', lambda self_: '102.9.9.9'):
+            self.assertEqual(self.agente._responder(canais[3], 'Olá').text, 'ok')
+
     def test_desligado_nas_definicoes(self):
         self.env['res.config.settings'].create({'kututa_ia_activo': False}).execute()
         with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'chave-de-teste'}):

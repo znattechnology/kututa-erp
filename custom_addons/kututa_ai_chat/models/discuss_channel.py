@@ -10,3 +10,5 @@ class DiscussChannel(models.Model):
     kututa_ia_respostas = fields.Integer(copy=False)
     kututa_ia_lead_id = fields.Many2one('crm.lead', copy=False, index='btree_not_null', ondelete='set null')
     kututa_ia_uso_ids = fields.One2many('kututa.ia.uso', 'channel_id')
+    # IP do visitante na primeira resposta da IA, para limitar as conversas por IP.
+    kututa_ia_ip = fields.Char(copy=False, index='btree_not_null')

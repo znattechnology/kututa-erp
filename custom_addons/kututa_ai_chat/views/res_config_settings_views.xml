@@ -22,6 +22,10 @@
                             <label class="col-lg-4 o_light_label" for="kututa_ia_max_respostas"/>
                             <field name="kututa_ia_max_respostas" class="oe_inline"/>
                         </div>
+                        <div class="row">
+                            <label class="col-lg-4 o_light_label" for="kututa_ia_max_conversas_ip"/>
+                            <field name="kututa_ia_max_conversas_ip" class="oe_inline"/>
+                        </div>
                         <div class="text-muted mt8">
                             Custo estimado por conversa: Opus ≈ 320 Kz, Sonnet ≈ 165 Kz, Haiku ≈ 10 Kz. Esforço mais
                             alto dá respostas mais pensadas, mas mais lentas e mais caras. O modelo novo vale para as

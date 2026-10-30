@@ -5,6 +5,7 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 
 from odoo import api, fields, models
+from odoo.http import request
 from odoo.tools import email_normalize, file_open
 
 _logger = logging.getLogger(__name__)
@@ -34,6 +35,10 @@ INDISPONIVEL = (
 )
 LIMITE = (
     'Esta conversa já vai longa para o assistente automático. Para continuar, a equipa da Kututa vai dar '
+    'seguimento pessoalmente: ligue para +244 923 594 951 ou deixe aqui o seu e-mail ou telefone.'
+)
+LIMITE_IP = (
+    'Hoje já teve várias conversas com o assistente automático. Para continuar, a equipa da Kututa dá '
     'seguimento pessoalmente: ligue para +244 923 594 951 ou deixe aqui o seu e-mail ou telefone.'
 )
 
@@ -154,6 +159,8 @@ class KututaIaAgente(models.AbstractModel):
         params = self.env['ir.config_parameter'].sudo()
         if channel.kututa_ia_respostas >= params.get_int('kututa_ia.max_respostas', 30):
             return Resposta(LIMITE, True)
+        if not self._dentro_do_limite_por_ip(channel):
+            return Resposta(LIMITE_IP, True)
         client = self._cliente()
         if client is None:
             return Resposta(INDISPONIVEL, True)
@@ -218,6 +225,38 @@ class KututaIaAgente(models.AbstractModel):
         if not texto_final:
             texto_final = 'Desculpe, não consegui responder a isso. Quer que passe a conversa a uma pessoa da equipa?'
         return Resposta(texto_final, estado['handover'])
+
+    @api.model
+    def _dentro_do_limite_por_ip(self, channel):
+        """Limita as conversas novas com a IA por IP do visitante nas últimas 24 horas (0 = sem limite)."""
+        if channel.kututa_ia_ip:
+            return True  # conversa já aceite: o limite de respostas por conversa trata do resto
+        ip = self._ip_visitante()
+        maximo = self.env['ir.config_parameter'].sudo().get_int('kututa_ia.max_conversas_ip', 5)
+        if not ip:
+            return True
+        if maximo > 0:
+            conversas = (
+                self.env['discuss.channel']
+                .sudo()
+                .search_count(
+                    [
+                        ('kututa_ia_ip', '=', ip),
+                        ('create_date', '>=', fields.Datetime.now() - timedelta(hours=24)),
+                        ('id', '!=', channel.id),
+                    ]
+                )
+            )
+            if conversas >= maximo:
+                _logger.info('Chat com IA: limite de %s conversas por IP atingido (canal %s)', maximo, channel.id)
+                return False
+        channel.kututa_ia_ip = ip
+        return True
+
+    @api.model
+    def _ip_visitante(self):
+        # Com proxy_mode, o Odoo já põe aqui o IP real do visitante (X-Forwarded-For do Caddy).
+        return request.httprequest.remote_addr if request else None
 
     @api.model
     def _cliente(self):

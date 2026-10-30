@@ -1,6 +1,6 @@
 {
     'name': 'Kututa ERP - Chat do site com IA',
-    'version': '20.0.1.1.0',
+    'version': '20.0.1.2.0',
     'summary': 'O chat do site atende com IA (Claude): responde, qualifica, regista no CRM, marca demonstrações e '
     'prepara orçamentos em rascunho',
     'description': """
