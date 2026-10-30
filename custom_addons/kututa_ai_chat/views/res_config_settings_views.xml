@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.kututa.ai.chat</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="website_livechat.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <setting id="livechat" position="after">
+                <setting id="kututa_ia" string="Assistente de IA do chat" groups="im_livechat.im_livechat_group_manager"
+                         help="O chat do site responde com IA (Claude). A chave da API está no servidor (ANTHROPIC_API_KEY).">
+                    <field name="kututa_ia_activo"/>
+                    <div class="content-group mt16" invisible="not kututa_ia_activo">
+                        <div class="row">
+                            <label class="col-lg-4 o_light_label" for="kututa_ia_modelo"/>
+                            <field name="kututa_ia_modelo" class="oe_inline"/>
+                        </div>
+                        <div class="row">
+                            <label class="col-lg-4 o_light_label" for="kututa_ia_esforco"/>
+                            <field name="kututa_ia_esforco" class="oe_inline"/>
+                        </div>
+                        <div class="row">
+                            <label class="col-lg-4 o_light_label" for="kututa_ia_max_respostas"/>
+                            <field name="kututa_ia_max_respostas" class="oe_inline"/>
+                        </div>
+                        <div class="text-muted mt8">
+                            Custo estimado por conversa: Opus ≈ 320 Kz, Sonnet ≈ 165 Kz, Haiku ≈ 10 Kz. Esforço mais
+                            alto dá respostas mais pensadas, mas mais lentas e mais caras. O modelo novo vale para as
+                            respostas seguintes; os custos reais ficam em Live Chat › Relatórios › Custos do chat com IA.
+                        </div>
+                    </div>
+                </setting>
+            </setting>
+        </field>
+    </record>
+</odoo>

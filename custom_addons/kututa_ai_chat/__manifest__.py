@@ -1,6 +1,6 @@
 {
     'name': 'Kututa ERP - Chat do site com IA',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'summary': 'O chat do site atende com IA (Claude): responde, qualifica, regista no CRM, marca demonstrações e '
     'prepara orçamentos em rascunho',
     'description': """
@@ -20,6 +20,8 @@ Só para a Vímeo (dona da marca Kututa), na base do site kututa.ao; não se ins
     'data': [
         'security/ir.access.csv',
         'data/chatbot.xml',
+        'data/ir_config_parameter.xml',
+        'views/res_config_settings_views.xml',
         'views/kututa_ia_uso_views.xml',
     ],
     'assets': {

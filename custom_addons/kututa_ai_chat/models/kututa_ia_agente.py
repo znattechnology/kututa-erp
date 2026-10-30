@@ -17,6 +17,12 @@ except ImportError:  # o módulo declara a dependência; isto só protege o carr
 Resposta = namedtuple('Resposta', ['text', 'handover'])
 
 MODELO = 'claude-opus-5-5'
+# Modelos que se podem escolher nas definições. O Haiku não aceita o parâmetro fallbacks (recuperação de recusas).
+MODELOS = {
+    'claude-opus-5-5': {'nome': 'Opus 5.5 (o mais capaz)', 'fallbacks': True},
+    'claude-sonnet-5-5': {'nome': 'Sonnet 5.5 (equilibrado)', 'fallbacks': True},
+    'claude-haiku-5-5': {'nome': 'Haiku 5.5 (o mais barato)', 'fallbacks': False},
+}
 MAX_VOLTAS = 6  # chamadas à API por mensagem do visitante (ferramentas incluídas)
 LUANDA = timedelta(hours=1)  # hora de Luanda = UTC+1, sem hora de Verão
 SEGMENTOS = {'empresas': 'Empresas', 'escolas': 'Escolas', 'ensino_superior': 'Universidades', 'servicos': 'Serviços'}
@@ -153,6 +159,13 @@ class KututaIaAgente(models.AbstractModel):
             return Resposta(INDISPONIVEL, True)
 
         modelo = params.get_str('kututa_ia.modelo', MODELO)
+        if modelo not in MODELOS:
+            modelo = MODELO
+        extra = (
+            {'betas': ['server-side-fallback-2026-07-01'], 'fallbacks': 'default'}
+            if MODELOS[modelo]['fallbacks']
+            else {}
+        )
         esforco = params.get_str('kututa_ia.esforco', 'low')
         historico = json.loads(channel.kututa_ia_historico or '[]')
         historico.append({'role': 'user', 'content': texto[:4000]})
@@ -168,9 +181,8 @@ class KututaIaAgente(models.AbstractModel):
                     messages=historico,
                     output_config={'effort': esforco},
                     cache_control={'type': 'ephemeral'},
-                    betas=['server-side-fallback-2026-07-01'],
-                    fallbacks='default',
                     metadata={'user_id': f'kututa-canal-{channel.id}'},
+                    **extra,
                 )
             except Exception as e:  # noqa: BLE001 - qualquer falha da API dá a resposta de indisponível
                 _logger.exception('Chat com IA: falha na API (canal %s)', channel.id)
@@ -204,7 +216,7 @@ class KututaIaAgente(models.AbstractModel):
 
     @api.model
     def _cliente(self):
-        if anthropic is None or not self.env['ir.config_parameter'].sudo().get_bool('kututa_ia.activo', True):
+        if anthropic is None or not self.env['ir.config_parameter'].sudo().get_bool('kututa_ia.activo'):
             return None
         chave = os.environ.get('ANTHROPIC_API_KEY')
         if not chave:

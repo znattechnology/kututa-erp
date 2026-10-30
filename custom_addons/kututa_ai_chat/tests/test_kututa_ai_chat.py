@@ -219,3 +219,36 @@ class TestKututaAiChat(TransactionCase):
     def test_passo_de_ia_nao_avanca_no_guiao(self):
         passo = self.env.ref('kututa_ai_chat.chatbot_kututa_ia_passo')
         self.assertEqual(passo._process_answer(self.canal, '<p>Olá</p>'), passo)
+
+    def test_modelo_escolhido_nas_definicoes(self):
+        definicoes = self.env['res.config.settings'].create(
+            {'kututa_ia_modelo': 'claude-haiku-5-5', 'kututa_ia_esforco': 'medium'}
+        )
+        definicoes.execute()
+        cliente = ClienteFalso([resposta([texto('Olá!')])])
+        with self._com(cliente):
+            self.agente._responder(self.canal, 'Olá')
+        pedido = cliente.pedidos[0]
+        self.assertEqual(pedido['model'], 'claude-haiku-5-5')
+        self.assertEqual(pedido['output_config'], {'effort': 'medium'})
+        # O Haiku não aceita a recuperação de recusas: o pedido vai sem fallbacks.
+        self.assertNotIn('fallbacks', pedido)
+        self.assertNotIn('betas', pedido)
+
+    def test_sonnet_leva_fallbacks_e_modelo_invalido_volta_ao_opus(self):
+        params = self.env['ir.config_parameter'].sudo()
+        params.set_str('kututa_ia.modelo', 'claude-sonnet-5-5')
+        cliente = ClienteFalso([resposta([texto('a')]), resposta([texto('b')])])
+        with self._com(cliente):
+            self.agente._responder(self.canal, 'Olá')
+            params.set_str('kututa_ia.modelo', 'modelo-que-nao-existe')
+            self.agente._responder(self.canal, 'Outra')
+        self.assertEqual(cliente.pedidos[0]['model'], 'claude-sonnet-5-5')
+        self.assertEqual(cliente.pedidos[0]['fallbacks'], 'default')
+        self.assertEqual(cliente.pedidos[1]['model'], 'claude-opus-5-5')
+
+    def test_desligado_nas_definicoes(self):
+        self.env['res.config.settings'].create({'kututa_ia_activo': False}).execute()
+        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'chave-de-teste'}):
+            r = self.agente._responder(self.canal, 'Olá')
+        self.assertEqual(r.text, agente_mod.INDISPONIVEL)

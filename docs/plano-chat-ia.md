@@ -90,6 +90,8 @@ A estimativa assume:
 
 Com 200 conversas por mês, o custo fica em cerca de 64 000 Kz com o Opus, 33 000 Kz com o Sonnet ou 2 000 Kz com o Haiku. Uma única venda do plano Negócio, com 350 000 Kz de implementação, paga anos de chat.
 
+**O modelo escolhe-se em Site › Definições › Assistente de IA do chat** (Opus 5.5, Sonnet 5.5 ou Haiku 5.5), junto com o esforço, o limite de respostas e o interruptor para ligar e desligar. Assim pode testar-se primeiro com os modelos mais baratos. O Haiku vai sem `fallbacks`, porque não os aceita.
+
 Configuração proposta:
 - o modelo, o esforço (`low` para conversa) e o número máximo de mensagens por conversa ficam em parâmetros de sistema, para se poderem mudar sem programar;
 - `fallbacks: "default"` activo, para a IA não ficar sem resposta se uma pergunta for recusada pelos filtros de segurança do modelo.

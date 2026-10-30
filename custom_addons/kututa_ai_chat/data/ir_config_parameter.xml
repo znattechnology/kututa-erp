@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="param_kututa_ia_activo" model="ir.config_parameter">
+        <field name="key">kututa_ia.activo</field>
+        <field name="value">True</field>
+    </record>
+    <record id="param_kututa_ia_modelo" model="ir.config_parameter">
+        <field name="key">kututa_ia.modelo</field>
+        <field name="value">claude-opus-5-5</field>
+    </record>
+</odoo>
