@@ -42,7 +42,7 @@
       },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "kututaOdooN8n",
+          "id": "kututaOdooN8n001",
           "name": "Odoo Kututa (n8n Prospecção)"
         }
       }
@@ -90,7 +90,7 @@
       },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "kututaGooglePlaces",
+          "id": "kututaGoogleP001",
           "name": "Google Places API"
         }
       },
@@ -140,7 +140,7 @@
       },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "kututaOdooN8n",
+          "id": "kututaOdooN8n001",
           "name": "Odoo Kututa (n8n Prospecção)"
         }
       }
@@ -155,7 +155,7 @@
         300
       ],
       "parameters": {
-        "jsCode": "// O Odoo devolve a lista dos ids criados; o n8n pode entregá-la como uma ou várias linhas.\nconst ids = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  if (Array.isArray(j)) ids.push(...j);\n  else if (Array.isArray(j.data)) ids.push(...j.data);\n  else if (typeof j.data === 'number') ids.push(j.data);\n}\nreturn [{ json: { ids } }];"
+        "jsCode": "// O Odoo devolve a lista dos ids criados; o n8n pode entregá-la como uma ou várias linhas.\nconst ids = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  if (typeof j === 'number') ids.push(j);\n  else if (Array.isArray(j)) ids.push(...j);\n  else if (Array.isArray(j.data)) ids.push(...j.data);\n  else if (typeof j.data === 'number') ids.push(j.data);\n}\nreturn [{ json: { ids } }];"
       }
     },
     {
@@ -188,7 +188,7 @@
       },
       "credentials": {
         "httpHeaderAuth": {
-          "id": "kututaOdooN8n",
+          "id": "kututaOdooN8n001",
           "name": "Odoo Kututa (n8n Prospecção)"
         }
       }
@@ -266,5 +266,6 @@
     "executionOrder": "v1"
   },
   "pinData": {},
-  "active": false
+  "active": false,
+  "id": "QR8QDzrHfnVJyTzd"
 }
