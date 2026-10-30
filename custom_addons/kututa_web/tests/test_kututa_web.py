@@ -1,5 +1,7 @@
 from odoo.tests import HttpCase, TransactionCase, tagged
 
+from .. import _kututa_login_terms
+
 
 @tagged('post_install', '-at_install')
 class TestKututaWeb(TransactionCase):
@@ -57,3 +59,17 @@ class TestKututaCores(TransactionCase):
         marca = next(i for i, p in enumerate(paths) if p.endswith('kututa_web/static/scss/marca.scss'))
         odoo = next(i for i, p in enumerate(paths) if p.endswith('web/static/src/scss/primary_variables.scss'))
         self.assertLess(marca, odoo)
+
+
+@tagged('post_install', '-at_install')
+class TestKututaLoginTerms(TransactionCase):
+    def test_login_in_angolan_portuguese(self):
+        self.env['res.lang']._activate_lang('pt_AO')
+        _kututa_login_terms(self.env)
+        arch = self.env.ref('web.login').with_context(lang='pt_AO').arch_db
+        self.assertIn('Palavra-passe', arch)
+        self.assertIn('Escreva o seu e-mail', arch)
+        self.assertNotIn('Senha', arch)
+        self.assertNotIn('Digite seu e-mail', arch)
+        # O inglês fica intacto.
+        self.assertIn('Enter your email', self.env.ref('web.login').with_context(lang='en_US').arch_db)

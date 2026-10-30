@@ -33,6 +33,41 @@ def _kututa_muk_colors(env):
             editor.write_colors(url, bundle, {n: KUTUTA_MUK[palette][n] for n in names})
 
 
+# Ecrãs de entrada, registo e redefinição da palavra-passe: o pt.po do núcleo traz frases do Brasil.
+# Por vista (chave) e termo de origem em inglês; o Odoo guarda-os por idioma no arch_db das vistas.
+LOGIN_TERMS = {
+    'web.login': {
+        'Email': 'E-mail',
+        'Enter your email': 'Escreva o seu e-mail',
+        'Password': 'Palavra-passe',
+        'Enter your password': 'Escreva a sua palavra-passe',
+        'Log in': 'Entrar',
+        'Login': 'Entrar',
+        'Log in as superuser': 'Entrar como superutilizador',
+    },
+    'web.login_layout': {'Manage Databases': 'Gerir bases de dados'},
+    'auth_signup.login': {
+        "Don't have an account?": 'Ainda não tem conta?',
+        'Reset Password': 'Redefinir palavra-passe',
+    },
+    'auth_signup.reset_password': {'Email': 'E-mail', 'Back to Login': 'Voltar à entrada'},
+    'auth_signup.fields': {'Password': 'Palavra-passe', 'Confirm Password': 'Confirmar palavra-passe'},
+    'auth_signup.signup': {'Already have an account?': 'Já tem conta?'},
+    'auth_signup.login_successful': {'Registration successful.': 'Registo concluído.'},
+}
+
+
+def _kututa_login_terms(env):
+    langs = [code for code, _name in env['res.lang'].get_installed() if code.startswith('pt')]
+    for key, terms in LOGIN_TERMS.items():
+        for view in env['ir.ui.view'].with_context(active_test=False).search([('key', '=', key)]):
+            source = view.with_context(lang='en_US').arch_db or ''
+            present = {src: dst for src, dst in terms.items() if f'>{src}<' in source or f'"{src}"' in source}
+            if present:
+                view.update_field_translations('arch_db', {lang: present for lang in langs})
+
+
 def _post_init_hook(env):
     env['res.company'].search([('external_report_layout_id', '=', False)])._kututa_set_default_layout()
     _kututa_muk_colors(env)
+    _kututa_login_terms(env)

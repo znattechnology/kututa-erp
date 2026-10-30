@@ -1,9 +1,11 @@
 import hashlib
 
 from odoo import http
+from odoo.addons.web.controllers.home import Home
 from odoo.addons.web.controllers.webmanifest import WebManifest
 from odoo.http import request
 from odoo.tools import file_open
+from odoo.tools.translate import code_translations
 
 IMG = '/kututa_web/static/img'
 
@@ -47,3 +49,17 @@ class KututaWebManifest(WebManifest):
 
     def _icon_path(self):
         return 'kututa_web/static/img/icone-192.png'
+
+
+class KututaHome(Home):
+    @http.route()
+    def web_login(self, *args, **kw):
+        """A mensagem de credenciais erradas vem do código do núcleo («Palavra-passe/sessão errados» no pt.po)."""
+        response = super().web_login(*args, **kw)
+        qcontext = getattr(response, 'qcontext', None)
+        lang = request.env.lang or ''
+        if qcontext and qcontext.get('error') and lang.startswith('pt'):
+            wrong = code_translations.get_python_translations('web', lang).get('Wrong login/password')
+            if qcontext['error'] in (wrong, 'Wrong login/password'):
+                qcontext['error'] = 'E-mail ou palavra-passe errados.'
+        return response
