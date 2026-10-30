@@ -1,0 +1,51 @@
+referencia,nome,grupo,preco,unidade,descricao
+KUT-ESS,Kututa ERP Essencial (mensalidade),Empresas,20000,Unidades,"Loja e micro-empresa: 3 utilizadores, facturação electrónica AGT ilimitada, 1 POS com talões certificados e modo offline, stock, clientes, SAF-T. Suporte remoto em horário laboral."
+KUT-ESS-IMP,Implementação Essencial,Empresas,75000,Unidades,"Configuração padrão, importação de artigos e clientes por Excel e 2 h de formação remota. Grátis no pagamento anual."
+KUT-ESS-USR,Utilizador adicional Essencial (mensalidade),Empresas,6000,Unidades,
+KUT-POS,Caixa POS adicional (mensalidade),Empresas,5000,Unidades,
+KUT-NEG,Kututa ERP Negócio (mensalidade),Empresas,55000,Unidades,"Pequena empresa do regime geral: 5 utilizadores, tudo do Essencial, contabilidade PGC, IVA, compras, tesouraria e salários (LGT, IRT, INSS) até 25 trabalhadores. Resposta em 8 h úteis."
+KUT-NEG-IMP,Implementação Negócio,Empresas,350000,Unidades,"Plano de contas, saldos iniciais e salários (cerca de 2 dias)."
+KUT-NEG-USR,Utilizador adicional Negócio (mensalidade),Empresas,8000,Unidades,
+KUT-NEG-TRB,Trabalhador adicional Negócio (mensalidade),Empresas,400,Unidades,Acima de 25 trabalhadores.
+KUT-EMP,Kututa ERP Empresarial (mensalidade),Empresas,150000,Unidades,"Média empresa: 10 utilizadores, todos os módulos (multi-armazém, CRM, projectos, site), salários até 100 trabalhadores, 4 h/mês de apoio funcional, resposta em 4 h úteis, uma visita por trimestre."
+KUT-EMP-IMP,Implementação Empresarial (a partir de),Empresas,1500000,Unidades,Habitualmente 1 500 000 a 4 000 000 Kz; orçamento por diárias.
+KUT-EMP-USR,Utilizador adicional Empresarial (mensalidade),Empresas,9000,Unidades,
+KUT-EMP-TRB,Trabalhador adicional Empresarial (mensalidade),Empresas,250,Unidades,Acima de 100 trabalhadores.
+KUT-CORP,Kututa ERP Corporativo (mensalidade a partir de),Empresas,500000,Unidades,"Grande empresa, multi-empresa: 50 utilizadores, instância dedicada, SLA de 2 h, 8 h/mês incluídas. Sob proposta."
+KUT-CORP-IMP,Implementação Corporativo (a partir de),Empresas,5000000,Unidades,Sob proposta.
+KUT-CORP-USR,Utilizador adicional Corporativo (mensalidade),Empresas,6500,Unidades,
+KUT-ESC-A1,Escola Académico até 300 alunos (mensalidade),Escolas,35000,Unidades,"Matrículas, turmas, pautas (Decreto 424/25 e Despacho 60/08), exames, propinas e emolumentos com factura certificada, portal do aluno, encarregado e professor."
+KUT-ESC-A2,Escola Académico 301 a 800 alunos (mensalidade),Escolas,60000,Unidades,
+KUT-ESC-A3,Escola Académico 801 a 1500 alunos (mensalidade),Escolas,90000,Unidades,
+KUT-ESC-A4,Escola Académico 1501 a 3000 alunos (mensalidade),Escolas,130000,Unidades,
+KUT-ESC-C1,Escola Completo até 300 alunos (mensalidade),Escolas,50000,Unidades,"Académico + contabilidade PGC, salários dos professores e funcionários, compras, stock e site da escola."
+KUT-ESC-C2,Escola Completo 301 a 800 alunos (mensalidade),Escolas,85000,Unidades,
+KUT-ESC-C3,Escola Completo 801 a 1500 alunos (mensalidade),Escolas,125000,Unidades,
+KUT-ESC-C4,Escola Completo 1501 a 3000 alunos (mensalidade),Escolas,180000,Unidades,
+KUT-ESC-IMP1,Implementação escola até 300 alunos,Escolas,200000,Unidades,"Ano lectivo, classes, turmas e disciplinas, importação de alunos e encarregados por Excel, tabela de propinas e 2 sessões de formação presenciais. Plano Académico: menos 25%. Pode ser paga em 3 prestações."
+KUT-ESC-IMP2,Implementação escola 301 a 800 alunos,Escolas,400000,Unidades,Plano Académico: menos 25%.
+KUT-ESC-IMP3,Implementação escola 801 a 1500 alunos,Escolas,600000,Unidades,Plano Académico: menos 25%.
+KUT-ESC-IMP4,Implementação escola 1501 a 3000 alunos,Escolas,900000,Unidades,Plano Académico: menos 25%.
+KUT-UNI-1,Ensino superior até 1500 estudantes (mensalidade),Universidades,500000,Unidades,"Candidaturas online, inscrição em unidades curriculares, créditos, pautas, diplomas, propinas certificadas, portais, contabilidade e salários dos docentes, 8 h/mês, visita mensal, reforço na época de inscrições."
+KUT-UNI-2,Ensino superior 1501 a 4000 estudantes (mensalidade),Universidades,950000,Unidades,
+KUT-UNI-3,Ensino superior 4001 a 8000 estudantes (mensalidade),Universidades,1500000,Unidades,
+KUT-UNI-4,Ensino superior 8001 a 15000 estudantes (mensalidade),Universidades,2300000,Unidades,
+KUT-UNI-IMP1,Implementação ensino superior até 1500 estudantes,Universidades,3500000,Unidades,"Paga em 40% na assinatura, 40% no arranque das inscrições e 20% no fecho do primeiro semestre."
+KUT-UNI-IMP2,Implementação ensino superior 1501 a 4000 estudantes,Universidades,6000000,Unidades,
+KUT-UNI-IMP3,Implementação ensino superior 4001 a 8000 estudantes,Universidades,9000000,Unidades,
+KUT-UNI-IMP4,Implementação ensino superior 8001 a 15000 estudantes,Universidades,14000000,Unidades,
+KUT-SRV-DIA,Diária de consultoria (8 h em Luanda),Serviços,180000,Dias,
+KUT-SRV-MDIA,Meia diária de consultoria,Serviços,100000,Unidades,
+KUT-SRV-HORA,Hora de consultoria remota,Serviços,25000,Horas,"Mínimo 1 h, fracções de 30 min."
+KUT-SRV-10H,Pacote de 10 horas remotas,Serviços,220000,Unidades,Pré-pago; válido 6 meses.
+KUT-SRV-URG,Hora de urgência fora do horário,Serviços,40000,Horas,
+KUT-FOR-MDIA,Formação presencial meio dia (até 10 formandos),Serviços,100000,Unidades,
+KUT-FOR-DIA,Formação presencial dia (até 10 formandos),Serviços,180000,Dias,
+KUT-FOR-HORA,Formação remota,Serviços,20000,Horas,
+KUT-MIG-EXCEL,Migração de dados mestre a partir de Excel (até 5 000 registos),Serviços,150000,Unidades,
+KUT-MIG-SALDOS,Migração de saldos contabilísticos e valores em aberto,Serviços,300000,Unidades,
+KUT-MIG-ERP,Migração de outro ERP (a partir de),Serviços,600000,Unidades,"Primavera e outros, via SAF-T ou exportações."
+KUT-MIG-ACAD,Migração de histórico académico de escola (a partir de),Serviços,200000,Unidades,Universidades: orçamento.
+KUT-DEV-HORA,Desenvolvimento à medida (hora),Serviços,25000,Horas,Ou orçamento fechado com 30% adiantados.
+KUT-DEV-MAPA,Relatório ou mapa personalizado (a partir de),Serviços,150000,Unidades,
+KUT-DEV-INT,Integração com banco ou outro sistema (a partir de),Serviços,750000,Unidades,"Banco, referência Multicaixa, outro sistema."
