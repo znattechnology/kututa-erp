@@ -1,6 +1,9 @@
 # ruff: noqa: F821  (o env vem do shell do Odoo)
 """Carrega a tabela de preços do Kututa ERP (``docs/comercial/tabela-precos.csv``) na base da Vímeo.
 
+A tabela é só da Vímeo (dona da marca Kututa), não das empresas clientes: o script recusa correr noutra
+empresa e os produtos ficam presos à empresa da Vímeo (``company_id``).
+
 Corre no shell do Odoo, com o CSV em ``/tmp/tabela-precos.csv`` (ou no caminho de ``TABELA_CSV``):
     odoo-bin shell -d kututa --no-http < tools/carregar_tabela_precos.py
 
@@ -13,7 +16,9 @@ import csv
 import os
 
 CSV = os.environ.get('TABELA_CSV', '/tmp/tabela-precos.csv')
-company = env.company
+VIMEO_NIF = '5003603490'
+company = env['res.company'].search([('vat', '=', VIMEO_NIF)], limit=1)
+assert company, f'Esta base não é a da Vímeo (NIF {VIMEO_NIF}): a tabela de preços do Kututa é só da Vímeo'
 aoa = env.ref('base.AOA')
 dominio_iva = [
     ('type_tax_use', '=', 'sale'),
@@ -50,6 +55,7 @@ with open(CSV, encoding='utf-8') as f:
             'invoice_policy': 'order',
             'taxes_id': [(6, 0, iva.ids)],
             'description_sale': row['descricao'] or False,
+            'company_id': company.id,
         }
         product = (
             env['product.template']

@@ -2,6 +2,8 @@
 
 Aprovada a 30/10/2026. Posicionamento: **ERP completo a meio do mercado**. O Kututa cobra cerca de 3 a 5 vezes o preço do software local de facturação e 35 a 50% do Primavera, e cobra sempre a implementação. Fundamentação em [`docs/estudos/Preços software gestão Angola.md`](../estudos/Preços%20software%20gestão%20Angola.md).
 
+**Esta tabela é só da Vímeo (dona da marca Kututa) para vender o Kututa ERP aos seus clientes. Não é carregada nas bases das empresas clientes:** o script só corre na empresa com o NIF da Vímeo e os produtos ficam presos a essa empresa.
+
 Os preços estão em Kz, sem IVA; acresce o IVA de 14%. A lista completa, com referências e descrições, está em [`tabela-precos.csv`](tabela-precos.csv). É a fonte que carrega os produtos no Odoo: `tools/carregar_tabela_precos.py`.
 
 ## Empresas
