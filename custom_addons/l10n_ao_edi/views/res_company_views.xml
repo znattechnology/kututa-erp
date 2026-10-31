@@ -24,6 +24,9 @@
                             <field name="l10n_ao_edi_last_communication" invisible="not l10n_ao_edi_enabled"/>
                             <field name="l10n_ao_edi_contingency" invisible="not l10n_ao_edi_enabled"/>
                             <field name="l10n_ao_edi_contingency_start" invisible="not l10n_ao_edi_contingency"/>
+                            <button name="action_l10n_ao_edi_test_connection" type="object" string="Testar ligação à AGT"
+                                    class="btn-secondary" icon="cable" groups="base.group_system"
+                                    invisible="l10n_ao_edi_environment == 'demo'" colspan="2"/>
                         </group>
                         <group string="Credenciais da API" invisible="not l10n_ao_edi_enabled" groups="base.group_system">
                             <field name="l10n_ao_edi_username"/>
@@ -38,6 +41,8 @@
                         <group string="Chaves de assinatura (RS256)" invisible="not l10n_ao_edi_enabled">
                             <field name="l10n_ao_edi_software_key_id" domain="[('public', '=', False)]"/>
                             <field name="l10n_ao_edi_taxpayer_key_id" domain="[('public', '=', False)]"/>
+                            <field name="l10n_ao_edi_software_public_key" invisible="not l10n_ao_edi_software_key_id"
+                                   groups="base.group_system"/>
                         </group>
                     </group>
                 </page>

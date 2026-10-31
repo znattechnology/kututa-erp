@@ -39,16 +39,27 @@ class TestL10nAoEdiVendorAndSeries(L10nAoEdiCommon):
         payload = self.agt_calls[0][1]
         self.assertEqual(payload['documentNo'], 'FT FT26X9/45')
         self.assertEqual(payload['action'], 'C')
-        self.assertEqual(payload['deductAllVAT'], 'AD')
+        self.assertEqual(payload['deductibleVATPercentage'], 100.0)
+        self.assertNotIn('deductAllVAT', payload)
         public_pem = self.taxpayer_key._get_public_key_bytes(encoding='pem', formatting='raw')
         self.assertEqual(
             jws_verify(payload['jwsSignature'], public_pem),
-            {'taxRegistrationNumber': '5000000001', 'documentNo': 'FT FT26X9/45'},
+            {
+                'taxRegistrationNumber': '5000000001',
+                'documentNo': 'FT FT26X9/45',
+                'action': 'C',
+                'deductibleVATPercentage': 100.0,
+            },
         )
 
     def test_non_deductible_bill_and_rejection(self):
         bill = self._bill('ao_iva_purchase_14_nd')
-        self.assertEqual(bill._l10n_ao_edi_vendor_deduct_all(), 'ND')
+        self.assertEqual(bill._l10n_ao_edi_vendor_deductible_percentage(), 0.0)
+        confirmed = {'confirmRejectResult': {'actionResultCode': 'C_OK', 'documentStatusCode': 'S_RG', 'errorList': []}}
+        with self.mock_agt({'validarDocumento': (200, confirmed)}):
+            self._bill('ao_iva_purchase_14_nd').action_l10n_ao_edi_vendor_confirm()
+        # Sem IVA dedutível o campo não vai: a AGT considera que não há dedução.
+        self.assertNotIn('deductibleVATPercentage', self.agt_calls[-1][1])
         refused = {
             'confirmRejectResult': {
                 'actionResultCode': 'R_NOK',
@@ -78,3 +89,29 @@ class TestL10nAoEdiVendorAndSeries(L10nAoEdiCommon):
         self.assertEqual(new.state, 'active')
         self.assertEqual(new.document_type, 'GF')
         self.assertEqual(self.env['l10n_ao_edi.series'].search_count([('code', '=', self.series['FT'].code)]), 1)
+
+    def test_homologation_without_validation_number(self):
+        # Antes da certificação não há número: a homologação funciona sem ele, a produção não.
+        self.company.l10n_ao_edi_software_validation_number = False
+        self.company._l10n_ao_edi_check_configuration()
+        self.company.l10n_ao_edi_environment = 'production'
+        with self.assertRaisesRegex(UserError, 'N.º de certificação do software'):
+            self.company._l10n_ao_edi_check_configuration()
+
+    def test_missing_credentials(self):
+        self.company.l10n_ao_edi_password = False
+        with self.assertRaisesRegex(UserError, 'Credenciais da API AGT'):
+            self.company._l10n_ao_edi_check_configuration()
+
+    def test_connection_test_and_public_key(self):
+        public_pem = self.software_key._get_public_key_bytes(encoding='pem', formatting='raw').decode()
+        self.assertEqual(self.company.l10n_ao_edi_software_public_key, public_pem)
+        self.assertIn('BEGIN PUBLIC KEY', public_pem)
+        with self.mock_agt({'listarSeries': (200, {'seriesResultCount': 3, 'seriesInfo': []})}):
+            action = self.company.action_l10n_ao_edi_test_connection()
+        self.assertEqual(action['params']['type'], 'success')
+        self.assertIn('3', action['params']['message'])
+        self.assertEqual(self.agt_calls[0][0], 'listarSeries')
+        refused = {'errorList': [{'idError': 'E40', 'descriptionError': 'Credenciais inválidas'}]}
+        with self.mock_agt({'listarSeries': (401, refused)}), self.assertRaisesRegex(UserError, 'E40'):
+            self.company.action_l10n_ao_edi_test_connection()

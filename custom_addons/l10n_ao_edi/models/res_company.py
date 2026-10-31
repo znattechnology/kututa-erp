@@ -55,6 +55,11 @@ class ResCompany(models.Model):
         string='Chave privada do produtor de software',
         help='Assina jwsSoftwareSignature. A chave pública correspondente é registada no Portal do Parceiro.',
     )
+    l10n_ao_edi_software_public_key = fields.Text(
+        string='Chave pública do produtor',
+        compute='_compute_l10n_ao_edi_software_public_key',
+        help='A registar no Portal do Parceiro da AGT (portaldoparceiro.hml.minfin.gov.ao em homologação).',
+    )
     l10n_ao_edi_taxpayer_key_id = fields.Many2one(
         'certificate.key',
         string='Chave privada do contribuinte',
@@ -74,6 +79,47 @@ class ResCompany(models.Model):
     )
     l10n_ao_edi_contingency_start = fields.Datetime(string='Contingência desde', readonly=True)
 
+    def _compute_l10n_ao_edi_software_public_key(self):
+        for company in self:
+            key = company.sudo().l10n_ao_edi_software_key_id
+            company.l10n_ao_edi_software_public_key = (
+                key._get_public_key_bytes(encoding='pem', formatting='raw').decode() if key else False
+            )
+
+    def action_l10n_ao_edi_test_connection(self):
+        """Verifica a configuração e faz um pedido que não altera nada na AGT (listarSeries)."""
+        self.ensure_one()
+        if not self.env.user.has_group('base.group_system'):
+            raise AccessError(self.env._('Só o administrador do sistema testa a ligação à AGT.'))
+        if self.l10n_ao_edi_environment == 'demo':
+            raise UserError(self.env._('No ambiente de demonstração nada é enviado à AGT: escolha «Homologação».'))
+        self._l10n_ao_edi_check_configuration()
+        nif = self.partner_id._l10n_ao_normalize_nif(self.vat)
+        payload = {
+            **self._l10n_ao_edi_request_envelope(),
+            'establishmentNumber': self.l10n_ao_edi_establishment or 'SEDE',
+            'jwsSignature': self._l10n_ao_edi_sign({'taxRegistrationNumber': nif}),
+        }
+        status, body = self._l10n_ao_edi_call('listarSeries', payload)
+        body = body if isinstance(body, dict) else {}
+        Document = self.env['l10n_ao_edi.document']
+        Document._log_call(self, 'listarSeries', payload, status, body, ok=status == 200)
+        if status != 200:
+            errors = Document._format_errors(body.get('errorList') or [])
+            raise UserError(
+                self.env._('A AGT recusou o pedido (HTTP %(status)s): %(errors)s', status=status, errors=errors)
+            )
+        count = body.get('seriesResultCount') or len(body.get('seriesInfo') or body.get('seriresInfo') or [])
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'success',
+                'title': self.env._('Ligação à AGT bem-sucedida'),
+                'message': self.env._('A AGT aceitou as credenciais e as assinaturas. Séries registadas: %s.', count),
+            },
+        }
+
     # -------------------------------------------------------------------------
     # Pedidos à API
     # -------------------------------------------------------------------------
@@ -84,12 +130,17 @@ class ResCompany(models.Model):
             label
             for label, value in (
                 (self.env._('NIF da empresa'), self.vat),
-                (self.env._('N.º de certificação do software'), self.l10n_ao_edi_software_validation_number),
                 (self.env._('Chave privada do produtor de software'), self.l10n_ao_edi_software_key_id),
                 (self.env._('Chave privada do contribuinte'), self.l10n_ao_edi_taxpayer_key_id),
             )
             if not value
         ]
+        if self.l10n_ao_edi_environment in ('test', 'production'):
+            if not self.sudo().l10n_ao_edi_username or not self.sudo().l10n_ao_edi_password:
+                missing.append(self.env._('Credenciais da API AGT'))
+        # Em homologação o software ainda não está certificado: o número só existe depois da certificação.
+        if self.l10n_ao_edi_environment == 'production' and not self.l10n_ao_edi_software_validation_number:
+            missing.append(self.env._('N.º de certificação do software'))
         if self.tax_calculation_rounding_method != 'round_per_line':
             # A AGT calcula o imposto linha a linha (taxContribution): com arredondamento global os totais divergem.
             missing.append(self.env._('Arredondamento do imposto «por linha» (Definições de Contabilidade)'))

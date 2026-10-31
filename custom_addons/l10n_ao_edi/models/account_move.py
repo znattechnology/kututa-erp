@@ -11,6 +11,8 @@ from .res_partner import FINAL_CONSUMER_NIF
 AGT_QR_URL = 'https://quiosqueagt.minfin.gov.ao/facturacao-eletronica/consultar-fe'
 EDI_LOCKED_STATES = ('to_send', 'sent', 'valid')
 # Tipos AGT permitidos em cada tipo de movimento do Odoo.
+# Documentos de fornecedor em que a AGT não aceita a percentagem de IVA dedutível (validarDocumento).
+VENDOR_NO_DEDUCTION = ('NC', 'AR', 'RC', 'RG', 'RE')
 DOCUMENT_TYPES_BY_MOVE_TYPE = {'out_invoice': ('FT', 'FR', 'FA', 'ND'), 'out_refund': ('NC',)}
 # Campos que definem o documento comunicado: não mudam depois da emissão (art. 8.º do DP n.º 71/25).
 LOCKED_FIELDS = (
@@ -462,14 +464,19 @@ class AccountMove(models.Model):
     # Facturas de fornecedor: confirmar / rejeitar na AGT (validarDocumento)
     # -------------------------------------------------------------------------
 
-    def _l10n_ao_edi_vendor_deduct_all(self):
-        """AD: todo o IVA da factura é dedutível; ND: nenhum (deductAllVAT)."""
+    def _l10n_ao_edi_vendor_deductible_percentage(self):
+        """Percentagem do IVA da factura que é dedutível (deductibleVATPercentage): o IVA lançado na conta de IVA
+        dedutível sobre o IVA total. Sem IVA dedutível devolve 0 (a AGT considera então que não há dedução)."""
         self.ensure_one()
         deductible_account = (
             self.env['account.chart.template'].with_company(self.company_id).ref('ao_34_2_3', raise_if_not_found=False)
         )
         tax_lines = self.line_ids.filtered('tax_line_id')
-        return 'AD' if tax_lines and all(line.account_id == deductible_account for line in tax_lines) else 'ND'
+        total = sum(abs(line.balance) for line in tax_lines)
+        if not total:
+            return 0.0
+        deductible = sum(abs(line.balance) for line in tax_lines if line.account_id == deductible_account)
+        return float_round(deductible / total * 100, precision_digits=2)
 
     def _l10n_ao_edi_vendor_validate(self, action):
         self._l10n_ao_edi_check_can_communicate()
@@ -482,14 +489,17 @@ class AccountMove(models.Model):
             company = move.company_id
             company._l10n_ao_edi_check_configuration()
             nif = company.partner_id._l10n_ao_normalize_nif(company.vat)
+            signed = {'taxRegistrationNumber': nif, 'documentNo': document_no, 'action': action}
+            # A dedução só se indica na confirmação de facturas (não em recibos nem notas de crédito); sem o campo,
+            # a AGT considera que não há direito a dedução.
+            if action == 'C' and move.move_type == 'in_invoice' and not document_no.startswith(VENDOR_NO_DEDUCTION):
+                if percentage := move._l10n_ao_edi_vendor_deductible_percentage():
+                    signed['deductibleVATPercentage'] = percentage
             payload = {
                 **company._l10n_ao_edi_request_envelope(),
-                'jwsSignature': company._l10n_ao_edi_sign({'taxRegistrationNumber': nif, 'documentNo': document_no}),
-                'documentNo': document_no,
-                'action': action,
+                'jwsSignature': company._l10n_ao_edi_sign(signed),
+                **{key: value for key, value in signed.items() if key != 'taxRegistrationNumber'},
             }
-            if action == 'C':
-                payload['deductAllVAT'] = move._l10n_ao_edi_vendor_deduct_all()
             status, body = company._l10n_ao_edi_call('validarDocumento', payload)
             body = body if isinstance(body, dict) else {}
             result = body.get('confirmRejectResult') or {}
