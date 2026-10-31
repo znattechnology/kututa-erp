@@ -168,6 +168,18 @@ class TestKututaAiChat(TransactionCase):
         self.assertTrue(erro)
         self.assertIn('registar_contacto', conteudo)
 
+    def test_nome_da_oportunidade_apos_registar_contacto(self):
+        # Um aviso à equipa antes do contacto cria a oportunidade sem nome; o contacto dá-lhe o nome real.
+        self.agente._avisar_equipa(self.canal, 'Visitante pediu uma pessoa.')
+        lead = self.canal.kututa_ia_lead_id
+        self.assertEqual(lead.name, agente_mod.NOME_SEM_CONTACTO)
+        self.agente._executar(self.canal, 'registar_contacto', {'nome': 'Rui', 'organizacao': 'Colégio Exemplo'}, {})
+        self.assertEqual(lead.name, 'Chat do site: Colégio Exemplo')
+        # O nome dado pela equipa mantém-se.
+        lead.name = 'Colégio Exemplo - 3 escolas'
+        self.agente._executar(self.canal, 'registar_contacto', {'nome': 'Rui', 'telefone': '923000000'}, {})
+        self.assertEqual(lead.name, 'Colégio Exemplo - 3 escolas')
+
     def test_precos_so_da_tabela_da_vimeo(self):
         conteudo, erro = self.agente._executar(self.canal, 'consultar_precos', {'segmento': 'empresas'}, {})
         self.assertFalse(erro)

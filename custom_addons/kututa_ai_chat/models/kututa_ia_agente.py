@@ -24,6 +24,7 @@ MODELOS = {
     'claude-sonnet-5-5': {'nome': 'Sonnet 5.5 (equilibrado)', 'fallbacks': True},
     'claude-haiku-5-5': {'nome': 'Haiku 5.5 (o mais barato)', 'fallbacks': False},
 }
+NOME_SEM_CONTACTO = 'Chat do site: visitante'
 MAX_VOLTAS = 6  # chamadas à API por mensagem do visitante (ferramentas incluídas)
 LUANDA = timedelta(hours=1)  # hora de Luanda = UTC+1, sem hora de Verão
 SEGMENTOS = {'empresas': 'Empresas', 'escolas': 'Escolas', 'ensino_superior': 'Universidades', 'servicos': 'Serviços'}
@@ -348,16 +349,21 @@ class KututaIaAgente(models.AbstractModel):
             }.items()
             if v
         }
+        nome = f'Chat do site: {dados.get("organizacao") or dados.get("nome") or "visitante"}'
         lead = channel.kututa_ia_lead_id.sudo()
         if lead:
             if detalhes:
                 vals['description'] = (lead.description or '') + '<br/>' + '<br/>'.join(detalhes)
+            # A oportunidade criada antes de haver contacto (aviso à equipa) ganha o nome real; um nome dado pela
+            # equipa não se toca.
+            if lead.name == NOME_SEM_CONTACTO and nome != NOME_SEM_CONTACTO:
+                vals['name'] = nome
             lead.write(vals)
         else:
             team = self.env['crm.team'].sudo().search([('company_id', 'in', [empresa.id, False])], limit=1)
             vals.update(
                 {
-                    'name': f'Chat do site: {dados.get("organizacao") or dados.get("nome") or "visitante"}',
+                    'name': nome,
                     'description': '<br/>'.join(detalhes),
                     'origin_channel_id': channel.id,
                     'company_id': empresa.id,
